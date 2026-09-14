@@ -1,0 +1,103 @@
+/* TripDee tokens · v4 Hum-based playful · OKLCH · light + dark (mirrors :root in src/app/globals.css) */
+:root {
+  --color-paper:      oklch(97% 0.012 95);
+  --color-paper-2:    oklch(94% 0.016 95);
+  --color-card:       oklch(97% 0.012 95);
+  --color-ink:        oklch(20% 0.012 250);
+  --color-ink-2:      oklch(42% 0.013 250);
+  --color-ink-deep:   oklch(12% 0.010 250);
+  --color-rule:       oklch(86% 0.014 95);
+  --color-rule-2:     oklch(72% 0.014 95);
+  --color-shadow:     oklch(20% 0.012 250 / 0.16);
+
+  --color-accent:     oklch(86% 0.180 95);
+  --color-accent-deep:oklch(58% 0.140 95);
+  --color-accent-ink: oklch(20% 0.012 250);
+  --color-accent-soft:color-mix(in oklch, oklch(86% 0.180 95) 16%, oklch(97% 0.012 95));
+  --color-accent-cast:oklch(76% 0.200 95 / 0.45);
+  --color-focus:      oklch(50% 0.160 255);
+
+  --color-sun:        oklch(83% 0.170 95);
+  --color-sun-soft:   color-mix(in oklch, oklch(83% 0.170 95) 16%, oklch(97% 0.012 95));
+  --color-sun-ink:    oklch(25% 0.030 80);
+  --color-leaf:       oklch(48% 0.130 155);
+  --color-leaf-deep:  oklch(38% 0.110 155);
+  --color-leaf-soft:  color-mix(in oklch, oklch(50% 0.130 155) 12%, oklch(97% 0.012 95));
+  --color-sky:        oklch(48% 0.140 240);
+  --color-sky-deep:   oklch(38% 0.120 240);
+  --color-sky-soft:   color-mix(in oklch, oklch(50% 0.140 240) 12%, oklch(97% 0.012 95));
+  --color-berry:      oklch(48% 0.190 12);
+  --color-berry-deep: oklch(38% 0.160 12);
+  --color-berry-soft: color-mix(in oklch, oklch(50% 0.190 12) 12%, oklch(97% 0.012 95));
+  --color-grape:      oklch(48% 0.150 300);
+  --color-grape-deep: oklch(38% 0.130 300);
+  --color-grape-soft: color-mix(in oklch, oklch(50% 0.150 300) 14%, oklch(97% 0.012 95));
+  --color-coral:      oklch(65% 0.240 22);
+
+  --font-display: var(--font-nunito), var(--font-noto-thai), "Sukhumvit Set", "Thonburi", system-ui, sans-serif;
+  --font-body: var(--font-nunito), var(--font-noto-thai), "Sukhumvit Set", "Thonburi", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
+
+  --space-3xs: 0.25rem;  --space-2xs: 0.5rem;  --space-xs: 0.75rem;
+  --space-sm:  1rem;     --space-md:  1.5rem;  --space-lg: 2rem;
+  --space-xl:  3rem;     --space-2xl: 4.5rem;  --space-3xl: 7rem;
+  --text-xs: 0.75rem;  --text-sm: 0.875rem; --text-md: 1.125rem;
+  --text-lg: 1.375rem; --text-xl: 1.75rem;  --text-2xl: 2.25rem;
+  --text-display: clamp(2.75rem, 5vw + 1rem, 4.5rem);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-micro: 120ms;
+  --dur-snap: 140ms;
+  --dur-press: 70ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
+  --radius-card: 20px; --radius-modal: 24px; --radius-pill: 999px; --radius-input: 12px;
+
+  --shadow-card: 0 1px 2px oklch(20% 0.012 250 / 0.07), 0 12px 32px -16px oklch(20% 0.012 250 / 0.14);
+  --shadow-lift: 0 2px 4px oklch(20% 0.012 250 / 0.08), 0 20px 44px -16px oklch(20% 0.012 250 / 0.20);
+  --shadow-soft: 0 1px 2px oklch(20% 0.012 250 / 0.06), 0 8px 20px -12px oklch(20% 0.012 250 / 0.18);
+}
+
+[data-theme="dark"] {
+  --color-paper:      oklch(17% 0.012 60);
+  --color-paper-2:    oklch(21% 0.012 60);
+  --color-card:       oklch(17% 0.012 60);
+  --color-ink:        oklch(93% 0.010 95);
+  --color-ink-2:      oklch(72% 0.012 90);
+  --color-ink-deep:   oklch(55% 0.010 90);
+  --color-rule:       oklch(30% 0.012 60);
+  --color-rule-2:     oklch(38% 0.014 60);
+  --color-shadow:     rgb(0 0 0 / 0.40);
+
+  --color-accent:     oklch(80% 0.160 95);
+  --color-accent-deep:oklch(62% 0.130 95);
+  --color-accent-ink: oklch(22% 0.020 95);
+  --color-accent-soft:color-mix(in oklch, oklch(80% 0.160 95) 18%, oklch(17% 0.012 60));
+  --color-accent-cast:oklch(80% 0.160 95 / 0.25);
+  --color-focus:      oklch(72% 0.150 255);
+
+  --color-sun:        oklch(80% 0.160 95);
+  --color-sun-soft:   color-mix(in oklch, oklch(80% 0.160 95) 16%, oklch(17% 0.012 60));
+  --color-sun-ink:    oklch(25% 0.030 80);
+  --color-leaf:       oklch(48% 0.130 155);
+  --color-leaf-deep:  oklch(32% 0.100 155);
+  --color-leaf-soft:  color-mix(in oklch, oklch(48% 0.130 155) 20%, oklch(17% 0.012 60));
+  --color-sky:        oklch(48% 0.140 240);
+  --color-sky-deep:   oklch(32% 0.110 240);
+  --color-sky-soft:   color-mix(in oklch, oklch(48% 0.140 240) 20%, oklch(17% 0.012 60));
+  --color-berry:      oklch(48% 0.190 12);
+  --color-berry-deep: oklch(34% 0.150 12);
+  --color-berry-soft: color-mix(in oklch, oklch(48% 0.190 12) 22%, oklch(17% 0.012 60));
+  --color-grape:      oklch(48% 0.150 300);
+  --color-grape-deep: oklch(36% 0.130 300);
+  --color-grape-soft: color-mix(in oklch, oklch(48% 0.150 300) 22%, oklch(17% 0.012 60));
+  --color-coral:      oklch(70% 0.220 22);
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -16px rgb(0 0 0 / 0.55);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.45), 0 20px 44px -16px rgb(0 0 0 / 0.6);
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 20px -12px rgb(0 0 0 / 0.5);
+}
