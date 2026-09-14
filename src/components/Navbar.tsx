@@ -39,10 +39,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   const lastY = useRef(0);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+    try {
+      const saved = localStorage.getItem('td-theme');
+      const preferred = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.dataset.theme = preferred;
+      setTheme(preferred === 'dark' ? 'dark' : 'light');
+    } catch {
+      setTheme('light');
+    }
   }, []);
-
   useEffect(() => {
     let ticking = false;
     const onScroll = () => {

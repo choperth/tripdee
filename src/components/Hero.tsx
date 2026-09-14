@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowDown, ShieldCheck, Phone, ReceiptText, MapPin } from 'lucide-react';
+import { ArrowDown, ShieldCheck, Phone, ReceiptText, MapPin, Users, Search, Sparkles } from 'lucide-react';
 import { POPULAR_ROUTES } from '@/data/mockData';
 import { useLanguage } from '@/context/LanguageContext';
 import type { DictKey } from '@/i18n/dictionaries';
@@ -16,24 +16,10 @@ interface HeroProps {
   resultCount: number;
 }
 
-const inputCls =
-  'w-full rounded-input border border-rule bg-paper-2 px-4 py-3 text-sm font-bold text-ink transition duration-220 ease-out placeholder:font-medium placeholder:text-ink-2/70 hover:border-ink-2/50 focus:border-accent';
-const labelCls =
-  'mb-1.5 block text-xs font-extrabold text-ink-2';
-
 const TRUST = [
-  { icon: ShieldCheck, key: 'hero.trust1', tint: 'bg-leaf-soft text-leaf' },
-  { icon: Phone, key: 'hero.trust2', tint: 'bg-sky-soft text-sky' },
-  { icon: ReceiptText, key: 'hero.trust3', tint: 'bg-sun-soft text-ink' },
-] as const;
-
-const CHIP_TINTS = [
-  'bg-accent-soft text-ink',
-  'bg-sky-soft text-sky',
-  'bg-leaf-soft text-leaf',
-  'bg-berry-soft text-berry',
-  'bg-grape-soft text-grape',
-  'bg-sun-soft text-ink',
+  { icon: ShieldCheck, key: 'hero.trust1', label: 'ป้ายเหลือง & ตรวจประวัติคนขับ', tint: 'bg-leaf-soft text-leaf' },
+  { icon: Phone, key: 'hero.trust2', label: 'ติดต่อคนขับตรง 0% หักหัวคิว', tint: 'bg-sky-soft text-sky' },
+  { icon: ReceiptText, key: 'hero.trust3', label: 'ใบเสนอราคา & หัก ณ ที่จ่าย 3%', tint: 'bg-sun-soft text-sun-ink' },
 ] as const;
 
 export const Hero: React.FC<HeroProps> = ({
@@ -55,34 +41,49 @@ export const Hero: React.FC<HeroProps> = ({
   };
 
   return (
-    <section aria-label={t('hero.searchAria')} className="relative overflow-hidden">
-      {/* playful backdrop */}
-      <div aria-hidden="true" className="td-dots pointer-events-none absolute inset-0 opacity-60 [mask-image:radial-gradient(70%_60%_at_50%_0%,black,transparent)]" />
-      <div aria-hidden="true" className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[42rem] max-w-none -translate-x-1/2 rounded-full bg-accent-soft blur-3xl" />
+    <section aria-label={t('hero.searchAria')} className="relative overflow-hidden pt-4 sm:pt-6">
+      {/* Subtle Lanna Nature Backdrop Glow */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[56rem] max-w-none -translate-x-1/2 rounded-full bg-accent/8 blur-3xl"
+      />
 
-      <div className="relative mx-auto w-full max-w-6xl px-4 pb-12 pt-8 sm:px-6 md:pt-12 lg:px-8">
-        <div className="max-w-2xl">
-          <h1 className="font-display text-[clamp(2rem,1rem+5vw,2.75rem)] font-extrabold leading-[1.15] tracking-tight text-ink md:text-display">
-            {t('hero.titleA')}
-            <span className="td-hl">{t('hero.titleB')}</span>
-          </h1>
-          <p className="mt-4 max-w-[52ch] text-[15px] font-medium leading-relaxed text-ink-2">
-            {t('hero.subtitle')}
-          </p>
-          <ul className="mt-5 flex flex-wrap items-center gap-2">
-            {TRUST.map((item) => (
-              <li
-                key={item.key}
-                className={`inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-xs font-extrabold ${item.tint}`}
-              >
-                <item.icon className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-                {t(item.key)}
-              </li>
-            ))}
-          </ul>
+      <div className="relative mx-auto w-full max-w-6xl px-4 pb-10 pt-6 sm:px-6 md:pt-10 lg:px-8 text-center">
+        {/* Top Eyebrow Badge */}
+        <div className="inline-flex items-center gap-2 rounded-pill bg-card px-4 py-1.5 text-xs font-extrabold text-ink shadow-sm border border-rule/80 mb-5">
+          <span className="grid h-2 w-2 rounded-full bg-sun animate-pulse" />
+          <span>ทริปดีๆ เริ่มต้นที่นี่ • ศูนย์รวมรถตู้ VIP & ที่พัก เชียงใหม่</span>
         </div>
 
-        {/* search band */}
+        {/* Main Headline */}
+        <h1 className="mx-auto max-w-3xl font-display text-[clamp(2.1rem,1.2rem+4.5vw,3.25rem)] font-extrabold leading-[1.18] tracking-tight text-ink">
+          {t('hero.titleA')}{' '}
+          <span className="text-accent underline decoration-accent/30 decoration-wavy underline-offset-8">
+            {t('hero.titleB')}
+          </span>
+        </h1>
+
+        {/* Subtitle */}
+        <p className="mx-auto mt-4 max-w-[62ch] text-[15px] sm:text-base font-medium leading-relaxed text-ink-2">
+          {t('hero.subtitle')}
+        </p>
+
+        {/* Trust Badges Bar */}
+        <ul className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+          {TRUST.map((item) => (
+            <li
+              key={item.key}
+              className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold ${item.tint} border border-rule/40 shadow-xs`}
+            >
+              <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" strokeWidth={2.5} />
+              <span>{t(item.key)}</span>
+            </li>
+          ))}
+        </ul>
+
+        {/* ========================================================= */}
+        {/* Floating Unified Search Box (แคปซูลค้นหาลอยตัวตรงกลาง) */}
+        {/* ========================================================= */}
         <form
           role="search"
           aria-label={t('hero.filterAria')}
@@ -90,19 +91,23 @@ export const Hero: React.FC<HeroProps> = ({
             e.preventDefault();
             scrollToResults();
           }}
-          className="td-elev-lift mt-8 rounded-modal bg-card p-5 sm:p-6"
+          className="td-elev-lift mx-auto mt-9 w-full max-w-4xl rounded-3xl md:rounded-full bg-card p-2 md:p-2.5 border border-rule shadow-lift transition-all hover:shadow-2xl"
         >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="td-zone" className={labelCls}>
-                <MapPin className="mr-1 inline h-3.5 w-3.5 text-accent-deep" aria-hidden="true" />
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-0">
+            {/* Segment 1: Zone / Destination */}
+            <div className="flex-1 text-left px-3.5 py-2 hover:bg-paper/80 rounded-2xl md:rounded-l-full transition-colors">
+              <label
+                htmlFor="td-zone"
+                className="flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wide text-accent"
+              >
+                <MapPin className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
                 {t('hero.zoneLabel')}
               </label>
               <select
                 id="td-zone"
                 value={selectedZone}
                 onChange={(e) => setSelectedZone(e.target.value)}
-                className={inputCls}
+                className="w-full bg-transparent font-display text-sm font-extrabold text-ink focus:outline-none cursor-pointer mt-0.5"
               >
                 <option value="all">{t('hero.zoneAll')}</option>
                 <option value="ม่อนแจ่ม">{t('hero.zoneMonjam')}</option>
@@ -113,15 +118,23 @@ export const Hero: React.FC<HeroProps> = ({
               </select>
             </div>
 
-            <div>
-              <label htmlFor="td-seats" className={labelCls}>
+            {/* Divider */}
+            <div className="hidden md:block h-9 w-px bg-rule shrink-0" />
+
+            {/* Segment 2: Capacity / Seats */}
+            <div className="flex-1 text-left px-3.5 py-2 hover:bg-paper/80 rounded-2xl transition-colors">
+              <label
+                htmlFor="td-seats"
+                className="flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wide text-accent"
+              >
+                <Users className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
                 {t('hero.seatsLabel')}
               </label>
               <select
                 id="td-seats"
                 value={selectedSeats}
                 onChange={(e) => setSelectedSeats(e.target.value)}
-                className={inputCls}
+                className="w-full bg-transparent font-display text-sm font-extrabold text-ink focus:outline-none cursor-pointer mt-0.5"
               >
                 <option value="all">{t('hero.seatsAll')}</option>
                 <option value="7">{t('hero.seats7')}</option>
@@ -131,8 +144,16 @@ export const Hero: React.FC<HeroProps> = ({
               </select>
             </div>
 
-            <div className="sm:col-span-2">
-              <label htmlFor="td-q" className={labelCls}>
+            {/* Divider */}
+            <div className="hidden md:block h-9 w-px bg-rule shrink-0" />
+
+            {/* Segment 3: Keyword / Amenities */}
+            <div className="flex-1 text-left px-3.5 py-2 hover:bg-paper/80 rounded-2xl transition-colors">
+              <label
+                htmlFor="td-q"
+                className="flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wide text-accent"
+              >
+                <Search className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
                 {t('hero.keywordLabel')}
               </label>
               <input
@@ -141,50 +162,65 @@ export const Hero: React.FC<HeroProps> = ({
                 placeholder={t('hero.keywordPh')}
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
-                className={inputCls}
+                className="w-full bg-transparent font-display text-sm font-bold text-ink placeholder:font-medium placeholder:text-ink-2/60 focus:outline-none mt-0.5"
               />
             </div>
-          </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2 border-t-2 border-dashed border-rule pt-4">
-            <span className="text-[13px] font-extrabold text-ink-2">{t('hero.hot')}</span>
-            {POPULAR_ROUTES.slice(0, 5).map((route, i) => (
+            {/* Segment 4: Search Button */}
+            <div className="p-1 shrink-0">
               <button
-                key={route.id}
-                type="button"
-                onClick={() => setSelectedZone(route.filterKey)}
-                className={`td-tab rounded-pill px-3 py-1.5 text-[13px] font-extrabold transition duration-220 ease-spring hover:-translate-y-0.5 ${CHIP_TINTS[i % CHIP_TINTS.length]}`}
+                type="submit"
+                data-burst
+                className="td-btn td-pop inline-flex w-full md:w-auto items-center justify-center gap-2 rounded-full bg-accent hover:bg-accent-deep px-6 py-3.5 text-sm font-extrabold text-accent-ink shadow-md hover:shadow-lg transition-all"
               >
-                {t(`route.${route.id}.name` as DictKey)}
+                <span>{t('hero.searchBtn', { count: resultCount })}</span>
+                <ArrowDown className="h-4 w-4" aria-hidden="true" strokeWidth={3} />
               </button>
-            ))}
+            </div>
           </div>
-
-          <button
-            type="submit"
-            data-burst
-            className="td-btn td-pop mt-4 inline-flex w-full items-center justify-center gap-2 rounded-pill bg-accent px-4 py-3.5 text-base font-extrabold text-accent-ink"
-          >
-            {t('hero.searchBtn', { count: resultCount })}
-            <ArrowDown className="h-5 w-5" aria-hidden="true" strokeWidth={3} />
-          </button>
         </form>
 
-        {/* photo band with a single sticker */}
+        {/* Quick Route Filter Pills below Capsule */}
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+          <span className="text-xs font-extrabold text-ink-2 flex items-center gap-1">
+            <Sparkles className="h-3.5 w-3.5 text-sun" />
+            {t('hero.hot')}
+          </span>
+          {POPULAR_ROUTES.slice(0, 5).map((route) => (
+            <button
+              key={route.id}
+              type="button"
+              onClick={() => setSelectedZone(route.filterKey)}
+              className={`td-btn rounded-pill px-3 py-1 text-xs font-extrabold transition-all border ${
+                selectedZone === route.filterKey
+                  ? 'bg-accent text-white border-accent shadow-xs'
+                  : 'bg-card text-ink-2 border-rule hover:border-accent/40 hover:text-ink'
+              }`}
+            >
+              {t(`route.${route.id}.name` as DictKey)}
+            </button>
+          ))}
+        </div>
+
+        {/* Premium Vehicle Visual Banner */}
         <div className="relative mt-8">
-          <figure className="td-elev-card m-0 overflow-hidden rounded-card">
+          <figure className="td-elev-card m-0 overflow-hidden rounded-card border border-rule">
             <img
-              src="https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1600&q=80"
+              src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1600&q=85"
               alt={t('hero.photoAlt')}
               fetchPriority="high"
               className="aspect-[16/7] w-full object-cover"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
           </figure>
-          <p className="td-sticker td-float absolute -top-4 left-4 flex items-center gap-1.5 rounded-pill bg-leaf px-4 py-2 text-[13px] font-extrabold text-white sm:left-8" style={{ animationDelay: '1.2s' }}>
+          <p
+            className="td-sticker td-float absolute -top-4 left-4 flex items-center gap-1.5 rounded-pill bg-leaf px-4 py-2 text-xs font-extrabold text-white shadow-md sm:left-8"
+            style={{ animationDelay: '1.2s' }}
+          >
             <ShieldCheck className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
             {t('hero.verifiedSticker')}
           </p>
-          <p className="mt-3 text-[13px] font-bold text-ink-2">
+          <p className="mt-3 text-xs font-bold text-ink-2">
             {t('hero.photoCaption')}
           </p>
         </div>

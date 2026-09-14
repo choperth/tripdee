@@ -116,13 +116,6 @@ export default function RootLayout({
             dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
           />
         ))}
-        <script
-          type={typeof window === 'undefined' ? 'text/javascript' : 'text/plain'}
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('td-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;var l=localStorage.getItem('td-lang');document.documentElement.lang=l==='zh'?'zh-CN':l==='en'?'en':'th';}catch(e){}})();`,
-          }}
-        />
         {gaId && (
           <>
             <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />

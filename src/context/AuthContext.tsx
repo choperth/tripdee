@@ -126,16 +126,19 @@ const INITIAL_QUOTATIONS: QuotationRecord[] = [
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    if (typeof window === 'undefined') return null;
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [quotations, setQuotations] = useState<QuotationRecord[]>(INITIAL_QUOTATIONS);
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem('td-auth-user');
-      return saved ? JSON.parse(saved) : null;
+      if (saved) {
+        setUser(JSON.parse(saved));
+      }
     } catch {
-      return null;
+      /* ignore storage access error */
     }
-  });
-  const [quotations, setQuotations] = useState<QuotationRecord[]>(INITIAL_QUOTATIONS);
+  }, []);
 
   const saveUser = (newUser: UserProfile | null) => {
     setUser(newUser);

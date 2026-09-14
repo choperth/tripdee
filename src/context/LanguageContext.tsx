@@ -19,15 +19,18 @@ const isLocale = (v: string | null): v is Locale =>
   v !== null && LOCALES.some((l) => l.code === v);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [locale, setLocaleState] = useState<Locale>(() => {
-    if (typeof window === 'undefined') return 'th';
+  const [locale, setLocaleState] = useState<Locale>('th');
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return isLocale(saved) ? saved : 'th';
+      if (isLocale(saved) && saved !== 'th') {
+        setLocaleState(saved);
+      }
     } catch {
-      return 'th';
+      /* ignore */
     }
-  });
+  }, []);
 
   useEffect(() => {
     const meta = LOCALES.find((l) => l.code === locale);

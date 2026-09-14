@@ -1,12 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { SPONSORS } from '@/data/mockData';
 import { Sparkles, MapPin, BadgePercent, ArrowUpRight, Megaphone, Phone, ExternalLink, ShieldCheck } from 'lucide-react';
 import { useAnalytics } from '@/context/AnalyticsContext';
 
 export const SponsorSidebar: React.FC = () => {
   const { trackSponsor, trackCall, getSponsorClickCount } = useAnalytics();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSponsorClick = (sponsor: typeof SPONSORS[0]) => {
     trackSponsor({
@@ -33,30 +38,35 @@ export const SponsorSidebar: React.FC = () => {
     <aside aria-label="โฆษณาและสิทธิพิเศษพาร์ตเนอร์" className="space-y-4">
       {/* 1. Primary Featured Sponsor (Sticky Sidebar Card) */}
       {primarySponsor && (
-        <div className="td-elev-card overflow-hidden rounded-card border-2 border-ink bg-card text-ink shadow-[0_4px_12px_rgba(51,35,26,0.08)]">
+        <div className="td-elev-card overflow-hidden rounded-card border border-rule bg-card text-ink shadow-card transition-all hover:shadow-lift hover:border-accent/30">
           {/* Top image with badge */}
-          <div className="relative aspect-[16/10] w-full overflow-hidden border-b-2 border-ink bg-paper-2">
+          <div className="relative aspect-[16/10] w-full overflow-hidden bg-paper-2">
             <img
               src={primarySponsor.image}
               alt={primarySponsor.title}
-              className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
             />
-            <span className="td-sticker absolute left-3 top-3 inline-flex items-center gap-1 rounded-pill border border-ink/20 bg-berry px-2.5 py-1 text-[11px] font-black text-white shadow-sm">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+
+            <span className="td-sticker absolute left-3 top-3 inline-flex items-center gap-1 rounded-pill bg-berry px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm">
               <Sparkles className="h-3 w-3" strokeWidth={2.5} />
               สปอนเซอร์แถบข้างแนะนำ
             </span>
-            <span className="absolute bottom-2 right-2 rounded-md bg-ink/80 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
-              คลิก: {getSponsorClickCount(primarySponsor.id)} ครั้ง
+            <span
+              suppressHydrationWarning
+              className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-xs"
+            >
+              คลิก: {mounted ? getSponsorClickCount(primarySponsor.id) : 0} ครั้ง
             </span>
           </div>
 
-          <div className="p-4">
+          <div className="p-4 sm:p-5">
             <div className="flex items-center gap-1 text-xs font-bold text-ink-2">
               <MapPin className="h-3.5 w-3.5 text-accent" />
               <span>{primarySponsor.location}</span>
             </div>
 
-            <h4 className="font-display mt-1 text-base font-black text-ink line-clamp-2">
+            <h4 className="font-display mt-1 text-base font-extrabold text-ink line-clamp-2">
               {primarySponsor.title}
             </h4>
 
@@ -65,7 +75,7 @@ export const SponsorSidebar: React.FC = () => {
             </p>
 
             {/* Discount Pill */}
-            <div className="mt-3 rounded-xl border border-dashed border-berry/40 bg-berry-soft p-2.5 text-xs font-black text-berry flex items-center gap-1.5">
+            <div className="mt-3 rounded-xl border border-dashed border-berry/30 bg-berry-soft p-2.5 text-xs font-extrabold text-berry flex items-center gap-1.5">
               <BadgePercent className="h-4 w-4 shrink-0 text-berry" />
               <span className="line-clamp-1">{primarySponsor.discountText}</span>
             </div>
@@ -78,7 +88,7 @@ export const SponsorSidebar: React.FC = () => {
               onClick={() => handleSponsorClick(primarySponsor)}
               data-analytics-sponsor={primarySponsor.id}
               data-analytics-variant="sidebar"
-              className="td-btn td-pop mt-3 flex w-full items-center justify-center gap-1.5 rounded-pill border-2 border-ink bg-berry py-2.5 text-xs font-black text-white shadow-[0_2px_0_0_var(--color-ink)]"
+              className="td-btn td-pop mt-3.5 flex w-full items-center justify-center gap-1.5 rounded-full bg-berry hover:bg-berry-deep py-2.5 text-xs font-extrabold text-white shadow-sm transition-all"
             >
               <span>ติดต่อรับสิทธิ์ / จองตรง</span>
               <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.5} />
@@ -89,22 +99,25 @@ export const SponsorSidebar: React.FC = () => {
 
       {/* 2. Secondary Service Partner (Compact Card) */}
       {secondarySponsor && (
-        <div className="rounded-card border-2 border-ink bg-sun-soft p-4 text-ink">
+        <div className="rounded-card border border-rule bg-sun-soft/50 p-4 text-ink shadow-xs">
           <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-xs font-black text-ink">
+            <div className="flex items-center gap-1.5 text-xs font-extrabold text-ink">
               <ShieldCheck className="h-4 w-4 text-leaf" />
               <span>บริการแนะนำสำหรับคนขับ & รถเช่า</span>
             </div>
-            <span className="text-[10px] font-bold text-ink-2 bg-sun px-1.5 py-0.5 rounded">
-              คลิก: {getSponsorClickCount(secondarySponsor.id)}
+            <span
+              suppressHydrationWarning
+              className="text-[10px] font-bold text-sun-ink bg-sun-soft px-2 py-0.5 rounded-pill border border-sun/20"
+            >
+              คลิก: {mounted ? getSponsorClickCount(secondarySponsor.id) : 0}
             </span>
           </div>
 
-          <h5 className="font-display mt-1.5 text-sm font-black text-ink line-clamp-1">
+          <h5 className="font-display mt-2 text-sm font-extrabold text-ink line-clamp-1">
             {secondarySponsor.title}
           </h5>
 
-          <p className="mt-0.5 text-xs text-ink-2 font-medium line-clamp-2">
+          <p className="mt-1 text-xs text-ink-2 font-medium line-clamp-2">
             {secondarySponsor.discountText}
           </p>
 
@@ -113,7 +126,7 @@ export const SponsorSidebar: React.FC = () => {
             onClick={() => handleSponsorClick(secondarySponsor)}
             data-analytics-sponsor={secondarySponsor.id}
             data-analytics-variant="sidebar"
-            className="td-btn td-pop mt-2.5 inline-flex items-center gap-1 rounded-pill border-2 border-ink bg-card px-3 py-1.5 text-xs font-black text-ink hover:bg-paper-2"
+            className="td-btn td-pop mt-3 inline-flex items-center gap-1.5 rounded-full bg-card border border-rule px-3.5 py-1.5 text-xs font-extrabold text-ink hover:border-accent/40 shadow-xs transition-all"
           >
             {secondarySponsor.link.startsWith('tel:') ? (
               <>
@@ -130,14 +143,14 @@ export const SponsorSidebar: React.FC = () => {
         </div>
       )}
 
-      {/* 3. "Ad Space Available" Pitch Box (ชักชวนธุรกิจในเชียงใหม่มาลงโฆษณาแถบข้าง) */}
-      <div className="rounded-card border-2 border-dashed border-rule bg-paper p-4 text-ink">
-        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-accent">
+      {/* 3. "Ad Space Available" Pitch Box */}
+      <div className="rounded-card border border-dashed border-rule bg-paper p-4 text-ink">
+        <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-accent">
           <Megaphone className="h-4 w-4" />
           <span>พื้นที่โฆษณาแถบข้าง (ว่าง 1 จุด)</span>
         </div>
 
-        <h5 className="font-display mt-1 text-sm font-black text-ink">
+        <h5 className="font-display mt-1 text-sm font-extrabold text-ink">
           สนใจโปรโมตรีสอร์ต / ธุรกิจของคุณ?
         </h5>
 
@@ -146,12 +159,12 @@ export const SponsorSidebar: React.FC = () => {
         </p>
 
         <div className="mt-3 flex items-center justify-between border-t border-dashed border-rule pt-2.5">
-          <span className="text-xs font-black text-leaf">เริ่มต้น ฿1,500/เดือน</span>
+          <span className="text-xs font-extrabold text-leaf">เริ่มต้น ฿1,500/เดือน</span>
           <a
             href="https://line.me"
             target="_blank"
             rel="noopener noreferrer"
-            className="td-btn rounded-pill border border-ink bg-card px-3 py-1 text-[11px] font-black text-ink hover:bg-paper-2"
+            className="td-btn rounded-pill border border-rule bg-card px-3 py-1 text-[11px] font-extrabold text-ink hover:bg-paper-2 transition-colors"
           >
             ทักไลน์ @tripdee
           </a>

@@ -18,6 +18,7 @@ import { CustomerPortalModal } from '@/components/portals/CustomerPortalModal';
 import { AdminPortalModal } from '@/components/portals/AdminPortalModal';
 import { useAuth } from '@/context/AuthContext';
 import { Footer } from '@/components/Footer';
+import { MobileBottomBar } from '@/components/MobileBottomBar';
 import { useLanguage } from '@/context/LanguageContext';
 import type { DictKey } from '@/i18n/dictionaries';
 import { SearchX, ArrowRight } from 'lucide-react';
@@ -144,7 +145,7 @@ export default function HomePage() {
         />
       )}
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-20 md:pb-8 sm:px-6 lg:px-8">
         {activeTab === 'hotel' ? (
           <div key="hotel" className="td-panel-enter pb-16">
             <div>
@@ -354,6 +355,9 @@ export default function HomePage() {
       {user?.role === 'admin' && (
         <AdminPortalModal isOpen={isPortalOpen} onClose={() => setIsPortalOpen(false)} />
       )}
+
+      {/* Floating Mobile Quick Call/LINE bar */}
+      <MobileBottomBar />
     </div>
   );
 }
