@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import type { DictKey } from '@/i18n/dictionaries';
-import { X, Check, ShieldCheck, Send, PartyPopper, CarFront } from 'lucide-react';
+import { X, Check, ShieldCheck, Send, PartyPopper, CarFront, Loader2 } from 'lucide-react';
 
 interface DriverRegisterModalProps {
   isOpen: boolean;
@@ -23,6 +23,7 @@ const PITCH: { key: DictKey; tint: string }[] = [
 export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen, onClose }) => {
   const { t } = useLanguage();
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     driverName: '',
     nickname: '',
@@ -49,9 +50,21 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setIsSubmitting(true);
+    try {
+      await fetch('/api/leads/driver', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+    } catch (err) {
+      console.error('Submit driver error:', err);
+    } finally {
+      setIsSubmitting(false);
+      setSubmitted(true);
+    }
   };
 
   return (
@@ -239,11 +252,20 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
 
               <button
                 type="submit"
-                data-burst
-                className="td-btn td-pop inline-flex w-full items-center justify-center gap-2 rounded-pill bg-accent px-4 py-3.5 text-sm font-extrabold text-accent-ink"
+                disabled={isSubmitting}
+                className="td-btn td-pop inline-flex w-full items-center justify-center gap-2 rounded-pill bg-accent disabled:opacity-60 px-4 py-3.5 text-sm font-extrabold text-accent-ink"
               >
-                <Send className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-                {t('reg.submit')}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>กำลังบันทึกข้อมูล...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
+                    {t('reg.submit')}
+                  </>
+                )}
               </button>
             </form>
           )}

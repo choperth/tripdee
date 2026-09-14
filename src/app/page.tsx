@@ -21,7 +21,7 @@ import { Footer } from '@/components/Footer';
 import { MobileBottomBar } from '@/components/MobileBottomBar';
 import { useLanguage } from '@/context/LanguageContext';
 import type { DictKey } from '@/i18n/dictionaries';
-import { SearchX, ArrowRight } from 'lucide-react';
+import { SearchX, ArrowRight, X } from 'lucide-react';
 
 const SERVICE_LINKS: DictKey[] = [
   'home.service1',
@@ -193,6 +193,45 @@ export default function HomePage() {
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
                 {/* Main Vehicle Grid */}
                 <div className="min-w-0">
+                  {hasFilters && (
+                    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-card p-3 border border-rule/80">
+                      <span className="text-xs font-bold text-ink-2">กำลังกรอง:</span>
+                      {selectedZone !== 'all' && (
+                        <button
+                          onClick={() => setSelectedZone('all')}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent px-3 py-1 text-xs font-extrabold transition-colors"
+                        >
+                          <span>📍 {selectedZone}</span>
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                      {selectedSeats !== 'all' && (
+                        <button
+                          onClick={() => setSelectedSeats('all')}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-sun/20 hover:bg-sun/30 text-sun-ink px-3 py-1 text-xs font-extrabold transition-colors"
+                        >
+                          <span>👥 {selectedSeats} ที่นั่ง</span>
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                      {searchKeyword.trim() !== '' && (
+                        <button
+                          onClick={() => setSearchKeyword('')}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-paper-2 hover:bg-rule text-ink px-3 py-1 text-xs font-extrabold transition-colors"
+                        >
+                          <span>🔍 &ldquo;{searchKeyword}&rdquo;</span>
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                      <button
+                        onClick={resetFilters}
+                        className="text-xs font-extrabold text-ink-2 hover:text-ink underline ml-auto"
+                      >
+                        {t('home.clearFilters')}
+                      </button>
+                    </div>
+                  )}
+
                   {filteredVehicles.length > 0 ? (
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                       {filteredVehicles.map((vehicle) => (

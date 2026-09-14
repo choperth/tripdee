@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Check, Send, Briefcase, PartyPopper } from 'lucide-react';
+import { Check, Send, Briefcase, PartyPopper, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
 import type { DictKey } from '@/i18n/dictionaries';
 
 const inputCls =
@@ -18,7 +19,9 @@ const POINTS: { key: DictKey; tint: string }[] = [
 
 export const CorporateSection: React.FC = () => {
   const { t } = useLanguage();
+  const { addQuotation } = useAuth();
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
     phone: '',
@@ -28,9 +31,32 @@ export const CorporateSection: React.FC = () => {
     details: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setIsSubmitting(true);
+    try {
+      // 1. Save to portal quotations archive
+      addQuotation({
+        companyName: formData.companyName,
+        route: formData.details || 'โปรแกรมตามที่ลูกค้ากำหนด',
+        totalDays: 1,
+        passengers: `${formData.passengers} คน`,
+        estimatedPrice: 3500,
+        needsTaxInvoice: formData.needsTaxInvoice,
+      });
+
+      // 2. Dispatch to backend API / webhooks
+      await fetch('/api/leads/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+    } catch (err) {
+      console.error('Submit quote lead error:', err);
+    } finally {
+      setIsSubmitting(false);
+      setSubmitted(true);
+    }
   };
 
   return (
@@ -176,11 +202,20 @@ export const CorporateSection: React.FC = () => {
 
               <button
                 type="submit"
-                data-burst
-                className="td-btn td-pop inline-flex w-full items-center justify-center gap-2 rounded-pill bg-grape px-4 py-3.5 text-sm font-extrabold text-white"
+                disabled={isSubmitting}
+                className="td-btn td-pop inline-flex w-full items-center justify-center gap-2 rounded-pill bg-grape disabled:opacity-60 px-4 py-3.5 text-sm font-extrabold text-white"
               >
-                <Send className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-                {t('corp.submit')}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>กำลังส่งข้อมูล...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
+                    {t('corp.submit')}
+                  </>
+                )}
               </button>
             </form>
           )}
