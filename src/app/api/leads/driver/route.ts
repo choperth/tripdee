@@ -1,23 +1,51 @@
-import { NextResponse } from 'next/server';
-import { sendDriverNotification, DriverLeadPayload } from '@/lib/notification';
+import { NextRequest, NextResponse } from 'next/server';
+import { getAllDriverLeads, addDriverLead, approveDriverLead } from '@/lib/leadsStore';
 
-export async function POST(req: Request) {
+export async function GET() {
+  const drivers = getAllDriverLeads();
+  return NextResponse.json({
+    success: true,
+    total: drivers.length,
+    drivers,
+  });
+}
+
+export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as DriverLeadPayload;
-    if (!body.phone || !body.driverName) {
-      return NextResponse.json({ error: 'Missing driver info' }, { status: 400 });
+    const body = await req.json();
+
+    if (body.action === 'approve' && body.id) {
+      const ok = approveDriverLead(String(body.id));
+      return NextResponse.json({ success: ok });
     }
 
-    // Trigger free webhook notifications (Discord / Telegram / Google Sheet)
-    const notifyResults = await sendDriverNotification(body);
+    if (!body.nickname || !body.phone) {
+      return NextResponse.json(
+        { error: 'กรุณากรอกชื่อ/ชื่อเล่น และเบอร์โทรศัพท์ติดต่อ' },
+        { status: 400 }
+      );
+    }
+
+    const newDriver = addDriverLead({
+      driverName: String(body.driverName || body.nickname).trim(),
+      nickname: String(body.nickname).trim(),
+      phone: String(body.phone).trim(),
+      lineId: String(body.lineId || '').trim(),
+      vehicleModel: String(body.vehicleModel || 'Toyota Commuter').trim(),
+      seats: String(body.seats || '9').trim(),
+      plateNumber: body.plateNumber ? String(body.plateNumber).trim() : undefined,
+      routes: String(body.routes || 'เชียงใหม่และใกล้เคียง').trim(),
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'Driver registration received successfully',
-      notified: notifyResults,
+      message: 'ลงทะเบียนคนขับพาร์ตเนอร์สำเร็จ ข้อมูลเข้าสู่ระบบการตรวจสอบแล้ว',
+      lead: newDriver,
     });
-  } catch (error) {
-    console.error('API /leads/driver error:', error);
-    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
+  } catch (err) {
+    return NextResponse.json(
+      { error: 'เกิดข้อผิดพลาดในการบันทึกข้อมูลคนขับ', details: String(err) },
+      { status: 500 }
+    );
   }
 }

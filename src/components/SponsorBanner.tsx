@@ -13,7 +13,6 @@ interface SponsorBannerProps {
 export const SponsorBanner: React.FC<SponsorBannerProps> = ({ sponsor, variant = 'split' }) => {
   const { t } = useLanguage();
   const { trackSponsor, trackCall, getSponsorClickCount } = useAnalytics();
-  const clickCount = getSponsorClickCount(sponsor.id);
 
   const handleSponsorClick = () => {
     trackSponsor({
@@ -57,7 +56,6 @@ export const SponsorBanner: React.FC<SponsorBannerProps> = ({ sponsor, variant =
           rel="noopener noreferrer"
           onClick={handleSponsorClick}
           data-analytics-sponsor={sponsor.id}
-          data-analytics-clicks={clickCount}
           className="td-btn td-pop inline-flex shrink-0 items-center justify-center gap-1.5 rounded-pill bg-ink px-5 py-2.5 text-[13px] font-extrabold text-paper"
         >
           {t('sponsor.cta')}
@@ -105,7 +103,6 @@ export const SponsorBanner: React.FC<SponsorBannerProps> = ({ sponsor, variant =
             rel="noopener noreferrer"
             onClick={handleSponsorClick}
             data-analytics-sponsor={sponsor.id}
-            data-analytics-clicks={clickCount}
             className="td-btn td-pop inline-flex shrink-0 items-center justify-center gap-1.5 rounded-pill bg-berry px-5 py-2.5 text-[13px] font-extrabold text-white"
           >
             {t('sponsor.cta')}

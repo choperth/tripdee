@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { SPONSORS, Sponsor } from '@/data/mockData';
-import { X, Crown, Check, LogOut, CheckCircle2, MousePointerClick, PhoneCall, BarChart3, Trash2, ArrowUpRight, FileSpreadsheet, Activity, LayoutDashboard } from 'lucide-react';
+import { DriverLead, QuotationLead } from '@/lib/leadsStore';
+import { X, Crown, Check, LogOut, CheckCircle2, MousePointerClick, PhoneCall, BarChart3, Trash2, ArrowUpRight, FileSpreadsheet, Activity, Users, CarFront, LayoutDashboard } from 'lucide-react';
 import { SponsorReportModal } from '@/components/SponsorReportModal';
 
 interface AdminPortalModalProps {
@@ -20,11 +21,36 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
   const [activeTab, setActiveTab] = useState<'verifications' | 'sponsors' | 'quotations' | 'analytics'>('verifications');
   const [approvedDrivers, setApprovedDrivers] = useState<string[]>([]);
   const [reportSponsor, setReportSponsor] = useState<Sponsor | null>(null);
+  const [driverLeads, setDriverLeads] = useState<DriverLead[]>([]);
+  const [quoteLeads, setQuoteLeads] = useState<QuotationLead[]>([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch('/api/leads/quote')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.quotations) setQuoteLeads(data.quotations);
+      })
+      .catch(() => {});
+
+    fetch('/api/leads/driver')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.drivers) setDriverLeads(data.drivers);
+      })
+      .catch(() => {});
+  }, [isOpen]);
+
   if (!isOpen || !user) return null;
 
-  const handleApprove = (driverId: string) => {
+  const handleApprove = async (driverId: string) => {
     approveDriverVerification(driverId);
-    setApprovedDrivers([...approvedDrivers, driverId]);
+    setApprovedDrivers((prev) => [...prev, driverId]);
+    fetch('/api/leads/driver', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve', id: driverId }),
+    }).catch(() => {});
   };
 
   return (
@@ -116,49 +142,75 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
               {t('padm.verifIntroA')}{' '}<strong>{t('padm.verifIntroB')}</strong>{t('padm.verifIntroC')}
             </p>
 
-            <div className="rounded-2xl bg-paper p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <div>
-                  <h4 className="font-extrabold text-sm text-ink">นายกิตติศักดิ์ ศรีล้านนา (พี่เอก)</h4>
-                  <p className="text-xs text-ink-2">Toyota All New Commuter 10 ที่นั่ง (นข-4521 ชม.)</p>
-                </div>
-                <span className="rounded-pill bg-sun-soft px-2.5 py-0.5 text-xs font-extrabold text-ink">
-                  {t('padm.pendingBadge')}
-                </span>
-              </div>
+            {driverLeads.length === 0 ? (
+              <p className="text-xs text-ink-2 italic p-4 text-center rounded-2xl bg-paper">
+                ไม่มีข้อมูลคนขับที่รอตรวจสอบ
+              </p>
+            ) : (
+              driverLeads.map((drv) => {
+                const isApproved = drv.status === 'verified' || approvedDrivers.includes(drv.id);
+                return (
+                  <div key={drv.id} className="rounded-2xl bg-paper p-4 border border-rule/70">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <div>
+                        <h4 className="font-extrabold text-sm text-ink">{drv.driverName} ({drv.nickname})</h4>
+                        <p className="text-xs text-ink-2">{drv.vehicleModel} {drv.seats} ที่นั่ง {drv.plateNumber ? `(${drv.plateNumber})` : ''}</p>
+                      </div>
+                      <span className={`rounded-pill px-2.5 py-0.5 text-xs font-extrabold ${isApproved ? 'bg-leaf-soft text-leaf' : 'bg-sun-soft text-sun-ink'}`}>
+                        {isApproved ? 'อนุมัติตราแล้ว' : t('padm.pendingBadge')}
+                      </span>
+                    </div>
 
-              <div className="my-3 space-y-1.5 rounded-xl border border-rule bg-card p-3 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-ink-2">{t('padm.docLicense')}</span>
-                  <span className="font-bold text-ink">ท.2 เลขที่ 64002341 (หมดอายุ พ.ย. 2570)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-2">{t('padm.docInspect')}</span>
-                  <span className="font-bold text-ink">ผ่านการตรวจสภาพประจำปี 2569</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-2">{t('padm.docPhone')}</span>
-                  <span className="font-bold text-ink">089-876-5432</span>
-                </div>
-              </div>
+                    <div className="my-3 space-y-1.5 rounded-xl border border-rule bg-card p-3 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-ink-2">เส้นทางที่ชำนาญ:</span>
+                        <span className="font-bold text-ink">{drv.routes || 'เชียงใหม่และใกล้เคียง'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ink-2">LINE ID:</span>
+                        <span className="font-mono text-accent-deep">{drv.lineId || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ink-2">{t('padm.docPhone')}</span>
+                        <span className="font-mono font-bold text-ink">{drv.phone}</span>
+                      </div>
+                    </div>
 
-              <div className="flex items-center justify-end gap-2 pt-1">
-                {approvedDrivers.includes('drv-02') ? (
-                  <span className="flex items-center gap-1 text-xs font-extrabold text-leaf">
-                    <CheckCircle2 className="h-4 w-4" />
-                    {t('padm.approved')}
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => handleApprove('drv-02')}
-                    className="td-btn td-pop inline-flex items-center gap-1.5 rounded-pill bg-leaf px-4 py-1.5 text-xs font-extrabold text-white"
-                  >
-                    <Check className="h-4 w-4" strokeWidth={3} />
-                    <span>{t('padm.approve')}</span>
-                  </button>
-                )}
-              </div>
-            </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <a
+                        href={`tel:${drv.phone}`}
+                        onClick={() => {
+                          trackCall({
+                            targetType: 'admin_fleet',
+                            targetId: drv.id,
+                            targetTitle: `โทรหาคนขับสมัครใหม่: ${drv.nickname}`,
+                            phoneNumber: drv.phone,
+                          });
+                        }}
+                        className="text-xs font-bold text-accent-deep hover:underline inline-flex items-center gap-1"
+                      >
+                        <PhoneCall className="h-3.5 w-3.5" />
+                        โทรสัมภาษณ์คนขับ
+                      </a>
+                      {isApproved ? (
+                        <span className="flex items-center gap-1 text-xs font-extrabold text-leaf">
+                          <CheckCircle2 className="h-4 w-4" />
+                          {t('padm.approved')}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleApprove(drv.id)}
+                          className="td-btn td-pop inline-flex items-center gap-1.5 rounded-pill bg-leaf px-4 py-1.5 text-xs font-extrabold text-white"
+                        >
+                          <Check className="h-4 w-4" strokeWidth={3} />
+                          <span>{t('padm.approve')}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
 
@@ -176,8 +228,8 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
             </div>
 
             {/* Ad Placement Positions Overview Card */}
-            <div className="rounded-2xl border-2 border-ink bg-card p-4">
-              <h4 className="text-xs font-black uppercase text-ink flex items-center gap-1.5 mb-2.5">
+            <div className="rounded-2xl border border-rule bg-card p-4">
+              <h4 className="text-xs font-extrabold uppercase text-ink flex items-center gap-1.5 mb-2.5">
                 <LayoutDashboard className="h-4 w-4 text-accent" />
                 <span>ผังตำแหน่งพื้นที่โฆษณา TripDee (Ad Slots Inventory)</span>
               </h4>
@@ -248,32 +300,41 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
         {/* Tab 3: Quotations */}
         {activeTab === 'quotations' && (
           <div className="space-y-3">
-            {quotations.map((q) => (
-              <div key={q.id} className="rounded-2xl bg-paper p-3.5">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-bold text-xs text-ink">{q.companyName}</span>
-                  <span className="font-extrabold text-xs text-accent-deep">฿{q.estimatedPrice.toLocaleString()}</span>
+            {quoteLeads.length === 0 ? (
+              <p className="text-xs text-ink-2 italic p-4 text-center rounded-2xl bg-paper">
+                ยังไม่มีคำขอใบเสนอราคาใหม่
+              </p>
+            ) : (
+              quoteLeads.map((q) => (
+                <div key={q.id} className="rounded-2xl bg-paper p-3.5 border border-rule/70">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-bold text-xs text-ink">{q.companyName}</span>
+                    <span className="font-extrabold text-xs text-accent-deep">฿{q.estimatedPrice.toLocaleString('th-TH')}</span>
+                  </div>
+                  <p className="text-xs text-ink-2 mb-2">{q.route} ({q.passengers})</p>
+                  <div className="flex justify-between items-center text-[11px] pt-1.5 border-t border-rule">
+                    <span className="text-ink-2 font-mono">
+                      {new Date(q.submittedAt).toLocaleDateString('th-TH')}
+                    </span>
+                    <a
+                      href={`tel:${q.phone}`}
+                      onClick={() => {
+                        trackCall({
+                          targetType: 'admin_fleet',
+                          targetId: q.id,
+                          targetTitle: `งานองค์กร: ${q.companyName}`,
+                          phoneNumber: q.phone,
+                        });
+                      }}
+                      className="font-bold text-accent-deep hover:underline inline-flex items-center gap-1"
+                    >
+                      <PhoneCall className="h-3 w-3" />
+                      โทรประสานงาน ({q.phone})
+                    </a>
+                  </div>
                 </div>
-                <p className="text-xs text-ink-2 mb-2">{q.route} ({q.passengers})</p>
-                <div className="flex justify-between items-center text-[11px] pt-1.5 border-t border-rule">
-                  <span className="text-ink-2">{t('padm.submittedOn', { date: q.date })}</span>
-                  <a
-                    href="tel:0812345678"
-                    onClick={() => {
-                      trackCall({
-                        targetType: 'admin_fleet',
-                        targetId: q.id,
-                        targetTitle: `งานองค์กร: ${q.companyName}`,
-                        phoneNumber: '0812345678',
-                      });
-                    }}
-                    className="font-bold text-accent-deep hover:underline"
-                  >
-                    {t('padm.callFleet')}
-                  </a>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
 

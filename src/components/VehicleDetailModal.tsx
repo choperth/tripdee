@@ -154,10 +154,10 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle,
             </a>
           </div>
 
-          <div className="mt-4 rounded-card bg-sun-soft p-4">
+          <div className="mt-4 rounded-card bg-paper p-4 border border-rule">
             <p className="text-xs font-extrabold uppercase tracking-wide text-ink-2">{t('detail.contactTitle')}</p>
             <div className="mt-2 flex items-center gap-3">
-              <span aria-hidden="true" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-card text-base font-extrabold text-grape">
+              <span aria-hidden="true" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent-soft text-base font-extrabold text-accent">
                 {vehicle.driverNickname.charAt(0)}
               </span>
               <div className="min-w-0">
@@ -190,9 +190,9 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle,
                 href={vehicle.driverLine}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="td-btn td-pop inline-flex items-center justify-center gap-1.5 rounded-pill bg-card px-3 py-3 text-sm font-extrabold text-ink"
+                className="td-btn td-pop inline-flex items-center justify-center gap-1.5 rounded-pill bg-[#06C755] hover:bg-[#05b34c] px-3 py-3 text-sm font-extrabold text-white shadow-sm transition-all"
               >
-                <MessageCircle className="h-4 w-4 text-leaf" aria-hidden="true" strokeWidth={2.5} />
+                <MessageCircle className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
                 {t('detail.lineChat')}
               </a>
             </div>

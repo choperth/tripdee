@@ -343,7 +343,6 @@ export const TripBoard: React.FC = () => {
 
           <button
             type="submit"
-            data-burst
             className="td-btn td-pop mt-4 inline-flex w-full items-center justify-center gap-2 rounded-pill bg-leaf px-6 py-3 text-sm font-extrabold text-white sm:w-auto"
           >
             <Plus className="h-4 w-4" aria-hidden="true" strokeWidth={3} />

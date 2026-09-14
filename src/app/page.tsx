@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { initBurst } from '@/lib/burst';
 import { VEHICLES, SPONSORS, POPULAR_ROUTES, Vehicle } from '@/data/mockData';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
@@ -21,14 +20,14 @@ import { Footer } from '@/components/Footer';
 import { MobileBottomBar } from '@/components/MobileBottomBar';
 import { useLanguage } from '@/context/LanguageContext';
 import type { DictKey } from '@/i18n/dictionaries';
-import { SearchX, ArrowRight, X } from 'lucide-react';
+import { SearchX, ArrowRight, X, SlidersHorizontal, RotateCcw } from 'lucide-react';
 
-const SERVICE_LINKS: DictKey[] = [
-  'home.service1',
-  'home.service2',
-  'home.service3',
-  'home.service4',
-  'home.service5',
+const SERVICE_ACTIONS: { key: DictKey; tab: 'van' | 'car' | 'hotel' | 'corporate'; zone?: string; seats?: string }[] = [
+  { key: 'home.service1', tab: 'van', seats: '9' },
+  { key: 'home.service2', tab: 'van', zone: 'ม่อนแจ่ม' },
+  { key: 'home.service3', tab: 'van', zone: 'ดอยอินทนนท์' },
+  { key: 'home.service4', tab: 'van', zone: 'แม่กำปอง' },
+  { key: 'home.service5', tab: 'corporate' },
 ];
 
 const ROUTE_LINKS: { key: DictKey; value: string }[] = [
@@ -39,14 +38,6 @@ const ROUTE_LINKS: { key: DictKey; value: string }[] = [
   { key: 'home.routeLink5', value: 'ปาย' },
 ];
 
-const ROUTE_TINTS = [
-  'bg-accent-soft',
-  'bg-sky-soft',
-  'bg-leaf-soft',
-  'bg-berry-soft',
-  'bg-grape-soft',
-  'bg-sun-soft',
-] as const;
 
 function SectionHead({
   title,
@@ -88,9 +79,6 @@ export default function HomePage() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isPortalOpen, setIsPortalOpen] = useState<boolean>(false);
 
-  useEffect(() => {
-    initBurst();
-  }, []);
 
   const filteredVehicles = useMemo(() => {
     return VEHICLES.filter((vehicle) => {
@@ -194,39 +182,56 @@ export default function HomePage() {
                 {/* Main Vehicle Grid */}
                 <div className="min-w-0">
                   {hasFilters && (
-                    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-card p-3 border border-rule/80">
-                      <span className="text-xs font-bold text-ink-2">กำลังกรอง:</span>
+                    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-card p-3 border border-rule shadow-xs">
+                      <span className="text-xs font-extrabold text-ink-2 flex items-center gap-1.5 mr-1">
+                        <SlidersHorizontal className="h-3.5 w-3.5 text-accent" />
+                        ตัวกรองที่เลือก:
+                      </span>
                       {selectedZone !== 'all' && (
-                        <button
-                          onClick={() => setSelectedZone('all')}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent px-3 py-1 text-xs font-extrabold transition-colors"
-                        >
-                          <span>📍 {selectedZone}</span>
-                          <X className="h-3 w-3" />
-                        </button>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft text-accent px-3 py-1 text-xs font-extrabold border border-accent/20">
+                          <span>📍 โซน: {selectedZone}</span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedZone('all')}
+                            aria-label="ลบตัวกรองโซน"
+                            className="rounded-full p-0.5 hover:bg-accent hover:text-white transition-colors"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </span>
                       )}
                       {selectedSeats !== 'all' && (
-                        <button
-                          onClick={() => setSelectedSeats('all')}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-sun/20 hover:bg-sun/30 text-sun-ink px-3 py-1 text-xs font-extrabold transition-colors"
-                        >
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-sun-soft text-sun-ink px-3 py-1 text-xs font-extrabold border border-sun/20">
                           <span>👥 {selectedSeats} ที่นั่ง</span>
-                          <X className="h-3 w-3" />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedSeats('all')}
+                            aria-label="ลบตัวกรองที่นั่ง"
+                            className="rounded-full p-0.5 hover:bg-sun hover:text-white transition-colors"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </span>
                       )}
                       {searchKeyword.trim() !== '' && (
-                        <button
-                          onClick={() => setSearchKeyword('')}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-paper-2 hover:bg-rule text-ink px-3 py-1 text-xs font-extrabold transition-colors"
-                        >
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-paper text-ink px-3 py-1 text-xs font-extrabold border border-rule">
                           <span>🔍 &ldquo;{searchKeyword}&rdquo;</span>
-                          <X className="h-3 w-3" />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => setSearchKeyword('')}
+                            aria-label="ลบคำค้นหา"
+                            className="rounded-full p-0.5 hover:bg-rule transition-colors"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </span>
                       )}
                       <button
+                        type="button"
                         onClick={resetFilters}
-                        className="text-xs font-extrabold text-ink-2 hover:text-ink underline ml-auto"
+                        className="td-btn ml-auto inline-flex items-center gap-1 rounded-pill bg-paper px-3 py-1 text-xs font-extrabold text-berry hover:bg-berry-soft transition-colors border border-rule"
                       >
+                        <RotateCcw className="h-3 w-3" />
                         {t('home.clearFilters')}
                       </button>
                     </div>
@@ -302,7 +307,7 @@ export default function HomePage() {
                         {t(`route.${route.id}.zone` as DictKey)}
                       </span>
                     </span>
-                    <span className={`block p-4 ${ROUTE_TINTS[i % ROUTE_TINTS.length]}`}>
+                    <span className="block p-4 bg-card border-t border-rule/60">
                       <span className="block font-display text-[15px] font-extrabold text-ink">{t(`route.${route.id}.name` as DictKey)}</span>
                       <span className="mt-0.5 block line-clamp-2 text-xs font-medium leading-relaxed text-ink/70">
                         {t(`route.${route.id}.highlight` as DictKey)}
@@ -339,15 +344,23 @@ export default function HomePage() {
               {t('home.servicesTitle')}
             </h2>
             <ul className="flex flex-col gap-2.5">
-              {SERVICE_LINKS.map((link) => (
-                <li key={link}>
-                  <a
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    className="td-footlink text-sm font-bold text-ink-2 transition-colors duration-220 ease-out hover:text-ink"
+              {SERVICE_ACTIONS.map((item) => (
+                <li key={item.key}>
+                  <button
+                    onClick={() => {
+                      setActiveTab(item.tab);
+                      if (item.zone) setSelectedZone(item.zone);
+                      if (item.seats) setSelectedSeats(item.seats);
+                      if (item.tab === 'van') {
+                        document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+                      } else {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
+                    }}
+                    className="td-footlink text-left text-sm font-bold text-ink-2 transition-colors duration-220 ease-out hover:text-accent"
                   >
-                    {t(link)}
-                  </a>
+                    {t(item.key)}
+                  </button>
                 </li>
               ))}
             </ul>

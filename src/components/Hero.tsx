@@ -170,7 +170,6 @@ export const Hero: React.FC<HeroProps> = ({
             <div className="p-1 shrink-0">
               <button
                 type="submit"
-                data-burst
                 className="td-btn td-pop inline-flex w-full md:w-auto items-center justify-center gap-2 rounded-full bg-accent hover:bg-accent-deep px-6 py-3.5 text-sm font-extrabold text-accent-ink shadow-md hover:shadow-lg transition-all"
               >
                 <span>{t('hero.searchBtn', { count: resultCount })}</span>

@@ -12,13 +12,6 @@ interface VehicleCardProps {
   onSelectDetail: (vehicle: Vehicle) => void;
 }
 
-const AMENITY_TINTS = [
-  'bg-sun-soft text-sun-ink',
-  'bg-sky-soft text-sky',
-  'bg-leaf-soft text-leaf',
-  'bg-accent-soft text-accent',
-] as const;
-
 export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetail }) => {
   const { t } = useLanguage();
   const { trackCall } = useAnalytics();
@@ -113,11 +106,12 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
         </div>
 
         {/* Amenities Pills */}
+        {/* Amenities Pills - Clean & Elegant */}
         <div className="mb-4 flex flex-wrap gap-1.5">
-          {vehicle.amenities.slice(0, 3).map((item, i) => (
+          {vehicle.amenities.slice(0, 3).map((item) => (
             <span
               key={item}
-              className={`rounded-pill px-2.5 py-0.5 text-[11px] font-bold ${AMENITY_TINTS[i % AMENITY_TINTS.length]}`}
+              className="rounded-pill bg-paper px-2.5 py-0.5 text-[11px] font-bold text-ink-2 border border-rule/60"
             >
               {item}
             </span>
