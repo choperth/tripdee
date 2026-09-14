@@ -1,20 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Check, Send, Briefcase, PartyPopper, Loader2 } from 'lucide-react';
+import { Check, Send, Briefcase, PartyPopper, Loader2, FileCheck, Building2, ShieldCheck, PhoneCall } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import type { DictKey } from '@/i18n/dictionaries';
 
 const inputCls =
-  'w-full rounded-input border border-rule bg-paper px-4 py-3 text-sm font-bold text-ink transition duration-220 ease-out placeholder:font-medium placeholder:text-ink-2/70 hover:border-ink-2/50 focus:border-grape';
-const labelCls = 'mb-1.5 block text-xs font-extrabold uppercase tracking-[0.06em] text-ink-2';
+  'w-full rounded-input border border-rule bg-paper px-3.5 py-2.5 text-sm font-semibold text-ink transition-colors placeholder:font-normal placeholder:text-ink-2/60 hover:border-accent/50 focus:border-accent focus:bg-card focus:outline-none';
+const labelCls = 'mb-1 block text-xs font-bold uppercase tracking-wider text-ink-2';
 
-const POINTS: { key: DictKey; tint: string }[] = [
-  { key: 'corp.point1', tint: 'bg-sky-soft' },
-  { key: 'corp.point2', tint: 'bg-leaf-soft' },
-  { key: 'corp.point3', tint: 'bg-sun-soft' },
-  { key: 'corp.point4', tint: 'bg-berry-soft' },
+const POINTS: { key: DictKey; icon: React.FC<{ className?: string }> }[] = [
+  { key: 'corp.point1', icon: FileCheck },
+  { key: 'corp.point2', icon: ShieldCheck },
+  { key: 'corp.point3', icon: Building2 },
+  { key: 'corp.point4', icon: PhoneCall },
 ];
 
 export const CorporateSection: React.FC = () => {
@@ -35,7 +35,6 @@ export const CorporateSection: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // 1. Save to portal quotations archive
       addQuotation({
         companyName: formData.companyName,
         route: formData.details || 'โปรแกรมตามที่ลูกค้ากำหนด',
@@ -45,7 +44,6 @@ export const CorporateSection: React.FC = () => {
         needsTaxInvoice: formData.needsTaxInvoice,
       });
 
-      // 2. Dispatch to backend API / webhooks
       await fetch('/api/leads/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -60,59 +58,74 @@ export const CorporateSection: React.FC = () => {
   };
 
   return (
-    <section id="corporate-section" aria-label={t('corp.aria')} className="scroll-mt-28 overflow-hidden rounded-card bg-ink text-paper">
+    <section id="corporate-section" aria-label={t('corp.aria')} className="scroll-mt-28 overflow-hidden rounded-card bg-[#0F172A] text-white border border-slate-800 shadow-lift">
       <div className="grid grid-cols-1 gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,6fr)_minmax(0,6fr)] lg:gap-10 lg:p-10">
-        <div className="min-w-0">
-          <p className="inline-flex items-center gap-1.5 rounded-pill bg-grape px-3.5 py-1.5 text-xs font-extrabold text-white">
-            <Briefcase className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2.5} />
-            {t('corp.badge')}
-          </p>
-          <h2 className="mt-4 font-display text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-4xl">
-            {t('corp.titleA')}
-            <br />
-            {t('corp.titleB')}
-          </h2>
-          <p className="mt-4 max-w-[48ch] text-[15px] font-medium leading-relaxed text-paper/75">
-            {t('corp.desc')}
-          </p>
+        {/* Left Column: B2B Procurement Pitch */}
+        <div className="min-w-0 flex flex-col justify-between">
+          <div>
+            <div className="inline-flex items-center gap-1.5 rounded-pill bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 text-xs font-bold">
+              <Briefcase className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2.5} />
+              <span>{t('corp.badge')}</span>
+            </div>
 
-          <ul className="mt-6 flex flex-col gap-2.5">
-            {POINTS.map((point) => (
-              <li key={point.key} className="flex items-center gap-3 rounded-input bg-paper/10 px-3.5 py-2.5 text-sm font-bold">
-                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${point.tint}`}>
-                  <Check className="h-3.5 w-3.5 text-ink" aria-hidden="true" strokeWidth={3} />
-                </span>
-                {t(point.key)}
-              </li>
-            ))}
-          </ul>
+            <h2 className="mt-4 font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight text-white">
+              {t('corp.titleA')}
+              <br />
+              <span className="text-blue-400">{t('corp.titleB')}</span>
+            </h2>
+
+            <p className="mt-3 text-sm sm:text-base font-normal leading-relaxed text-slate-300">
+              {t('corp.desc')}
+            </p>
+
+            {/* Corporate Value Props Checklist */}
+            <ul className="mt-6 flex flex-col gap-2.5">
+              {POINTS.map((point) => (
+                <li key={point.key} className="flex items-center gap-3 rounded-input bg-slate-800/80 border border-slate-700/60 px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-200">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-blue-500/20 text-blue-400">
+                    <Check className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={3} />
+                  </span>
+                  <span>{t(point.key)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
+            <span>✓ รองรับการเบิกจ่ายทุกองค์กรภาครัฐและเอกชน • ออกเอกสารโดยนิติบุคคลถูกต้อง</span>
+          </div>
         </div>
 
-        <div className="min-w-0 rounded-card bg-card p-5 text-ink sm:p-6">
+        {/* Right Column: Clean Quotation Request Card */}
+        <div className="min-w-0 rounded-input bg-card p-5 sm:p-6 text-ink border border-rule shadow-card">
           {submitted ? (
             <div className="py-10 text-center">
-              <span className="td-wiggle-hover mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-leaf text-white">
-                <PartyPopper className="h-8 w-8" aria-hidden="true" />
+              <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-leaf-soft text-leaf">
+                <PartyPopper className="h-7 w-7" aria-hidden="true" />
               </span>
-              <h3 className="font-display text-2xl font-extrabold text-ink">
+              <h3 className="font-display text-xl font-extrabold text-ink">
                 {t('corp.doneTitle')}
               </h3>
-              <p className="mx-auto mt-2 max-w-[45ch] text-sm font-medium leading-relaxed text-ink-2">
+              <p className="mx-auto mt-2 max-w-[45ch] text-xs sm:text-sm font-medium leading-relaxed text-ink-2">
                 {t('corp.doneDesc')}
               </p>
               <button
                 onClick={() => setSubmitted(false)}
-                className="td-btn mt-5 rounded-pill bg-paper px-4 py-2 text-[13px] font-extrabold text-ink transition-transform duration-220 ease-spring hover:-translate-y-0.5"
+                className="td-btn mt-5 rounded-input bg-accent hover:bg-accent-deep text-white px-4 py-2 text-xs font-bold transition-colors"
               >
                 {t('corp.doneMore')}
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <h3 className="font-display text-xl font-extrabold tracking-tight text-ink">
-                {t('corp.formTitle')}
-              </h3>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+              <div>
+                <h3 className="font-display text-lg font-extrabold tracking-tight text-ink">
+                  {t('corp.formTitle')}
+                </h3>
+                <p className="text-xs text-ink-2 mt-0.5">กรอกข้อมูลเบื้องต้นเพื่อรับใบเสนอราคาภายใน 15-30 นาที</p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label htmlFor="td-co" className={labelCls}>
                     {t('corp.fCompany')}
@@ -143,7 +156,7 @@ export const CorporateSection: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label htmlFor="td-codate" className={labelCls}>
                     {t('corp.fDate')}
@@ -185,25 +198,25 @@ export const CorporateSection: React.FC = () => {
                   placeholder={t('corp.fDetailPh')}
                   value={formData.details}
                   onChange={(e) => setFormData({ ...formData, details: e.target.value })}
-                  className={`${inputCls} min-h-24 resize-y`}
+                  className={`${inputCls} min-h-20 resize-y`}
                 />
               </div>
 
-              <label htmlFor="td-cotax" className="flex cursor-pointer items-center gap-2.5 rounded-input bg-grape-soft px-3.5 py-3 text-[13px] font-bold text-ink">
+              <label htmlFor="td-cotax" className="flex cursor-pointer items-center gap-2.5 rounded-input bg-paper p-3 text-xs font-semibold text-ink border border-rule hover:border-accent/40 transition-colors">
                 <input
                   id="td-cotax"
                   type="checkbox"
                   checked={formData.needsTaxInvoice}
                   onChange={(e) => setFormData({ ...formData, needsTaxInvoice: e.target.checked })}
-                  className="h-5 w-5 shrink-0 accent-grape"
+                  className="h-4 w-4 shrink-0 rounded accent-accent"
                 />
-                {t('corp.taxLabel')}
+                <span>{t('corp.taxLabel')}</span>
               </label>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="td-btn td-pop inline-flex w-full items-center justify-center gap-2 rounded-pill bg-grape disabled:opacity-60 px-4 py-3.5 text-sm font-extrabold text-white"
+                className="td-btn inline-flex w-full items-center justify-center gap-2 rounded-input bg-accent hover:bg-accent-deep disabled:opacity-60 px-4 py-3 text-sm font-bold text-white shadow-xs transition-all active:scale-[0.98]"
               >
                 {isSubmitting ? (
                   <>
@@ -213,7 +226,7 @@ export const CorporateSection: React.FC = () => {
                 ) : (
                   <>
                     <Send className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-                    {t('corp.submit')}
+                    <span>{t('corp.submit')}</span>
                   </>
                 )}
               </button>

@@ -21,6 +21,10 @@ export interface Vehicle {
   driverNickname: string;
   driverPhone: string;
   driverLine: string;
+  driverWhatsapp?: string;
+  driverWechat?: string;
+  driverKakao?: string;
+  languages?: ('th' | 'en' | 'zh' | 'ko')[];
   rating: number;
   reviewCount: number;
   isVerified: boolean;
@@ -30,6 +34,7 @@ export interface Vehicle {
   /** หมายเหตุราคาเฉพาะคัน (ถ้ามี) */
   rateNote?: string;
   location: string;
+  region?: 'north' | 'central' | 'south' | 'east' | 'isan';
   popularRoutes: string[];
   amenities: string[];
   description: string;
@@ -64,36 +69,36 @@ export const ZONE_RATE_CARDS: ZoneRateCard[] = [
   {
     id: 'city',
     zoneNo: 1,
-    label: 'ในเมือง / รอบเมือง / สนามบิน',
+    label: 'ในเมือง / ตัวจังหวัด / สนามบิน',
     shortLabel: 'ในเมือง',
-    examples: 'ตัวเมือง นิมมาน สนามบิน ดอยสุเทพ',
+    examples: 'กทม.และปริมณฑล, ตัวเมืองเชียงใหม่, ตัวเมืองภูเก็ต, พัทยา',
     baseRateRange: [1800, 2000],
     fuelFlatRatePerDay: 500,
   },
   {
     id: 'midHill',
     zoneNo: 2,
-    label: 'ดอยระดับกลาง',
-    shortLabel: 'ม่อนแจ่ม',
-    examples: 'ม่อนแจ่ม แม่ริม แม่กำปอง',
+    label: 'ชานเมือง / แหล่งท่องเที่ยวเนินเขา / ชายหาด',
+    shortLabel: 'ชานเมือง/ชายหาด',
+    examples: 'เขาใหญ่, ม่อนแจ่ม, หัวหิน, ชะอำ, พังงา, บางแสน',
     baseRateRange: [2000, 2200],
     fuelFlatRatePerDay: 700,
   },
   {
     id: 'highHill',
     zoneNo: 3,
-    label: 'ดอยสูงชันพิเศษ',
-    shortLabel: 'อินทนนท์',
-    examples: 'ดอยอินทนนท์ กิ่วแม่ปาน ดอยอ่างขาง',
+    label: 'ภูเขาสูงชัน / ทางไกล / ทะเลเกาะ',
+    shortLabel: 'ภูเขาสูง/เกาะ',
+    examples: 'ดอยอินทนนท์, ภูทับเบิก, ปาย, กุยบุรี, ท่าเรือเกาะช้าง',
     baseRateRange: [2200, 2500],
     fuelFlatRatePerDay: 900,
   },
   {
     id: 'crossProvince',
     zoneNo: 4,
-    label: 'ข้ามจังหวัด',
+    label: 'ข้ามจังหวัด / ทริปเหมาทางไกล',
     shortLabel: 'ข้ามจังหวัด',
-    examples: 'เชียงราย ปาย แม่ฮ่องสอน',
+    examples: 'กทม.-พัทยา/หัวหิน, เชียงใหม่-เชียงราย, ภูเก็ต-กระบี่',
     baseRateRange: [2500, 3000],
     fuelFlatRatePerDay: 1200,
   },
@@ -113,43 +118,63 @@ export const formatTHB = (n: number): string => `฿${n.toLocaleString('th-TH')}
 export const POPULAR_ROUTES: TravelRoute[] = [
   {
     id: 'mon-jam',
-    name: 'ม่อนแจ่ม - แม่ริม',
+    name: 'ม่อนแจ่ม - แม่ริม (เชียงใหม่)',
     filterKey: 'ม่อนแจ่ม',
-    zone: 'ภูเขา/ธรรมชาติ',
+    zone: 'ภาคเหนือ / ธรรมชาติ',
     highlight: 'ทุ่งดอกไม้ สวนส้ม ทะเลหมอก คาเฟ่วิวเขา',
     image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
     estimatedPrice: '1,800 - 2,200 บ./วัน',
     recommendedVehicle: 'รถตู้ VIP / SUV'
   },
   {
+    id: 'bkk-pattaya',
+    name: 'กรุงเทพฯ - พัทยา - สัตหีบ',
+    filterKey: 'พัทยา',
+    zone: 'ภาคตะวันออก / ทะเล',
+    highlight: 'แหลมบาลีฮาย สวนนงนุช เกาะล้าน ท่องเที่ยวชายทะเล',
+    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+    estimatedPrice: '2,000 - 2,500 บ./วัน',
+    recommendedVehicle: 'Toyota Majesty / VIP Van'
+  },
+  {
     id: 'inthanon',
-    name: 'ดอยอินทนนท์ - กิ่วแม่ปาน',
+    name: 'ดอยอินทนนท์ - กิ่วแม่ปาน (เชียงใหม่)',
     filterKey: 'ดอยอินทนนท์',
-    zone: 'ภูเขา/ขึ้นดอยสูง',
+    zone: 'ภาคเหนือ / ดอยสูง',
     highlight: 'จุดสูงสุดแดนสยาม พระมหาธาตุฯ น้ำตกวชิรธาร เส้นทางศึกษาธรรมชาติ',
     image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
     estimatedPrice: '2,200 - 2,500 บ./วัน',
     recommendedVehicle: 'รถตู้ VIP เครื่องแรงชำนาญทาง'
   },
   {
-    id: 'mae-kampong',
-    name: 'แม่กำปอง - สันกำแพง',
-    filterKey: 'แม่กำปอง',
-    zone: 'วิถีชุมชน/ธรรมชาติ',
-    highlight: 'หมู่บ้านในหุบเขา คาเฟ่ริมธาร น้ำตกแม่กำปอง น้ำพุร้อนสันกำแพง',
-    image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80',
-    estimatedPrice: '1,800 - 2,200 บ./วัน',
-    recommendedVehicle: 'รถตู้ VIP / เก๋งขับเอง'
+    id: 'phuket-phangnga',
+    name: 'ภูเก็ต - พังงา - เสม็ดนางชี',
+    filterKey: 'ภูเก็ต',
+    zone: 'ภาคใต้ / ทะเลอันดามัน',
+    highlight: 'จุดชมวิวอ่าวพังงา หาดป่าตอง เมืองเก่าภูเก็ต แหลมพรหมเทพ',
+    image: 'https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?auto=format&fit=crop&w=800&q=80',
+    estimatedPrice: '2,200 - 2,600 บ./วัน',
+    recommendedVehicle: 'All New Commuter VIP'
   },
   {
-    id: 'chiang-rai',
-    name: 'ทริปข้ามจังหวัด เชียงใหม่ - เชียงราย',
-    filterKey: 'ทริปข้ามจังหวัด เชียงใหม่',
-    zone: 'ทริปวันเดย์/ค้างคืน',
-    highlight: 'วัดร่องขุ่น ไร่ชาฉุยฟง วัดร่องเสือเต้น ดอยช้าง',
-    image: 'https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=800&q=80',
-    estimatedPrice: '2,500 - 3,000 บ./วัน',
-    recommendedVehicle: 'รถตู้ VIP เบาะนวด'
+    id: 'khao-yai',
+    name: 'กรุงเทพฯ - เขาใหญ่ - ปากช่อง',
+    filterKey: 'เขาใหญ่',
+    zone: 'ภาคอีสาน / อากาศบริสุทธิ์',
+    highlight: 'อุทยานแห่งชาติเขาใหญ่ ไร่องุ่น คาเฟ่ธรรมชาติ สัมมนากลุ่ม',
+    image: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80',
+    estimatedPrice: '2,000 - 2,400 บ./วัน',
+    recommendedVehicle: 'Toyota Commuter / SUV 4WD'
+  },
+  {
+    id: 'bkk-huahin',
+    name: 'กรุงเทพฯ - ชะอำ - หัวหิน',
+    filterKey: 'หัวหิน',
+    zone: 'ภาคกลาง / พักผ่อนตากอากาศ',
+    highlight: 'ชายหาดหัวหิน ตลาดซิเคด้า พระราชนิเวศน์มฤคทายวัน',
+    image: 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=800&q=80',
+    estimatedPrice: '2,200 - 2,600 บ./วัน',
+    recommendedVehicle: 'Toyota Majesty / VIP Van'
   }
 ];
 
@@ -190,6 +215,11 @@ export const VEHICLES: Vehicle[] = [
     driverNickname: 'พี่ชัย รถตู้เชียงใหม่',
     driverPhone: '081-234-5678',
     driverLine: 'https://line.me',
+    driverWhatsapp: 'https://wa.me/66812345678',
+    driverWechat: 'chaicnx_van',
+    driverKakao: 'chaivan_cnx',
+    languages: ['th', 'en'],
+    region: 'north',
     rating: 4.9,
     reviewCount: 48,
     isVerified: true,
@@ -198,8 +228,8 @@ export const VEHICLES: Vehicle[] = [
       'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80'
     ],
     zoneRates: { city: 1900, midHill: 2100, highHill: 2300, crossProvince: 2700 },
-    location: 'ตัวเมืองเชียงใหม่ / สนามบิน / นิมมาน',
-    popularRoutes: ['ม่อนแจ่ม', 'ดอยอินทนนท์', 'แม่กำปอง', 'เชียงราย'],
+    location: 'เชียงใหม่ / ม่อนแจ่ม / ดอยอินทนนท์ / ภาคเหนือ',
+    popularRoutes: ['ม่อนแจ่ม', 'ดอยอินทนนท์', 'แม่กำปอง', 'เชียงใหม่', 'เชียงราย'],
     amenities: [
       'เบาะนวดปรับไฟฟ้า 9 ที่นั่ง',
       'ชุดคาราโอเกะ + YouTube Smart TV',
@@ -208,90 +238,132 @@ export const VEHICLES: Vehicle[] = [
       'ประกันภัยผู้โดยสารชั้น 1',
       'ตู้เย็นขนาดเล็กบนรถ'
     ],
-    description: 'รถตู้ตกแต่ง VIP สภาพใหม่เอี่ยม แอร์เย็นฉ่ำ เบาะนวดสบาย เหมาะสำหรับทริปครอบครัว ผู้บริหาร และกลุ่มเพื่อน คนขับชำนาญเส้นทางดอยสูง ปลอดภัย ขับนุ่มนวล ไม่สูบบุหรี่'
+    description: 'รถตู้ตกแต่ง VIP สภาพใหม่เอี่ยม แอร์เย็นฉ่ำ เบาะนวดสบาย เหมาะสำหรับทริปครอบครัว ผู้บริหาร และกลุ่มเพื่อน คนขับชำนาญเส้นทางดอยสูง ปลอดภัย สื่อสารภาษาอังกฤษพื้นฐานได้ ไม่สูบบุหรี่'
   },
   {
     id: 'v-2',
-    title: 'All New Commuter หลังคาสูง 10 ที่นั่ง VIP สไตล์โมเดิร์น',
-    type: 'van',
-    seats: 10,
-    driverName: 'นายกิตติศักดิ์ ศรีล้านนา',
-    driverNickname: 'พี่เอก เชียงใหม่ทราเวล',
-    driverPhone: '089-876-5432',
-    driverLine: 'https://line.me',
-    rating: 4.8,
-    reviewCount: 35,
-    isVerified: true,
-    images: [
-      'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=800&q=80'
-    ],
-    zoneRates: { city: 1800, midHill: 2000, highHill: 2200, crossProvince: 2600 },
-    location: 'สนามบินเชียงใหม่ / สันทราย / แม่ริม',
-    popularRoutes: ['ดอยสุเทพ', 'ม่อนแจ่ม', 'ปาย-แม่ฮ่องสอน'],
-    amenities: [
-      'เบาะ VIP 10 ที่นั่ง กว้างขวาง',
-      'จอเพดาน Android TV',
-      'ไฟ Ambient Light ปรับสีได้',
-      'ช่องชาร์จโทรศัพท์ทุกแถว',
-      'ประกันภัย พ.ร.บ. ครบถ้วน'
-    ],
-    description: 'รถตู้รุ่นใหม่ สภาพป้ายแดง เบาะหนังแท้นุ่มสบาย ระบบช่วงล่างนุ่มนวลขึ้นดอยได้ปลอดภัย คนขับตรงต่อเวลา มีใบขับขี่สาธารณะถูกต้อง รับงานสัมมนาและทัวร์ส่วนตัว'
-  },
-  {
-    id: 'v-3',
-    title: 'Toyota Majesty คลาสผู้บริหาร 7 ที่นั่ง เบาะ Captain Seat พรีเมียม',
+    title: 'Toyota Majesty Executive 7 ที่นั่ง เบาะ Captain Seat พรีเมียม (กทม. & พัทยา & หัวหิน)',
     type: 'van',
     seats: 7,
     driverName: 'นายวรพจน์ กานต์ธนา',
     driverNickname: 'พี่พจน์ VIP Limo',
     driverPhone: '086-555-1234',
     driverLine: 'https://line.me',
+    driverWhatsapp: 'https://wa.me/66865551234',
+    driverWechat: 'bkk_limo_vip',
+    languages: ['th', 'en', 'zh'],
+    region: 'central',
     rating: 5.0,
-    reviewCount: 29,
+    reviewCount: 42,
     isVerified: true,
     images: [
       'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80'
     ],
     zoneRates: { city: 3200, midHill: 3400, highHill: 3600, crossProvince: 4000 },
     rateNote: 'รุ่นพรีเมียมผู้บริหาร ออกใบกำกับภาษีเต็มรูปได้',
-    location: 'สนามบินเชียงใหม่ / โรงแรม 5 ดาวทั่วเชียงใหม่',
-    popularRoutes: ['รับ-ส่งสนามบิน', 'ประชุมสัมมนาผู้บริหาร', 'ทริปตีกอล์ฟ'],
+    location: 'กรุงเทพฯ & ปริมณฑล / พัทยา / หัวหิน / อยุธยา',
+    popularRoutes: ['กรุงเทพฯ', 'พัทยา', 'หัวหิน', 'อยุธยา', 'สนามบินสุวรรณภูมิ'],
     amenities: [
       'เบาะ Captain Seat ปรับไฟฟ้าคู่หน้า',
       'ประตูสไลด์ไฟฟ้าสองฝั่ง',
       'ระบบฟอกอากาศ Nanoe',
-      'คนขับสวมสูทสุภาพ ตรงเวลา 100%',
+      'คนขับสื่อสารภาษาอังกฤษและจีนได้',
       'รองรับการออกใบกำกับภาษีเต็มรูปแบบ'
     ],
-    description: 'ระดับพรีเมียมสำหรับรับรองแขก VIP ลูกค้าองค์กร หรือทริปครอบครัวที่ต้องการความหรูหราและความเป็นส่วนตัวสูงสุด ออกใบกำกับภาษีในนามบริษัทได้'
+    description: 'ระดับพรีเมียมสำหรับรับรองแขก VIP ลูกค้าองค์กร ชาวต่างชาติ หรือทริปครอบครัวที่ต้องการความหรูหราและความเป็นส่วนตัวสูงสุด ออกใบกำกับภาษีในนามบริษัทได้'
+  },
+  {
+    id: 'v-3',
+    title: 'All New Commuter VIP 10 ที่นั่ง หลังคาสูง (ภูเก็ต & พังงา & กระบี่)',
+    type: 'van',
+    seats: 10,
+    driverName: 'นายเอกชัย อันดามัน',
+    driverNickname: 'โกเอก รถตู้ภูเก็ต VIP',
+    driverPhone: '089-876-5432',
+    driverLine: 'https://line.me',
+    driverWhatsapp: 'https://wa.me/66898765432',
+    driverWechat: 'phuket_andaman_van',
+    driverKakao: 'phuketvan88',
+    languages: ['th', 'en'],
+    region: 'south',
+    rating: 4.9,
+    reviewCount: 56,
+    isVerified: true,
+    images: [
+      'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=800&q=80'
+    ],
+    zoneRates: { city: 2000, midHill: 2200, highHill: 2500, crossProvince: 2800 },
+    location: 'ภูเก็ต / กระบี่ / พังงา / เขาหลัก',
+    popularRoutes: ['ภูเก็ต', 'พังงา', 'กระบี่', 'สนามบินภูเก็ต'],
+    amenities: [
+      'เบาะ VIP 10 ที่นั่ง กว้างขวาง',
+      'จอเพดาน Android TV + คาราโอเกะ',
+      'ช่องชาร์จโทรศัพท์ทุกที่นั่ง',
+      'ประกันภัยผู้โดยสารชั้น 1',
+      'คนขับชำนาญเส้นทางแหล่งท่องเที่ยวอันดามัน'
+    ],
+    description: 'รถตู้ VIP สภาพใหม่เอี่ยม เบาะหนังแท้นุ่มสบาย ระบบแอร์เย็นฉ่ำทั่วคัน เหมาะสำหรับรับส่งสนามบินภูเก็ต ทริปเที่ยวอ่าวพังงา เกาะพีพี หรือข้ามไปกระบี่และเขาหลัก'
   },
   {
     id: 'v-4',
-    title: 'Toyota Fortuner 4WD 7 ที่นั่ง (เช่าขับเอง หรือพร้อมคนขับ)',
+    title: 'Hyundai Staria VIP 9 ที่นั่ง โมเดิร์นลักชัวรี่ (พัทยา & ชลบุรี & ระยอง)',
+    type: 'van',
+    seats: 9,
+    driverName: 'นายยุทธนา ชลประทาน',
+    driverNickname: 'พี่ยุทธ พัทยาทราเวล',
+    driverPhone: '082-333-4455',
+    driverLine: 'https://line.me',
+    driverWhatsapp: 'https://wa.me/66823334455',
+    driverKakao: 'pattaya_staria',
+    languages: ['th', 'en', 'ko'],
+    region: 'east',
+    rating: 4.9,
+    reviewCount: 38,
+    isVerified: true,
+    images: [
+      'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80'
+    ],
+    zoneRates: { city: 2400, midHill: 2600, highHill: 2900, crossProvince: 3300 },
+    location: 'พัทยา / ชลบุรี / สัตหีบ / ระยอง / เกาะช้าง',
+    popularRoutes: ['พัทยา', 'สัตหีบ', 'ระยอง', 'เกาะช้าง', 'สนามบินอู่ตะเภา'],
+    amenities: [
+      'ห้องโดยสารสไตล์ยานอวกาศ หน้าต่างกว้างพาโนรามา',
+      'เบาะนวด Relaxing Seat ปรับเอนไฟฟ้า',
+      'คนขับสื่อสารภาษาอังกฤษและเกาหลีได้',
+      'กล้อง 360 องศา ระบบความปลอดภัยครบ',
+      'ออกใบเสร็จรับเงิน/ใบกำกับภาษีได้'
+    ],
+    description: 'รถตู้ดีไซน์ล้ำสมัยระดับพรีเมียม ขับนุ่มนวล เงียบสงบ เหมาะสำหรับนักธุรกิจ ทริปตีกอล์ฟ และครอบครัวที่มาพักผ่อนพัทยาและระยอง คนขับสุภาพ ตรงต่อเวลา'
+  },
+  {
+    id: 'v-5',
+    title: 'Toyota Fortuner 4WD 7 ที่นั่ง ลุยธรรมชาติ (เขาใหญ่ & โคราช & อีสาน)',
     type: 'suv',
     seats: 7,
-    driverName: 'ซีเอ็นเอ็กซ์ คาร์เร้นท์',
-    driverNickname: 'ทีมงานเช่ารถเชียงใหม่',
-    driverPhone: '053-112233',
+    driverName: 'นายโชคชัย สุวรรณภูมิ',
+    driverNickname: 'พี่โชค เขาใหญ่ทัวร์',
+    driverPhone: '085-111-2233',
     driverLine: 'https://line.me',
-    rating: 4.7,
-    reviewCount: 62,
+    driverWhatsapp: 'https://wa.me/66851112233',
+    languages: ['th', 'en'],
+    region: 'isan',
+    rating: 4.8,
+    reviewCount: 45,
     isVerified: true,
     images: [
       'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80'
     ],
-    zoneRates: { city: 1600, midHill: 1800, highHill: 2000, crossProvince: 2400 },
-    rateNote: 'เช่าขับเองเริ่ม ฿1,600/วัน (มัดจำ 5,000 บ. คืนทันที)',
-    location: 'จุดส่งรถฟรี สนามบินเชียงใหม่',
-    popularRoutes: ['ขับขึ้นดอยอินทนนท์', 'เชียงดาว', 'อ่างขาง'],
+    zoneRates: { city: 1800, midHill: 2000, highHill: 2200, crossProvince: 2600 },
+    location: 'เขาใหญ่ / ปากช่อง / นครราชสีมา / ขอนแก่น',
+    popularRoutes: ['เขาใหญ่', 'ปากช่อง', 'วังน้ำเขียว', 'ขอนแก่น'],
     amenities: [
-      'ระบบขับเคลื่อน 4 ล้อ ลุยดอยสบาย',
+      'ระบบขับเคลื่อน 4 ล้อ ลุยเส้นทางธรรมชาติสบาย',
       'Apple CarPlay / Android Auto',
-      'กล้องมองหลังและเซ็นเซอร์รอบคัน',
-      'ประกันภัยชั้น 1 พาณิชย์',
-      'ส่งและรับรถฟรีที่สนามบิน'
+      'ประกันภัยชั้น 1 คุ้มครองผู้โดยสาร',
+      'พร้อมคนขับชำนาญทางเขาใหญ่-วังน้ำเขียว',
+      'บริการส่งรับรถถึงที่พัก'
     ],
-    description: 'SUV สภาพใหม่กริ๊บ เหมาะสำหรับกลุ่มเพื่อนหรือครอบครัว 4-6 คนที่อยากขับรถเที่ยวเอง ขึ้นดอยสูงได้มั่นใจ ช่วงล่างแน่น เอกสารเช่าง่าย ไม่ใช้บัตรเครดิตก็เช่าได้'
+    description: 'รถ SUV สภาพดีเยี่ยม เหมาะสำหรับกลุ่มเล็ก 4-6 คน เที่ยวสูดอากาศบริสุทธิ์เขาใหญ่ วังน้ำเขียว หรือทริปธุรกิจขอนแก่น คนขับใจดี ชำนาญจุดถ่ายรูปและร้านอาหารอร่อย'
   }
 ];
 

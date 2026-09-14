@@ -23,19 +23,19 @@ import type { DictKey } from '@/i18n/dictionaries';
 import { SearchX, ArrowRight, X, SlidersHorizontal, RotateCcw } from 'lucide-react';
 
 const SERVICE_ACTIONS: { key: DictKey; tab: 'van' | 'car' | 'hotel' | 'corporate'; zone?: string; seats?: string }[] = [
-  { key: 'home.service1', tab: 'van', seats: '9' },
-  { key: 'home.service2', tab: 'van', zone: 'ม่อนแจ่ม' },
-  { key: 'home.service3', tab: 'van', zone: 'ดอยอินทนนท์' },
-  { key: 'home.service4', tab: 'van', zone: 'แม่กำปอง' },
+  { key: 'home.service1', tab: 'van' },
+  { key: 'home.service2', tab: 'van', seats: '9' },
+  { key: 'home.service3', tab: 'car' },
+  { key: 'home.service4', tab: 'van', seats: '7' },
   { key: 'home.service5', tab: 'corporate' },
 ];
 
 const ROUTE_LINKS: { key: DictKey; value: string }[] = [
   { key: 'home.routeLink1', value: 'ม่อนแจ่ม' },
-  { key: 'home.routeLink2', value: 'ดอยอินทนนท์' },
-  { key: 'home.routeLink3', value: 'แม่กำปอง' },
-  { key: 'home.routeLink4', value: 'เชียงใหม่' },
-  { key: 'home.routeLink5', value: 'ปาย' },
+  { key: 'home.routeLink2', value: 'พัทยา' },
+  { key: 'home.routeLink3', value: 'ภูเก็ต' },
+  { key: 'home.routeLink4', value: 'เขาใหญ่' },
+  { key: 'home.routeLink5', value: 'หัวหิน' },
 ];
 
 
@@ -84,8 +84,17 @@ export default function HomePage() {
     return VEHICLES.filter((vehicle) => {
       const matchesTab =
         activeTab === 'van' ? vehicle.type === 'van' : vehicle.type !== 'van';
+      
+      const matchesRegion =
+        (selectedZone === 'bkk' && (vehicle.region === 'central' || vehicle.location.includes('กรุงเทพ') || vehicle.location.includes('กทม'))) ||
+        (selectedZone === 'north' && (vehicle.region === 'north' || vehicle.location.includes('เชียงใหม่'))) ||
+        (selectedZone === 'east' && (vehicle.region === 'east' || vehicle.location.includes('พัทยา') || vehicle.location.includes('ชลบุรี'))) ||
+        (selectedZone === 'south' && (vehicle.region === 'south' || vehicle.location.includes('ภูเก็ต') || vehicle.location.includes('กระบี่'))) ||
+        (selectedZone === 'isan' && (vehicle.region === 'isan' || vehicle.location.includes('เขาใหญ่') || vehicle.location.includes('โคราช')));
+
       const matchesZone =
         selectedZone === 'all' ||
+        matchesRegion ||
         vehicle.popularRoutes.some((r) => r.includes(selectedZone)) ||
         vehicle.location.includes(selectedZone);
       const matchesSeats =
@@ -182,8 +191,8 @@ export default function HomePage() {
                 {/* Main Vehicle Grid */}
                 <div className="min-w-0">
                   {hasFilters && (
-                    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-card p-3 border border-rule shadow-xs">
-                      <span className="text-xs font-extrabold text-ink-2 flex items-center gap-1.5 mr-1">
+                    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-card bg-card p-3 border border-rule shadow-xs">
+                      <span className="text-xs font-bold text-ink-2 flex items-center gap-1.5 mr-1">
                         <SlidersHorizontal className="h-3.5 w-3.5 text-accent" />
                         ตัวกรองที่เลือก:
                       </span>
@@ -312,11 +321,11 @@ export default function HomePage() {
                       <span className="mt-0.5 block line-clamp-2 text-xs font-medium leading-relaxed text-ink/70">
                         {t(`route.${route.id}.highlight` as DictKey)}
                       </span>
-                      <span className="mt-3 flex items-center justify-between border-t-2 border-dashed border-rule pt-3">
-                        <span className="td-fig text-[13px] font-extrabold text-ink">
+                      <span className="mt-3 flex items-center justify-between border-t border-rule pt-3">
+                        <span className="td-fig text-xs font-extrabold text-ink">
                           {t(`route.${route.id}.price` as DictKey)}
                         </span>
-                        <span className="inline-flex items-center gap-1 rounded-pill bg-ink px-3 py-1.5 text-xs font-extrabold text-paper">
+                        <span className="inline-flex items-center gap-1 rounded-input bg-accent text-white px-2.5 py-1 text-xs font-bold shadow-2xs">
                           {t('home.viewCars')} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                         </span>
                       </span>

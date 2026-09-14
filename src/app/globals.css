@@ -1,55 +1,55 @@
 @import "tailwindcss";
 
-/* Hallmark · genre: playful · macrostructure: Marquee Hero · design-system: DESIGN.md · designed-as-app */
-/* TripDee · v4 Hum-based playful · Tailwind v4 + Nunito/Noto Sans Thai
- * Pear/cyan/coral on warm cream, soft push buttons, borderless tinted
- * surfaces, spring motion. Shape lock: pills, 20px cards, 24px modals, 12px inputs.
+/* TripDee · Clean Utility Marketplace (Airbnb / Booking style)
+ * Clean slate-50/white canvas, authoritative blue accent, high-contrast typography,
+ * crisp 1px borders, subtle layered shadows, and high-efficiency utility controls.
  */
 
 :root {
-  --color-paper:      #FBF9F5;
-  --color-paper-2:    #F4EFEA;
+  --color-paper:      #F8FAFC;
+  --color-paper-2:    #F1F5F9;
   --color-card:       #FFFFFF;
-  --color-ink:        #18201C;
-  --color-ink-2:      #5A6B62;
-  --color-ink-deep:   #0F1412;
-  --color-rule:       #EAE6DF;
-  --color-rule-2:     #DBD5CC;
-  --color-shadow:     rgba(13, 92, 58, 0.08);
+  --color-ink:        #0F172A;
+  --color-ink-2:      #475569;
+  --color-ink-deep:   #020617;
+  --color-rule:       #E2E8F0;
+  --color-rule-2:     #CBD5E1;
+  --color-shadow:     rgba(15, 23, 42, 0.06);
 
-  --color-accent:     #0D5C3A;
-  --color-accent-deep:#064E3B;
+  --color-accent:     #2563EB;
+  --color-accent-deep:#1D4ED8;
   --color-accent-ink: #FFFFFF;
-  --color-accent-soft:#EBF5F0;
-  --color-accent-cast:rgba(13, 92, 58, 0.25);
-  --color-focus:      #0D5C3A;
+  --color-accent-soft:#EFF6FF;
+  --color-accent-cast:rgba(37, 99, 235, 0.18);
+  --color-focus:      #2563EB;
 
   --color-sun:        #D97706;
-  --color-sun-soft:   #FEF3C7;
-  --color-sun-ink:    #78350F;
+  --color-sun-soft:   #FFFBEB;
+  --color-sun-ink:    #92400E;
   --color-leaf:       #059669;
   --color-leaf-deep:  #047857;
-  --color-leaf-soft:  #D1FAE5;
+  --color-leaf-soft:  #ECFDF5;
   --color-sky:        #0284C7;
   --color-sky-deep:   #0369A1;
-  --color-sky-soft:   #E0F2FE;
-  --color-berry:      #BE185D;
-  --color-berry-deep: #9D174D;
-  --color-berry-soft: #FCE7F3;
-  --color-grape:      #6D28D9;
-  --color-grape-deep: #5B21B6;
-  --color-grape-soft: #EDE9FE;
+  --color-sky-soft:   #F0F9FF;
+  --color-berry:      #E11D48;
+  --color-berry-deep: #BE123C;
+  --color-berry-soft: #FFF1F2;
+  --color-grape:      #7C3AED;
+  --color-grape-deep: #6D28D9;
+  --color-grape-soft: #F5F3FF;
   --color-coral:      #EA580C;
-  --font-display: var(--font-nunito), var(--font-noto-thai), var(--font-noto-sc), "Sukhumvit Set", "Thonburi", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --font-body: var(--font-nunito), var(--font-noto-thai), var(--font-noto-sc), "Sukhumvit Set", "Thonburi", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, monospace;
+
+  --font-display: var(--font-nunito), var(--font-noto-thai), var(--font-noto-sc), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Sukhumvit Set", "Thonburi", sans-serif;
+  --font-body: var(--font-nunito), var(--font-noto-thai), var(--font-noto-sc), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Sukhumvit Set", "Thonburi", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   --space-3xs: 0.25rem;  --space-2xs: 0.5rem;  --space-xs: 0.75rem;
   --space-sm:  1rem;     --space-md:  1.5rem;  --space-lg: 2rem;
   --space-xl:  3rem;     --space-2xl: 4.5rem;  --space-3xl: 7rem;
   --text-xs: 0.75rem;  --text-sm: 0.875rem; --text-md: 1.125rem;
   --text-lg: 1.375rem; --text-xl: 1.75rem;  --text-2xl: 2.25rem;
-  --text-display: clamp(2.75rem, 5vw + 1rem, 4.5rem);
+  --text-display: clamp(2.5rem, 4.5vw + 1rem, 4rem);
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -59,35 +59,39 @@
   --dur-micro: 120ms;
   --dur-snap: 140ms;
   --dur-press: 70ms;
-  --dur-short: 220ms;
-  --dur-long: 420ms;
-  --radius-card: 20px; --radius-modal: 24px; --radius-pill: 999px; --radius-input: 14px;
+  --dur-short: 200ms;
+  --dur-long: 380ms;
 
-  /* Layered Soft Shadows (Airbnb / Apple style) */
-  --shadow-card: 0 2px 10px -2px rgba(13, 92, 58, 0.05), 0 10px 24px -6px rgba(13, 92, 58, 0.07);
-  --shadow-lift: 0 6px 16px -2px rgba(13, 92, 58, 0.08), 0 20px 38px -6px rgba(13, 92, 58, 0.12);
-  --shadow-soft: 0 1px 4px rgba(13, 92, 58, 0.04), 0 6px 14px -4px rgba(13, 92, 58, 0.06);
+  --radius-card: 14px;
+  --radius-modal: 20px;
+  --radius-pill: 999px;
+  --radius-input: 10px;
+
+  /* Modern Crisp Shadows (Airbnb / Booking style) */
+  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lift: 0 10px 25px -3px rgba(15, 23, 42, 0.09), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+  --shadow-soft: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
 
   --z-base: 1; --z-raised: 10; --z-sticky: 200; --z-modal: 400;
 }
 
 [data-theme="dark"] {
-  --color-paper:      #111915;
-  --color-paper-2:    #18231E;
-  --color-card:       #16201A;
-  --color-ink:        #F3F7F4;
-  --color-ink-2:      #A3B8AC;
-  --color-ink-deep:   #6C8375;
-  --color-rule:       #24332A;
-  --color-rule-2:     #2F4438;
-  --color-shadow:     rgba(0, 0, 0, 0.5);
+  --color-paper:      #090D16;
+  --color-paper-2:    #0F172A;
+  --color-card:       #131C31;
+  --color-ink:        #F8FAFC;
+  --color-ink-2:      #94A3B8;
+  --color-ink-deep:   #64748B;
+  --color-rule:       #1E293B;
+  --color-rule-2:     #334155;
+  --color-shadow:     rgba(0, 0, 0, 0.6);
 
-  --color-accent:     #10B981;
-  --color-accent-deep:#059669;
-  --color-accent-ink: #064E3B;
-  --color-accent-soft:rgba(16, 185, 129, 0.15);
-  --color-accent-cast:rgba(16, 185, 129, 0.3);
-  --color-focus:      #10B981;
+  --color-accent:     #3B82F6;
+  --color-accent-deep:#2563EB;
+  --color-accent-ink: #FFFFFF;
+  --color-accent-soft:rgba(59, 130, 246, 0.16);
+  --color-accent-cast:rgba(59, 130, 246, 0.3);
+  --color-focus:      #3B82F6;
 
   --color-sun:        #F59E0B;
   --color-sun-soft:   rgba(245, 158, 11, 0.15);
@@ -154,24 +158,24 @@ body {
   color: var(--color-ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2 { overflow-wrap: anywhere; }
 
-::selection { background: var(--color-sun); color: var(--color-sun-ink); }
+::selection { background: var(--color-accent-soft); color: var(--color-accent-deep); }
 
 :focus { outline: none; }
 :focus-visible {
-  outline: 3px solid var(--color-focus);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
-  border-radius: 8px;
 }
 
 /* Single-line affordances: the parent reflows, never the label. */
 .td-btn, .td-navlink, .td-footlink, .td-tab {
   white-space: nowrap;
 }
-.td-btn:active { transform: translateY(2px); }
+.td-btn:active { transform: translateY(1px); }
 
 .td-fig { font-variant-numeric: tabular-nums; }
 
@@ -179,60 +183,62 @@ h1, h2 { overflow-wrap: anywhere; }
 .td-elev-card { box-shadow: var(--shadow-card); }
 .td-elev-lift { box-shadow: var(--shadow-lift); }
 
-/* Hum push: full-width colour edge + soft ground cast. The press is the feedback. */
-/* Modern Layered Soft Push */
+/* Clean Marketplace Button Interaction */
 .td-pop {
-  transition: transform var(--dur-short) var(--ease-spring),
+  transition: transform var(--dur-short) var(--ease-out),
     box-shadow var(--dur-short) var(--ease-out),
     background-color var(--dur-micro) var(--ease-out);
-  box-shadow: 0 2px 6px -1px rgba(13, 92, 58, 0.12);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   transform: translateY(0);
 }
 @media (hover: hover) and (pointer: fine) {
   .td-pop:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px -4px rgba(13, 92, 58, 0.20);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -2px var(--color-accent-cast);
   }
 }
 .td-pop:active {
   transform: translateY(1px);
-  box-shadow: 0 1px 3px rgba(13, 92, 58, 0.15);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   transition-duration: var(--dur-press);
 }
-.td-pop:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+.td-pop:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .td-pop:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; transform: none; box-shadow: none; }
 
 .td-card-hover {
-  transition: transform var(--dur-short) var(--ease-spring), box-shadow var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out);
+  transition: transform var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
-  .td-card-hover:hover { transform: translateY(-4px); box-shadow: var(--shadow-lift); }
+  .td-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
 }
 
-/* Sticker badge: card ring, never tilted */
+/* Sticker badge */
 .td-sticker {
-  box-shadow: 0 0 0 3px var(--color-card), var(--shadow-card);
+  box-shadow: 0 0 0 2px var(--color-card), var(--shadow-card);
 }
 
-/* Pear highlighter: clipped to the text, tracks wraps */
+/* Text highlight */
 .td-hl {
   color: inherit;
   background-image: linear-gradient(var(--color-accent-soft) 0 0);
   background-repeat: no-repeat;
-  background-size: 100% 0.32em;
-  background-position: 0 82%;
+  background-size: 100% 0.35em;
+  background-position: 0 85%;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
   padding-bottom: 0.02em;
 }
 
-/* Dotted confetti backdrop */
+/* Backdrop pattern */
 .td-dots {
-  background-image: radial-gradient(oklch(58% 0.140 95 / 0.28) 1.5px, transparent 1.6px);
-  background-size: 22px 22px;
+  background-image: radial-gradient(rgba(37, 99, 235, 0.08) 1.5px, transparent 1.6px);
+  background-size: 20px 20px;
 }
 [data-theme="dark"] .td-dots {
-  background-image: radial-gradient(rgb(255 243 226 / 0.12) 1.5px, transparent 1.6px);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.6px);
 }
 
 @keyframes td-fade-in {
@@ -240,33 +246,32 @@ h1, h2 { overflow-wrap: anywhere; }
   to { opacity: 1; }
 }
 @keyframes td-pop-in {
-  0% { opacity: 0; transform: scale(0.96) translateY(10px); }
+  0% { opacity: 0; transform: scale(0.97) translateY(8px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 @keyframes td-float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-4px); }
 }
 @keyframes td-wiggle {
   0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-4deg); }
-  75% { transform: rotate(4deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
 }
 .td-panel-enter { animation: td-fade-in var(--dur-short) var(--ease-out); }
-.td-modal-enter { animation: td-pop-in 380ms var(--ease-spring); }
-.td-scrim-enter { animation: td-fade-in 250ms var(--ease-out); }
-.td-float { animation: td-float 5s ease-in-out infinite; }
-.td-wiggle-hover:hover { animation: td-wiggle 400ms ease-in-out; }
+.td-modal-enter { animation: td-pop-in 240ms var(--ease-out); }
+.td-scrim-enter { animation: td-fade-in 200ms var(--ease-out); }
+.td-float { animation: td-float 4s ease-in-out infinite; }
+.td-wiggle-hover:hover { animation: td-wiggle 300ms ease-in-out; }
 
-/* Wordmark character dot: the one reacting mark */
+/* Wordmark character dot */
 .td-dot {
-  animation: td-dot-breathe 4s var(--ease-in-out) infinite;
+  animation: td-dot-breathe 3.5s var(--ease-in-out) infinite;
 }
 @keyframes td-dot-breathe {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.25); }
+  50% { transform: scale(1.2); }
 }
-
 
 /* Footer marquee */
 .td-marquee { overflow: hidden; }
@@ -300,7 +305,7 @@ h1, h2 { overflow-wrap: anywhere; }
   html { scroll-behavior: auto; }
 }
 
-/* N12 head-height sync: the page spacer follows banner state. No height animation. */
+/* Head-height sync */
 :root { --td-banner-h: 40px; --td-bar-h: 64px; --td-head-h: calc(var(--td-banner-h) + var(--td-bar-h)); }
 html[data-nav="compact"] { --td-head-h: var(--td-bar-h); }
 html[data-nav="dismissed"] { --td-banner-h: 0px; }

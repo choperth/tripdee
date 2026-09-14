@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Menu, X, Plus, Sun, Moon, CarFront, KeyRound, BedDouble, Briefcase, UserCheck, LogIn, Crown } from 'lucide-react';
+import { Menu, X, Plus, Sun, Moon, CarFront, KeyRound, BedDouble, Briefcase, UserCheck, LogIn, Crown, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -16,10 +16,10 @@ interface NavbarProps {
 }
 
 const TABS = [
-  { id: 'van', labelKey: 'nav.van' as DictKey, icon: CarFront, active: 'bg-accent text-accent-ink' },
-  { id: 'car', labelKey: 'nav.car' as DictKey, icon: KeyRound, active: 'bg-sky text-white' },
-  { id: 'hotel', labelKey: 'nav.hotel' as DictKey, icon: BedDouble, active: 'bg-berry text-white' },
-  { id: 'corporate', labelKey: 'nav.corp' as DictKey, icon: Briefcase, active: 'bg-grape text-white' },
+  { id: 'van', labelKey: 'nav.van' as DictKey, icon: CarFront },
+  { id: 'car', labelKey: 'nav.car' as DictKey, icon: KeyRound },
+  { id: 'hotel', labelKey: 'nav.hotel' as DictKey, icon: BedDouble },
+  { id: 'corporate', labelKey: 'nav.corp' as DictKey, icon: Briefcase },
 ] as const;
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -41,52 +41,53 @@ export const Navbar: React.FC<NavbarProps> = ({
   useEffect(() => {
     try {
       const saved = localStorage.getItem('td-theme');
-      const preferred = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      document.documentElement.dataset.theme = preferred;
-      setTheme(preferred === 'dark' ? 'dark' : 'light');
-    } catch {
-      setTheme('light');
-    }
+      if (saved === 'dark') {
+        setTheme('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch {}
   }, []);
+
   useEffect(() => {
-    let ticking = false;
     const onScroll = () => {
-      const y = window.scrollY || 0;
-      setScrolled(y > 8);
-      if (!dismissed) {
-        if (y > 120 && y > lastY.current + 4) setCompact(true);
-        else if (y < lastY.current - 4 || y <= 120) setCompact(false);
+      const y = window.scrollY;
+      setScrolled(y > 10);
+      if (dismissed) {
+        setCompact(false);
+        lastY.current = y;
+        return;
+      }
+      if (y <= 0) {
+        setCompact(false);
+      } else if (y > 60 && y > lastY.current + 4) {
+        setCompact(true);
+      } else if (y < lastY.current - 8) {
+        setCompact(false);
       }
       lastY.current = y;
-      ticking = false;
     };
-    const handler = () => {
-      if (!ticking) {
-        ticking = true;
-        window.requestAnimationFrame(onScroll);
-      }
-    };
-    window.addEventListener('scroll', handler, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', handler);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, [dismissed]);
 
   useEffect(() => {
-    document.documentElement.dataset.nav = dismissed ? 'dismissed' : compact ? 'compact' : '';
-    return () => {
-      document.documentElement.dataset.nav = '';
-    };
+    const root = document.documentElement;
+    if (dismissed) {
+      root.setAttribute('data-nav', 'dismissed');
+    } else if (compact) {
+      root.setAttribute('data-nav', 'compact');
+    } else {
+      root.removeAttribute('data-nav');
+    }
   }, [dismissed, compact]);
 
   const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
+    const next = theme === 'light' ? 'dark' : 'light';
     setTheme(next);
-    document.documentElement.dataset.theme = next;
+    document.documentElement.setAttribute('data-theme', next);
     try {
       localStorage.setItem('td-theme', next);
-    } catch {
-      /* private mode */
-    }
+    } catch {}
   };
 
   const pick = (tab: string) => {
@@ -96,152 +97,152 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-200 transition-transform duration-420 ease-out ${
+      className={`fixed inset-x-0 top-0 z-200 transition-transform duration-300 ease-out ${
         compact && !dismissed ? '-translate-y-[var(--td-banner-h)]' : 'translate-y-0'
       }`}
     >
+      {/* Top Banner */}
       {!dismissed && (
-        <div role="region" aria-label={t('nav.promo')} className="flex h-[var(--td-banner-h)] items-center justify-center gap-2 bg-coral px-4 text-center text-[13px] font-bold text-ink">
-          <p className="overflow-hidden text-ellipsis whitespace-nowrap">
-            {t('nav.promo')}{' '}
-            <button onClick={onOpenRegisterModal} className="td-navlink font-extrabold underline underline-offset-4">
+        <div role="region" aria-label={t('nav.promo')} className="flex h-[var(--td-banner-h)] items-center justify-between gap-2 bg-slate-900 text-white px-4 text-xs font-semibold">
+          <div className="mx-auto flex items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
+            <span className="flex h-2 w-2 rounded-full bg-leaf animate-pulse" />
+            <span>{t('nav.promo')}</span>
+            <button onClick={onOpenRegisterModal} className="font-extrabold text-blue-400 hover:text-blue-300 underline underline-offset-2">
               {t('nav.promoCta')}
             </button>
-          </p>
+          </div>
           <button
             onClick={() => {
               setDismissed(true);
               setCompact(false);
             }}
             aria-label={t('nav.promoClose')}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-slate-400 hover:text-white"
           >
-            <X className="h-4 w-4" aria-hidden="true" strokeWidth={3} />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       )}
 
+      {/* Main Navbar */}
       <nav
         aria-label={t('nav.main')}
-        className={`td-glass border-b bg-paper/85 backdrop-blur-[14px] backdrop-saturate-[1.2] ${
-          scrolled ? 'border-rule' : 'border-transparent'
+        className={`border-b bg-card/95 backdrop-blur-md transition-colors ${
+          scrolled ? 'border-rule shadow-xs' : 'border-rule/80'
         }`}
       >
-        <div className="mx-auto flex h-[var(--td-bar-h)] w-full max-w-6xl items-center gap-1 px-4 sm:px-6 lg:px-8">
-          <button
-            onClick={() => pick('van')}
-            className="td-navlink mr-auto flex shrink-0 items-center gap-1 font-display text-lg font-extrabold tracking-tight text-ink"
-            aria-label={t('nav.home')}
-          >
-            TripDee
-            <span aria-hidden="true" className="td-dot inline-block h-2.5 w-2.5 rounded-full bg-accent" />
-          </button>
-
-          {/* Desktop tabs */}
-          <ul className="hidden items-center gap-1 md:flex">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const active = activeTab === tab.id;
-              return (
-                <li key={tab.id}>
-                  <button
-                    onClick={() => pick(tab.id)}
-                    aria-current={active ? 'page' : undefined}
-                    className={`td-tab inline-flex items-center gap-1.5 rounded-pill px-3.5 py-2 text-[13px] transition duration-220 ease-out ${
-                      active
-                        ? `${tab.active} font-extrabold`
-                        : 'font-bold text-ink-2 hover:bg-paper-2 hover:text-ink'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-                    {t(tab.labelKey)}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? t('nav.toLight') : t('nav.toDark')}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-2 transition duration-220 ease-out hover:bg-paper-2 hover:text-ink"
-          >
-            {theme === 'dark' ? (
-              <Sun className="h-5 w-5" aria-hidden="true" />
-            ) : (
-              <Moon className="h-5 w-5" aria-hidden="true" />
-            )}
-          </button>
-          <LanguageSwitcher />
-
-          {/* Auth State Button */}
-          {user ? (
+        <div className="mx-auto flex h-[var(--td-bar-h)] w-full max-w-6xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
+          {/* Logo */}
+          <div className="flex items-center gap-6">
             <button
-              onClick={onOpenPortal}
-              className={`td-btn td-pop hidden shrink-0 items-center gap-1.5 rounded-pill px-3.5 py-2 text-xs font-extrabold md:inline-flex ${
-                user.role === 'driver'
-                  ? 'bg-accent text-accent-ink'
-                  : user.role === 'customer'
-                  ? 'bg-grape text-white'
-                  : 'bg-sun text-sun-ink'
-              }`}
+              onClick={() => pick('van')}
+              className="flex shrink-0 items-center gap-1.5 font-display text-xl font-extrabold tracking-tight text-ink"
+              aria-label={t('nav.home')}
             >
-              {user.role === 'driver' && <CarFront className="h-3.5 w-3.5" strokeWidth={2.5} />}
-              {user.role === 'customer' && <Briefcase className="h-3.5 w-3.5" strokeWidth={2.5} />}
-              {user.role === 'admin' && <Crown className="h-3.5 w-3.5" strokeWidth={2.5} />}
-
-              <span className="max-w-[120px] truncate">
-                {user.role === 'driver' && (user.driverNickname || user.name)}
-                {user.role === 'customer' && (user.companyName || user.name)}
-                {user.role === 'admin' && t('nav.admin')}
+              <span>TripDee</span>
+              <span className="inline-flex items-center rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-extrabold text-accent border border-accent/20">
+                เชียงใหม่
               </span>
+            </button>
 
-              {user.role === 'driver' && (
-                <span
-                  className={`h-2 w-2 rounded-full ${user.isAvailable ? 'bg-leaf animate-pulse' : 'bg-berry'}`}
-                  title={user.isAvailable ? t('nav.available') : t('nav.busy')}
-                />
+            {/* Desktop Navigation Tabs */}
+            <ul className="hidden items-center gap-1 md:flex">
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
+                  <li key={tab.id}>
+                    <button
+                      onClick={() => pick(tab.id)}
+                      aria-current={active ? 'page' : undefined}
+                      className={`inline-flex items-center gap-1.5 rounded-input px-3.5 py-2 text-xs font-bold transition-colors ${
+                        active
+                          ? 'bg-accent-soft text-accent border border-accent/20'
+                          : 'text-ink-2 hover:bg-paper hover:text-ink'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" aria-hidden="true" strokeWidth={2.2} />
+                      <span>{t(tab.labelKey)}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          {/* Right Action Icons & CTAs */}
+          <div className="flex items-center gap-2">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? t('nav.toLight') : t('nav.toDark')}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-input text-ink-2 transition-colors hover:bg-paper hover:text-ink border border-rule/60"
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Moon className="h-4 w-4" aria-hidden="true" />
               )}
             </button>
-          ) : (
-            <button
-              onClick={onOpenLoginModal}
-              className="td-btn hidden shrink-0 items-center gap-1 rounded-pill bg-paper-2 px-3.5 py-2 text-[13px] font-extrabold text-ink transition duration-220 ease-out hover:bg-card md:inline-flex"
-            >
-              <LogIn className="h-4 w-4 text-accent-deep" strokeWidth={2.5} />
-              <span>{t('nav.login')}</span>
-            </button>
-          )}
 
-          {/* Register Free Vehicle Button */}
-          <button
-            onClick={onOpenRegisterModal}
-            className="td-btn td-pop hidden shrink-0 items-center gap-1 rounded-pill bg-sun px-3.5 py-2 text-[13px] font-extrabold text-sun-ink md:inline-flex"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" strokeWidth={3} />
-            {t('nav.registerFree')}
-          </button>
+            {/* Language Switcher */}
+            <LanguageSwitcher />
 
-          {/* Mobile disclosure */}
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-expanded={menuOpen}
-            aria-label={menuOpen ? t('nav.menuClose') : t('nav.menuOpen')}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink transition duration-220 ease-out hover:bg-paper-2 md:hidden"
-          >
-            {menuOpen ? (
-              <X className="h-5 w-5" aria-hidden="true" />
+            {/* User Auth or Login Button */}
+            {user ? (
+              <button
+                onClick={onOpenPortal}
+                className="hidden shrink-0 items-center gap-1.5 rounded-input bg-accent text-white px-3 py-2 text-xs font-bold shadow-xs hover:bg-accent-deep md:inline-flex"
+              >
+                {user.role === 'driver' && <CarFront className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                {user.role === 'customer' && <Briefcase className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                {user.role === 'admin' && <Crown className="h-3.5 w-3.5" strokeWidth={2.5} />}
+
+                <span className="max-w-[120px] truncate">
+                  {user.role === 'driver' && (user.driverNickname || user.name)}
+                  {user.role === 'customer' && (user.companyName || user.name)}
+                  {user.role === 'admin' && t('nav.admin')}
+                </span>
+              </button>
             ) : (
-              <Menu className="h-5 w-5" aria-hidden="true" />
+              <button
+                onClick={onOpenLoginModal}
+                className="hidden shrink-0 items-center gap-1 rounded-input border border-rule bg-paper px-3 py-2 text-xs font-bold text-ink hover:bg-paper-2 md:inline-flex"
+              >
+                <LogIn className="h-3.5 w-3.5 text-accent" strokeWidth={2.5} />
+                <span>{t('nav.login')}</span>
+              </button>
             )}
-          </button>
+
+            {/* Register Free Driver Button */}
+            <button
+              onClick={onOpenRegisterModal}
+              className="hidden shrink-0 items-center gap-1.5 rounded-input bg-accent hover:bg-accent-deep text-white px-3.5 py-2 text-xs font-bold shadow-xs transition-colors md:inline-flex"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2.5} />
+              <span>{t('nav.registerFree')}</span>
+            </button>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-expanded={menuOpen}
+              aria-label={menuOpen ? t('nav.menuClose') : t('nav.menuOpen')}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-input text-ink border border-rule md:hidden"
+            >
+              {menuOpen ? (
+                <X className="h-5 w-5" aria-hidden="true" />
+              ) : (
+                <Menu className="h-5 w-5" aria-hidden="true" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu Dropdown */}
         {menuOpen && (
-          <div className="td-elev-lift mx-4 mb-3 rounded-card bg-card p-2 md:hidden">
-            <ul className="flex flex-col gap-1">
+          <div className="border-t border-rule bg-card p-3 md:hidden shadow-lg">
+            <ul className="flex flex-col gap-1.5">
               <li>
                 <LanguageSwitcher variant="row" onPick={() => setMenuOpen(false)} />
               </li>
@@ -253,30 +254,29 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <button
                       onClick={() => pick(tab.id)}
                       aria-current={active ? 'page' : undefined}
-                      className={`td-tab inline-flex w-full items-center gap-2.5 rounded-input px-3 py-2.5 text-left text-sm transition duration-220 ease-out ${
+                      className={`inline-flex w-full items-center gap-2 rounded-input px-3 py-2.5 text-left text-xs font-bold transition-colors ${
                         active
-                          ? `${tab.active} font-extrabold`
-                          : 'font-bold text-ink hover:bg-paper-2'
+                          ? 'bg-accent text-white'
+                          : 'text-ink hover:bg-paper'
                       }`}
                     >
-                      <Icon className="h-5 w-5" aria-hidden="true" strokeWidth={2.5} />
-                      {t(tab.labelKey)}
+                      <Icon className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
+                      <span>{t(tab.labelKey)}</span>
                     </button>
                   </li>
                 );
               })}
 
-              <li className="mt-1 space-y-1.5 border-t-2 border-dashed border-rule pt-2">
+              <li className="pt-2 border-t border-rule flex flex-col gap-2">
                 {user ? (
                   <button
                     onClick={() => {
                       setMenuOpen(false);
                       onOpenPortal();
                     }}
-                    className="td-btn flex w-full items-center justify-center gap-1.5 rounded-input bg-accent py-2.5 text-sm font-extrabold text-accent-ink"
+                    className="flex w-full items-center justify-center gap-1.5 rounded-input bg-accent text-white py-2.5 text-xs font-bold"
                   >
-                    <UserCheck className="h-4 w-4" />
-                    <span>{t('nav.dashboard', { name: user.name })}</span>
+                    <span>{t('nav.dashboard', { name: user.driverNickname || user.companyName || user.name })}</span>
                   </button>
                 ) : (
                   <button
@@ -284,10 +284,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                       setMenuOpen(false);
                       onOpenLoginModal();
                     }}
-                    className="td-btn flex w-full items-center justify-center gap-1.5 rounded-input bg-paper-2 py-2.5 text-sm font-extrabold text-ink"
+                    className="flex w-full items-center justify-center gap-1.5 rounded-input border border-rule bg-paper py-2.5 text-xs font-bold text-ink"
                   >
-                    <LogIn className="h-4 w-4 text-accent-deep" />
-                    <span>{t('nav.loginMobile')}</span>
+                    <LogIn className="h-4 w-4 text-accent" />
+                    <span>{t('nav.login')}</span>
                   </button>
                 )}
 
@@ -296,10 +296,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setMenuOpen(false);
                     onOpenRegisterModal();
                   }}
-                  className="td-btn td-pop flex w-full items-center justify-center gap-1.5 rounded-input bg-sun py-2.5 text-sm font-extrabold text-sun-ink"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-input bg-accent hover:bg-accent-deep py-2.5 text-xs font-bold text-white"
                 >
-                  <Plus className="h-4 w-4" aria-hidden="true" strokeWidth={3} />
-                  {t('nav.registerFree')}
+                  <Plus className="h-4 w-4" />
+                  <span>{t('nav.registerFree')}</span>
                 </button>
               </li>
             </ul>
