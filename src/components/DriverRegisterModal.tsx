@@ -92,45 +92,62 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
         aria-modal="true"
         aria-label={t('reg.aria')}
         onClick={(e) => e.stopPropagation()}
-        className="td-modal-enter relative my-8 grid w-full max-w-3xl grid-cols-1 overflow-hidden rounded-modal bg-card md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
+        className="td-modal-enter relative my-6 grid w-full max-w-4xl grid-cols-1 overflow-hidden rounded-2xl bg-card border border-rule shadow-2xl md:grid-cols-[290px_1fr]"
       >
         <button
           onClick={onClose}
           aria-label={t('reg.close')}
-          className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-card text-ink transition-transform duration-220 ease-spring"
+          className="absolute right-3.5 top-3.5 z-10 grid h-9 w-9 place-items-center rounded-full bg-paper/90 text-ink-2 shadow-2xs hover:bg-paper hover:text-ink transition-transform duration-220 ease-spring"
         >
           <X className="h-5 w-5" aria-hidden="true" strokeWidth={2.5} />
         </button>
 
-        <div className="td-dots min-w-0 bg-sun-soft p-5 sm:p-7">
-          <p className="inline-flex items-center gap-1.5 rounded-pill bg-card px-3 py-1.5 text-xs font-extrabold text-ink">
-            <CarFront className="h-3.5 w-3.5 text-accent-deep" aria-hidden="true" strokeWidth={2.5} />
-            {t('reg.partner')}
-          </p>
-          <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-ink">
-            {t('reg.title')}
-          </h2>
-          <p className="mt-1 text-sm font-bold text-ink-2">{t('reg.subtitle')}</p>
-          <ul className="mt-5 flex flex-col gap-2.5">
-            {PITCH.map((point) => (
-              <li key={point.key} className="flex items-center gap-2.5 rounded-input border border-rule bg-card px-3 py-2.5 text-[13px] font-bold leading-snug text-ink">
-                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${point.tint}`}>
-                  <Check className="h-3.5 w-3.5 text-ink" aria-hidden="true" strokeWidth={3} />
-                </span>
-                {t(point.key)}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-5 flex items-start gap-2 rounded-input bg-card/70 p-3 text-xs font-medium leading-relaxed text-ink-2">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-leaf" aria-hidden="true" />
-            {t('reg.verifyNote')}
-          </p>
+        {/* Left Column: Compact Benefits & Trust Info */}
+        <div className="td-dots min-w-0 bg-sun-soft/50 p-6 sm:p-7 flex flex-col justify-between border-b md:border-b-0 md:border-r border-rule">
+          <div>
+            <p className="inline-flex items-center gap-1.5 rounded-pill bg-card px-3 py-1.5 text-xs font-extrabold text-ink shadow-2xs border border-rule/50">
+              <CarFront className="h-3.5 w-3.5 text-accent-deep" aria-hidden="true" strokeWidth={2.5} />
+              {t('reg.partner')}
+            </p>
+            <h2 className="mt-3.5 font-display text-2xl font-black leading-tight tracking-tight text-ink">
+              {t('reg.title')}
+            </h2>
+            <p className="mt-1.5 text-xs font-bold leading-relaxed text-ink-2">
+              {t('reg.subtitle')}
+            </p>
+
+            <ul className="mt-6 flex flex-col gap-2.5">
+              {PITCH.map((point) => (
+                <li
+                  key={point.key}
+                  className="flex items-center gap-2.5 rounded-xl border border-rule/70 bg-card/90 px-3 py-2.5 text-xs font-bold leading-snug text-ink shadow-2xs"
+                >
+                  <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full ${point.tint}`}>
+                    <Check className="h-3 w-3 text-ink" aria-hidden="true" strokeWidth={3} />
+                  </span>
+                  <span>{t(point.key)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-6 pt-5 border-t border-rule/70">
+            <div className="rounded-xl bg-card/80 p-3 text-[11px] font-semibold leading-relaxed text-ink-2 border border-rule/50 flex items-start gap-2">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-leaf" aria-hidden="true" />
+              <span>{t('reg.verifyNote')}</span>
+            </div>
+            <div className="mt-3 flex items-center justify-between text-[11px] font-bold text-ink-2 px-1">
+              <span>⚡ ไม่มีสัญญาผูกมัด</span>
+              <span>🔒 ปลอดภัย 100%</span>
+            </div>
+          </div>
         </div>
 
-        <div className="max-h-[85vh] min-w-0 overflow-y-auto p-5 sm:p-7">
+        {/* Right Column: Form with Balanced Spacing */}
+        <div className="max-h-[85vh] min-w-0 overflow-y-auto p-6 sm:p-8">
           {submitted ? (
-            <div className="py-10 text-center">
-              <span className="td-wiggle-hover mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-leaf text-white">
+            <div className="py-12 text-center">
+              <span className="td-wiggle-hover mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-leaf text-white shadow-sm">
                 <PartyPopper className="h-8 w-8" aria-hidden="true" />
               </span>
               <h3 className="font-display text-2xl font-extrabold text-ink">
@@ -141,91 +158,115 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
               </p>
               <button
                 onClick={() => setSubmitted(false)}
-                className="td-btn mt-5 rounded-pill bg-paper px-4 py-2 text-[13px] font-extrabold text-ink transition-transform duration-220 ease-spring hover:-translate-y-0.5"
+                className="td-btn mt-6 rounded-pill bg-accent px-5 py-2.5 text-xs font-extrabold text-white transition-transform duration-220 ease-spring hover:-translate-y-0.5 shadow-xs"
               >
                 {t('reg.doneMore')}
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <h3 className="font-display text-xl font-extrabold tracking-tight text-ink">
-                {t('reg.formTitle')}
-              </h3>
-              {/* Service Type Switch */}
-              <div className="grid grid-cols-2 gap-2 p-1 bg-card rounded-xl border border-rule">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      serviceType: 'with_driver',
-                      vehicleModel: 'Toyota Commuter D4D (หลังคาสูง 9-13 ที่นั่ง)',
-                      plateType: 'yellow',
-                    })
-                  }
-                  className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                    formData.serviceType === 'with_driver'
-                      ? 'bg-accent text-white shadow-xs'
-                      : 'text-ink-2 hover:text-ink'
-                  }`}
-                >
-                  <span>🚐 รถตู้ / รถพร้อมคนขับ</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      serviceType: 'self_drive',
-                      vehicleModel: 'Toyota Yaris Ativ / Honda City (Sedan Eco Car)',
-                      plateType: 'blue',
-                    })
-                  }
-                  className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                    formData.serviceType === 'self_drive'
-                      ? 'bg-accent text-white shadow-xs'
-                      : 'text-ink-2 hover:text-ink'
-                  }`}
-                >
-                  <span>🚗 รถเช่าขับเอง (Self-Drive)</span>
-                </button>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              <div>
+                <h3 className="font-display text-xl font-black tracking-tight text-ink">
+                  {t('reg.formTitle')}
+                </h3>
+                <p className="mt-0.5 text-xs font-semibold text-ink-2">
+                  กรอกข้อมูลรถและช่องทางติดต่อเพื่อเริ่มรับงานตรง
+                </p>
               </div>
 
-              {formData.serviceType === 'with_driver' ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="td-dname" className={labelCls}>
-                      {t('reg.fName')} (ชื่อจริงคนขับ)
-                    </label>
-                    <input
-                      id="td-dname"
-                      type="text"
-                      required
-                      placeholder={t('reg.fNamePh')}
-                      value={formData.driverName}
-                      onChange={(e) => setFormData({ ...formData, driverName: e.target.value })}
-                      className={inputCls}
-                    />
-                    <span className="text-[10px] text-ink-2 mt-1 block">* แสดงเฉพาะชื่อเล่นบนหน้าเว็บเพื่อความปลอดภัย</span>
-                  </div>
-                  <div>
-                    <label htmlFor="td-dnick" className={labelCls}>
-                      {t('reg.fNick')} (ชื่อเรียกหน้าเว็บ)
-                    </label>
-                    <input
-                      id="td-dnick"
-                      type="text"
-                      required
-                      placeholder="เช่น พี่ชัย รถตู้เชียงใหม่"
-                      value={formData.nickname}
-                      onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
-                      className={inputCls}
-                    />
-                  </div>
+              {/* Section 1: Service Type Switch */}
+              <div className="rounded-xl border border-rule bg-card/60 p-3">
+                <label className="mb-2 block text-xs font-black uppercase tracking-wider text-ink-2">
+                  1. เลือกรูปแบบบริการของคุณ
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        serviceType: 'with_driver',
+                        vehicleModel: 'Toyota Commuter D4D (หลังคาสูง 9-13 ที่นั่ง)',
+                        plateType: 'yellow',
+                      })
+                    }
+                    className={`p-2.5 sm:p-3 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-1 text-center ${
+                      formData.serviceType === 'with_driver'
+                        ? 'bg-accent text-white shadow-xs ring-2 ring-accent/30'
+                        : 'bg-paper text-ink-2 hover:text-ink border border-rule/60'
+                    }`}
+                  >
+                    <span className="text-sm">🚐 รถพร้อมคนขับ / รถตู้</span>
+                    <span className={`text-[10px] font-medium ${formData.serviceType === 'with_driver' ? 'text-white/80' : 'text-ink-2'}`}>
+                      มีคนขับคอยให้บริการนำเที่ยว
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        serviceType: 'self_drive',
+                        vehicleModel: 'Toyota Yaris Ativ / Honda City (Sedan Eco Car)',
+                        plateType: 'blue',
+                      })
+                    }
+                    className={`p-2.5 sm:p-3 rounded-xl text-xs font-black transition-all flex flex-col items-center justify-center gap-1 text-center ${
+                      formData.serviceType === 'self_drive'
+                        ? 'bg-accent text-white shadow-xs ring-2 ring-accent/30'
+                        : 'bg-paper text-ink-2 hover:text-ink border border-rule/60'
+                    }`}
+                  >
+                    <span className="text-sm">🚗 รถเช่าขับเอง (Self-Drive)</span>
+                    <span className={`text-[10px] font-medium ${formData.serviceType === 'self_drive' ? 'text-white/80' : 'text-ink-2'}`}>
+                      ลูกค้าเช่ารถขับท่องเที่ยวเอง
+                    </span>
+                  </button>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="sm:col-span-2">
+              </div>
+
+              {/* Section 2: Contact Information */}
+              <div className="rounded-xl border border-rule bg-card/60 p-3.5 sm:p-4 space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black uppercase tracking-wider text-ink-2">
+                    2. ข้อมูลผู้ให้บริการ & ช่องทางติดต่อ
+                  </label>
+                  <span className="text-[10px] font-bold text-leaf">🔒 เซ็นเซอร์นามสกุลอัตโนมัติ</span>
+                </div>
+
+                {formData.serviceType === 'with_driver' ? (
+                  <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="td-dname" className={labelCls}>
+                        {t('reg.fName')} (ชื่อจริงคนขับ)
+                      </label>
+                      <input
+                        id="td-dname"
+                        type="text"
+                        required
+                        placeholder={t('reg.fNamePh')}
+                        value={formData.driverName}
+                        onChange={(e) => setFormData({ ...formData, driverName: e.target.value })}
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="td-dnick" className={labelCls}>
+                        {t('reg.fNick')} (ชื่อเรียกหน้าเว็บ)
+                      </label>
+                      <input
+                        id="td-dnick"
+                        type="text"
+                        required
+                        placeholder="เช่น พี่ชัย รถตู้เชียงใหม่"
+                        value={formData.nickname}
+                        onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                        className={inputCls}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div>
                     <label htmlFor="td-dname" className={labelCls}>
                       ชื่อร้าน / บริษัทรถเช่า หรือ ชื่อเจ้าของรถ
                     </label>
@@ -245,131 +286,142 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                       className={inputCls}
                     />
                   </div>
-                </div>
-              )}
+                )}
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="td-dphone" className={labelCls}>
-                    {t('reg.fPhone')}
-                  </label>
-                  <input
-                    id="td-dphone"
-                    type="tel"
-                    required
-                    placeholder="08x-xxx-xxxx"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="td-dline" className={labelCls}>
-                    {t('reg.fLine')}
-                  </label>
-                  <input
-                    id="td-dline"
-                    type="text"
-                    required
-                    placeholder={t('reg.fLinePh')}
-                    value={formData.lineId}
-                    onChange={(e) => setFormData({ ...formData, lineId: e.target.value })}
-                    className={inputCls}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="td-dmodel" className={labelCls}>
-                    {t('reg.fModel')} (เลือกรุ่นรถ)
-                  </label>
-                  <select
-                    id="td-dmodel"
-                    value={isCustomModel ? 'custom' : formData.vehicleModel}
-                    onChange={(e) => {
-                      if (e.target.value === 'custom') {
-                        setIsCustomModel(true);
-                      } else {
-                        setIsCustomModel(false);
-                        setFormData({ ...formData, vehicleModel: e.target.value });
-                      }
-                    }}
-                    className={inputCls}
-                  >
-                    {VEHICLE_CATEGORY_GROUPS.map((group) => (
-                      <optgroup key={group.category} label={group.label}>
-                        {group.models.map((model) => (
-                          <option key={model} value={model}>
-                            {model}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                    <option value="custom">⚡ อื่นๆ (พิมพ์ระบุรุ่นรถเอง)</option>
-                  </select>
-
-                  {isCustomModel && (
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="td-dphone" className={labelCls}>
+                      {t('reg.fPhone')} (เบอร์โทรติดต่อตรง)
+                    </label>
                     <input
+                      id="td-dphone"
+                      type="tel"
+                      required
+                      placeholder="08x-xxx-xxxx"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="td-dline" className={labelCls}>
+                      {t('reg.fLine')} (LINE ID สำหรับจอง)
+                    </label>
+                    <input
+                      id="td-dline"
                       type="text"
                       required
-                      placeholder="พิมพ์ระบุยี่ห้อและรุ่นรถของคุณ เช่น Ford Transit VIP"
-                      value={customModelText}
-                      onChange={(e) => setCustomModelText(e.target.value)}
-                      className={`${inputCls} mt-2 text-accent focus:border-accent`}
+                      placeholder={t('reg.fLinePh')}
+                      value={formData.lineId}
+                      onChange={(e) => setFormData({ ...formData, lineId: e.target.value })}
+                      className={inputCls}
                     />
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="td-dseats" className={labelCls}>
-                    {t('reg.fSeats')} (จำนวนที่นั่งผู้โดยสาร)
-                  </label>
-                  <select
-                    id="td-dseats"
-                    value={formData.seats}
-                    onChange={(e) => setFormData({ ...formData, seats: e.target.value })}
-                    className={inputCls}
-                  >
-                    <option value="4">4 ที่นั่ง (Sedan / รถเก๋ง / Eco Car)</option>
-                    <option value="5">5 ที่นั่ง (Sedan ผู้บริหาร / Compact SUV)</option>
-                    <option value="7">7 ที่นั่ง (VIP MPV / SUV 7 ที่นั่ง)</option>
-                    <option value="8">8 ที่นั่ง (Van / MPV เบาะกว้าง)</option>
-                    <option value="9">9 ที่นั่ง (VIP Van เบาะ 3 แถวยอดนิยม)</option>
-                    <option value="10">10 ที่นั่ง (VIP Commuter / Staria)</option>
-                    <option value="11">11 ที่นั่ง (H-1 / Majesty / Commuter)</option>
-                    <option value="13">13 ที่นั่ง (Commuter เบาะ 4 แถวมาตรฐาน)</option>
-                    <option value="14">14 ที่นั่ง (Commuter / HiAce จุคนเยอะ)</option>
-                    <option value="20">20 ที่นั่ง (มินิบัส Coaster / Hino ท่องเที่ยว)</option>
-                    <option value="24">24 ที่นั่ง (มินิบัสขนาดใหญ่ / กรุ๊ปสัมมนา)</option>
-                  </select>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="td-damen" className={labelCls}>
-                  {t('reg.fAmen')}
+              {/* Section 3: Vehicle Information */}
+              <div className="rounded-xl border border-rule bg-card/60 p-3.5 sm:p-4 space-y-3.5">
+                <label className="block text-xs font-black uppercase tracking-wider text-ink-2">
+                  3. ข้อมูลยานพาหนะ & สิ่งอำนวยความสะดวก
                 </label>
-                <input
-                  id="td-damen"
-                  type="text"
-                  placeholder={t('reg.fAmenPh')}
-                  value={formData.amenities}
-                  onChange={(e) => setFormData({ ...formData, amenities: e.target.value })}
-                  className={inputCls}
-                />
+
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="td-dmodel" className={labelCls}>
+                      {t('reg.fModel')} (เลือกรุ่นรถ)
+                    </label>
+                    <select
+                      id="td-dmodel"
+                      value={isCustomModel ? 'custom' : formData.vehicleModel}
+                      onChange={(e) => {
+                        if (e.target.value === 'custom') {
+                          setIsCustomModel(true);
+                        } else {
+                          setIsCustomModel(false);
+                          setFormData({ ...formData, vehicleModel: e.target.value });
+                        }
+                      }}
+                      className={inputCls}
+                    >
+                      {VEHICLE_CATEGORY_GROUPS.map((group) => (
+                        <optgroup key={group.category} label={group.label}>
+                          {group.models.map((model) => (
+                            <option key={model} value={model}>
+                              {model}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                      <option value="custom">⚡ อื่นๆ (พิมพ์ระบุรุ่นรถเอง)</option>
+                    </select>
+
+                    {isCustomModel && (
+                      <input
+                        type="text"
+                        required
+                        placeholder="พิมพ์ระบุยี่ห้อและรุ่นรถ เช่น Ford Transit VIP"
+                        value={customModelText}
+                        onChange={(e) => setCustomModelText(e.target.value)}
+                        className={`${inputCls} mt-2 text-accent focus:border-accent`}
+                      />
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="td-dseats" className={labelCls}>
+                      {t('reg.fSeats')} (จำนวนที่นั่งผู้โดยสาร)
+                    </label>
+                    <select
+                      id="td-dseats"
+                      value={formData.seats}
+                      onChange={(e) => setFormData({ ...formData, seats: e.target.value })}
+                      className={inputCls}
+                    >
+                      <option value="4">4 ที่นั่ง (Sedan / รถเก๋ง / Eco Car)</option>
+                      <option value="5">5 ที่นั่ง (Sedan ผู้บริหาร / Compact SUV)</option>
+                      <option value="7">7 ที่นั่ง (VIP MPV / SUV 7 ที่นั่ง)</option>
+                      <option value="8">8 ที่นั่ง (Van / MPV เบาะกว้าง)</option>
+                      <option value="9">9 ที่นั่ง (VIP Van เบาะ 3 แถวยอดนิยม)</option>
+                      <option value="10">10 ที่นั่ง (VIP Commuter / Staria)</option>
+                      <option value="11">11 ที่นั่ง (H-1 / Majesty / Commuter)</option>
+                      <option value="13">13 ที่นั่ง (Commuter เบาะ 4 แถวมาตรฐาน)</option>
+                      <option value="14">14 ที่นั่ง (Commuter / HiAce จุคนเยอะ)</option>
+                      <option value="20">20 ที่นั่ง (มินิบัส Coaster / Hino ท่องเที่ยว)</option>
+                      <option value="24">24 ที่นั่ง (มินิบัสขนาดใหญ่ / กรุ๊ปสัมมนา)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="td-damen" className={labelCls}>
+                    {t('reg.fAmen')}
+                  </label>
+                  <input
+                    id="td-damen"
+                    type="text"
+                    placeholder={t('reg.fAmenPh')}
+                    value={formData.amenities}
+                    onChange={(e) => setFormData({ ...formData, amenities: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
               </div>
 
-              {/* License Plate Type & Tax Capability */}
-              <div className="rounded-input border border-rule bg-card/60 p-3.5 space-y-3">
+              {/* Section 4: License Plate Type & Operations */}
+              <div className="rounded-xl border border-rule bg-card/60 p-3.5 sm:p-4 space-y-3.5">
+                <label className="block text-xs font-black uppercase tracking-wider text-ink-2">
+                  4. ประเภทป้ายทะเบียน & เงื่อนไขการให้บริการ
+                </label>
+
                 <div>
-                  <label className={labelCls}>ประเภทป้ายทะเบียน / รูปแบบบริการ</label>
+                  <label className={labelCls}>ประเภทป้ายทะเบียน / รูปแบบรถ</label>
                   {formData.serviceType === 'with_driver' ? (
                     <div className="grid grid-cols-2 gap-2 mt-1">
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, plateType: 'yellow' })}
-                        className={`p-2.5 rounded-input border text-left text-xs font-bold transition-all ${
+                        className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
                           formData.plateType === 'yellow'
                             ? 'border-amber-400 bg-amber-50 text-amber-950 ring-1 ring-amber-400'
                             : 'border-rule bg-paper text-ink-2 hover:text-ink'
@@ -384,7 +436,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, plateType: 'blue' })}
-                        className={`p-2.5 rounded-input border text-left text-xs font-bold transition-all ${
+                        className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
                           formData.plateType === 'blue'
                             ? 'border-blue-400 bg-blue-50 text-blue-950 ring-1 ring-blue-400'
                             : 'border-rule bg-paper text-ink-2 hover:text-ink'
@@ -401,7 +453,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, plateType: 'yellow' })}
-                        className={`p-2.5 rounded-input border text-left text-xs font-bold transition-all ${
+                        className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
                           formData.plateType === 'yellow'
                             ? 'border-emerald-400 bg-emerald-50 text-emerald-950 ring-1 ring-emerald-400'
                             : 'border-rule bg-paper text-ink-2 hover:text-ink'
@@ -416,7 +468,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, plateType: 'blue' })}
-                        className={`p-2.5 rounded-input border text-left text-xs font-bold transition-all ${
+                        className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
                           formData.plateType === 'blue'
                             ? 'border-slate-400 bg-slate-100 text-slate-950 ring-1 ring-slate-400'
                             : 'border-rule bg-paper text-ink-2 hover:text-ink'
@@ -463,9 +515,12 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                 )}
 
                 <div>
-                  <label htmlFor="td-dplate" className={labelCls}>
-                    หมายเลขทะเบียนรถ
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="td-dplate" className={labelCls + ' mb-0'}>
+                      หมายเลขทะเบียนรถ
+                    </label>
+                    <span className="text-[10px] font-bold text-accent">🔒 เซ็นเซอร์เป็น 30-xxxx อัตโนมัติ</span>
+                  </div>
                   <input
                     id="td-dplate"
                     type="text"
@@ -474,7 +529,6 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                     onChange={(e) => setFormData({ ...formData, plateNumber: e.target.value })}
                     className={inputCls}
                   />
-                  <span className="text-[10px] text-ink-2 mt-1 block">* ระบบจะเซ็นเซอร์เลขทะเบียนบนหน้าเว็บสาธารณะเพื่อความปลอดภัย</span>
                 </div>
 
                 <label className="flex items-center gap-2 cursor-pointer pt-1">
@@ -485,28 +539,34 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                     className="rounded border-rule text-accent focus:ring-accent h-4 w-4"
                   />
                   <span className="text-xs font-bold text-ink">
-                    🏢 สามารถออกใบเสร็จรับเงิน / ใบกำกับภาษีได้
+                    🏢 สามารถออกใบเสร็จรับเงิน / ใบกำกับภาษีได้ (สำหรับงานบริษัท/ราชการ)
                   </span>
                 </label>
               </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="td-btn td-pop inline-flex w-full items-center justify-center gap-2 rounded-pill bg-accent disabled:opacity-60 px-4 py-3.5 text-sm font-extrabold text-accent-ink"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>กำลังบันทึกข้อมูล...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-                    {t('reg.submit')}
-                  </>
-                )}
-              </button>
+              {/* Submit Button */}
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="td-btn td-pop inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent disabled:opacity-60 px-4 py-3.5 text-sm font-black text-white shadow-md hover:bg-accent-deep transition-all"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>กำลังบันทึกข้อมูลเข้าระบบ...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
+                      {t('reg.submit')}
+                    </>
+                  )}
+                </button>
+                <p className="mt-2 text-center text-[10px] font-bold text-ink-2">
+                  🔒 ข้อมูลของคุณได้รับการปกป้องตามนโยบายความเป็นส่วนตัว TripDee ไม่มีค่าใช้จ่ายแอบแฝง
+                </p>
+              </div>
             </form>
           )}
         </div>
