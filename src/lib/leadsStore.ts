@@ -14,7 +14,7 @@ export interface QuotationLead {
   needsTaxInvoice: boolean;
   estimatedPrice: number;
   submittedAt: string;
-  status: 'pending' | 'quoted' | 'confirmed';
+  status: 'pending' | 'quoted' | 'confirmed' | 'cancelled';
 }
 
 export interface DriverLead {
@@ -101,6 +101,9 @@ interface LeadsDatabase {
   quotations: QuotationLead[];
   drivers: DriverLead[];
   approvedVehicles: Vehicle[];
+  deletedVehicleIds: string[];
+  deletedDriverLeadIds: string[];
+  deletedQuotationIds: string[];
 }
 
 declare global {
@@ -159,10 +162,22 @@ function getDb(): LeadsDatabase {
       quotations: [...INITIAL_QUOTATIONS],
       drivers: [...INITIAL_DRIVERS],
       approvedVehicles: [],
+      deletedVehicleIds: [],
+      deletedDriverLeadIds: [],
+      deletedQuotationIds: [],
     };
   }
   if (!Array.isArray(globalThis.__tripdee_leads__.approvedVehicles)) {
     globalThis.__tripdee_leads__.approvedVehicles = [];
+  }
+  if (!Array.isArray(globalThis.__tripdee_leads__.deletedVehicleIds)) {
+    globalThis.__tripdee_leads__.deletedVehicleIds = [];
+  }
+  if (!Array.isArray(globalThis.__tripdee_leads__.deletedDriverLeadIds)) {
+    globalThis.__tripdee_leads__.deletedDriverLeadIds = [];
+  }
+  if (!Array.isArray(globalThis.__tripdee_leads__.deletedQuotationIds)) {
+    globalThis.__tripdee_leads__.deletedQuotationIds = [];
   }
   return globalThis.__tripdee_leads__;
 }
@@ -193,6 +208,31 @@ export function addQuotation(lead: {
   return newLead;
 }
 
+export function updateQuotation(id: string, updates: Partial<QuotationLead>): QuotationLead | null {
+  const db = getDb();
+  const idx = db.quotations.findIndex((q) => q.id === id);
+  if (idx >= 0) {
+    db.quotations[idx] = { ...db.quotations[idx], ...updates };
+    return db.quotations[idx];
+  }
+  return null;
+}
+
+export function deleteQuotation(id: string): boolean {
+  const db = getDb();
+  if (!db.deletedQuotationIds.includes(id)) {
+    db.deletedQuotationIds.push(id);
+  }
+  const initialLen = db.quotations.length;
+  db.quotations = db.quotations.filter((q) => q.id !== id);
+  return true;
+}
+
+export function getDeletedQuotationIds(): string[] {
+  const db = getDb();
+  return db.deletedQuotationIds || [];
+}
+
 // Driver Lead Operations
 export function getAllDriverLeads(): DriverLead[] {
   return getDb().drivers;
@@ -219,6 +259,31 @@ export function addDriverLead(lead: {
   return newLead;
 }
 
+export function updateDriverLead(id: string, updates: Partial<DriverLead>): DriverLead | null {
+  const db = getDb();
+  const idx = db.drivers.findIndex((d) => d.id === id);
+  if (idx >= 0) {
+    db.drivers[idx] = { ...db.drivers[idx], ...updates };
+    return db.drivers[idx];
+  }
+  return null;
+}
+
+export function deleteDriverLead(id: string): boolean {
+  const db = getDb();
+  if (!db.deletedDriverLeadIds.includes(id)) {
+    db.deletedDriverLeadIds.push(id);
+  }
+  const initialLen = db.drivers.length;
+  db.drivers = db.drivers.filter((d) => d.id !== id);
+  return true;
+}
+
+export function getDeletedDriverLeadIds(): string[] {
+  const db = getDb();
+  return db.deletedDriverLeadIds || [];
+}
+
 export function approveDriverLead(id: string): Vehicle | null {
   const db = getDb();
   const driver = db.drivers.find((d) => d.id === id);
@@ -236,10 +301,50 @@ export function approveDriverLead(id: string): Vehicle | null {
   return null;
 }
 
+// Vehicle Catalog Operations (In-Memory Fallback & Sync)
 export function getApprovedVehicles(): Vehicle[] {
   const db = getDb();
   if (!Array.isArray(db.approvedVehicles)) {
     db.approvedVehicles = [];
   }
   return db.approvedVehicles;
+}
+
+export function addApprovedVehicle(vehicle: Vehicle): Vehicle {
+  const db = getDb();
+  db.deletedVehicleIds = db.deletedVehicleIds.filter((id) => id !== vehicle.id);
+  const idx = db.approvedVehicles.findIndex((v) => v.id === vehicle.id);
+  if (idx >= 0) {
+    db.approvedVehicles[idx] = vehicle;
+  } else {
+    db.approvedVehicles.unshift(vehicle);
+  }
+  return vehicle;
+}
+
+export function updateApprovedVehicle(id: string, updates: Partial<Vehicle>): Vehicle | null {
+  const db = getDb();
+  const idx = db.approvedVehicles.findIndex((v) => v.id === id);
+  if (idx >= 0) {
+    db.approvedVehicles[idx] = { ...db.approvedVehicles[idx], ...updates };
+    return db.approvedVehicles[idx];
+  }
+  return null;
+}
+
+export function deleteApprovedVehicle(id: string): boolean {
+  const db = getDb();
+  if (!db.deletedVehicleIds.includes(id)) {
+    db.deletedVehicleIds.push(id);
+  }
+  db.approvedVehicles = db.approvedVehicles.filter((v) => v.id !== id);
+  return true;
+}
+
+export function getDeletedVehicleIds(): string[] {
+  const db = getDb();
+  if (!Array.isArray(db.deletedVehicleIds)) {
+    db.deletedVehicleIds = [];
+  }
+  return db.deletedVehicleIds;
 }

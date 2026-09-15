@@ -126,15 +126,35 @@ create index if not exists idx_analytics_events_name on public.analytics_events(
 create index if not exists idx_analytics_events_created_at on public.analytics_events(created_at desc);
 
 -- ------------------------------------------------------------------------------
--- 7. ROW LEVEL SECURITY (RLS) POLICIES
+-- 7. TABLE: sponsors (ผู้สนับสนุน และแบนเนอร์พันธมิตร)
+-- ------------------------------------------------------------------------------
+create table if not exists public.sponsors (
+    id text primary key,
+    title text not null,
+    category text not null, -- 'hotel' | 'auto_service' | 'restaurant' | 'activity'
+    category_label text not null,
+    tagline text,
+    badge_text text,
+    image text not null,
+    link text not null,
+    discount_text text,
+    location text,
+    created_at timestamptz default now()
+);
+
+create index if not exists idx_sponsors_category on public.sponsors(category);
+
+-- ------------------------------------------------------------------------------
+-- 8. ROW LEVEL SECURITY (RLS) POLICIES
 -- ------------------------------------------------------------------------------
 alter table public.quotations enable row level security;
 alter table public.driver_leads enable row level security;
 alter table public.vehicles enable row level security;
 alter table public.board_posts enable row level security;
 alter table public.analytics_events enable row level security;
+alter table public.sponsors enable row level security;
 
--- Quotations policies: anyone can create quote request; anyone can read for portal
+-- Quotations policies
 create policy "Allow public insert on quotations"
     on public.quotations for insert
     with check (true);
@@ -147,7 +167,11 @@ create policy "Allow public update on quotations"
     on public.quotations for update
     using (true);
 
--- Driver leads policies: anyone can apply; portal can read & verify
+create policy "Allow public delete on quotations"
+    on public.quotations for delete
+    using (true);
+
+-- Driver leads policies
 create policy "Allow public insert on driver_leads"
     on public.driver_leads for insert
     with check (true);
@@ -160,7 +184,11 @@ create policy "Allow public update on driver_leads"
     on public.driver_leads for update
     using (true);
 
--- Vehicles policies: anyone can view vehicles; authenticated/anon can insert for seeding
+create policy "Allow public delete on driver_leads"
+    on public.driver_leads for delete
+    using (true);
+
+-- Vehicles policies
 create policy "Allow public select on vehicles"
     on public.vehicles for select
     using (true);
@@ -173,7 +201,11 @@ create policy "Allow public update on vehicles"
     on public.vehicles for update
     using (true);
 
--- Board posts policies: anyone can read and post
+create policy "Allow public delete on vehicles"
+    on public.vehicles for delete
+    using (true);
+
+-- Board posts policies
 create policy "Allow public select on board_posts"
     on public.board_posts for select
     using (true);
@@ -182,7 +214,32 @@ create policy "Allow public insert on board_posts"
     on public.board_posts for insert
     with check (true);
 
--- Analytics events policies: anyone can submit tracking events
+create policy "Allow public update on board_posts"
+    on public.board_posts for update
+    using (true);
+
+create policy "Allow public delete on board_posts"
+    on public.board_posts for delete
+    using (true);
+
+-- Sponsors policies
+create policy "Allow public select on sponsors"
+    on public.sponsors for select
+    using (true);
+
+create policy "Allow public insert on sponsors"
+    on public.sponsors for insert
+    with check (true);
+
+create policy "Allow public update on sponsors"
+    on public.sponsors for update
+    using (true);
+
+create policy "Allow public delete on sponsors"
+    on public.sponsors for delete
+    using (true);
+
+-- Analytics events policies
 create policy "Allow public insert on analytics_events"
     on public.analytics_events for insert
     with check (true);
@@ -456,3 +513,33 @@ values
     now() - interval '2 days'
 )
 on conflict (id) do nothing;
+
+-- Seed Sponsors
+insert into public.sponsors (id, title, category, category_label, tagline, badge_text, image, link, discount_text, location)
+values
+(
+    'sp-1',
+    'หมอกฟ้า พูลวิลล่า & แกลมปิ้ง ม่อนแจ่ม',
+    'hotel',
+    'ที่พักแนะนำพันธมิตร',
+    'สัมผัสทะเลหมอกหน้าห้องพัก สระว่ายน้ำส่วนตัว พร้อมชุดหมูกระทะยามเย็น',
+    'ส่วนลดพิเศษลูกค้า TripDee',
+    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
+    'https://line.me',
+    'ลดทันที 15% เมื่อแสดงใบยืนยันรถเช่า TripDee',
+    'ม่อนแจ่ม, เชียงใหม่'
+),
+(
+    'sp-2',
+    'ซีเอ็นเอ็กซ์ เซอร์วิสแอนด์ไทร์ (ศูนย์ยางและเบรกรถตู้)',
+    'auto_service',
+    'บริการสำหรับคนขับ',
+    'บริการตรวจเช็กระบบเบรก ถ่ายน้ำมันเครื่อง เปลี่ยนยางราคาพิเศษสำหรับสมาชิก TripDee',
+    'สิทธิพิเศษคนขับ TripDee',
+    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=800&q=80',
+    'tel:0899999999',
+    'เปลี่ยนยาง 4 เส้น ฟรีสลับยาง-ถ่วงล้อตลอดอายุการใช้งาน',
+    'ถนนซุปเปอร์ไฮเวย์ เชียงใหม่'
+)
+on conflict (id) do nothing;
+

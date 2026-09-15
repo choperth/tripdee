@@ -276,6 +276,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      sponsors: {
+        Row: {
+          id: string;
+          title: string;
+          category: 'hotel' | 'auto_service' | 'restaurant' | 'activity';
+          category_label: string;
+          tagline: string | null;
+          badge_text: string | null;
+          image: string;
+          link: string;
+          discount_text: string | null;
+          location: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          title: string;
+          category: 'hotel' | 'auto_service' | 'restaurant' | 'activity';
+          category_label: string;
+          tagline?: string | null;
+          badge_text?: string | null;
+          image: string;
+          link: string;
+          discount_text?: string | null;
+          location?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          category?: 'hotel' | 'auto_service' | 'restaurant' | 'activity';
+          category_label?: string;
+          tagline?: string | null;
+          badge_text?: string | null;
+          image?: string;
+          link?: string;
+          discount_text?: string | null;
+          location?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

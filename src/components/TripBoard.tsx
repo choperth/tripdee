@@ -79,16 +79,23 @@ export const TripBoard: React.FC = () => {
   const [form, setForm] = useState<PostFormState>(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
+  const loadBoardPosts = React.useCallback(() => {
     fetch('/api/board')
       .then((res) => res.json())
       .then((data) => {
-        if (data.posts && Array.isArray(data.posts) && data.posts.length > 0) {
+        if (data.posts && Array.isArray(data.posts)) {
           setPosts(data.posts);
         }
       })
       .catch((err) => console.debug('Failed to fetch board posts:', err));
   }, []);
+
+  useEffect(() => {
+    loadBoardPosts();
+    const handleUpdate = () => loadBoardPosts();
+    window.addEventListener('tripdee-board-updated', handleUpdate);
+    return () => window.removeEventListener('tripdee-board-updated', handleUpdate);
+  }, [loadBoardPosts]);
 
   const visiblePosts = posts.filter((p) => filter === 'all' || p.type === filter);
 
