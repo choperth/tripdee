@@ -74,12 +74,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     const root = document.documentElement;
     if (dismissed) {
       root.setAttribute('data-nav', 'dismissed');
-    } else if (compact) {
-      root.setAttribute('data-nav', 'compact');
     } else {
       root.removeAttribute('data-nav');
     }
-  }, [dismissed, compact]);
+  }, [dismissed]);
 
   const toggleTheme = () => {
     const next = theme === 'light' ? 'dark' : 'light';

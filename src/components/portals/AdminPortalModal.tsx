@@ -46,11 +46,21 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
   const handleApprove = async (driverId: string) => {
     approveDriverVerification(driverId);
     setApprovedDrivers((prev) => [...prev, driverId]);
-    fetch('/api/leads/driver', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'approve', id: driverId }),
-    }).catch(() => {});
+    setDriverLeads((prev) =>
+      prev.map((d) => (d.id === driverId ? { ...d, status: 'verified' } : d))
+    );
+    try {
+      await fetch('/api/leads/driver', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve', id: driverId }),
+      });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
+      }
+    } catch (err) {
+      console.error('Error approving driver:', err);
+    }
   };
 
   return (

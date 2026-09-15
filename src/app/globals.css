@@ -307,5 +307,5 @@ h1, h2 { overflow-wrap: anywhere; }
 
 /* Head-height sync */
 :root { --td-banner-h: 40px; --td-bar-h: 64px; --td-head-h: calc(var(--td-banner-h) + var(--td-bar-h)); }
-html[data-nav="compact"] { --td-head-h: var(--td-bar-h); }
 html[data-nav="dismissed"] { --td-banner-h: 0px; }
+

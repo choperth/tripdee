@@ -31,9 +31,76 @@ export interface DriverLead {
   status: 'pending' | 'verified' | 'rejected';
 }
 
+import { Vehicle } from '@/data/mockData';
+
+export function convertLeadToVehicle(lead: DriverLead): Vehicle {
+  const seatsNum = Number(lead.seats.replace(/[^0-9]/g, '')) || 9;
+
+  let region: 'north' | 'central' | 'south' | 'east' | 'isan' = 'north';
+  const routesLower = (lead.routes || '').toLowerCase();
+  if (routesLower.includes('กทม') || routesLower.includes('กรุงเทพ') || routesLower.includes('อยุธยา') || routesLower.includes('หัวหิน')) {
+    region = 'central';
+  } else if (routesLower.includes('ภูเก็ต') || routesLower.includes('พังงา') || routesLower.includes('กระบี่') || routesLower.includes('สมุย')) {
+    region = 'south';
+  } else if (routesLower.includes('พัทยา') || routesLower.includes('ชลบุรี') || routesLower.includes('ระยอง')) {
+    region = 'east';
+  } else if (routesLower.includes('เขาใหญ่') || routesLower.includes('โคราช') || routesLower.includes('ขอนแก่น')) {
+    region = 'isan';
+  }
+
+  const popularRoutes = lead.routes
+    ? lead.routes.split(/[,/•]+/).map((r) => r.trim()).filter(Boolean)
+    : ['ตัวเมือง', 'สนามบิน'];
+
+  const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
+  const cleanLine = lead.lineId
+    ? lead.lineId.startsWith('http')
+      ? lead.lineId
+      : `https://line.me/ti/p/~${lead.lineId}`
+    : 'https://line.me';
+  const whatsapp = cleanPhone ? `https://wa.me/66${cleanPhone.replace(/^0/, '')}` : undefined;
+
+  const titleSeats = lead.vehicleModel.includes('ที่นั่ง') ? '' : ` ${seatsNum} ที่นั่ง`;
+
+  return {
+    id: `v-${lead.id}`,
+    title: `${lead.vehicleModel}${titleSeats} (${lead.nickname})`,
+    type: lead.vehicleModel.toLowerCase().includes('fortuner') || lead.vehicleModel.toLowerCase().includes('suv') ? 'suv' : 'van',
+    seats: seatsNum,
+    driverName: lead.driverName,
+    driverNickname: lead.nickname,
+    driverPhone: lead.phone,
+    driverLine: cleanLine,
+    driverWhatsapp: whatsapp,
+    driverWechat: undefined,
+    driverKakao: undefined,
+    languages: ['th'],
+    region,
+    rating: 5.0,
+    reviewCount: 1,
+    isVerified: true,
+    images: [
+      'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80',
+    ],
+    zoneRates: { city: 1900, midHill: 2100, highHill: 2300, crossProvince: 2700 },
+    rateNote: 'คนขับผ่านการยืนยันตัวตน TripDee Verified เรียบร้อยแล้ว',
+    location: lead.routes || 'บริการทั่วไทย',
+    popularRoutes: popularRoutes.length > 0 ? popularRoutes : ['ตัวเมือง', 'สนามบิน'],
+    amenities: [
+      'ตรวจสภาพรถและประวัติคนขับแล้ว 100%',
+      'ใบขับขี่สาธารณะถูกต้อง',
+      'ประกันภัยคุ้มครองผู้โดยสาร',
+      'แอร์เย็นฉ่ำ สภาพรถใหม่สะอาด',
+    ],
+    description: `บริการรถตู้พร้อมคนขับ โดย ${lead.driverName} (${lead.nickname}) ยานพาหนะ ${lead.vehicleModel} ชำนาญเส้นทาง ${lead.routes} ผ่านการตรวจสอบเอกสารและอนุมัติตรา TripDee Verified พร้อมให้บริการลูกค้าทันที`,
+  };
+}
+
 interface LeadsDatabase {
   quotations: QuotationLead[];
   drivers: DriverLead[];
+  approvedVehicles: Vehicle[];
 }
 
 declare global {
@@ -91,7 +158,11 @@ function getDb(): LeadsDatabase {
     globalThis.__tripdee_leads__ = {
       quotations: [...INITIAL_QUOTATIONS],
       drivers: [...INITIAL_DRIVERS],
+      approvedVehicles: [],
     };
+  }
+  if (!Array.isArray(globalThis.__tripdee_leads__.approvedVehicles)) {
+    globalThis.__tripdee_leads__.approvedVehicles = [];
   }
   return globalThis.__tripdee_leads__;
 }
@@ -148,12 +219,27 @@ export function addDriverLead(lead: {
   return newLead;
 }
 
-export function approveDriverLead(id: string): boolean {
+export function approveDriverLead(id: string): Vehicle | null {
   const db = getDb();
   const driver = db.drivers.find((d) => d.id === id);
   if (driver) {
     driver.status = 'verified';
-    return true;
+    const newVehicle = convertLeadToVehicle(driver);
+    const existingIdx = db.approvedVehicles.findIndex((v) => v.id === newVehicle.id);
+    if (existingIdx >= 0) {
+      db.approvedVehicles[existingIdx] = newVehicle;
+    } else {
+      db.approvedVehicles.unshift(newVehicle);
+    }
+    return newVehicle;
   }
-  return false;
+  return null;
+}
+
+export function getApprovedVehicles(): Vehicle[] {
+  const db = getDb();
+  if (!Array.isArray(db.approvedVehicles)) {
+    db.approvedVehicles = [];
+  }
+  return db.approvedVehicles;
 }

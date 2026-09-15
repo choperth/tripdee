@@ -134,7 +134,7 @@ export type Database = {
           driver_name: string;
           driver_nickname: string;
           driver_phone: string;
-          driver_line?: string;
+          driver_line?: string | null;
           driver_whatsapp?: string | null;
           driver_wechat?: string | null;
           driver_kakao?: string | null;
@@ -160,7 +160,7 @@ export type Database = {
           driver_name?: string;
           driver_nickname?: string;
           driver_phone?: string;
-          driver_line?: string;
+          driver_line?: string | null;
           driver_whatsapp?: string | null;
           driver_wechat?: string | null;
           driver_kakao?: string | null;

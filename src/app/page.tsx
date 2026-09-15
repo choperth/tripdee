@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { VEHICLES, SPONSORS, POPULAR_ROUTES, Vehicle } from '@/data/mockData';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
@@ -18,6 +18,7 @@ import { AdminPortalModal } from '@/components/portals/AdminPortalModal';
 import { useAuth } from '@/context/AuthContext';
 import { Footer } from '@/components/Footer';
 import { MobileBottomBar } from '@/components/MobileBottomBar';
+import { ScrollQualityMonitor } from '@/components/ScrollQualityMonitor';
 import { useLanguage } from '@/context/LanguageContext';
 import type { DictKey } from '@/i18n/dictionaries';
 import { SearchX, ArrowRight, X, SlidersHorizontal, RotateCcw } from 'lucide-react';
@@ -75,7 +76,7 @@ export default function HomePage() {
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [vehicles, setVehicles] = useState<Vehicle[]>(VEHICLES);
 
-  useEffect(() => {
+  const loadVehicles = useCallback(() => {
     fetch('/api/vehicles')
       .then((res) => res.json())
       .then((data) => {
@@ -85,6 +86,13 @@ export default function HomePage() {
       })
       .catch((err) => console.debug('Failed to fetch vehicles:', err));
   }, []);
+
+  useEffect(() => {
+    loadVehicles();
+    const handleUpdate = () => loadVehicles();
+    window.addEventListener('tripdee-vehicles-updated', handleUpdate);
+    return () => window.removeEventListener('tripdee-vehicles-updated', handleUpdate);
+  }, [loadVehicles]);
   const [selectedVehicleDetail, setSelectedVehicleDetail] = useState<Vehicle | null>(null);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
@@ -427,6 +435,9 @@ export default function HomePage() {
       {user?.role === 'admin' && (
         <AdminPortalModal isOpen={isPortalOpen} onClose={() => setIsPortalOpen(false)} />
       )}
+
+      {/* Scroll & Layout Quality Monitor */}
+      <ScrollQualityMonitor />
 
       {/* Floating Mobile Quick Call/LINE bar */}
       <MobileBottomBar />

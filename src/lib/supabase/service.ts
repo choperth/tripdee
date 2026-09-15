@@ -22,6 +22,8 @@ import {
   getAllDriverLeads as getLocalDrivers,
   addDriverLead as addLocalDriver,
   approveDriverLead as approveLocalDriver,
+  getApprovedVehicles,
+  convertLeadToVehicle,
 } from '@/lib/leadsStore';
 import { AnalyticsEvent } from '@/lib/analytics';
 import { recordServerAnalyticsEvent } from '@/lib/serverAnalyticsStore';
@@ -223,20 +225,73 @@ export async function saveDriverLead(lead: {
 }
 
 export async function verifyDriverLead(id: string): Promise<boolean> {
-  approveLocalDriver(id);
+  let newVehicle = approveLocalDriver(id);
 
   const supabase = getSupabase();
   if (!supabase) return true;
 
   try {
-    const { error } = await supabase
+    const { data: updatedLead, error } = await supabase
       .from('driver_leads')
       .update({ status: 'verified' })
-      .eq('id', id);
+      .eq('id', id)
+      .select()
+      .maybeSingle();
 
     if (error) {
       console.warn('[TripDee Supabase] Error approving driver in db:', error.message);
     }
+
+    if (!newVehicle && updatedLead) {
+      const leadObj: DriverLead = {
+        id: updatedLead.id,
+        driverName: updatedLead.driver_name,
+        nickname: updatedLead.nickname,
+        phone: updatedLead.phone,
+        lineId: updatedLead.line_id || '',
+        vehicleModel: updatedLead.vehicle_model || 'Toyota Commuter VIP',
+        seats: String(updatedLead.seats || '9'),
+        plateNumber: updatedLead.plate_number || undefined,
+        routes: updatedLead.routes || 'เชียงใหม่และใกล้เคียง',
+        submittedAt: updatedLead.created_at,
+        status: 'verified',
+      };
+      newVehicle = convertLeadToVehicle(leadObj);
+      const approvedList = getApprovedVehicles();
+      if (!approvedList.some((v) => v.id === newVehicle!.id)) {
+        approvedList.unshift(newVehicle);
+      }
+    }
+
+    if (newVehicle) {
+      // Upsert the newly approved vehicle into Supabase public.vehicles table
+      await supabase.from('vehicles').upsert({
+        id: newVehicle.id,
+        title: newVehicle.title,
+        type: newVehicle.type,
+        seats: newVehicle.seats,
+        driver_name: newVehicle.driverName,
+        driver_nickname: newVehicle.driverNickname,
+        driver_phone: newVehicle.driverPhone,
+        driver_line: newVehicle.driverLine || null,
+        driver_whatsapp: newVehicle.driverWhatsapp || null,
+        driver_wechat: newVehicle.driverWechat || null,
+        driver_kakao: newVehicle.driverKakao || null,
+        languages: newVehicle.languages,
+        rating: newVehicle.rating,
+        review_count: newVehicle.reviewCount,
+        is_verified: true,
+        images: newVehicle.images,
+        zone_rates: newVehicle.zoneRates,
+        rate_note: newVehicle.rateNote || null,
+        location: newVehicle.location,
+        region: newVehicle.region || 'north',
+        popular_routes: newVehicle.popularRoutes,
+        amenities: newVehicle.amenities,
+        description: newVehicle.description,
+      });
+    }
+
     return true;
   } catch (err) {
     console.warn('[TripDee Supabase] Exception approving driver:', err);
@@ -249,8 +304,17 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
 // ==============================================================================
 
 export async function fetchVehicles(): Promise<Vehicle[]> {
+  const localApproved = getApprovedVehicles() || [];
   const supabase = getSupabase();
-  if (!supabase) return VEHICLES;
+  if (!supabase) {
+    const combined = [...localApproved];
+    for (const v of VEHICLES) {
+      if (!combined.some((c) => c.id === v.id)) {
+        combined.push(v);
+      }
+    }
+    return combined;
+  }
 
   try {
     const { data, error } = await supabase
@@ -258,38 +322,53 @@ export async function fetchVehicles(): Promise<Vehicle[]> {
       .select('*')
       .order('rating', { ascending: false });
 
-    if (error || !data || data.length === 0) {
-      return VEHICLES;
+    let baseVehicles: Vehicle[] = VEHICLES;
+
+    if (!error && data && data.length > 0) {
+      baseVehicles = data.map((row) => ({
+        id: row.id,
+        title: row.title,
+        type: row.type,
+        seats: row.seats,
+        driverName: row.driver_name,
+        driverNickname: row.driver_nickname,
+        driverPhone: row.driver_phone,
+        driverLine: row.driver_line || '',
+        driverWhatsapp: row.driver_whatsapp || undefined,
+        driverWechat: row.driver_wechat || undefined,
+        driverKakao: row.driver_kakao || undefined,
+        languages: (row.languages as ('th' | 'en' | 'zh' | 'ko')[]) || ['th'],
+        rating: Number(row.rating) || 5.0,
+        reviewCount: Number(row.review_count) || 0,
+        isVerified: Boolean(row.is_verified),
+        images: row.images || [],
+        zoneRates: row.zone_rates as Record<ZoneId, number>,
+        rateNote: row.rate_note || undefined,
+        location: row.location,
+        region: (row.region as 'north' | 'central' | 'south' | 'east' | 'isan') || 'north',
+        popularRoutes: row.popular_routes || [],
+        amenities: row.amenities || [],
+        description: row.description || '',
+      }));
     }
 
-    return data.map((row) => ({
-      id: row.id,
-      title: row.title,
-      type: row.type,
-      seats: row.seats,
-      driverName: row.driver_name,
-      driverNickname: row.driver_nickname,
-      driverPhone: row.driver_phone,
-      driverLine: row.driver_line || '',
-      driverWhatsapp: row.driver_whatsapp || undefined,
-      driverWechat: row.driver_wechat || undefined,
-      driverKakao: row.driver_kakao || undefined,
-      languages: (row.languages as ('th' | 'en' | 'zh' | 'ko')[]) || ['th'],
-      rating: Number(row.rating) || 5.0,
-      reviewCount: Number(row.review_count) || 0,
-      isVerified: Boolean(row.is_verified),
-      images: row.images || [],
-      zoneRates: row.zone_rates as Record<ZoneId, number>,
-      rateNote: row.rate_note || undefined,
-      location: row.location,
-      region: (row.region as 'north' | 'central' | 'south' | 'east' | 'isan') || 'north',
-      popularRoutes: row.popular_routes || [],
-      amenities: row.amenities || [],
-      description: row.description || '',
-    }));
+    // Merge in any locally approved vehicles so they show up immediately
+    const combined = [...localApproved];
+    for (const v of baseVehicles) {
+      if (!combined.some((c) => c.id === v.id)) {
+        combined.push(v);
+      }
+    }
+    return combined;
   } catch (err) {
     console.warn('[TripDee Supabase] Error fetching vehicles, using mock data:', err);
-    return VEHICLES;
+    const combined = [...localApproved];
+    for (const v of VEHICLES) {
+      if (!combined.some((c) => c.id === v.id)) {
+        combined.push(v);
+      }
+    }
+    return combined;
   }
 }
 
