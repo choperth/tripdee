@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { VehicleCard } from '@/components/VehicleCard';
 import { SponsorBanner } from '@/components/SponsorBanner';
+import { OfficialPartnersMarquee } from '@/components/OfficialPartnersMarquee';
 import { SponsorSidebar } from '@/components/SponsorSidebar';
 import { CorporateSection } from '@/components/CorporateSection';
 import { VehicleDetailModal } from '@/components/VehicleDetailModal';
@@ -423,11 +424,6 @@ export default function HomePage() {
               </div>
             </section>
 
-            {/* Sponsor feature */}
-            <div className="mt-12">
-              <SponsorBanner sponsor={SPONSORS[0]} variant="split" />
-            </div>
-
             {/* Routes strip */}
             <section aria-label={t('home.routesAria')} className="mt-12">
               <SectionHead
@@ -472,16 +468,15 @@ export default function HomePage() {
               </div>
             </section>
 
-            <div className="mt-10">
-              <SponsorBanner sponsor={SPONSORS[1]} variant="strip" />
-            </div>
-
             {/* Corporate strip */}
             <div className="mt-12">
               <CorporateSection />
             </div>
           </div>
         )}
+
+        {/* Official Partners Marquee (Clean, non-cluttering brand showcase) */}
+        <OfficialPartnersMarquee />
 
         {/* Index band */}
         <nav aria-label={t('home.indexAria')} className="td-elev-card mb-12 grid grid-cols-1 gap-6 rounded-card bg-paper-2 p-6 sm:grid-cols-2 sm:p-8">

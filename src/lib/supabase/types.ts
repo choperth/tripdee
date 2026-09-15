@@ -304,7 +304,7 @@ export type Database = {
         Row: {
           id: string;
           title: string;
-          category: 'hotel' | 'auto_service' | 'restaurant' | 'activity';
+          category: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel';
           category_label: string;
           tagline: string | null;
           badge_text: string | null;
@@ -317,7 +317,7 @@ export type Database = {
         Insert: {
           id: string;
           title: string;
-          category: 'hotel' | 'auto_service' | 'restaurant' | 'activity';
+          category: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel';
           category_label: string;
           tagline?: string | null;
           badge_text?: string | null;
@@ -330,7 +330,7 @@ export type Database = {
         Update: {
           id?: string;
           title?: string;
-          category?: 'hotel' | 'auto_service' | 'restaurant' | 'activity';
+          category?: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel';
           category_label?: string;
           tagline?: string | null;
           badge_text?: string | null;

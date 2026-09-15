@@ -53,7 +53,7 @@ export interface Vehicle {
 export interface Sponsor {
   id: string;
   title: string;
-  category: 'hotel' | 'auto_service' | 'restaurant' | 'activity';
+  category: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel';
   categoryLabel: string;
   tagline: string;
   badgeText: string;
@@ -61,6 +61,9 @@ export interface Sponsor {
   link: string;
   discountText: string;
   location: string;
+  region?: 'north' | 'central' | 'south' | 'northeast' | 'all';
+  targetAudience?: 'traveler' | 'driver' | 'all';
+  logo?: string;
 }
 
 export interface TravelRoute {
@@ -198,8 +201,10 @@ export const SPONSORS: Sponsor[] = [
     badgeText: 'ส่วนลดพิเศษลูกค้า TripDee',
     image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
     link: 'https://line.me',
-    discountText: 'ลดทันที 15% เมื่อแสดงใบยืนยันรถเช่า TripDee',
-    location: 'ม่อนแจ่ม, เชียงใหม่'
+    discountText: 'ลดทันที 15% เมื่อแสดงใบจองหรือบอกว่ามาจาก TripDee',
+    location: 'ม่อนแจ่ม, เชียงใหม่',
+    region: 'north',
+    targetAudience: 'traveler',
   },
   {
     id: 'sp-2',
@@ -211,9 +216,141 @@ export const SPONSORS: Sponsor[] = [
     image: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=800&q=80',
     link: 'tel:0899999999',
     discountText: 'เปลี่ยนยาง 4 เส้น ฟรีสลับยาง-ถ่วงล้อตลอดอายุการใช้งาน',
-    location: 'ถนนซุปเปอร์ไฮเวย์ เชียงใหม่'
-  }
+    location: 'ถนนซุปเปอร์ไฮเวย์ เชียงใหม่',
+    region: 'north',
+    targetAudience: 'driver',
+  },
+  {
+    id: 'sp-3',
+    title: 'ทิพยประกันภัย คุ้มครองอุบัติเหตุ & ค่าเสียหายส่วนแรก',
+    category: 'insurance',
+    categoryLabel: 'ประกันภัยการเดินทาง & รถเช่า',
+    tagline: 'เดินทางอุ่นใจไร้กังวล คุ้มครองทั้งคนขับ ผู้โดยสาร และความเสียหายตัวรถตลอด 24 ชม.',
+    badgeText: 'สิทธิพิเศษสำหรับผู้เดินทาง',
+    image: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80',
+    link: 'https://www.dhipaya.co.th',
+    discountText: 'เบี้ยประกันเริ่มต้นเพียง 50 บาท/วัน เคลมไวง่ายผ่านแอป',
+    location: 'คุ้มครองทั่วประเทศไทย',
+    region: 'all',
+    targetAudience: 'all',
+  },
+  {
+    id: 'sp-4',
+    title: 'PT Max Card Plus สิทธิพิเศษน้ำมัน & กาแฟพันธุ์ไทย',
+    category: 'fuel',
+    categoryLabel: 'ส่วนลดพลังงานและการเดินทาง',
+    tagline: 'บัตรเดียวคุ้ม เติมน้ำมันลดลิตรละ 50 สต. พร้อมรับส่วนลดเครื่องดื่ม 50% ทุกสาขาทั่วไทย',
+    badgeText: 'พันธมิตรการเดินทาง',
+    image: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80',
+    link: 'https://www.pt.co.th',
+    discountText: 'สมัครผ่าน TripDee รับแต้มสะสมฟรี 500 พอยท์ทันที',
+    location: 'สถานีบริการน้ำมัน PT ทั่วประเทศ',
+    region: 'all',
+    targetAudience: 'all',
+  },
 ];
+
+export interface OfficialPartner {
+  id: string;
+  name: string;
+  category: string;
+  badge: string;
+  logoIcon: string;
+  highlight: string;
+  link: string;
+}
+
+export const OFFICIAL_PARTNERS: OfficialPartner[] = [
+  {
+    id: 'p-ptt',
+    name: 'PTT Station & EV Station',
+    category: 'สถานีบริการน้ำมัน & จุดชาร์จ EV',
+    badge: 'พลังงานการเดินทาง',
+    logoIcon: '⛽',
+    highlight: 'สะสมแต้ม Blue Card & จุดพักรถมาตรฐาน',
+    link: 'https://www.pttor.com',
+  },
+  {
+    id: 'p-pt',
+    name: 'PT Max Card Plus',
+    category: 'น้ำมันและเครื่องดื่ม',
+    badge: 'ส่วนลดคนขับ & นักเดินทาง',
+    logoIcon: '☕',
+    highlight: 'ลดลิตรละ 50 สต. + พันธุ์ไทย 50%',
+    link: 'https://www.pt.co.th',
+  },
+  {
+    id: 'p-msig',
+    name: 'MSIG Insurance',
+    category: 'ประกันภัยการเดินทาง',
+    badge: 'คุ้มครองทริป',
+    logoIcon: '🛡️',
+    highlight: 'ประกันเดินทาง & รถเช่า เริ่มต้น 50 บ./วัน',
+    link: 'https://www.msig-thai.com',
+  },
+  {
+    id: 'p-dhipaya',
+    name: 'ทิพยประกันภัย',
+    category: 'ประกันภัยยานพาหนะ',
+    badge: 'ประกันภัยชั้นนำ',
+    logoIcon: '🏢',
+    highlight: 'พ.ร.บ. และประกันภัยชั้น 1 คุ้มครองผู้โดยสาร',
+    link: 'https://www.dhipaya.co.th',
+  },
+  {
+    id: 'p-bquik',
+    name: 'B-Quik (บี-ควิก)',
+    category: 'ศูนย์บริการยางและเบรก',
+    badge: 'ดูแลรถตู้ & รถเช่า',
+    logoIcon: '🔧',
+    highlight: 'ตรวจเช็กสุขภาพรถฟรี 30 รายการก่อนออกทริป',
+    link: 'https://www.b-quik.com',
+  },
+  {
+    id: 'p-cockpit',
+    name: 'COCKPIT (ค็อกพิท)',
+    category: 'ยางบริดจสโตนมาตรฐาน',
+    badge: 'มาตรฐานความปลอดภัย',
+    logoIcon: '🛞',
+    highlight: 'เปลี่ยนยางรับประกัน 1 ปี พร้อมบริการฉุกเฉิน 24 ชม.',
+    link: 'https://www.cockpit.co.th',
+  },
+  {
+    id: 'p-veranda',
+    name: 'Veranda Resort & Hotels',
+    category: 'เครือโรงแรมและรีสอร์ต',
+    badge: 'ที่พักพันธมิตร VIP',
+    logoIcon: '🏨',
+    highlight: 'ส่วนลดห้องพัก 15% เชียงใหม่ พัทยา หัวหิน',
+    link: 'https://www.verandaresort.com',
+  },
+  {
+    id: 'p-mhokfah',
+    name: 'หมอกฟ้า พูลวิลล่า ม่อนแจ่ม',
+    category: 'ที่พักวิวดอย & แกลมปิ้ง',
+    badge: 'ท็อปเรตติ้งภาคเหนือ',
+    logoIcon: '🌄',
+    highlight: 'พูลวิลล่าส่วนตัวพร้อมหมูกระทะยามเย็น ลด 15%',
+    link: 'https://line.me',
+  },
+];
+
+export function getContextualSponsor(params: {
+  region?: string;
+  isSelfDrive?: boolean;
+  audience?: 'traveler' | 'driver';
+}): Sponsor {
+  if (params.audience === 'driver') {
+    return SPONSORS.find((s) => s.category === 'auto_service') || SPONSORS[1];
+  }
+  if (params.isSelfDrive) {
+    return SPONSORS.find((s) => s.category === 'insurance') || SPONSORS[2];
+  }
+  if (params.region === 'north') {
+    return SPONSORS.find((s) => s.region === 'north' && s.targetAudience === 'traveler') || SPONSORS[0];
+  }
+  return SPONSORS[0];
+}
 
 export const VEHICLES: Vehicle[] = [
   {
