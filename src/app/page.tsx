@@ -136,13 +136,30 @@ export default function HomePage() {
         vehicle.popularRoutes.some((r) => r.includes(selectedZone)) ||
         vehicle.location.includes(selectedZone);
       const matchesSeats =
-        selectedSeats === 'all' || vehicle.seats === Number(selectedSeats);
+        selectedSeats === 'all'
+          ? true
+          : selectedSeats === '4-5' || selectedSeats === '4'
+          ? vehicle.seats <= 5
+          : selectedSeats === '7'
+          ? vehicle.seats === 7
+          : selectedSeats === '9'
+          ? vehicle.seats === 9
+          : selectedSeats === '10'
+          ? vehicle.seats === 10
+          : selectedSeats === '11-14' || selectedSeats === '13'
+          ? vehicle.seats >= 11 && vehicle.seats <= 14
+          : selectedSeats === '20'
+          ? vehicle.seats >= 16
+          : vehicle.seats === Number(selectedSeats);
+
       const keyword = searchKeyword.trim().toLowerCase();
       const matchesKeyword =
         keyword === '' ||
         vehicle.title.toLowerCase().includes(keyword) ||
         vehicle.description.toLowerCase().includes(keyword) ||
-        vehicle.amenities.some((a) => a.toLowerCase().includes(keyword));
+        vehicle.amenities.some((a) => a.toLowerCase().includes(keyword)) ||
+        (vehicle.driverNickname && vehicle.driverNickname.toLowerCase().includes(keyword)) ||
+        (vehicle.driverName && vehicle.driverName.toLowerCase().includes(keyword));
 
       const matchesPlate =
         plateFilter === 'all'

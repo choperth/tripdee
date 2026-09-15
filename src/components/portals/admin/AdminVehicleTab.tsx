@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Vehicle, ZoneId } from '@/data/mockData';
+import { ALL_VEHICLE_MODELS } from '@/data/vehicleModels';
 import { CarFront, Plus, Pencil, Trash2, CheckCircle2, ShieldCheck, Search } from 'lucide-react';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
@@ -232,9 +233,15 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   name="title"
                   defaultValue={editingVehicle?.title || ''}
                   required
-                  placeholder="เช่น Toyota Commuter VIP 9 ที่นั่ง เบาะนวดไฟฟ้า"
+                  list="admin-vehicle-models"
+                  placeholder="เช่น Toyota Commuter VIP 9 ที่นั่ง หรือเลือกจากรายการรุ่นรถยอดนิยม"
                   className="w-full p-2 rounded-xl bg-paper border border-rule text-ink focus:outline-accent"
                 />
+                <datalist id="admin-vehicle-models">
+                  {ALL_VEHICLE_MODELS.map((model) => (
+                    <option key={model} value={model} />
+                  ))}
+                </datalist>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

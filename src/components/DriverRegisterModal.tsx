@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import type { DictKey } from '@/i18n/dictionaries';
 import { X, Check, ShieldCheck, Send, PartyPopper, CarFront, Loader2 } from 'lucide-react';
+import { VEHICLE_CATEGORY_GROUPS } from '@/data/vehicleModels';
 
 interface DriverRegisterModalProps {
   isOpen: boolean;
@@ -38,6 +39,8 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
     canIssueTaxInvoice: false,
     businessType: 'individual' as 'company' | 'individual',
   });
+  const [isCustomModel, setIsCustomModel] = useState(false);
+  const [customModelText, setCustomModelText] = useState('');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -57,11 +60,15 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    const finalModel = isCustomModel && customModelText.trim() ? customModelText.trim() : formData.vehicleModel;
     try {
       await fetch('/api/leads/driver', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          vehicleModel: finalModel,
+        }),
       });
     } catch (err) {
       console.error('Submit driver error:', err);
@@ -206,25 +213,48 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="td-dmodel" className={labelCls}>
-                    {t('reg.fModel')}
+                    {t('reg.fModel')} (เลือกรุ่นรถ)
                   </label>
                   <select
                     id="td-dmodel"
-                    value={formData.vehicleModel}
-                    onChange={(e) => setFormData({ ...formData, vehicleModel: e.target.value })}
+                    value={isCustomModel ? 'custom' : formData.vehicleModel}
+                    onChange={(e) => {
+                      if (e.target.value === 'custom') {
+                        setIsCustomModel(true);
+                      } else {
+                        setIsCustomModel(false);
+                        setFormData({ ...formData, vehicleModel: e.target.value });
+                      }
+                    }}
                     className={inputCls}
                   >
-                    <option value="Toyota Commuter D4D">Toyota Commuter D4D</option>
-                    <option value="All New Commuter">{t('reg.modelLong')}</option>
-                    <option value="Toyota Majesty">Toyota Majesty</option>
-                    <option value="Hyundai H1 / Staria">Hyundai H1 / Staria</option>
-                    <option value="Alphard / Vellfire">Toyota Alphard / Vellfire</option>
-                    <option value="SUV / รถเช่าขับเอง">{t('reg.modelSuv')}</option>
+                    {VEHICLE_CATEGORY_GROUPS.map((group) => (
+                      <optgroup key={group.category} label={group.label}>
+                        {group.models.map((model) => (
+                          <option key={model} value={model}>
+                            {model}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                    <option value="custom">⚡ อื่นๆ (พิมพ์ระบุรุ่นรถเอง)</option>
                   </select>
+
+                  {isCustomModel && (
+                    <input
+                      type="text"
+                      required
+                      placeholder="พิมพ์ระบุยี่ห้อและรุ่นรถของคุณ เช่น Ford Transit VIP"
+                      value={customModelText}
+                      onChange={(e) => setCustomModelText(e.target.value)}
+                      className={`${inputCls} mt-2 text-accent focus:border-accent`}
+                    />
+                  )}
                 </div>
+
                 <div>
                   <label htmlFor="td-dseats" className={labelCls}>
-                    {t('reg.fSeats')}
+                    {t('reg.fSeats')} (จำนวนที่นั่งผู้โดยสาร)
                   </label>
                   <select
                     id="td-dseats"
@@ -232,10 +262,17 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                     onChange={(e) => setFormData({ ...formData, seats: e.target.value })}
                     className={inputCls}
                   >
-                    <option value="7">{t('reg.seats7')}</option>
-                    <option value="9">{t('reg.seats9')}</option>
-                    <option value="10">{t('reg.seats10')}</option>
-                    <option value="13">{t('reg.seats13')}</option>
+                    <option value="4">4 ที่นั่ง (Sedan / รถเก๋ง / Eco Car)</option>
+                    <option value="5">5 ที่นั่ง (Sedan ผู้บริหาร / Compact SUV)</option>
+                    <option value="7">7 ที่นั่ง (VIP MPV / SUV 7 ที่นั่ง)</option>
+                    <option value="8">8 ที่นั่ง (Van / MPV เบาะกว้าง)</option>
+                    <option value="9">9 ที่นั่ง (VIP Van เบาะ 3 แถวยอดนิยม)</option>
+                    <option value="10">10 ที่นั่ง (VIP Commuter / Staria)</option>
+                    <option value="11">11 ที่นั่ง (H-1 / Majesty / Commuter)</option>
+                    <option value="13">13 ที่นั่ง (Commuter เบาะ 4 แถวมาตรฐาน)</option>
+                    <option value="14">14 ที่นั่ง (Commuter / HiAce จุคนเยอะ)</option>
+                    <option value="20">20 ที่นั่ง (มินิบัส Coaster / Hino ท่องเที่ยว)</option>
+                    <option value="24">24 ที่นั่ง (มินิบัสขนาดใหญ่ / กรุ๊ปสัมมนา)</option>
                   </select>
                 </div>
               </div>

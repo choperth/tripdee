@@ -3,6 +3,7 @@
 import React from 'react';
 import { ArrowDown, ShieldCheck, Phone, ReceiptText, MapPin, Users, Search, Sparkles, CheckCircle2 } from 'lucide-react';
 import { POPULAR_ROUTES } from '@/data/mockData';
+import { SEAT_CAPACITY_OPTIONS } from '@/data/vehicleModels';
 import { useLanguage } from '@/context/LanguageContext';
 import type { DictKey } from '@/i18n/dictionaries';
 
@@ -130,11 +131,11 @@ export const Hero: React.FC<HeroProps> = ({
                   onChange={(e) => setSelectedSeats(e.target.value)}
                   className="w-full bg-transparent text-sm font-bold text-ink focus:outline-none cursor-pointer mt-0.5"
                 >
-                  <option value="all">{t('hero.seatsAll')}</option>
-                  <option value="7">{t('hero.seats7')}</option>
-                  <option value="9">{t('hero.seats9')}</option>
-                  <option value="10">{t('hero.seats10')}</option>
-                  <option value="13">{t('hero.seats13')}</option>
+                  {SEAT_CAPACITY_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -214,7 +215,7 @@ export const Hero: React.FC<HeroProps> = ({
                 </p>
               </div>
               <p className="text-xs text-white/80 font-medium hidden sm:block">
-                รถตู้ VIP 9-10 ที่นั่ง • รถตู้คอมมิวเตอร์ • รถ SUV ขับเอง
+                รถตู้ VIP 9-10 ที่นั่ง • มินิบัส 20 ที่นั่ง • รถตู้หรู Alphard/Staria • SUV ลุยดอย • ซีดานผู้บริหาร
               </p>
             </div>
           </div>
