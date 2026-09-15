@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllDriverLeads, addDriverLead, approveDriverLead } from '@/lib/leadsStore';
+import { fetchDriverLeads, saveDriverLead, verifyDriverLead } from '@/lib/supabase/service';
 
 export async function GET() {
-  const drivers = getAllDriverLeads();
+  const drivers = await fetchDriverLeads();
   return NextResponse.json({
     success: true,
     total: drivers.length,
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     if (body.action === 'approve' && body.id) {
-      const ok = approveDriverLead(String(body.id));
+      const ok = await verifyDriverLead(String(body.id));
       return NextResponse.json({ success: ok });
     }
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const newDriver = addDriverLead({
+    const newDriver = await saveDriverLead({
       driverName: String(body.driverName || body.nickname).trim(),
       nickname: String(body.nickname).trim(),
       phone: String(body.phone).trim(),

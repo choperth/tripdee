@@ -73,7 +73,18 @@ export default function HomePage() {
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [selectedSeats, setSelectedSeats] = useState<string>('all');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
+  const [vehicles, setVehicles] = useState<Vehicle[]>(VEHICLES);
 
+  useEffect(() => {
+    fetch('/api/vehicles')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.vehicles && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
+          setVehicles(data.vehicles);
+        }
+      })
+      .catch((err) => console.debug('Failed to fetch vehicles:', err));
+  }, []);
   const [selectedVehicleDetail, setSelectedVehicleDetail] = useState<Vehicle | null>(null);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
@@ -81,7 +92,7 @@ export default function HomePage() {
 
 
   const filteredVehicles = useMemo(() => {
-    return VEHICLES.filter((vehicle) => {
+    return vehicles.filter((vehicle) => {
       const matchesTab =
         activeTab === 'van' ? vehicle.type === 'van' : vehicle.type !== 'van';
       
@@ -107,7 +118,7 @@ export default function HomePage() {
         vehicle.amenities.some((a) => a.toLowerCase().includes(keyword));
       return matchesTab && matchesZone && matchesSeats && matchesKeyword;
     });
-  }, [activeTab, selectedZone, selectedSeats, searchKeyword]);
+  }, [activeTab, selectedZone, selectedSeats, searchKeyword, vehicles]);
 
   const resetFilters = () => {
     setSelectedZone('all');

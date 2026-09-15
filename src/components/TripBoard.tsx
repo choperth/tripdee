@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import type { DictKey } from '@/i18n/dictionaries';
@@ -23,7 +23,6 @@ import {
   Users,
   ShieldCheck,
   Clock,
-  Sparkles,
   Send,
 } from 'lucide-react';
 
@@ -78,19 +77,31 @@ export const TripBoard: React.FC = () => {
   const [filter, setFilter] = useState<BoardFilter>('all');
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState<PostFormState>(EMPTY_FORM);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/board')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.posts && Array.isArray(data.posts) && data.posts.length > 0) {
+          setPosts(data.posts);
+        }
+      })
+      .catch((err) => console.debug('Failed to fetch board posts:', err));
+  }, []);
 
   const visiblePosts = posts.filter((p) => filter === 'all' || p.type === filter);
 
   const set = (patch: Partial<PostFormState>) => setForm((prev) => ({ ...prev, ...patch }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const days = Math.max(1, Number(form.days) || 1);
     const seats = Math.max(1, Number(form.seats) || 1);
     const price = Math.max(0, Math.round(Number(form.price) || 0));
     if (price <= 0) return;
     const post: BoardPost = {
-      id: `user-${Date.now()}`,
+      id: `b-${Date.now().toString().slice(-6)}`,
       type: form.type,
       title: form.title.trim(),
       zoneId: form.zoneId,
@@ -109,6 +120,19 @@ export const TripBoard: React.FC = () => {
     setPosts((prev) => [post, ...prev]);
     setForm(EMPTY_FORM);
     setFormOpen(false);
+
+    setIsSubmitting(true);
+    try {
+      await fetch('/api/board', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(post),
+      });
+    } catch (err) {
+      console.debug('Failed to persist post to server/Supabase:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -373,10 +397,11 @@ export const TripBoard: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 rounded-input bg-accent hover:bg-accent-deep px-5 py-2 text-xs font-bold text-white shadow-xs"
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-1.5 rounded-input bg-accent hover:bg-accent-deep disabled:opacity-50 px-5 py-2 text-xs font-bold text-white shadow-xs"
             >
               <Send className="h-3.5 w-3.5" />
-              <span>{t('board.submit')}</span>
+              <span>{isSubmitting ? 'กำลังบันทึก...' : t('board.submit')}</span>
             </button>
           </div>
         </form>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AnalyticsEvent } from '@/lib/analytics';
-import { recordServerAnalyticsEvent } from '@/lib/serverAnalyticsStore';
+import { getServerAnalyticsSummary } from '@/lib/serverAnalyticsStore';
+import { logAnalyticsEvent } from '@/lib/supabase/service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +19,8 @@ export async function POST(req: NextRequest) {
       timestamp: body.timestamp || new Date().toISOString(),
     } as AnalyticsEvent;
 
-    const updatedSummary = recordServerAnalyticsEvent(event);
+    await logAnalyticsEvent(event);
+    const updatedSummary = getServerAnalyticsSummary();
 
     return NextResponse.json({
       success: true,

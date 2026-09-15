@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllQuotations, addQuotation } from '@/lib/leadsStore';
+import { fetchQuotations, saveQuotation } from '@/lib/supabase/service';
 
 export async function GET() {
-  const quotations = getAllQuotations();
+  const quotations = await fetchQuotations();
   return NextResponse.json({
     success: true,
     total: quotations.length,
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const newLead = addQuotation({
+    const newLead = await saveQuotation({
       companyName: String(body.companyName).trim(),
       contactName: body.contactName ? String(body.contactName).trim() : undefined,
       phone: String(body.phone).trim(),
