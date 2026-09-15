@@ -45,6 +45,11 @@ export async function POST(req: NextRequest) {
       rating: Number(body.rating) || 5.0,
       reviewCount: Number(body.reviewCount) || 1,
       isVerified: Boolean(body.isVerified ?? true),
+      plateType: body.plateType === 'yellow' ? 'yellow' : 'blue',
+      plateNumber: body.plateNumber ? String(body.plateNumber).trim() : undefined,
+      canIssueTaxInvoice: Boolean(body.canIssueTaxInvoice),
+      businessType: body.businessType === 'company' ? 'company' : 'individual',
+      isAvailable: body.isAvailable !== false,
       images: Array.isArray(body.images) && body.images.length > 0
         ? body.images
         : ['https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80'],

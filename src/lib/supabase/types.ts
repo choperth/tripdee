@@ -124,6 +124,11 @@ export type Database = {
           popular_routes: string[];
           amenities: string[];
           description: string;
+          plate_type: 'yellow' | 'blue' | null;
+          plate_number: string | null;
+          can_issue_tax_invoice: boolean | null;
+          business_type: 'company' | 'individual' | null;
+          is_available: boolean | null;
           created_at: string;
         };
         Insert: {
@@ -150,6 +155,11 @@ export type Database = {
           popular_routes?: string[];
           amenities?: string[];
           description?: string;
+          plate_type?: 'yellow' | 'blue' | null;
+          plate_number?: string | null;
+          can_issue_tax_invoice?: boolean | null;
+          business_type?: 'company' | 'individual' | null;
+          is_available?: boolean | null;
           created_at?: string;
         };
         Update: {
@@ -176,6 +186,11 @@ export type Database = {
           popular_routes?: string[];
           amenities?: string[];
           description?: string;
+          plate_type?: 'yellow' | 'blue' | null;
+          plate_number?: string | null;
+          can_issue_tax_invoice?: boolean | null;
+          business_type?: 'company' | 'individual' | null;
+          is_available?: boolean | null;
           created_at?: string;
         };
         Relationships: [];
@@ -198,6 +213,9 @@ export type Database = {
           detail: string;
           posted_at: string;
           is_verified: boolean;
+          category: 'general' | 'corporate' | null;
+          pin: string | null;
+          is_closed: boolean | null;
           created_at: string;
         };
         Insert: {
@@ -217,6 +235,9 @@ export type Database = {
           detail: string;
           posted_at?: string;
           is_verified?: boolean;
+          category?: 'general' | 'corporate' | null;
+          pin?: string | null;
+          is_closed?: boolean | null;
           created_at?: string;
         };
         Update: {
@@ -236,6 +257,9 @@ export type Database = {
           detail?: string;
           posted_at?: string;
           is_verified?: boolean;
+          category?: 'general' | 'corporate' | null;
+          pin?: string | null;
+          is_closed?: boolean | null;
           created_at?: string;
         };
         Relationships: [];

@@ -240,6 +240,9 @@ export async function saveDriverLead(lead: {
   vehicleModel: string;
   seats: string;
   plateNumber?: string;
+  plateType?: 'yellow' | 'blue';
+  canIssueTaxInvoice?: boolean;
+  businessType?: 'company' | 'individual';
   routes: string;
 }): Promise<DriverLead> {
   const localLead = addLocalDriver(lead);
@@ -457,6 +460,11 @@ export async function fetchVehicles(): Promise<Vehicle[]> {
         popularRoutes: row.popular_routes || [],
         amenities: row.amenities || [],
         description: row.description || '',
+        plateType: (row.plate_type as 'yellow' | 'blue') || undefined,
+        plateNumber: row.plate_number || undefined,
+        canIssueTaxInvoice: row.can_issue_tax_invoice !== null ? Boolean(row.can_issue_tax_invoice) : undefined,
+        businessType: (row.business_type as 'company' | 'individual') || undefined,
+        isAvailable: row.is_available !== null ? Boolean(row.is_available) : true,
       }));
     }
 
@@ -509,6 +517,11 @@ export async function saveVehicle(vehicle: Vehicle): Promise<Vehicle> {
       popular_routes: vehicle.popularRoutes,
       amenities: vehicle.amenities,
       description: vehicle.description,
+      plate_type: vehicle.plateType || null,
+      plate_number: vehicle.plateNumber || null,
+      can_issue_tax_invoice: vehicle.canIssueTaxInvoice ?? null,
+      business_type: vehicle.businessType || null,
+      is_available: vehicle.isAvailable ?? true,
     });
   } catch (err) {
     console.warn('[TripDee Supabase] Exception saving vehicle:', err);
@@ -551,6 +564,11 @@ export async function updateVehicle(id: string, updates: Partial<Vehicle>): Prom
     if (updates.popularRoutes !== undefined) supabaseUpdates.popular_routes = updates.popularRoutes;
     if (updates.amenities !== undefined) supabaseUpdates.amenities = updates.amenities;
     if (updates.description !== undefined) supabaseUpdates.description = updates.description;
+    if (updates.plateType !== undefined) supabaseUpdates.plate_type = updates.plateType;
+    if (updates.plateNumber !== undefined) supabaseUpdates.plate_number = updates.plateNumber;
+    if (updates.canIssueTaxInvoice !== undefined) supabaseUpdates.can_issue_tax_invoice = updates.canIssueTaxInvoice;
+    if (updates.businessType !== undefined) supabaseUpdates.business_type = updates.businessType;
+    if (updates.isAvailable !== undefined) supabaseUpdates.is_available = updates.isAvailable;
 
     await (supabase.from('vehicles') as any).update(supabaseUpdates).eq('id', id);
   } catch (err) {
@@ -579,7 +597,28 @@ export async function deleteVehicle(id: string): Promise<boolean> {
 
 export async function fetchBoardPosts(): Promise<BoardPost[]> {
   const supabase = getSupabase();
-  if (!supabase) return BOARD_POSTS.filter((p) => !deletedBoardPostIds.includes(p.id));
+  const now = new Date();
+
+  // Helper to check if a post is auto-expired
+  const isPostExpired = (post: { date?: string; created_at?: string; createdAt?: string }): boolean => {
+    // If created_at is older than 30 days, expire it
+    const dateStr = post.created_at || post.createdAt;
+    if (dateStr) {
+      const created = new Date(dateStr);
+      if (!isNaN(created.getTime())) {
+        const daysDiff = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysDiff > 30) return true;
+      }
+    }
+    return false;
+  };
+
+  if (!supabase) {
+    return BOARD_POSTS
+      .filter((p) => !deletedBoardPostIds.includes(p.id))
+      .filter((p) => !p.isClosed)
+      .filter((p) => !isPostExpired(p));
+  }
 
   try {
     const { data, error } = await supabase
@@ -588,11 +627,16 @@ export async function fetchBoardPosts(): Promise<BoardPost[]> {
       .order('created_at', { ascending: false });
 
     if (error || !data || data.length === 0) {
-      return BOARD_POSTS.filter((p) => !deletedBoardPostIds.includes(p.id));
+      return BOARD_POSTS
+        .filter((p) => !deletedBoardPostIds.includes(p.id))
+        .filter((p) => !p.isClosed)
+        .filter((p) => !isPostExpired(p));
     }
 
     return data
       .filter((row) => !deletedBoardPostIds.includes(row.id))
+      .filter((row) => !row.is_closed)
+      .filter((row) => !isPostExpired(row))
       .map((row) => ({
         id: row.id,
         type: row.type,
@@ -610,10 +654,17 @@ export async function fetchBoardPosts(): Promise<BoardPost[]> {
         detail: row.detail,
         postedAt: row.posted_at || 'เมื่อสักครู่',
         isVerified: Boolean(row.is_verified),
+        category: (row.category as 'general' | 'corporate') || 'general',
+        pin: row.pin || undefined,
+        isClosed: Boolean(row.is_closed),
+        createdAt: row.created_at,
       }));
   } catch (err) {
     console.warn('[TripDee Supabase] Error fetching board posts, using mock data:', err);
-    return BOARD_POSTS.filter((p) => !deletedBoardPostIds.includes(p.id));
+    return BOARD_POSTS
+      .filter((p) => !deletedBoardPostIds.includes(p.id))
+      .filter((p) => !p.isClosed)
+      .filter((p) => !isPostExpired(p));
   }
 }
 
@@ -623,6 +674,9 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
     ...post,
     id: newId,
     postedAt: 'เมื่อสักครู่',
+    category: post.category || 'general',
+    isClosed: false,
+    createdAt: new Date().toISOString(),
   };
 
   const supabase = getSupabase();
@@ -648,6 +702,9 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
         detail: post.detail,
         posted_at: 'เมื่อสักครู่',
         is_verified: Boolean(post.isVerified),
+        category: post.category || 'general',
+        pin: post.pin || null,
+        is_closed: false,
       })
       .select()
       .single();
@@ -675,6 +732,10 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
         detail: data.detail,
         postedAt: data.posted_at || 'เมื่อสักครู่',
         isVerified: Boolean(data.is_verified),
+        category: (data.category as 'general' | 'corporate') || 'general',
+        pin: data.pin || undefined,
+        isClosed: Boolean(data.is_closed),
+        createdAt: data.created_at,
       };
     }
   } catch (err) {
@@ -710,6 +771,9 @@ export async function updateBoardPost(id: string, updates: Partial<BoardPost>): 
     if (updates.vehicleLabel !== undefined) supabaseUpdates.vehicle_label = updates.vehicleLabel;
     if (updates.detail !== undefined) supabaseUpdates.detail = updates.detail;
     if (updates.isVerified !== undefined) supabaseUpdates.is_verified = updates.isVerified;
+    if (updates.category !== undefined) supabaseUpdates.category = updates.category;
+    if (updates.pin !== undefined) supabaseUpdates.pin = updates.pin;
+    if (updates.isClosed !== undefined) supabaseUpdates.is_closed = updates.isClosed;
 
     await (supabase.from('board_posts') as any).update(supabaseUpdates).eq('id', id);
   } catch (err) {
@@ -732,6 +796,36 @@ export async function deleteBoardPost(id: string): Promise<boolean> {
     console.warn('[TripDee Supabase] Exception deleting board post:', err);
     return true;
   }
+}
+
+/**
+ * Customer Board Self-Close: Allows post author to mark post as closed
+ * using either their 4-digit PIN or the last 4 digits of their phone number.
+ */
+export async function closeBoardPost(id: string, inputPin: string): Promise<{ success: boolean; message: string }> {
+  const posts = await fetchBoardPosts();
+  const post = posts.find((p) => p.id === id);
+  if (!post) {
+    return { success: false, message: 'ไม่พบประกาศที่ต้องการปิด หรือประกาศหมดอายุแล้ว' };
+  }
+
+  const cleanInput = inputPin.trim();
+  const cleanPhone = (post.authorPhone || '').replace(/\D/g, '');
+  const phoneLast4 = cleanPhone.slice(-4);
+  const correctPin = (post.pin || '').trim();
+
+  const isMatch = (correctPin && cleanInput === correctPin) || (phoneLast4 && cleanInput === phoneLast4);
+
+  if (!isMatch) {
+    return { success: false, message: 'รหัส PIN หรือเลข 4 ตัวท้ายของเบอร์โทรศัพท์ไม่ถูกต้อง' };
+  }
+
+  await updateBoardPost(id, { isClosed: true });
+  if (!deletedBoardPostIds.includes(id)) {
+    deletedBoardPostIds.push(id);
+  }
+
+  return { success: true, message: 'ปิดประกาศเรียบร้อยแล้ว ขอบคุณที่ใช้บริการ TripDee' };
 }
 
 // ==============================================================================

@@ -26,6 +26,9 @@ export interface DriverLead {
   vehicleModel: string;
   seats: string;
   plateNumber?: string;
+  plateType?: 'yellow' | 'blue';
+  canIssueTaxInvoice?: boolean;
+  businessType?: 'company' | 'individual';
   routes: string;
   submittedAt: string;
   status: 'pending' | 'verified' | 'rejected';
@@ -62,6 +65,8 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
 
   const titleSeats = lead.vehicleModel.includes('ที่นั่ง') ? '' : ` ${seatsNum} ที่นั่ง`;
 
+  const isYellow = lead.plateType === 'yellow' || (lead.plateNumber ? lead.plateNumber.trim().startsWith('3') : false);
+
   return {
     id: `v-${lead.id}`,
     title: `${lead.vehicleModel}${titleSeats} (${lead.nickname})`,
@@ -94,6 +99,11 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
       'แอร์เย็นฉ่ำ สภาพรถใหม่สะอาด',
     ],
     description: `บริการรถตู้พร้อมคนขับ โดย ${lead.driverName} (${lead.nickname}) ยานพาหนะ ${lead.vehicleModel} ชำนาญเส้นทาง ${lead.routes} ผ่านการตรวจสอบเอกสารและอนุมัติตรา TripDee Verified พร้อมให้บริการลูกค้าทันที`,
+    plateType: lead.plateType || (isYellow ? 'yellow' : 'blue'),
+    plateNumber: lead.plateNumber || undefined,
+    canIssueTaxInvoice: Boolean(lead.canIssueTaxInvoice),
+    businessType: lead.businessType || (isYellow ? 'company' : 'individual'),
+    isAvailable: true,
   };
 }
 
@@ -246,6 +256,9 @@ export function addDriverLead(lead: {
   vehicleModel: string;
   seats: string;
   plateNumber?: string;
+  plateType?: 'yellow' | 'blue';
+  canIssueTaxInvoice?: boolean;
+  businessType?: 'company' | 'individual';
   routes: string;
 }): DriverLead {
   const db = getDb();

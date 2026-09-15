@@ -33,6 +33,10 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
     seats: '9',
     zone: 'ตัวเมืองเชียงใหม่',
     amenities: '',
+    plateType: 'yellow' as 'yellow' | 'blue',
+    plateNumber: '',
+    canIssueTaxInvoice: false,
+    businessType: 'individual' as 'company' | 'individual',
   });
 
   useEffect(() => {
@@ -248,6 +252,70 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                   onChange={(e) => setFormData({ ...formData, amenities: e.target.value })}
                   className={inputCls}
                 />
+              </div>
+
+              {/* License Plate Type & Tax Capability */}
+              <div className="rounded-input border border-rule bg-card/60 p-3.5 space-y-3">
+                <div>
+                  <label className={labelCls}>ประเภทป้ายทะเบียน / การรับงาน</label>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, plateType: 'yellow' })}
+                      className={`p-2.5 rounded-input border text-left text-xs font-bold transition-all ${
+                        formData.plateType === 'yellow'
+                          ? 'border-amber-400 bg-amber-50 text-amber-950 ring-1 ring-amber-400'
+                          : 'border-rule bg-paper text-ink-2 hover:text-ink'
+                      }`}
+                    >
+                      <span className="block text-amber-900 font-extrabold">🟡 ป้ายเหลือง 30</span>
+                      <span className="block text-[10px] text-amber-800/80 font-normal mt-0.5">
+                        รับงานองค์กร / ราชการ / บริษัท
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, plateType: 'blue' })}
+                      className={`p-2.5 rounded-input border text-left text-xs font-bold transition-all ${
+                        formData.plateType === 'blue'
+                          ? 'border-blue-400 bg-blue-50 text-blue-950 ring-1 ring-blue-400'
+                          : 'border-rule bg-paper text-ink-2 hover:text-ink'
+                      }`}
+                    >
+                      <span className="block text-blue-900 font-extrabold">🔵 ป้ายฟ้า (ส่วนบุคคล)</span>
+                      <span className="block text-[10px] text-blue-800/80 font-normal mt-0.5">
+                        รับงานบุคคล / ครอบครัว / ท่องเที่ยว
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="td-dplate" className={labelCls}>
+                    หมายเลขทะเบียนรถ
+                  </label>
+                  <input
+                    id="td-dplate"
+                    type="text"
+                    placeholder="เช่น 30-1234 เชียงใหม่ หรือ นข-5678"
+                    value={formData.plateNumber}
+                    onChange={(e) => setFormData({ ...formData, plateNumber: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
+
+                <label className="flex items-center gap-2 cursor-pointer pt-1">
+                  <input
+                    type="checkbox"
+                    checked={formData.canIssueTaxInvoice}
+                    onChange={(e) => setFormData({ ...formData, canIssueTaxInvoice: e.target.checked })}
+                    className="rounded border-rule text-accent focus:ring-accent h-4 w-4"
+                  />
+                  <span className="text-xs font-bold text-ink">
+                    🏢 สามารถออกใบเสร็จรับเงิน / ใบกำกับภาษีได้
+                  </span>
+                </label>
               </div>
 
               <button

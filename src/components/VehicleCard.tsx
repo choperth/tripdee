@@ -54,11 +54,21 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
 
         {/* Top Floating Badges */}
-        <div className="absolute left-3 top-3 flex items-center gap-1.5">
+        <div className="absolute left-3 top-3 flex items-center gap-1.5 flex-wrap max-w-[80%]">
           <span className="inline-flex items-center gap-1 rounded-pill bg-black/70 backdrop-blur-xs px-2.5 py-1 text-xs font-bold text-white shadow-xs">
             <Users className="h-3 w-3 text-accent" aria-hidden="true" strokeWidth={2.5} />
             <span>{vehicle.seats} {t('vehicle.seats', { n: vehicle.seats }).replace(`${vehicle.seats} `, '')}</span>
           </span>
+          {vehicle.plateNumber && (
+            <span className="inline-flex items-center gap-1 rounded-pill bg-black/60 backdrop-blur-xs px-2 py-0.5 text-[11px] font-mono font-semibold text-white/90 shadow-xs border border-white/20">
+              {vehicle.plateNumber}
+            </span>
+          )}
+          {vehicle.isAvailable === false && (
+            <span className="inline-flex items-center gap-1 rounded-pill bg-rose-600/90 backdrop-blur-xs px-2 py-0.5 text-[11px] font-bold text-white shadow-xs">
+              ⏸️ คิวเต็มชั่วคราว
+            </span>
+          )}
         </div>
 
         {vehicle.isVerified && (
@@ -111,14 +121,41 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
 
         {/* Trust Badges Bar (Legal & Safety Verification + Language badges) */}
         <div className="mb-3 flex flex-wrap items-center gap-1.5">
-          <span className="inline-flex items-center gap-1 rounded-pill bg-sun-soft text-sun-ink px-2.5 py-0.5 text-[11px] font-bold border border-sun/20">
-            <Award className="h-3 w-3 text-sun" />
-            {t('vehicle.yellowPlate')}
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-pill bg-sky-soft text-sky px-2.5 py-0.5 text-[11px] font-bold border border-sky/20">
-            <ShieldCheck className="h-3 w-3" />
+          {/* Plate Type Badge */}
+          {vehicle.plateType === 'yellow' ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-pill bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/30 px-2.5 py-0.5 text-[11px] font-bold"
+              title="รถตู้ป้ายเหลือง 30 (ขนส่งสาธารณะ) เหมาะสำหรับหน่วยงานราชการ บริษัท สัมมนา และทั่วไป"
+            >
+              <Award className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+              🟡 ป้ายเหลือง 30
+            </span>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1 rounded-pill bg-sky-500/15 text-sky-800 dark:text-sky-200 border border-sky-500/30 px-2.5 py-0.5 text-[11px] font-bold"
+              title="รถตู้ป้ายฟ้า (ส่วนบุคคล) เหมาะสำหรับท่องเที่ยวทั่วไป ครอบครัว หรือองค์กรที่ไม่ติดเงื่อนไขใบประกอบการ"
+            >
+              <Award className="h-3 w-3 text-sky-600 dark:text-sky-400" />
+              🔵 ป้ายฟ้า (ส่วนบุคคล)
+            </span>
+          )}
+
+          {/* Tax Invoice Badge */}
+          {vehicle.canIssueTaxInvoice && (
+            <span
+              className="inline-flex items-center gap-1 rounded-pill bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-bold"
+              title="สามารถออกใบเสร็จรับเงิน / ใบกำกับภาษีเต็มรูปแบบ / หักภาษี ณ ที่จ่าย 3% ได้"
+            >
+              <FileCheck2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+              🏢 ใบกำกับภาษี
+            </span>
+          )}
+
+          <span className="inline-flex items-center gap-1 rounded-pill bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 text-[11px] font-medium border border-rule">
+            <ShieldCheck className="h-3 w-3 text-leaf" />
             {t('vehicle.insured')}
           </span>
+
           {vehicle.languages && vehicle.languages.length > 1 && (
             <div className="flex items-center gap-1 ml-auto">
               {vehicle.languages.includes('en') && (

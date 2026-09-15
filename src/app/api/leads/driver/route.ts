@@ -33,7 +33,10 @@ export async function POST(req: NextRequest) {
       lineId: String(body.lineId || '').trim(),
       vehicleModel: String(body.vehicleModel || 'Toyota Commuter').trim(),
       seats: String(body.seats || '9').trim(),
+      plateType: body.plateType === 'yellow' ? 'yellow' : 'blue',
       plateNumber: body.plateNumber ? String(body.plateNumber).trim() : undefined,
+      canIssueTaxInvoice: Boolean(body.canIssueTaxInvoice),
+      businessType: body.businessType === 'company' ? 'company' : 'individual',
       routes: String(body.routes || 'เชียงใหม่และใกล้เคียง').trim(),
     });
 

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Vehicle, ZONE_RATE_CARDS, STANDARD_TERMS, formatTHB } from '@/data/mockData';
-import { X, ShieldCheck, Star, Phone, MessageCircle, MapPin, Check, Info, Users, CheckCircle2, Clock, Calendar, Copy } from 'lucide-react';
+import { X, ShieldCheck, Star, Phone, MessageCircle, MapPin, Check, Info, Users, CheckCircle2, Clock, Calendar, Copy, Award, FileCheck2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import type { DictKey } from '@/i18n/dictionaries';
@@ -71,11 +71,16 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle,
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
 
             {/* Badges on Image */}
-            <div className="absolute left-3 top-3 flex items-center gap-1.5">
+            <div className="absolute left-3 top-3 flex items-center gap-1.5 flex-wrap max-w-[85%]">
               <span className="inline-flex items-center gap-1 rounded-pill bg-black/75 px-3 py-1 text-xs font-bold text-white shadow-xs backdrop-blur-xs">
                 <Users className="h-3.5 w-3.5 text-accent" aria-hidden="true" strokeWidth={2.5} />
                 {t('detail.vipSeats', { n: vehicle.seats })}
               </span>
+              {vehicle.plateNumber && (
+                <span className="inline-flex items-center gap-1 rounded-pill bg-black/65 px-2.5 py-1 text-xs font-mono font-bold text-white shadow-xs backdrop-blur-xs border border-white/20">
+                  {vehicle.plateNumber}
+                </span>
+              )}
             </div>
 
             {vehicle.isVerified && (
@@ -109,6 +114,34 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle,
             <MapPin className="h-4 w-4 text-accent" aria-hidden="true" />
             <span>{t('detail.basedAt')} {vehicle.location}</span>
           </p>
+
+          {/* Legal Plate & Corporate Status Bar */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {vehicle.plateType === 'yellow' ? (
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/30 px-3 py-1 text-xs font-bold">
+                <Award className="h-3.5 w-3.5 text-amber-600" />
+                🟡 ป้ายเหลือง 30 (ขนส่งสาธารณะ)
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-sky-500/15 text-sky-800 dark:text-sky-200 border border-sky-500/30 px-3 py-1 text-xs font-bold">
+                <Award className="h-3.5 w-3.5 text-sky-600" />
+                🔵 ป้ายฟ้า (รถตู้ส่วนบุคคล)
+              </span>
+            )}
+
+            {vehicle.canIssueTaxInvoice && (
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 border border-emerald-500/30 px-3 py-1 text-xs font-bold">
+                <FileCheck2 className="h-3.5 w-3.5 text-emerald-600" />
+                🏢 ออกใบกำกับภาษี & หัก 3% ได้
+              </span>
+            )}
+
+            {vehicle.isAvailable === false && (
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 px-3 py-1 text-xs font-bold">
+                ⏸️ คิวเต็มชั่วคราว
+              </span>
+            )}
+          </div>
 
           <p className="mt-3 text-sm font-normal leading-relaxed text-ink-2">
             {vehicle.description}

@@ -13,6 +13,7 @@ interface NavbarProps {
   onOpenRegisterModal: () => void;
   onOpenLoginModal: () => void;
   onOpenPortal: () => void;
+  onOpenDriverSelfService?: () => void;
 }
 
 const TABS = [
@@ -28,6 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenRegisterModal,
   onOpenLoginModal,
   onOpenPortal,
+  onOpenDriverSelfService,
 }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -213,6 +215,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
+            {/* Driver Self-Service Quick Action */}
+            {onOpenDriverSelfService && (
+              <button
+                type="button"
+                onClick={onOpenDriverSelfService}
+                className="hidden shrink-0 items-center gap-1.5 rounded-input border border-amber-300/80 bg-amber-50/90 hover:bg-amber-100 text-amber-900 px-3 py-2 text-xs font-bold shadow-2xs transition-colors md:inline-flex"
+                title="สำหรับคนขับ: ปรับสถานะว่าง/คิวเต็ม และแก้ไขราคา"
+              >
+                <CarFront className="h-3.5 w-3.5 text-amber-700" strokeWidth={2.5} />
+                <span>คนขับ: จัดการรถ</span>
+              </button>
+            )}
+
             {/* Register Free Driver Button */}
             <button
               onClick={onOpenRegisterModal}
@@ -287,6 +302,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <LogIn className="h-4 w-4 text-accent" />
                     <span>{t('nav.login')}</span>
+                  </button>
+                )}
+
+                {onOpenDriverSelfService && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onOpenDriverSelfService();
+                    }}
+                    className="flex w-full items-center justify-center gap-1.5 rounded-input border border-amber-300 bg-amber-50 py-2.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition-colors"
+                  >
+                    <CarFront className="h-4 w-4 text-amber-700" />
+                    <span>🚐 สำหรับคนขับ: จัดการสถานะรถ & ราคา</span>
                   </button>
                 )}
 

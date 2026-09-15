@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Check, Send, Briefcase, PartyPopper, Loader2, FileCheck, Building2, ShieldCheck, PhoneCall } from 'lucide-react';
+import { Check, Send, Briefcase, PartyPopper, Loader2, FileCheck, Building2, ShieldCheck, PhoneCall, ArrowRight, Award } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import type { DictKey } from '@/i18n/dictionaries';
@@ -31,6 +31,14 @@ export const CorporateSection: React.FC = () => {
     details: '',
   });
 
+  const handleGoYellowPlate = () => {
+    window.dispatchEvent(new CustomEvent('tripdee-filter-plate', { detail: 'yellow' }));
+    const el = document.getElementById('results');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -44,13 +52,33 @@ export const CorporateSection: React.FC = () => {
         needsTaxInvoice: formData.needsTaxInvoice,
       });
 
-      await fetch('/api/leads/quote', {
+      // Automatically post to Trip Board as corporate request
+      await fetch('/api/board', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          type: 'request',
+          category: 'corporate',
+          title: `[งานองค์กร] หารถตู้คาราวาน (${formData.passengers}) โดย ${formData.companyName}`,
+          zoneId: 'city',
+          date: formData.travelDate || 'เร็วๆ นี้',
+          days: 1,
+          seats: formData.passengers.includes('50') ? 50 : 20,
+          price: 0,
+          priceNote: formData.needsTaxInvoice ? 'ต้องการใบกำกับภาษี/หัก 3%' : 'ตามตกลง',
+          authorName: formData.companyName,
+          authorPhone: formData.phone,
+          authorLine: '',
+          detail: `${formData.details || 'โปรแกรมตามที่ลูกค้ากำหนด'} (${formData.needsTaxInvoice ? 'ต้องการรถป้ายเหลือง 30 / ออกใบกำกับภาษีได้' : 'ป้ายฟ้าหรือป้ายเหลืองก็ได้'})`,
+          isVerified: false,
+          pin: formData.phone.replace(/\D/g, '').slice(-4),
+        }),
       });
+
+      // Dispatch event to refresh community board in real-time
+      window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
     } catch (err) {
-      console.error('Submit quote lead error:', err);
+      console.error('Submit corporate board request error:', err);
     } finally {
       setIsSubmitting(false);
       setSubmitted(true);
@@ -77,6 +105,19 @@ export const CorporateSection: React.FC = () => {
             <p className="mt-3 text-sm sm:text-base font-normal leading-relaxed text-slate-300">
               {t('corp.desc')}
             </p>
+
+            {/* Direct Yellow Plate CTA Button */}
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={handleGoYellowPlate}
+                className="inline-flex items-center gap-2 rounded-input bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 text-xs sm:text-sm shadow-sm transition-all active:scale-[0.98]"
+              >
+                <Award className="h-4 w-4 text-slate-950 shrink-0" />
+                <span>🟡 ดูรถตู้ป้ายเหลือง 30 & ออกใบกำกับภาษี (ดีลตรงทันที)</span>
+                <ArrowRight className="h-4 w-4 shrink-0" />
+              </button>
+            </div>
 
             {/* Corporate Value Props Checklist */}
             <ul className="mt-6 flex flex-col gap-2.5">

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchBoardPosts, saveBoardPost, updateBoardPost, deleteBoardPost } from '@/lib/supabase/service';
+import { fetchBoardPosts, saveBoardPost, updateBoardPost, deleteBoardPost, closeBoardPost } from '@/lib/supabase/service';
 import { ZoneId } from '@/data/mockData';
 
 export async function GET() {
@@ -21,6 +21,16 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+
+    // Check if user is closing their post
+    if (body.action === 'close' && body.id) {
+      const pin = body.pin || '';
+      const res = await closeBoardPost(String(body.id), String(pin));
+      if (!res.success) {
+        return NextResponse.json({ error: res.message }, { status: 400 });
+      }
+      return NextResponse.json({ success: true, message: res.message });
+    }
 
     if (!body.title || !body.authorName || !body.authorPhone) {
       return NextResponse.json(
@@ -44,6 +54,8 @@ export async function POST(req: NextRequest) {
       vehicleLabel: body.vehicleLabel ? String(body.vehicleLabel).trim() : undefined,
       detail: String(body.detail || '').trim(),
       isVerified: Boolean(body.isVerified),
+      category: body.category === 'corporate' ? 'corporate' : 'general',
+      pin: body.pin ? String(body.pin).trim() : undefined,
     });
 
     return NextResponse.json({

@@ -4,7 +4,11 @@ import React from 'react';
 import { MapPin, MessageCircle, ShieldCheck, FileCheck2, CarFront, Phone } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  onOpenDriverSelfService?: () => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onOpenDriverSelfService }) => {
   const { t } = useLanguage();
 
   return (
@@ -85,6 +89,14 @@ export const Footer: React.FC = () => {
               <li className="hover:text-white transition-colors cursor-pointer">จัดขบวนรถสัมมนา 2-20+ คัน</li>
               <li className="hover:text-white transition-colors cursor-pointer">ออกใบกำกับภาษีและหัก ณ ที่จ่าย 3%</li>
               <li className="hover:text-white transition-colors cursor-pointer">ลงทะเบียนเป็นคนขับ / ผู้ประกอบการฟรี</li>
+              {onOpenDriverSelfService && (
+                <li
+                  onClick={onOpenDriverSelfService}
+                  className="text-amber-400 hover:text-amber-300 font-bold transition-colors cursor-pointer flex items-center gap-1.5 pt-1"
+                >
+                  <span>🚐 จัดการสถานะรถ & ราคา (สำหรับคนขับ)</span>
+                </li>
+              )}
               <li className="hover:text-white transition-colors cursor-pointer">ติดต่อลงโฆษณาที่พัก & สปอนเซอร์</li>
             </ul>
           </div>

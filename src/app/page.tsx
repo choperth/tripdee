@@ -13,6 +13,7 @@ import { TripBoard } from '@/components/TripBoard';
 import { DriverRegisterModal } from '@/components/DriverRegisterModal';
 import { LoginModal } from '@/components/LoginModal';
 import { DriverPortalModal } from '@/components/portals/DriverPortalModal';
+import { DriverSelfServiceModal } from '@/components/portals/DriverSelfServiceModal';
 import { CustomerPortalModal } from '@/components/portals/CustomerPortalModal';
 import { AdminPortalModal } from '@/components/portals/AdminPortalModal';
 import { useAuth } from '@/context/AuthContext';
@@ -87,17 +88,35 @@ export default function HomePage() {
       .catch((err) => console.debug('Failed to fetch vehicles:', err));
   }, []);
 
+  const [plateFilter, setPlateFilter] = useState<'all' | 'yellow' | 'blue' | 'tax'>('all');
+
   useEffect(() => {
     loadVehicles();
     const handleUpdate = () => loadVehicles();
     window.addEventListener('tripdee-vehicles-updated', handleUpdate);
     return () => window.removeEventListener('tripdee-vehicles-updated', handleUpdate);
   }, [loadVehicles]);
+
+  useEffect(() => {
+    const handlePlateFilter = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        if (customEvent.detail === 'yellow' || customEvent.detail === 'blue' || customEvent.detail === 'tax') {
+          setPlateFilter(customEvent.detail);
+        } else {
+          setPlateFilter('all');
+        }
+      }
+    };
+    window.addEventListener('tripdee-filter-plate', handlePlateFilter);
+    return () => window.removeEventListener('tripdee-filter-plate', handlePlateFilter);
+  }, []);
+
   const [selectedVehicleDetail, setSelectedVehicleDetail] = useState<Vehicle | null>(null);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isPortalOpen, setIsPortalOpen] = useState<boolean>(false);
-
+  const [isDriverSelfServiceOpen, setIsDriverSelfServiceOpen] = useState<boolean>(false);
 
   const filteredVehicles = useMemo(() => {
     return vehicles.filter((vehicle) => {
@@ -124,17 +143,30 @@ export default function HomePage() {
         vehicle.title.toLowerCase().includes(keyword) ||
         vehicle.description.toLowerCase().includes(keyword) ||
         vehicle.amenities.some((a) => a.toLowerCase().includes(keyword));
-      return matchesTab && matchesZone && matchesSeats && matchesKeyword;
+
+      const matchesPlate =
+        plateFilter === 'all'
+          ? true
+          : plateFilter === 'yellow'
+          ? vehicle.plateType === 'yellow'
+          : plateFilter === 'blue'
+          ? vehicle.plateType === 'blue'
+          : plateFilter === 'tax'
+          ? vehicle.canIssueTaxInvoice === true
+          : true;
+
+      return matchesTab && matchesZone && matchesSeats && matchesKeyword && matchesPlate;
     });
-  }, [activeTab, selectedZone, selectedSeats, searchKeyword, vehicles]);
+  }, [activeTab, selectedZone, selectedSeats, searchKeyword, plateFilter, vehicles]);
 
   const resetFilters = () => {
     setSelectedZone('all');
     setSelectedSeats('all');
     setSearchKeyword('');
+    setPlateFilter('all');
   };
 
-  const hasFilters = selectedZone !== 'all' || selectedSeats !== 'all' || searchKeyword !== '';
+  const hasFilters = selectedZone !== 'all' || selectedSeats !== 'all' || searchKeyword !== '' || plateFilter !== 'all';
 
   const hotelStays = SPONSORS.filter((s) => s.category === 'hotel');
 
@@ -146,6 +178,7 @@ export default function HomePage() {
         onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
         onOpenPortal={() => setIsPortalOpen(true)}
+        onOpenDriverSelfService={() => setIsDriverSelfServiceOpen(true)}
       />
       <div aria-hidden="true" className="h-[var(--td-head-h)] shrink-0" />
 
@@ -206,6 +239,57 @@ export default function HomePage() {
                 }
               />
 
+              {/* Quick Filter: Transport Category & Legal Type */}
+              <div className="mb-6 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold text-ink-2 mr-1">ประเภทรถ/เอกสาร:</span>
+                <button
+                  type="button"
+                  onClick={() => setPlateFilter('all')}
+                  className={`rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                    plateFilter === 'all'
+                      ? 'bg-ink text-paper shadow-sm'
+                      : 'bg-card text-ink-2 hover:text-ink border border-rule'
+                  }`}
+                >
+                  ทั้งหมด ({vehicles.filter(v => activeTab === 'van' ? v.type === 'van' : v.type !== 'van').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPlateFilter('yellow')}
+                  className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                    plateFilter === 'yellow'
+                      ? 'bg-amber-400 text-amber-950 ring-2 ring-amber-500 shadow-sm'
+                      : 'bg-card text-ink hover:bg-amber-50 border border-amber-300/80 text-amber-900'
+                  }`}
+                >
+                  <span className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-amber-300"></span>
+                  <span>🟡 ป้ายเหลือง 30 (รับงานองค์กร/ราชการ)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPlateFilter('blue')}
+                  className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                    plateFilter === 'blue'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-card text-ink hover:bg-blue-50 border border-blue-200 text-blue-800'
+                  }`}
+                >
+                  <span className="h-2 w-2 rounded-full bg-blue-500 ring-2 ring-blue-200"></span>
+                  <span>🔵 ป้ายฟ้า (ท่องเที่ยวทั่วไป/ส่วนบุคคล)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPlateFilter('tax')}
+                  className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                    plateFilter === 'tax'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-card text-ink hover:bg-emerald-50 border border-emerald-300 text-emerald-800'
+                  }`}
+                >
+                  <span>🏢 ออกใบกำกับภาษี/ใบเสร็จได้</span>
+                </button>
+              </div>
+
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
                 {/* Main Vehicle Grid */}
                 <div className="min-w-0">
@@ -215,6 +299,23 @@ export default function HomePage() {
                         <SlidersHorizontal className="h-3.5 w-3.5 text-accent" />
                         ตัวกรองที่เลือก:
                       </span>
+                      {plateFilter !== 'all' && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-paper text-ink px-3 py-1 text-xs font-extrabold border border-rule">
+                          <span>
+                            {plateFilter === 'yellow' && '🟡 ป้ายเหลือง 30'}
+                            {plateFilter === 'blue' && '🔵 ป้ายฟ้า'}
+                            {plateFilter === 'tax' && '🏢 ออกใบกำกับภาษีได้'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setPlateFilter('all')}
+                            aria-label="ลบตัวกรองป้ายทะเบียน"
+                            className="rounded-full p-0.5 hover:bg-rule transition-colors"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </span>
+                      )}
                       {selectedZone !== 'all' && (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft text-accent px-3 py-1 text-xs font-extrabold border border-accent/20">
                           <span>📍 โซน: {selectedZone}</span>
@@ -416,10 +517,18 @@ export default function HomePage() {
         </nav>
       </main>
 
-      <Footer />
+      <Footer onOpenDriverSelfService={() => setIsDriverSelfServiceOpen(true)} />
 
       <VehicleDetailModal vehicle={selectedVehicleDetail} onClose={() => setSelectedVehicleDetail(null)} />
       <DriverRegisterModal isOpen={isRegisterModalOpen} onClose={() => setIsRegisterModalOpen(false)} />
+      <DriverSelfServiceModal
+        isOpen={isDriverSelfServiceOpen}
+        onClose={() => setIsDriverSelfServiceOpen(false)}
+        onOpenRegisterModal={() => {
+          setIsDriverSelfServiceOpen(false);
+          setIsRegisterModalOpen(true);
+        }}
+      />
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
 
       {user?.role === 'driver' && (

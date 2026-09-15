@@ -24,14 +24,18 @@ import {
   ShieldCheck,
   Clock,
   Send,
+  CheckCircle2,
+  Lock,
+  Briefcase,
 } from 'lucide-react';
 
-type BoardFilter = 'all' | BoardPostType;
+type BoardFilter = 'all' | BoardPostType | 'corporate';
 
-const FILTERS: { id: BoardFilter; key: DictKey }[] = [
+const FILTERS: { id: BoardFilter; label?: string; key?: DictKey }[] = [
   { id: 'all', key: 'board.filterAll' },
   { id: 'request', key: 'board.filterRequest' },
   { id: 'offer', key: 'board.filterOffer' },
+  { id: 'corporate', label: '🏢 งานองค์กร / คาราวาน' },
 ];
 
 const inputCls =
@@ -40,6 +44,7 @@ const labelCls = 'mb-1 block text-xs font-bold uppercase tracking-wider text-ink
 
 interface PostFormState {
   type: BoardPostType;
+  category: 'general' | 'corporate';
   title: string;
   zoneId: ZoneId;
   date: string;
@@ -52,10 +57,12 @@ interface PostFormState {
   authorLine: string;
   vehicleLabel: string;
   detail: string;
+  pin: string;
 }
 
 const EMPTY_FORM: PostFormState = {
   type: 'request',
+  category: 'general',
   title: '',
   zoneId: 'city',
   date: '',
@@ -68,6 +75,7 @@ const EMPTY_FORM: PostFormState = {
   authorLine: '',
   vehicleLabel: '',
   detail: '',
+  pin: '',
 };
 
 export const TripBoard: React.FC = () => {
@@ -78,6 +86,13 @@ export const TripBoard: React.FC = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState<PostFormState>(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Self-Service Close Post Modal State
+  const [closingPost, setClosingPost] = useState<BoardPost | null>(null);
+  const [closePin, setClosePin] = useState('');
+  const [closeError, setCloseError] = useState('');
+  const [closeSuccess, setCloseSuccess] = useState('');
+  const [isClosing, setIsClosing] = useState(false);
 
   const loadBoardPosts = React.useCallback(() => {
     fetch('/api/board')
@@ -97,7 +112,11 @@ export const TripBoard: React.FC = () => {
     return () => window.removeEventListener('tripdee-board-updated', handleUpdate);
   }, [loadBoardPosts]);
 
-  const visiblePosts = posts.filter((p) => filter === 'all' || p.type === filter);
+  const visiblePosts = posts.filter((p) => {
+    if (filter === 'all') return true;
+    if (filter === 'corporate') return p.category === 'corporate';
+    return p.type === filter;
+  });
 
   const set = (patch: Partial<PostFormState>) => setForm((prev) => ({ ...prev, ...patch }));
 
@@ -110,6 +129,7 @@ export const TripBoard: React.FC = () => {
     const post: BoardPost = {
       id: `b-${Date.now().toString().slice(-6)}`,
       type: form.type,
+      category: form.category,
       title: form.title.trim(),
       zoneId: form.zoneId,
       date: form.date.trim(),
@@ -122,6 +142,7 @@ export const TripBoard: React.FC = () => {
       authorLine: form.authorLine.trim(),
       vehicleLabel: form.type === 'offer' && form.vehicleLabel.trim() ? form.vehicleLabel.trim() : undefined,
       detail: form.detail.trim(),
+      pin: form.pin.trim() || undefined,
       postedAt: t('board.justNow'),
     };
     setPosts((prev) => [post, ...prev]);
@@ -135,10 +156,46 @@ export const TripBoard: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(post),
       });
+      window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
     } catch (err) {
       console.debug('Failed to persist post to server/Supabase:', err);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleClosePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!closingPost) return;
+    setIsClosing(true);
+    setCloseError('');
+    try {
+      const res = await fetch('/api/board', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'close',
+          id: closingPost.id,
+          pin: closePin.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setCloseError(data.error || 'รหัส PIN หรือเบอร์โทร 4 ตัวท้ายไม่ถูกต้อง');
+        return;
+      }
+      setCloseSuccess('ปิดประกาศสำเร็จ ขอบคุณที่ใช้บริการ TripDee!');
+      setPosts((prev) => prev.filter((p) => p.id !== closingPost.id));
+      window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
+      setTimeout(() => {
+        setClosingPost(null);
+        setCloseSuccess('');
+        setClosePin('');
+      }, 1200);
+    } catch (err) {
+      setCloseError('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setIsClosing(false);
     }
   };
 
@@ -392,7 +449,46 @@ export const TripBoard: React.FC = () => {
                 className={`${inputCls} min-h-20 resize-y`}
               />
             </div>
-          </div>
+
+              {/* Category & PIN for Self-Service */}
+              <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-rule/60">
+                <div>
+                  <label className={labelCls}>ประเภทงาน / จุดประสงค์</label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => set({ category: form.category === 'corporate' ? 'general' : 'corporate' })}
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-input border text-xs font-bold transition-all ${
+                        form.category === 'corporate'
+                          ? 'border-amber-400 bg-amber-50 text-amber-900 ring-1 ring-amber-400'
+                          : 'border-rule bg-card text-ink hover:bg-paper'
+                      }`}
+                    >
+                      <Briefcase className="h-4 w-4 text-amber-600" />
+                      <span>{form.category === 'corporate' ? '✓ สำหรับงานองค์กร / สัมมนา (ต้องการป้ายเหลือง/ใบกำกับภาษี)' : 'สำหรับบุคคลทั่วไป / ท่องเที่ยว'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="td-bpin" className={labelCls}>
+                    รหัส PIN 4 หลัก (สำหรับปิดประกาศเองเมื่อได้รถแล้ว)
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="td-bpin"
+                      type="password"
+                      maxLength={4}
+                      placeholder="เช่น 1234 (หรือเว้นว่างเพื่อใช้เบอร์ 4 ตัวท้าย)"
+                      value={form.pin}
+                      onChange={(e) => set({ pin: e.target.value })}
+                      className={`${inputCls} pl-9`}
+                    />
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-ink-2/50" />
+                  </div>
+                </div>
+              </div>
+            </div>
 
           <div className="mt-4 flex justify-end gap-2">
             <button
@@ -429,7 +525,7 @@ export const TripBoard: React.FC = () => {
                   : 'border-rule bg-paper text-ink-2 hover:border-accent/40 hover:text-ink'
               }`}
             >
-              {t(f.key)}
+              {f.label ?? (f.key ? t(f.key) : f.id)}
             </button>
           );
         })}
@@ -447,6 +543,7 @@ export const TripBoard: React.FC = () => {
           {visiblePosts.map((post) => {
             const zone = ZONE_RATE_CARDS.find((z) => z.id === post.zoneId) ?? ZONE_RATE_CARDS[0];
             const isRequest = post.type === 'request';
+            const isCorporate = post.category === 'corporate';
             return (
               <article
                 key={post.id}
@@ -461,6 +558,12 @@ export const TripBoard: React.FC = () => {
                     >
                       {isRequest ? t('board.badgeRequest') : t('board.badgeOffer')}
                     </span>
+                    {isCorporate && (
+                      <span className="inline-flex items-center gap-1 rounded-pill bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-0.5 text-[11px] font-bold shadow-2xs">
+                        <Briefcase className="h-3 w-3 text-amber-700" />
+                        <span>งานองค์กร / คาราวาน</span>
+                      </span>
+                    )}
                     {post.isVerified && (
                       <span className="inline-flex items-center gap-1 rounded-pill bg-card px-2 py-0.5 text-[11px] font-bold text-leaf border border-rule shadow-2xs">
                         <ShieldCheck className="h-3 w-3" strokeWidth={2.5} />
@@ -545,11 +648,111 @@ export const TripBoard: React.FC = () => {
                         <span>{t('board.lineChat')}</span>
                       </a>
                     )}
+                    {/* Self-Service Close Post Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setClosingPost(post);
+                        setClosePin('');
+                        setCloseError('');
+                        setCloseSuccess('');
+                      }}
+                      className="td-btn inline-flex items-center gap-1 rounded-input border border-rule bg-card hover:bg-leaf/10 hover:border-leaf/40 hover:text-leaf text-ink-2 px-2.5 py-2 text-xs font-bold transition-all"
+                      title="ได้รถแล้ว / ปิดประกาศนี้"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5 text-leaf" />
+                      <span className="hidden sm:inline">ปิดงานแล้ว</span>
+                    </button>
                   </div>
                 </div>
               </article>
             );
           })}
+        </div>
+      )}
+
+      {/* Self-service Close Post Modal */}
+      {closingPost && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl border border-rule animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-rule">
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-xl bg-leaf-soft text-leaf">
+                  <CheckCircle2 className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="font-display font-extrabold text-ink text-base">ได้รถแล้ว / ปิดประกาศ</h3>
+                  <p className="text-xs text-ink-2">นำประกาศออกจากหน้ากระดานทันที</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setClosingPost(null)}
+                className="rounded-full p-1.5 text-ink-2 hover:bg-paper"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleClosePost} className="mt-4 space-y-4">
+              <div className="rounded-xl bg-paper p-3 border border-rule text-xs">
+                <p className="font-bold text-ink line-clamp-1">{closingPost.title}</p>
+                <p className="text-ink-2 mt-0.5">ผู้ลงประกาศ: {closingPost.authorName} ({closingPost.authorPhone.replace(/(\d{3})\d{4}(\d{3})/, '$1-XXXX-$2')})</p>
+              </div>
+
+              <div>
+                <label htmlFor="modal-close-pin" className="block text-xs font-bold text-ink mb-1">
+                  ใส่รหัส PIN หรือ เบอร์โทรศัพท์ 4 ตัวท้าย
+                </label>
+                <div className="relative">
+                  <input
+                    id="modal-close-pin"
+                    type="password"
+                    required
+                    maxLength={4}
+                    autoFocus
+                    placeholder="เช่น 1234 หรือ 4 ตัวท้ายของเบอร์"
+                    value={closePin}
+                    onChange={(e) => setClosePin(e.target.value)}
+                    className={`${inputCls} pl-9 font-mono tracking-widest text-center text-base`}
+                  />
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-ink-2/50" />
+                </div>
+                <p className="text-[11px] text-ink-2 mt-1">
+                  * เพื่อความปลอดภัย ระบบจะตรวจสอบว่าตรงกับ PIN หรือ 4 ตัวท้ายของเบอร์ที่ลงประกาศ
+                </p>
+              </div>
+
+              {closeError && (
+                <div className="rounded-lg bg-rose-50 border border-rose-200 p-2.5 text-xs text-rose-700 font-medium">
+                  ⚠️ {closeError}
+                </div>
+              )}
+
+              {closeSuccess && (
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-2.5 text-xs text-emerald-800 font-bold">
+                  ✓ {closeSuccess}
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setClosingPost(null)}
+                  className="flex-1 rounded-input border border-rule bg-card py-2.5 text-xs font-bold text-ink-2 hover:bg-paper"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={isClosing || !closePin}
+                  className="flex-1 rounded-input bg-leaf hover:bg-leaf-deep disabled:opacity-50 py-2.5 text-xs font-bold text-white shadow-xs"
+                >
+                  {isClosing ? 'กำลังตรวจสอบ...' : 'ยืนยันปิดประกาศ'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </section>
