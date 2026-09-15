@@ -26,6 +26,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
+    serviceType: 'with_driver' as 'with_driver' | 'self_drive',
     driverName: '',
     nickname: '',
     phone: '',
@@ -33,6 +34,8 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
     vehicleModel: 'Toyota Commuter',
     seats: '9',
     zone: 'ตัวเมืองเชียงใหม่',
+    pickupLocation: '',
+    depositTerms: '',
     amenities: '',
     plateType: 'yellow' as 'yellow' | 'blue',
     plateNumber: '',
@@ -148,36 +151,102 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
               <h3 className="font-display text-xl font-extrabold tracking-tight text-ink">
                 {t('reg.formTitle')}
               </h3>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="td-dname" className={labelCls}>
-                    {t('reg.fName')}
-                  </label>
-                  <input
-                    id="td-dname"
-                    type="text"
-                    required
-                    placeholder={t('reg.fNamePh')}
-                    value={formData.driverName}
-                    onChange={(e) => setFormData({ ...formData, driverName: e.target.value })}
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="td-dnick" className={labelCls}>
-                    {t('reg.fNick')}
-                  </label>
-                  <input
-                    id="td-dnick"
-                    type="text"
-                    required
-                    placeholder={t('reg.fNickPh')}
-                    value={formData.nickname}
-                    onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
-                    className={inputCls}
-                  />
-                </div>
+              {/* Service Type Switch */}
+              <div className="grid grid-cols-2 gap-2 p-1 bg-card rounded-xl border border-rule">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      serviceType: 'with_driver',
+                      vehicleModel: 'Toyota Commuter D4D (หลังคาสูง 9-13 ที่นั่ง)',
+                      plateType: 'yellow',
+                    })
+                  }
+                  className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    formData.serviceType === 'with_driver'
+                      ? 'bg-accent text-white shadow-xs'
+                      : 'text-ink-2 hover:text-ink'
+                  }`}
+                >
+                  <span>🚐 รถตู้ / รถพร้อมคนขับ</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      serviceType: 'self_drive',
+                      vehicleModel: 'Toyota Yaris Ativ / Honda City (Sedan Eco Car)',
+                      plateType: 'blue',
+                    })
+                  }
+                  className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    formData.serviceType === 'self_drive'
+                      ? 'bg-accent text-white shadow-xs'
+                      : 'text-ink-2 hover:text-ink'
+                  }`}
+                >
+                  <span>🚗 รถเช่าขับเอง (Self-Drive)</span>
+                </button>
               </div>
+
+              {formData.serviceType === 'with_driver' ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="td-dname" className={labelCls}>
+                      {t('reg.fName')} (ชื่อจริงคนขับ)
+                    </label>
+                    <input
+                      id="td-dname"
+                      type="text"
+                      required
+                      placeholder={t('reg.fNamePh')}
+                      value={formData.driverName}
+                      onChange={(e) => setFormData({ ...formData, driverName: e.target.value })}
+                      className={inputCls}
+                    />
+                    <span className="text-[10px] text-ink-2 mt-1 block">* แสดงเฉพาะชื่อเล่นบนหน้าเว็บเพื่อความปลอดภัย</span>
+                  </div>
+                  <div>
+                    <label htmlFor="td-dnick" className={labelCls}>
+                      {t('reg.fNick')} (ชื่อเรียกหน้าเว็บ)
+                    </label>
+                    <input
+                      id="td-dnick"
+                      type="text"
+                      required
+                      placeholder="เช่น พี่ชัย รถตู้เชียงใหม่"
+                      value={formData.nickname}
+                      onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <label htmlFor="td-dname" className={labelCls}>
+                      ชื่อร้าน / บริษัทรถเช่า หรือ ชื่อเจ้าของรถ
+                    </label>
+                    <input
+                      id="td-dname"
+                      type="text"
+                      required
+                      placeholder="เช่น เชียงใหม่ คาร์เร้นท์ หรือ คุณสมชาย รถเช่า"
+                      value={formData.driverName}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          driverName: e.target.value,
+                          nickname: e.target.value,
+                        })
+                      }
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
@@ -294,39 +363,104 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
               {/* License Plate Type & Tax Capability */}
               <div className="rounded-input border border-rule bg-card/60 p-3.5 space-y-3">
                 <div>
-                  <label className={labelCls}>ประเภทป้ายทะเบียน / การรับงาน</label>
-                  <div className="grid grid-cols-2 gap-2 mt-1">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, plateType: 'yellow' })}
-                      className={`p-2.5 rounded-input border text-left text-xs font-bold transition-all ${
-                        formData.plateType === 'yellow'
-                          ? 'border-amber-400 bg-amber-50 text-amber-950 ring-1 ring-amber-400'
-                          : 'border-rule bg-paper text-ink-2 hover:text-ink'
-                      }`}
-                    >
-                      <span className="block text-amber-900 font-extrabold">🟡 ป้ายเหลือง 30</span>
-                      <span className="block text-[10px] text-amber-800/80 font-normal mt-0.5">
-                        รับงานองค์กร / ราชการ / บริษัท
-                      </span>
-                    </button>
+                  <label className={labelCls}>ประเภทป้ายทะเบียน / รูปแบบบริการ</label>
+                  {formData.serviceType === 'with_driver' ? (
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, plateType: 'yellow' })}
+                        className={`p-2.5 rounded-input border text-left text-xs font-bold transition-all ${
+                          formData.plateType === 'yellow'
+                            ? 'border-amber-400 bg-amber-50 text-amber-950 ring-1 ring-amber-400'
+                            : 'border-rule bg-paper text-ink-2 hover:text-ink'
+                        }`}
+                      >
+                        <span className="block text-amber-900 font-extrabold">🟡 ป้ายเหลือง 30</span>
+                        <span className="block text-[10px] text-amber-800/80 font-normal mt-0.5">
+                          รับงานองค์กร / ราชการ / บริษัท
+                        </span>
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, plateType: 'blue' })}
-                      className={`p-2.5 rounded-input border text-left text-xs font-bold transition-all ${
-                        formData.plateType === 'blue'
-                          ? 'border-blue-400 bg-blue-50 text-blue-950 ring-1 ring-blue-400'
-                          : 'border-rule bg-paper text-ink-2 hover:text-ink'
-                      }`}
-                    >
-                      <span className="block text-blue-900 font-extrabold">🔵 ป้ายฟ้า (ส่วนบุคคล)</span>
-                      <span className="block text-[10px] text-blue-800/80 font-normal mt-0.5">
-                        รับงานบุคคล / ครอบครัว / ท่องเที่ยว
-                      </span>
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, plateType: 'blue' })}
+                        className={`p-2.5 rounded-input border text-left text-xs font-bold transition-all ${
+                          formData.plateType === 'blue'
+                            ? 'border-blue-400 bg-blue-50 text-blue-950 ring-1 ring-blue-400'
+                            : 'border-rule bg-paper text-ink-2 hover:text-ink'
+                        }`}
+                      >
+                        <span className="block text-blue-900 font-extrabold">🔵 ป้ายฟ้า (ส่วนบุคคล)</span>
+                        <span className="block text-[10px] text-blue-800/80 font-normal mt-0.5">
+                          รับงานบุคคล / ครอบครัว / ท่องเที่ยว
+                        </span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, plateType: 'yellow' })}
+                        className={`p-2.5 rounded-input border text-left text-xs font-bold transition-all ${
+                          formData.plateType === 'yellow'
+                            ? 'border-emerald-400 bg-emerald-50 text-emerald-950 ring-1 ring-emerald-400'
+                            : 'border-rule bg-paper text-ink-2 hover:text-ink'
+                        }`}
+                      >
+                        <span className="block text-emerald-900 font-extrabold">🟢 ป้ายเขียว (รถบริการธุรกิจ)</span>
+                        <span className="block text-[10px] text-emerald-800/80 font-normal mt-0.5">
+                          รถเช่าเชิงพาณิชย์ถูกต้องตามกฎหมาย
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, plateType: 'blue' })}
+                        className={`p-2.5 rounded-input border text-left text-xs font-bold transition-all ${
+                          formData.plateType === 'blue'
+                            ? 'border-slate-400 bg-slate-100 text-slate-950 ring-1 ring-slate-400'
+                            : 'border-rule bg-paper text-ink-2 hover:text-ink'
+                        }`}
+                      >
+                        <span className="block text-slate-900 font-extrabold">⚪ ป้ายขาว (รถยนต์ส่วนบุคคล)</span>
+                        <span className="block text-[10px] text-slate-800/80 font-normal mt-0.5">
+                          รถบ้านปล่อยเช่า / บุคคลทั่วไป
+                        </span>
+                      </button>
+                    </div>
+                  )}
                 </div>
+
+                {formData.serviceType === 'self_drive' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label htmlFor="td-dpickup" className={labelCls}>
+                        จุดรับ - ส่งรถ
+                      </label>
+                      <input
+                        id="td-dpickup"
+                        type="text"
+                        placeholder="เช่น ส่งฟรีสนามบิน, สถานีรถไฟ, ในเมือง"
+                        value={formData.pickupLocation}
+                        onChange={(e) => setFormData({ ...formData, pickupLocation: e.target.value })}
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="td-ddeposit" className={labelCls}>
+                        เงินมัดจำประกันรถ & เงื่อนไข
+                      </label>
+                      <input
+                        id="td-ddeposit"
+                        type="text"
+                        placeholder="เช่น มัดจำ 3,000 บ., ไม่ใช้บัตรเครดิต"
+                        value={formData.depositTerms}
+                        onChange={(e) => setFormData({ ...formData, depositTerms: e.target.value })}
+                        className={inputCls}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label htmlFor="td-dplate" className={labelCls}>
@@ -335,11 +469,12 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                   <input
                     id="td-dplate"
                     type="text"
-                    placeholder="เช่น 30-1234 เชียงใหม่ หรือ นข-5678"
+                    placeholder="เช่น 30-1234 เชียงใหม่ หรือ กข-5678"
                     value={formData.plateNumber}
                     onChange={(e) => setFormData({ ...formData, plateNumber: e.target.value })}
                     className={inputCls}
                   />
+                  <span className="text-[10px] text-ink-2 mt-1 block">* ระบบจะเซ็นเซอร์เลขทะเบียนบนหน้าเว็บสาธารณะเพื่อความปลอดภัย</span>
                 </div>
 
                 <label className="flex items-center gap-2 cursor-pointer pt-1">

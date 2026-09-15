@@ -12,6 +12,7 @@ import {
   BoardPostType,
   ZoneId,
 } from '@/data/mockData';
+import { maskPhoneNumber, getPublicDriverName } from '@/lib/privacy';
 import {
   ClipboardList,
   Plus,
@@ -608,7 +609,7 @@ export const TripBoard: React.FC = () => {
                   )}
 
                   <p className="mt-2 text-xs text-ink-2">
-                    {t('board.author')} <span className="font-bold text-ink">{post.authorName}</span>
+                    {t('board.author')} <span className="font-bold text-ink">{getPublicDriverName(post.authorName)}</span>
                     {post.vehicleLabel && <span> • {post.vehicleLabel}</span>}
                   </p>
                 </div>
@@ -643,7 +644,7 @@ export const TripBoard: React.FC = () => {
                       className="td-btn inline-flex items-center gap-1 rounded-input bg-accent hover:bg-accent-deep px-3 py-2 text-xs font-bold text-white shadow-xs"
                     >
                       <Phone className="h-3.5 w-3.5" />
-                      <span>{isRequest ? t('board.acceptJob') : t('board.bookNow')}</span>
+                      <span>{isRequest ? t('board.acceptJob') : t('board.bookNow')} ({maskPhoneNumber(post.authorPhone)})</span>
                     </a>
                     {post.authorLine && post.authorLine.startsWith('http') && (
                       <a

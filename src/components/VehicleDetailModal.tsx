@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Vehicle, STANDARD_TERMS, formatTHB } from '@/data/mockData';
+import { maskPhoneNumber, maskPlateNumber, getPublicDriverName } from '@/lib/privacy';
 import { X, ShieldCheck, Star, Phone, MessageCircle, MapPin, Check, Info, Users, CheckCircle2, Clock, Calendar, Copy, Award, FileCheck2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -16,6 +17,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle,
   const { t } = useLanguage();
   const { trackCall } = useAnalytics();
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isPhoneRevealed, setIsPhoneRevealed] = useState<boolean>(false);
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -136,6 +138,12 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle,
               </span>
             )}
 
+            {vehicle.plateNumber && (
+              <span className="inline-flex items-center gap-1 rounded-pill bg-paper px-2.5 py-1 text-xs font-mono font-bold text-ink-2 border border-rule">
+                ทะเบียน: {maskPlateNumber(vehicle.plateNumber)}
+              </span>
+            )}
+
             {vehicle.isAvailable === false && (
               <span className="inline-flex items-center gap-1.5 rounded-pill bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 px-3 py-1 text-xs font-bold">
                 ⏸️ คิวเต็มชั่วคราว
@@ -238,13 +246,15 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle,
 
             <div className="mt-2.5 flex items-center gap-3">
               <span aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent text-sm font-extrabold text-white">
-                {vehicle.driverNickname.charAt(0)}
+                {getPublicDriverName(vehicle.driverName, vehicle.driverNickname).charAt(0)}
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-extrabold text-ink">
-                  {vehicle.driverNickname} ({vehicle.driverName})
+                  {getPublicDriverName(vehicle.driverName, vehicle.driverNickname)}
                 </p>
-                <p className="td-fig text-xs font-bold text-ink-2">{vehicle.driverPhone}</p>
+                <p className="td-fig text-xs font-bold text-ink-2">
+                  {isPhoneRevealed ? vehicle.driverPhone : maskPhoneNumber(vehicle.driverPhone)}
+                </p>
               </div>
             </div>
             <p className="mt-2 text-xs font-medium text-ink-2">{t('detail.contactNote')}</p>
@@ -255,6 +265,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle,
               <a
                 href={`tel:${vehicle.driverPhone}`}
                 onClick={() => {
+                  setIsPhoneRevealed(true);
                   trackCall({
                     targetType: 'vehicle_detail',
                     targetId: vehicle.id,
@@ -267,7 +278,11 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle,
                 className="td-btn inline-flex items-center justify-center gap-2 rounded-input bg-accent hover:bg-accent-deep px-3 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-xs transition-all active:scale-[0.98]"
               >
                 <Phone className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-                <span>{t('detail.callNow')} ({vehicle.driverPhone})</span>
+                <span>
+                  {isPhoneRevealed
+                    ? `${t('detail.callNow')} (${vehicle.driverPhone})`
+                    : `📞 ${maskPhoneNumber(vehicle.driverPhone)} (กดโทรออก)`}
+                </span>
               </a>
 
               {/* LINE */}

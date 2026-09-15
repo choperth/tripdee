@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Vehicle, formatTHB } from '@/data/mockData';
+import { maskPhoneNumber, maskPlateNumber, getPublicDriverName } from '@/lib/privacy';
 import { ShieldCheck, Star, Users, Phone, MessageCircle, MapPin, ArrowRight, Award, FileCheck2, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -16,6 +17,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
   const { t, locale } = useLanguage();
   const { trackCall } = useAnalytics();
   const [copiedWechat, setCopiedWechat] = React.useState(false);
+  const [isPhoneRevealed, setIsPhoneRevealed] = React.useState(false);
 
   const handleWechatClick = (e: React.MouseEvent) => {
     if (vehicle.driverWechat) {
@@ -61,7 +63,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
           </span>
           {vehicle.plateNumber && (
             <span className="inline-flex items-center gap-1 rounded-pill bg-black/60 backdrop-blur-xs px-2 py-0.5 text-[11px] font-mono font-semibold text-white/90 shadow-xs border border-white/20">
-              {vehicle.plateNumber}
+              {maskPlateNumber(vehicle.plateNumber)}
             </span>
           )}
           {vehicle.isAvailable === false && (
@@ -81,10 +83,10 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
         {/* Bottom image overlay: Starting price sneak peek */}
         <div className="absolute bottom-2.5 left-3 right-3 flex items-baseline justify-between text-white drop-shadow-sm">
           <span className="text-xs font-semibold text-white/90">
-            {vehicle.driverNickname} • {vehicle.location}
+            {getPublicDriverName(vehicle.driverName, vehicle.driverNickname)} • {vehicle.location}
           </span>
           <span className="text-xs font-bold text-white/95 bg-black/40 px-2 py-0.5 rounded-pill backdrop-blur-xs">
-            {t('vehicle.priceNote1')} {formatTHB(vehicle.zoneRates.city)}{t('vehicle.perDay')}
+            {t('vehicle.priceNote1')} {formatTHB(vehicle.zoneRates?.city || 1900)}{t('vehicle.perDay')}
           </span>
         </div>
       </button>
@@ -94,11 +96,11 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2 min-w-0">
             <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-soft text-xs font-extrabold text-accent border border-accent/20">
-              {vehicle.driverNickname.charAt(0)}
+              {getPublicDriverName(vehicle.driverName, vehicle.driverNickname).charAt(0)}
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-extrabold text-ink">
-                {vehicle.driverNickname}
+                {getPublicDriverName(vehicle.driverName, vehicle.driverNickname)}
               </p>
               <p className="flex items-center gap-1 text-xs font-medium text-ink-2 truncate">
                 <MapPin className="h-3 w-3 shrink-0 text-accent" aria-hidden="true" />
@@ -194,16 +196,16 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
           <div className="mb-2.5 flex items-end justify-between gap-2">
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-2 block">
-                {t('vehicle.priceNote1')}
+                ราคาเริ่มต้นโดยประมาณ
               </span>
               <p className="td-fig text-2xl font-extrabold text-ink leading-none mt-0.5">
-                {formatTHB(vehicle.zoneRates.city)}
-                <span className="text-xs font-semibold text-ink-2"> {t('vehicle.perDay')}</span>
+                {formatTHB(vehicle.zoneRates?.city || 1900)}
+                <span className="text-xs font-semibold text-ink-2"> /วัน</span>
               </p>
             </div>
             <p className="text-right text-[11px] font-medium text-ink-2 leading-tight">
-              {t('vehicle.priceNote1')}<br />
-              <span className="text-accent font-bold">{t('vehicle.priceNote2')}</span>
+              ตกลงราคากับคนขับโดยตรง<br />
+              <span className="text-accent font-bold">ตามระยะทางจริง</span>
             </p>
           </div>
 
@@ -217,12 +219,17 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
           <div className="grid grid-cols-2 gap-2">
             <a
               href={`tel:${vehicle.driverPhone}`}
-              onClick={handleCallClick}
+              onClick={() => {
+                setIsPhoneRevealed(true);
+                handleCallClick();
+              }}
               data-analytics-call={vehicle.id}
               className="td-btn inline-flex items-center justify-center gap-1.5 rounded-input bg-accent hover:bg-accent-deep px-3 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-xs transition-all active:scale-[0.98]"
             >
-              <Phone className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-              <span>{t('vehicle.callNow')}</span>
+              <Phone className="h-4 w-4 shrink-0" aria-hidden="true" strokeWidth={2.5} />
+              <span className="truncate">
+                {isPhoneRevealed ? vehicle.driverPhone : `${maskPhoneNumber(vehicle.driverPhone)} โทร`}
+              </span>
             </a>
 
             {locale === 'zh' && vehicle.driverWechat ? (
