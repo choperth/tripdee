@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Vehicle, ZONE_RATE_CARDS, formatTHB } from '@/data/mockData';
+import { Vehicle, formatTHB } from '@/data/mockData';
 import { ShieldCheck, Star, Users, Phone, MessageCircle, MapPin, ArrowRight, Award, FileCheck2, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -207,17 +207,10 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
             </p>
           </div>
 
-          {/* Mini Zone Rate Grid */}
-          <div className="mb-3.5 grid grid-cols-2 gap-1.5">
-            {ZONE_RATE_CARDS.map((zone) => (
-              <span
-                key={zone.id}
-                className="td-fig inline-flex items-baseline justify-between gap-1 rounded-input bg-paper px-2.5 py-1 text-[11px] border border-rule/60"
-              >
-                <span className="font-semibold text-ink-2 truncate">{t(`zone.${zone.id}.short` as DictKey)}</span>
-                <span className="font-extrabold text-ink shrink-0">{formatTHB(vehicle.zoneRates[zone.id])}</span>
-              </span>
-            ))}
+          {/* Clean Rate Note (No destination zones) */}
+          <div className="mb-3 flex items-center justify-between text-[11px] text-ink-2 bg-paper px-2.5 py-1.5 rounded-input border border-rule/60">
+            <span>รวมคนขับ & ยานพาหนะ</span>
+            <span className="font-semibold text-leaf">0% คอมมิชชั่น ดีลตรง</span>
           </div>
 
           {/* Direct Contact Dual Action Buttons (Smart Dynamic based on locale) */}

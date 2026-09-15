@@ -204,13 +204,9 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   <span className="text-ink-2 block">LINE:</span>
                   <span className="font-mono text-accent-deep truncate block">{v.driverLine || '-'}</span>
                 </div>
-                <div>
-                  <span className="text-ink-2 block">อัตราในเมือง:</span>
-                  <span className="font-bold text-ink">{v.zoneRates?.city?.toLocaleString() || '-'} บ./วัน</span>
-                </div>
-                <div>
-                  <span className="text-ink-2 block">ขึ้นดอยสูง:</span>
-                  <span className="font-bold text-ink">{v.zoneRates?.highHill?.toLocaleString() || '-'} บ./วัน</span>
+                <div className="col-span-2">
+                  <span className="text-ink-2 block">อัตราค่าบริการเริ่มต้น:</span>
+                  <span className="font-bold text-accent">{v.zoneRates?.city?.toLocaleString() || '-'} บ./วัน</span>
                 </div>
               </div>
             </div>
@@ -346,46 +342,17 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
               </div>
 
               {/* Rates */}
-              <div className="p-3 rounded-xl bg-paper border border-rule space-y-2">
-                <span className="font-bold text-ink block">อัตราค่าบริการ (บาท/วัน):</span>
-                <div className="grid grid-cols-4 gap-2">
-                  <div>
-                    <span className="text-[10px] text-ink-2 block">ในเมือง</span>
-                    <input
-                      name="rate_city"
-                      type="number"
-                      defaultValue={editingVehicle?.zoneRates?.city || 1900}
-                      className="w-full p-1.5 rounded-lg bg-card border border-rule text-ink"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-ink-2 block">ดอยกลาง</span>
-                    <input
-                      name="rate_midHill"
-                      type="number"
-                      defaultValue={editingVehicle?.zoneRates?.midHill || 2100}
-                      className="w-full p-1.5 rounded-lg bg-card border border-rule text-ink"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-ink-2 block">ดอยสูง</span>
-                    <input
-                      name="rate_highHill"
-                      type="number"
-                      defaultValue={editingVehicle?.zoneRates?.highHill || 2300}
-                      className="w-full p-1.5 rounded-lg bg-card border border-rule text-ink"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-ink-2 block">ข้ามจังหวัด</span>
-                    <input
-                      name="rate_cross"
-                      type="number"
-                      defaultValue={editingVehicle?.zoneRates?.crossProvince || 2700}
-                      className="w-full p-1.5 rounded-lg bg-card border border-rule text-ink"
-                    />
-                  </div>
-                </div>
+              <div className="p-3 rounded-xl bg-paper border border-rule space-y-1">
+                <label className="font-bold text-ink block">อัตราค่าบริการเริ่มต้นต่อวัน (บาท/วัน) *</label>
+                <input
+                  name="rate_city"
+                  type="number"
+                  min={500}
+                  step={100}
+                  defaultValue={editingVehicle?.zoneRates?.city || 1900}
+                  required
+                  className="w-full p-2 rounded-xl bg-card border border-rule text-ink"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">

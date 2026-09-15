@@ -446,36 +446,27 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
               </div>
             </div>
 
-            {/* 4. Pricing (Zone Rates) */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="driver-city-rate" className="block text-[11px] font-bold text-ink-2 mb-1">
-                  ราคาเหมาในเมือง (บาท/วัน)
-                </label>
-                <input
-                  id="driver-city-rate"
-                  type="number"
-                  min={500}
-                  step={100}
-                  value={cityRate}
-                  onChange={(e) => setCityRate(Number(e.target.value))}
-                  className="w-full rounded-input border border-rule bg-card px-3 py-2 text-xs font-semibold text-ink focus:border-accent focus:outline-none"
-                />
-              </div>
-              <div>
-                <label htmlFor="driver-hill-rate" className="block text-[11px] font-bold text-ink-2 mb-1">
-                  ราคาดอยสูง / ข้ามจังหวัด (บาท/วัน)
-                </label>
-                <input
-                  id="driver-hill-rate"
-                  type="number"
-                  min={500}
-                  step={100}
-                  value={highHillRate}
-                  onChange={(e) => setHighHillRate(Number(e.target.value))}
-                  className="w-full rounded-input border border-rule bg-card px-3 py-2 text-xs font-semibold text-ink focus:border-accent focus:outline-none"
-                />
-              </div>
+            {/* 4. Pricing (Daily Rental Rate) */}
+            <div>
+              <label htmlFor="driver-city-rate" className="block text-[11px] font-bold text-ink-2 mb-1">
+                ราคาค่าบริการเริ่มต้นต่อวัน (บาท/วัน)
+              </label>
+              <input
+                id="driver-city-rate"
+                type="number"
+                min={500}
+                step={100}
+                value={cityRate}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setCityRate(val);
+                  setHighHillRate(val + 400);
+                }}
+                className="w-full rounded-input border border-rule bg-card px-3 py-2 text-xs font-semibold text-ink focus:border-accent focus:outline-none"
+              />
+              <p className="text-[10px] text-ink-2 mt-1">
+                * ราคารวมคนขับและยานพาหนะ (คุยตกลงค่าน้ำมันและเส้นทางกับลูกค้าโดยตรง 0% ค่าคอมมิชชั่น)
+              </p>
             </div>
 
             {errorMessage && (

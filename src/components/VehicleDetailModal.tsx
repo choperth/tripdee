@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Vehicle, ZONE_RATE_CARDS, STANDARD_TERMS, formatTHB } from '@/data/mockData';
+import { Vehicle, STANDARD_TERMS, formatTHB } from '@/data/mockData';
 import { X, ShieldCheck, Star, Phone, MessageCircle, MapPin, Check, Info, Users, CheckCircle2, Clock, Calendar, Copy, Award, FileCheck2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -162,37 +162,31 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle,
             </ul>
           </div>
 
-          {/* Transparent Zone Rates Table */}
+          {/* Transparent Daily Rate (No Destination Zones) */}
           <div className="mt-5 rounded-card bg-paper p-4 border border-rule">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold uppercase tracking-wider text-ink">
-                {t('detail.ratesTitle')}
+                อัตราค่าบริการ (รวมคนขับและยานพาหนะ)
               </span>
-              <span className="text-[11px] font-semibold text-ink-2">ราคารวมคนขับและยานพาหนะ</span>
+              <span className="text-[11px] font-semibold text-leaf bg-leaf-soft px-2 py-0.5 rounded-pill border border-leaf/20">
+                0% คอมมิชชั่น ดีลตรง
+              </span>
             </div>
-            <dl className="flex flex-col gap-1.5">
-              {ZONE_RATE_CARDS.map((zone) => (
-                <div
-                  key={zone.id}
-                  className="flex items-baseline justify-between gap-3 rounded-input bg-card px-3 py-2 border border-rule/60"
-                >
-                  <dt className="min-w-0">
-                    <span className="block text-xs font-bold text-ink">
-                      {t('detail.zoneLine', { no: zone.zoneNo, label: t(`zone.${zone.id}.label` as DictKey) })}
-                    </span>
-                    <span className="block text-[11px] font-normal text-ink-2">{t(`zone.${zone.id}.examples` as DictKey)}</span>
-                  </dt>
-                  <dd className="td-fig shrink-0 text-sm font-extrabold text-ink">
-                    {formatTHB(vehicle.zoneRates[zone.id])}
-                    <span className="text-xs font-normal text-ink-2"> /วัน</span>
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            {vehicle.rateNote && (
+            <div className="flex items-baseline justify-between py-2 border-b border-rule/60">
+              <span className="text-sm font-bold text-ink">ราคาเริ่มต้นต่อวัน</span>
+              <span className="text-2xl font-extrabold text-accent">
+                {formatTHB(vehicle.zoneRates?.city || 1900)}{' '}
+                <span className="text-xs font-normal text-ink-2">/วัน</span>
+              </span>
+            </div>
+            {vehicle.rateNote ? (
               <p className="mt-2.5 flex items-start gap-1.5 text-xs font-medium leading-relaxed text-ink-2">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
                 <span>{vehicle.rateNote}</span>
+              </p>
+            ) : (
+              <p className="mt-2 text-[11px] text-ink-2">
+                * ราคารวมคนขับ ไม่รวมค่าน้ำมันและค่าทางด่วน (สามารถสอบถามและตกลงราคากับคนขับโดยตรงตามเส้นทางจริง)
               </p>
             )}
           </div>

@@ -285,23 +285,25 @@ export const TripBoard: React.FC = () => {
               />
             </div>
 
-            <div>
-              <label htmlFor="td-bzone" className={labelCls}>
-                {t('board.fZone')}
-              </label>
-              <select
-                id="td-bzone"
-                value={form.zoneId}
-                onChange={(e) => set({ zoneId: e.target.value as ZoneId })}
-                className={inputCls}
-              >
-                {ZONE_RATE_CARDS.map((z) => (
-                  <option key={z.id} value={z.id}>
-                    {t('board.zoneOption', { no: z.zoneNo, label: t(`zone.${z.id}.label` as DictKey) })}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {form.type === 'request' && (
+              <div>
+                <label htmlFor="td-bzone" className={labelCls}>
+                  {t('board.fZone')}
+                </label>
+                <select
+                  id="td-bzone"
+                  value={form.zoneId}
+                  onChange={(e) => set({ zoneId: e.target.value as ZoneId })}
+                  className={inputCls}
+                >
+                  {ZONE_RATE_CARDS.map((z) => (
+                    <option key={z.id} value={z.id}>
+                      {t('board.zoneOption', { no: z.zoneNo, label: t(`zone.${z.id}.label` as DictKey) })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div>
               <label htmlFor="td-bdate" className={labelCls}>
@@ -585,10 +587,12 @@ export const TripBoard: React.FC = () => {
                   </h3>
 
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-ink-2">
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5 text-accent" />
-                      <span>{t('board.metaZone', { no: zone.zoneNo, label: t(`zone.${zone.id}.label` as DictKey) })}</span>
-                    </span>
+                    {isRequest && (
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5 text-accent" />
+                        <span>{t('board.metaZone', { no: zone.zoneNo, label: t(`zone.${zone.id}.label` as DictKey) })}</span>
+                      </span>
+                    )}
                     <span className="inline-flex items-center gap-1">
                       <CalendarDays className="h-3.5 w-3.5 text-sky" />
                       <span>{t('board.metaDate', { date: post.date, days: post.days })}</span>
