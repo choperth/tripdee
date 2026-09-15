@@ -64,30 +64,35 @@ export const metadata: Metadata = {
       "zh-CN": "/?lang=zh",
     },
   },
+  icons: {
+    icon: "/app-icon.png",
+    shortcut: "/app-icon.png",
+    apple: "/app-icon.png",
+  },
   openGraph: {
     type: "website",
     locale: "th_TH",
     alternateLocale: ["en_US", "zh_CN"],
     url: BASE_URL,
-    siteName: "TripDee (ทริปดี) เชียงใหม่",
-    title: "TripDee (ทริปดี) | รวมรถตู้ VIP รถเช่า และที่พักคุณภาพ เชียงใหม่",
+    siteName: "TripDee (ทริปดี)",
+    title: "TripDee (ทริปดี) | รวมรถตู้ VIP รถเช่า และสิทธิพิเศษการเดินทาง ทั่วไทย",
     description:
-      "ทริปดีๆ เริ่มต้นที่นี่ ติดต่อคนขับตรง ไม่บวกค่านายหน้า รถตู้ VIP พร้อมคนขับ รถเช่าขับเอง และที่พักพาร์ตเนอร์ในเชียงใหม่ พร้อมใบเสนอราคาและใบกำกับภาษีเต็มรูปแบบ",
+      "ทริปดีๆ เริ่มต้นที่นี่ ติดต่อคนขับตรง 0% ค่านายหน้า รถตู้ VIP พร้อมคนขับ รถเช่าขับเอง และสิทธิพิเศษการเดินทางทั่วไทย พร้อมใบเสนอราคาและใบกำกับภาษีเต็มรูปแบบ",
     images: [
       {
         url: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&h=630&q=85",
         width: 1200,
         height: 630,
-        alt: "TripDee รวมรถตู้ VIP รถเช่า และที่พักคุณภาพ เชียงใหม่",
+        alt: "TripDee รวมรถตู้ VIP รถเช่า และสิทธิพิเศษการเดินทาง ทั่วไทย",
         type: "image/jpeg",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "TripDee (ทริปดี) | รวมรถตู้ VIP รถเช่า และที่พักคุณภาพ เชียงใหม่",
+    title: "TripDee (ทริปดี) | รวมรถตู้ VIP รถเช่า และสิทธิพิเศษการเดินทาง ทั่วไทย",
     description:
-      "ทริปดีๆ เริ่มต้นที่นี่ ติดต่อคนขับตรง ไม่บวกค่านายหน้า รถตู้ VIP พร้อมคนขับ และที่พักพาร์ตเนอร์ในเชียงใหม่",
+      "ทริปดีๆ เริ่มต้นที่นี่ ติดต่อคนขับตรง 0% ค่านายหน้า รถตู้ VIP พร้อมคนขับ และสิทธิพิเศษการเดินทางทั่วไทย",
     images: [
       "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&h=630&q=85",
     ],

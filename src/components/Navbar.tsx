@@ -136,13 +136,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-6">
             <button
               onClick={() => pick('van')}
-              className="flex shrink-0 items-center gap-1.5 font-display text-xl font-extrabold tracking-tight text-ink"
+              className="flex shrink-0 items-center py-1 transition-transform hover:scale-[1.02] focus:outline-none"
               aria-label={t('nav.home')}
             >
-              <span>TripDee</span>
-              <span className="inline-flex items-center rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-extrabold text-accent border border-accent/20">
-                เชียงใหม่
-              </span>
+              <img
+                src="/logo.png"
+                alt="TripDee ทริปดี"
+                className="h-8 sm:h-9 w-auto object-contain"
+              />
             </button>
 
             {/* Desktop Navigation Tabs */}

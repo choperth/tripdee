@@ -29,10 +29,11 @@ export const Footer: React.FC = () => {
           {/* Col 1: Brand & Bio */}
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-display text-xl font-extrabold tracking-tight text-white">TripDee</span>
-              <span className="rounded bg-blue-500/20 text-blue-300 border border-blue-400/30 px-1.5 py-0.5 text-[10px] font-bold">
-                เชียงใหม่
-              </span>
+              <img
+                src="/logo-white.png"
+                alt="TripDee ทริปดี"
+                className="h-8 w-auto object-contain"
+              />
             </div>
             <p className="mt-2 text-xs font-medium text-slate-400 leading-relaxed">
               {t('footer.tagline')}
@@ -40,7 +41,7 @@ export const Footer: React.FC = () => {
             <div className="mt-4 flex flex-col gap-1.5 text-xs">
               <div className="flex items-center gap-2 text-slate-300">
                 <MapPin className="h-4 w-4 text-blue-400 shrink-0" />
-                <span>เชียงใหม่ และภาคเหนือ ประเทศไทย</span>
+                <span>บริการครอบคลุมทั่วประเทศไทย</span>
               </div>
               <div className="flex items-center gap-2 text-slate-300">
                 <MessageCircle className="h-4 w-4 text-emerald-400 shrink-0" />
