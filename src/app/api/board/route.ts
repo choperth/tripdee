@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchBoardPosts, saveBoardPost, updateBoardPost, deleteBoardPost, closeBoardPost } from '@/lib/supabase/service';
+import { sendPushToDrivers } from '@/lib/pushService';
 import { ZoneId } from '@/data/mockData';
 
 export async function GET() {
@@ -57,6 +58,24 @@ export async function POST(req: NextRequest) {
       category: body.category === 'corporate' ? 'corporate' : 'general',
       pin: body.pin ? String(body.pin).trim() : undefined,
     });
+
+    // Trigger Web Push Notification to all subscribed drivers
+    try {
+      const isCorporate = newPost.category === 'corporate';
+      const pushTitle = isCorporate
+        ? '🏢 มีงานองค์กร/สัมมนาใหม่! (TripDee)'
+        : '🚐 มีงานใหม่ในบอร์ด! (TripDee)';
+      const pushBody = `[${newPost.title}] ${newPost.date} งบ ${newPost.price.toLocaleString()} บ. • แตะเพื่อดูเบอร์โทรและรับงาน`;
+
+      sendPushToDrivers({
+        title: pushTitle,
+        body: pushBody,
+        url: '/#trip-board',
+        tag: `tripdee-board-${newPost.id}`,
+      }).catch((e) => console.error('[Board Push Error]:', e));
+    } catch (pushErr) {
+      console.error('[Board Push Dispatch Error]:', pushErr);
+    }
 
     return NextResponse.json({
       success: true,

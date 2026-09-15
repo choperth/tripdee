@@ -17,6 +17,7 @@ import {
   ToggleLeft,
   ToggleRight,
 } from 'lucide-react';
+import { DriverPushBell } from '@/components/notifications/DriverPushBell';
 
 interface DriverSelfServiceModalProps {
   isOpen: boolean;
@@ -313,6 +314,9 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                 <span className="text-[11px] text-ink-2">{selectedVehicle.location}</span>
               </div>
             </div>
+
+            {/* Web Push Notification Setting for Driver */}
+            <DriverPushBell compact={true} />
 
             {/* 1. Quick Availability Toggle */}
             <div className="rounded-xl border border-rule bg-card p-3.5 shadow-2xs">

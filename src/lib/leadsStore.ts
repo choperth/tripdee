@@ -107,6 +107,15 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
   };
 }
 
+export interface PushSubscriptionRecord {
+  id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  role: 'driver' | 'customer' | 'admin';
+  createdAt: string;
+}
+
 interface LeadsDatabase {
   quotations: QuotationLead[];
   drivers: DriverLead[];
@@ -114,6 +123,7 @@ interface LeadsDatabase {
   deletedVehicleIds: string[];
   deletedDriverLeadIds: string[];
   deletedQuotationIds: string[];
+  pushSubscriptions?: PushSubscriptionRecord[];
 }
 
 declare global {
@@ -360,4 +370,46 @@ export function getDeletedVehicleIds(): string[] {
     db.deletedVehicleIds = [];
   }
   return db.deletedVehicleIds;
+}
+
+// Push Subscriptions Operations
+export function saveLocalPushSubscription(sub: Omit<PushSubscriptionRecord, 'id' | 'createdAt'>): PushSubscriptionRecord {
+  const db = getDb();
+  if (!Array.isArray(db.pushSubscriptions)) {
+    db.pushSubscriptions = [];
+  }
+  const existingIdx = db.pushSubscriptions.findIndex((s) => s.endpoint === sub.endpoint);
+  const record: PushSubscriptionRecord = {
+    ...sub,
+    id: existingIdx >= 0 ? db.pushSubscriptions[existingIdx].id : `sub-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    createdAt: new Date().toISOString(),
+  };
+  if (existingIdx >= 0) {
+    db.pushSubscriptions[existingIdx] = record;
+  } else {
+    db.pushSubscriptions.push(record);
+  }
+  return record;
+}
+
+export function removeLocalPushSubscription(endpoint: string): boolean {
+  const db = getDb();
+  if (!Array.isArray(db.pushSubscriptions)) {
+    db.pushSubscriptions = [];
+    return false;
+  }
+  const initLen = db.pushSubscriptions.length;
+  db.pushSubscriptions = db.pushSubscriptions.filter((s) => s.endpoint !== endpoint);
+  return db.pushSubscriptions.length < initLen;
+}
+
+export function getLocalPushSubscriptions(role?: 'driver' | 'customer' | 'admin'): PushSubscriptionRecord[] {
+  const db = getDb();
+  if (!Array.isArray(db.pushSubscriptions)) {
+    db.pushSubscriptions = [];
+  }
+  if (role) {
+    return db.pushSubscriptions.filter((s) => s.role === role);
+  }
+  return db.pushSubscriptions;
 }

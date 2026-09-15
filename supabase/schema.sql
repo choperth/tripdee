@@ -145,6 +145,20 @@ create table if not exists public.sponsors (
 create index if not exists idx_sponsors_category on public.sponsors(category);
 
 -- ------------------------------------------------------------------------------
+-- 7. PUSH SUBSCRIPTIONS TABLE (ระบบการแจ้งเตือน Web Push)
+-- ------------------------------------------------------------------------------
+create table if not exists public.push_subscriptions (
+    id text primary key,
+    endpoint text unique not null,
+    p256dh text not null,
+    auth text not null,
+    role text default 'driver',
+    created_at timestamptz default now()
+);
+
+create index if not exists idx_push_sub_role on public.push_subscriptions(role);
+
+-- ------------------------------------------------------------------------------
 -- 8. ROW LEVEL SECURITY (RLS) POLICIES
 -- ------------------------------------------------------------------------------
 alter table public.quotations enable row level security;
@@ -153,6 +167,19 @@ alter table public.vehicles enable row level security;
 alter table public.board_posts enable row level security;
 alter table public.analytics_events enable row level security;
 alter table public.sponsors enable row level security;
+alter table public.push_subscriptions enable row level security;
+
+create policy "Allow public select on push_subscriptions"
+    on public.push_subscriptions for select
+    using (true);
+
+create policy "Allow public insert on push_subscriptions"
+    on public.push_subscriptions for insert
+    with check (true);
+
+create policy "Allow public delete on push_subscriptions"
+    on public.push_subscriptions for delete
+    using (true);
 
 -- Quotations policies
 create policy "Allow public insert on quotations"

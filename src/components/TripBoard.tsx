@@ -28,6 +28,7 @@ import {
   Lock,
   Briefcase,
 } from 'lucide-react';
+import { DriverPushBell } from '@/components/notifications/DriverPushBell';
 
 type BoardFilter = 'all' | BoardPostType | 'corporate';
 
@@ -229,6 +230,9 @@ export const TripBoard: React.FC = () => {
           <span>{formOpen ? t('board.closeForm') : t('board.postFree')}</span>
         </button>
       </div>
+
+      {/* Driver Web Push Notification Banner */}
+      <DriverPushBell />
 
       {/* Post Form Drawer */}
       {formOpen && (
