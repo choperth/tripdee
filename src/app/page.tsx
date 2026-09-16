@@ -23,7 +23,7 @@ import { MobileBottomBar } from '@/components/MobileBottomBar';
 import { ScrollQualityMonitor } from '@/components/ScrollQualityMonitor';
 import { useLanguage } from '@/context/LanguageContext';
 import type { DictKey } from '@/i18n/dictionaries';
-import { SearchX, ArrowRight, X, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { SearchX, ArrowRight, X, SlidersHorizontal, RotateCcw, UserPlus, MessageCircle } from 'lucide-react';
 
 const SERVICE_ACTIONS: { key: DictKey; tab: 'van' | 'car' | 'hotel' | 'corporate'; zone?: string; seats?: string }[] = [
   { key: 'home.service1', tab: 'van' },
@@ -395,7 +395,7 @@ export default function HomePage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="rounded-card border-2 border-dashed border-rule bg-card px-6 py-14 text-center">
+                    <div className="rounded-card border-2 border-dashed border-rule bg-card px-6 py-12 text-center">
                       <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-sun-soft">
                         <SearchX className="h-7 w-7 text-ink-2" aria-hidden="true" />
                       </span>
@@ -405,10 +405,12 @@ export default function HomePage() {
                       <p className="mx-auto mt-1 max-w-[48ch] text-sm font-medium leading-relaxed text-ink-2">
                         {t('home.emptyDesc')}
                       </p>
+
+                      {/* Action buttons for traveler */}
                       <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
                         <button
                           onClick={resetFilters}
-                          className="td-btn td-pop inline-flex items-center rounded-pill bg-sun px-5 py-2.5 text-sm font-extrabold text-sun-ink"
+                          className="td-btn td-pop inline-flex items-center rounded-pill bg-sun px-5 py-2.5 text-sm font-extrabold text-sun-ink shadow-xs"
                         >
                           {t('home.emptyCta')}
                         </button>
@@ -419,6 +421,40 @@ export default function HomePage() {
                           <span>โพสต์ประกาศหาคนขับบน TripBoard</span>
                           <ArrowRight className="h-3.5 w-3.5" />
                         </a>
+                        <a
+                          href="https://line.me"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="td-btn inline-flex items-center gap-1.5 rounded-pill bg-[#06C755]/10 text-[#06C755] border border-[#06C755]/30 px-4 py-2.5 text-xs font-extrabold hover:bg-[#06C755] hover:text-white transition-all"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          <span>สอบถามคิวรถด่วนทาง LINE</span>
+                        </a>
+                      </div>
+
+                      {/* Driver Acquisition / Lead Generation Card */}
+                      <div className="mt-8 mx-auto max-w-xl rounded-card border border-emerald-200/80 bg-gradient-to-br from-emerald-50/70 via-card to-paper p-5 text-left shadow-xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div>
+                            <div className="inline-flex items-center gap-1.5 rounded-pill bg-emerald-600/10 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-700 mb-1.5">
+                              <span>🚐 สำหรับผู้ให้บริการรถตู้ / รถเช่า</span>
+                            </div>
+                            <h4 className="text-sm font-extrabold text-ink">
+                              คุณเป็นคนขับหรือเจ้าของรถในพื้นที่นี้ใช่หรือไม่?
+                            </h4>
+                            <p className="mt-0.5 text-xs font-medium text-ink-2">
+                              ร่วมเป็นพาร์ทเนอร์คนขับคันแรก รับงานตรงจากนักท่องเที่ยว 0% คอมมิชชั่น
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsRegisterModalOpen(true)}
+                            className="td-btn inline-flex shrink-0 items-center justify-center gap-1.5 rounded-pill bg-emerald-600 px-4 py-2 text-xs font-extrabold text-white shadow-xs hover:bg-emerald-700 transition-all"
+                          >
+                            <UserPlus className="h-3.5 w-3.5" />
+                            <span>ลงทะเบียนคนขับฟรี</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
