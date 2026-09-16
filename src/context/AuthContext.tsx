@@ -130,14 +130,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [quotations, setQuotations] = useState<QuotationRecord[]>(INITIAL_QUOTATIONS);
 
   useEffect(() => {
+    let isMounted = true;
     try {
       const saved = localStorage.getItem('td-auth-user');
       if (saved) {
-        setUser(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        queueMicrotask(() => {
+          if (isMounted) setUser(parsed);
+        });
       }
     } catch {
       /* ignore storage access error */
     }
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const saveUser = (newUser: UserProfile | null) => {

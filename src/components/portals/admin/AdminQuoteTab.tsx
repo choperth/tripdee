@@ -2,16 +2,17 @@
 
 import React, { useState } from 'react';
 import { QuotationLead } from '@/lib/leadsStore';
-import { FileText, Pencil, Trash2, PhoneCall, CheckCircle2, Clock, Ban, Search } from 'lucide-react';
+import { Pencil, Trash2, PhoneCall, Search } from 'lucide-react';
+import { useAnalytics } from '@/context/AnalyticsContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminQuoteTabProps {
   quotes: QuotationLead[];
   onRefresh: () => void;
-  trackCall: (info: any) => void;
 }
 
-export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh, trackCall }) => {
+export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh }) => {
+  const { trackCall } = useAnalytics();
   const [searchTerm, setSearchTerm] = useState('');
   const [editingQuote, setEditingQuote] = useState<QuotationLead | null>(null);
   const [deletingQuote, setDeletingQuote] = useState<QuotationLead | null>(null);
@@ -148,7 +149,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh,
                 <div className="flex items-center gap-1.5">
                   <select
                     value={q.status}
-                    onChange={(e) => handleStatusChange(q, e.target.value as any)}
+                    onChange={(e) => handleStatusChange(q, e.target.value as QuotationLead['status'])}
                     className="rounded-lg bg-card border border-rule px-2 py-1 text-[11px] font-bold text-ink"
                   >
                     <option value="pending">รอติดต่อ</option>

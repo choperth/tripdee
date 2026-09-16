@@ -22,14 +22,20 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [locale, setLocaleState] = useState<Locale>('th');
 
   useEffect(() => {
+    let isMounted = true;
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (isLocale(saved) && saved !== 'th') {
-        setLocaleState(saved);
+        queueMicrotask(() => {
+          if (isMounted) setLocaleState(saved);
+        });
       }
     } catch {
       /* ignore */
     }
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Bell, BellRing, CheckCircle, Volume2, X, AlertCircle, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, BellRing, Volume2, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -29,8 +29,10 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
   // Check support & current permission
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
-      setIsSupported(true);
-      setPermission(Notification.permission);
+      queueMicrotask(() => {
+        setIsSupported(true);
+        setPermission(Notification.permission);
+      });
 
       // Register Service Worker
       navigator.serviceWorker

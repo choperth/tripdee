@@ -251,13 +251,12 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
             driverLeads={driverLeads}
             onRefresh={refreshAll}
             onApprove={handleApprove}
-            trackCall={trackCall}
           />
         )}
 
         {/* Tab 3: Corporate Quotes */}
         {activeTab === 'quotations' && (
-          <AdminQuoteTab quotes={quoteLeads} onRefresh={refreshAll} trackCall={trackCall} />
+          <AdminQuoteTab quotes={quoteLeads} onRefresh={refreshAll} />
         )}
 
         {/* Tab 4: Board Posts */}

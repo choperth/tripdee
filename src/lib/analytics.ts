@@ -12,7 +12,8 @@ export type CallTargetType =
   | 'trip_board'
   | 'sponsor'
   | 'admin_fleet'
-  | 'driver_job';
+  | 'driver_job'
+  | 'corporate_quote';
 
 export interface SponsorClickEvent {
   type: 'sponsor_click';
@@ -89,6 +90,7 @@ export function createEmptySummary(): AnalyticsSummary {
         sponsor: 0,
         admin_fleet: 0,
         driver_job: 0,
+        corporate_quote: 0,
       },
       byTarget: {},
       byPhone: {},

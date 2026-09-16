@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Vehicle, ZoneId } from '@/data/mockData';
 import { ALL_VEHICLE_MODELS } from '@/data/vehicleModels';
-import { CarFront, Plus, Pencil, Trash2, CheckCircle2, ShieldCheck, Search } from 'lucide-react';
+import { CarFront, Plus, Pencil, Trash2, ShieldCheck, Search } from 'lucide-react';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminVehicleTabProps {

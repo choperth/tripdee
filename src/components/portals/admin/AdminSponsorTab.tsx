@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Sponsor } from '@/data/mockData';
-import { Building2, Plus, Pencil, Trash2, ArrowUpRight, FileSpreadsheet, Search } from 'lucide-react';
+import { Building2, Plus, Pencil, Trash2, FileSpreadsheet, Search } from 'lucide-react';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminSponsorTabProps {

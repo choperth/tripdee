@@ -18,13 +18,14 @@ export const ScrollQualityMonitor: React.FC = () => {
   const [benchmarkResult, setBenchmarkResult] = useState<string | null>(null);
 
   const frameCount = useRef(0);
-  const lastTime = useRef(performance.now());
+  const lastTime = useRef(0);
   const lastScrollY = useRef(0);
   const lastDirection = useRef<'up' | 'down' | 'none'>('none');
   const rapidTurnaroundCount = useRef(0);
   const lastTurnaroundTime = useRef(0);
 
   useEffect(() => {
+    lastTime.current = performance.now();
     // 1. Monitor FPS
     let animId: number;
     const calcFps = () => {

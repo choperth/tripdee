@@ -30,7 +30,6 @@ import {
   approveDriverLead as approveLocalDriver,
   getApprovedVehicles,
   addApprovedVehicle,
-  updateApprovedVehicle,
   deleteApprovedVehicle,
   getDeletedVehicleIds,
   convertLeadToVehicle,
@@ -44,6 +43,11 @@ import {
 import { Sponsor } from '@/data/mockData';
 import { AnalyticsEvent } from '@/lib/analytics';
 import { recordServerAnalyticsEvent } from '@/lib/serverAnalyticsStore';
+
+// Type-safe helper for dynamic table updates
+type DynamicTableQuery = {
+  update: (values: Record<string, unknown>) => { eq: (col: string, val: string) => Promise<unknown> };
+};
 
 // In-memory deleted board posts tracking to ensure instant UI sync across all modes
 const deletedBoardPostIds: string[] = [];
@@ -169,7 +173,7 @@ export async function updateQuotation(id: string, updates: Partial<QuotationLead
     if (updates.estimatedPrice !== undefined) supabaseUpdates.estimated_price = updates.estimatedPrice;
     if (updates.status) supabaseUpdates.status = updates.status;
 
-    await (supabase.from('quotations') as any).update(supabaseUpdates).eq('id', id);
+    await (supabase.from('quotations') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
   } catch (err) {
     console.warn('[TripDee Supabase] Exception updating quotation:', err);
   }
@@ -312,7 +316,7 @@ export async function updateDriverLead(id: string, updates: Partial<DriverLead>)
     if (updates.routes) supabaseUpdates.routes = updates.routes;
     if (updates.status) supabaseUpdates.status = updates.status;
 
-    await (supabase.from('driver_leads') as any).update(supabaseUpdates).eq('id', id);
+    await (supabase.from('driver_leads') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
   } catch (err) {
     console.warn('[TripDee Supabase] Exception updating driver lead:', err);
   }
@@ -570,7 +574,7 @@ export async function updateVehicle(id: string, updates: Partial<Vehicle>): Prom
     if (updates.businessType !== undefined) supabaseUpdates.business_type = updates.businessType;
     if (updates.isAvailable !== undefined) supabaseUpdates.is_available = updates.isAvailable;
 
-    await (supabase.from('vehicles') as any).update(supabaseUpdates).eq('id', id);
+    await (supabase.from('vehicles') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
   } catch (err) {
     console.warn('[TripDee Supabase] Exception updating vehicle:', err);
   }
@@ -775,7 +779,7 @@ export async function updateBoardPost(id: string, updates: Partial<BoardPost>): 
     if (updates.pin !== undefined) supabaseUpdates.pin = updates.pin;
     if (updates.isClosed !== undefined) supabaseUpdates.is_closed = updates.isClosed;
 
-    await (supabase.from('board_posts') as any).update(supabaseUpdates).eq('id', id);
+    await (supabase.from('board_posts') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
   } catch (err) {
     console.warn('[TripDee Supabase] Exception updating board post:', err);
   }
@@ -907,7 +911,7 @@ export async function updateSponsor(id: string, updates: Partial<Sponsor>): Prom
     if (updates.discountText !== undefined) supabaseUpdates.discount_text = updates.discountText;
     if (updates.location !== undefined) supabaseUpdates.location = updates.location;
 
-    await (supabase.from('sponsors') as any).update(supabaseUpdates).eq('id', id);
+    await (supabase.from('sponsors') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
   } catch (err) {
     console.warn('[TripDee Supabase] Error updating sponsor in db:', err);
   }

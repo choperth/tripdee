@@ -10,7 +10,7 @@ export const SponsorSidebar: React.FC = () => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    queueMicrotask(() => setMounted(true));
   }, []);
 
   const handleSponsorClick = (sponsor: typeof SPONSORS[0]) => {

@@ -243,7 +243,6 @@ export function deleteQuotation(id: string): boolean {
   if (!db.deletedQuotationIds.includes(id)) {
     db.deletedQuotationIds.push(id);
   }
-  const initialLen = db.quotations.length;
   db.quotations = db.quotations.filter((q) => q.id !== id);
   return true;
 }
@@ -297,7 +296,6 @@ export function deleteDriverLead(id: string): boolean {
   if (!db.deletedDriverLeadIds.includes(id)) {
     db.deletedDriverLeadIds.push(id);
   }
-  const initialLen = db.drivers.length;
   db.drivers = db.drivers.filter((d) => d.id !== id);
   return true;
 }

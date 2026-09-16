@@ -3,10 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { Vehicle, STANDARD_TERMS, formatTHB } from '@/data/mockData';
 import { maskPhoneNumber, maskPlateNumber, getPublicDriverName } from '@/lib/privacy';
-import { X, ShieldCheck, Star, Phone, MessageCircle, MapPin, Check, Info, Users, CheckCircle2, Clock, Calendar, Copy, Award, FileCheck2 } from 'lucide-react';
+import { X, ShieldCheck, Star, Phone, MessageCircle, MapPin, Check, Info, Users, CheckCircle2, Clock, Calendar, Award, FileCheck2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
-import type { DictKey } from '@/i18n/dictionaries';
 
 interface VehicleDetailModalProps {
   vehicle: Vehicle | null;
@@ -363,18 +362,24 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle,
               </div>
             </div>
 
-            <ul className="space-y-1.5 pt-2 border-t border-leaf/20 text-[11px] font-semibold text-ink-2">
+            <ul className="space-y-2 pt-2.5 border-t border-leaf/20 text-[11px] font-semibold text-ink-2">
               <li className="flex items-start gap-1.5">
                 <Check className="h-3.5 w-3.5 text-leaf shrink-0 mt-0.5" strokeWidth={3} />
-                <span>ติดต่อและตกลงราคากับคนขับโดยตรง ไม่มีการบวกเพิ่มส่วนต่างใดๆ</span>
+                <span>ติดต่อและตกลงราคากับคนขับโดยตรง 0% ค่านายหน้า ไม่มีบวกส่วนต่าง</span>
               </li>
               <li className="flex items-start gap-1.5">
                 <Check className="h-3.5 w-3.5 text-leaf shrink-0 mt-0.5" strokeWidth={3} />
-                <span>ตรวจสอบข้อมูลยานพาหนะและใบขับขี่ประจำตัวคนขับทุกคัน</span>
+                <span>
+                  <strong>โอนมัดจำปลอดภัย:</strong> ตรวจสอบชื่อบัญชีธนาคารให้ตรงกับชื่อจริงของคนขับ (<strong>{vehicle.driverName}</strong>)
+                </span>
               </li>
               <li className="flex items-start gap-1.5">
                 <Check className="h-3.5 w-3.5 text-leaf shrink-0 mt-0.5" strokeWidth={3} />
-                <span>แนะนำสอบถามจุดรับ-ส่ง เวลาเดินทาง และเงื่อนไขน้ำมันให้ชัดเจนก่อนออกทริป</span>
+                <span><strong>มัดจำตามมาตรฐาน:</strong> แนะนำวางเงินมัดจำเพื่อล็อคคิวรถล่วงหน้าไม่เกิน 20-30% ของยอดรวม</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <Check className="h-3.5 w-3.5 text-leaf shrink-0 mt-0.5" strokeWidth={3} />
+                <span>ตกลงเส้นทาง จุดนัดรับ เวลาเดินทาง และเงื่อนไขน้ำมัน (คืนถัง/เหมาโซน) ให้ชัดเจนก่อนออกทริป</span>
               </li>
             </ul>
           </div>

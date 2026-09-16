@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Vehicle } from '@/data/mockData';
 import {
   X,
@@ -9,9 +9,7 @@ import {
   CheckCircle,
   AlertCircle,
   CarFront,
-  ShieldCheck,
   Save,
-  MessageCircle,
   ArrowLeft,
   Sparkles,
   ToggleLeft,
@@ -49,19 +47,19 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
   const [cityRate, setCityRate] = useState(1900);
   const [highHillRate, setHighHillRate] = useState(2300);
 
-  // Sync state when selectedVehicle changes
-  useEffect(() => {
-    if (selectedVehicle) {
-      setIsAvailable(selectedVehicle.isAvailable !== false);
-      setPlateType(selectedVehicle.plateType || 'blue');
-      setPlateNumber(selectedVehicle.plateNumber || '');
-      setCanIssueTaxInvoice(Boolean(selectedVehicle.canIssueTaxInvoice));
-      setDriverPhone(selectedVehicle.driverPhone || '');
-      setDriverLine(selectedVehicle.driverLine || '');
-      setCityRate(selectedVehicle.zoneRates?.city || 1900);
-      setHighHillRate(selectedVehicle.zoneRates?.highHill || 2300);
+  const selectVehicle = (v: Vehicle | null) => {
+    setSelectedVehicle(v);
+    if (v) {
+      setIsAvailable(v.isAvailable !== false);
+      setPlateType(v.plateType || 'blue');
+      setPlateNumber(v.plateNumber || '');
+      setCanIssueTaxInvoice(Boolean(v.canIssueTaxInvoice));
+      setDriverPhone(v.driverPhone || '');
+      setDriverLine(v.driverLine || '');
+      setCityRate(v.zoneRates?.city || 1900);
+      setHighHillRate(v.zoneRates?.highHill || 2300);
     }
-  }, [selectedVehicle]);
+  };
 
   if (!isOpen) return null;
 
@@ -91,11 +89,11 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
 
       setMatchedVehicles(matches);
       if (matches.length === 1) {
-        setSelectedVehicle(matches[0]);
+        selectVehicle(matches[0]);
       } else {
-        setSelectedVehicle(null);
+        selectVehicle(null);
       }
-    } catch (err) {
+    } catch {
       setErrorMessage('เกิดข้อผิดพลาดในการค้นหาข้อมูล กรุณาลองใหม่อีกครั้ง');
     } finally {
       setIsSearching(false);
@@ -246,7 +244,7 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                   {matchedVehicles.map((v) => (
                     <div
                       key={v.id}
-                      onClick={() => setSelectedVehicle(v)}
+                      onClick={() => selectVehicle(v)}
                       className="p-3 rounded-xl border border-rule bg-paper hover:border-accent cursor-pointer transition-all flex items-center justify-between"
                     >
                       <div>

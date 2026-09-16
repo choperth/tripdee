@@ -2,22 +2,22 @@
 
 import React, { useState } from 'react';
 import { DriverLead } from '@/lib/leadsStore';
-import { Check, CheckCircle2, Pencil, PhoneCall, Trash2, ShieldCheck, Search } from 'lucide-react';
+import { Check, CheckCircle2, Pencil, PhoneCall, Trash2, Search } from 'lucide-react';
+import { useAnalytics } from '@/context/AnalyticsContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminDriverTabProps {
   driverLeads: DriverLead[];
   onRefresh: () => void;
   onApprove: (id: string) => void;
-  trackCall: (info: any) => void;
 }
 
 export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
   driverLeads,
   onRefresh,
   onApprove,
-  trackCall,
 }) => {
+  const { trackCall } = useAnalytics();
   const [searchTerm, setSearchTerm] = useState('');
   const [editingDriver, setEditingDriver] = useState<DriverLead | null>(null);
   const [deletingDriver, setDeletingDriver] = useState<DriverLead | null>(null);

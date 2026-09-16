@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { BoardPost, ZoneId } from '@/data/mockData';
-import { MessageSquare, Pencil, Trash2, ShieldCheck, CheckCircle2, Search, PhoneCall } from 'lucide-react';
+import { Pencil, Trash2, ShieldCheck, Search } from 'lucide-react';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminBoardTabProps {
