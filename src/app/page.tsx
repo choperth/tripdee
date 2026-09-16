@@ -114,6 +114,7 @@ export default function HomePage() {
   }, []);
 
   const [selectedVehicleDetail, setSelectedVehicleDetail] = useState<Vehicle | null>(null);
+  const [focusedVehicle, setFocusedVehicle] = useState<Vehicle | null>(null);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isPortalOpen, setIsPortalOpen] = useState<boolean>(false);
@@ -235,12 +236,8 @@ export default function HomePage() {
           </div>
         ) : (
           <div key={activeTab} className="td-panel-enter pb-16">
-            <div className="mt-8">
-              <TripBoard />
-            </div>
-
-            {/* Vehicle rail */}
-            <section id="results" aria-label={t('home.resultsAria')} className="mt-12 scroll-mt-28">
+            {/* Primary Vehicle Catalog & Filter Rail */}
+            <section id="results" aria-label={t('home.resultsAria')} className="mt-8 scroll-mt-28">
               <SectionHead
                 title={t(activeTab === 'van' ? 'home.vanTitle' : 'home.carTitle')}
                 count={t('home.vehicleCount', { count: filteredVehicles.length })}
@@ -390,7 +387,10 @@ export default function HomePage() {
                         <VehicleCard
                           key={vehicle.id}
                           vehicle={vehicle}
-                          onSelectDetail={(v) => setSelectedVehicleDetail(v)}
+                          onSelectDetail={(v) => {
+                            setFocusedVehicle(v);
+                            setSelectedVehicleDetail(v);
+                          }}
                         />
                       ))}
                     </div>
@@ -405,12 +405,21 @@ export default function HomePage() {
                       <p className="mx-auto mt-1 max-w-[48ch] text-sm font-medium leading-relaxed text-ink-2">
                         {t('home.emptyDesc')}
                       </p>
-                      <button
-                        onClick={resetFilters}
-                        className="td-btn td-pop mt-5 inline-flex items-center rounded-pill bg-sun px-5 py-2.5 text-sm font-extrabold text-sun-ink"
-                      >
-                        {t('home.emptyCta')}
-                      </button>
+                      <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                        <button
+                          onClick={resetFilters}
+                          className="td-btn td-pop inline-flex items-center rounded-pill bg-sun px-5 py-2.5 text-sm font-extrabold text-sun-ink"
+                        >
+                          {t('home.emptyCta')}
+                        </button>
+                        <a
+                          href="#tripboard"
+                          className="td-btn inline-flex items-center gap-1.5 rounded-pill border border-rule bg-paper-2 px-4 py-2.5 text-xs font-extrabold text-ink hover:bg-card transition-all"
+                        >
+                          <span>โพสต์ประกาศหาคนขับบน TripBoard</span>
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -422,6 +431,24 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+            </section>
+
+            {/* Secondary Matching / Community Fallback: TripBoard */}
+            <section id="tripboard" aria-label="กระดานจับคู่ทริปและประกาศหาคนขับ" className="mt-16 pt-8 border-t border-rule scroll-mt-28">
+              <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 rounded-pill bg-accent-soft px-3 py-1 text-xs font-bold text-accent mb-2 border border-accent/20">
+                    <span>💡 ไม่พบคันที่ถูกใจ? หรือต้องการเส้นทางเฉพาะ</span>
+                  </div>
+                  <h2 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight text-ink">
+                    กระดานประกาศหาคนขับ & คิวรถว่าง (TripBoard)
+                  </h2>
+                  <p className="mt-1 text-[13px] font-medium text-ink-2">
+                    โพสต์ประกาศให้คนขับติดต่อกลับโดยตรง หรือเลือกรับงานคิวรถว่างในเชียงใหม่และภาคเหนือ
+                  </p>
+                </div>
+              </div>
+              <TripBoard />
             </section>
 
             {/* Routes strip */}
@@ -557,11 +584,16 @@ export default function HomePage() {
         <AdminPortalModal isOpen={isPortalOpen} onClose={() => setIsPortalOpen(false)} />
       )}
 
-      {/* Scroll & Layout Quality Monitor */}
-      <ScrollQualityMonitor />
+      {/* Scroll & Layout Quality Monitor (Dev/Benchmark tool - only active with ?debug=perf) */}
+      {typeof window !== 'undefined' && window.location?.search?.includes('debug=perf') && (
+        <ScrollQualityMonitor />
+      )}
 
       {/* Floating Mobile Quick Call/LINE bar */}
-      <MobileBottomBar />
+      <MobileBottomBar
+        activeVehicle={selectedVehicleDetail || focusedVehicle}
+        onOpenDetail={(v) => setSelectedVehicleDetail(v)}
+      />
     </div>
   );
 }
