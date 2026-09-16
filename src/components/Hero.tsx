@@ -44,16 +44,6 @@ export const Hero: React.FC<HeroProps> = ({
   return (
     <section aria-label={t('hero.searchAria')} className="relative overflow-hidden bg-paper pt-4 pb-8 sm:pt-8 sm:pb-12 border-b border-rule">
       <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-        {/* Top Trust & Verification Pill */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-4 text-center">
-          <div className="inline-flex items-center gap-2 rounded-pill bg-card px-3.5 py-1.5 text-xs font-bold text-ink-2 border border-rule shadow-xs">
-            <span className="flex h-2 w-2 rounded-full bg-leaf" />
-            <span className="text-ink font-extrabold">Thailand Nationwide Direct Mobility</span>
-            <span className="text-rule-2">•</span>
-            <span>{t('hero.eyebrow')}</span>
-          </div>
-        </div>
-
         {/* Hero Title & Subtitle */}
         <div className="text-center max-w-3xl mx-auto">
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-ink leading-tight">
