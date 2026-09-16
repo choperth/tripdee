@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowDown, ShieldCheck, Phone, ReceiptText, MapPin, Users, Search, Sparkles, CheckCircle2 } from 'lucide-react';
-import { POPULAR_ROUTES } from '@/data/mockData';
+import { ArrowDown, ShieldCheck, Phone, ReceiptText, MapPin, Users, Search, CheckCircle2 } from 'lucide-react';
 import { SEAT_CAPACITY_OPTIONS } from '@/data/vehicleModels';
 import { useLanguage } from '@/context/LanguageContext';
 import type { DictKey } from '@/i18n/dictionaries';
@@ -168,28 +167,6 @@ export const Hero: React.FC<HeroProps> = ({
                   <ArrowDown className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
                 </button>
               </div>
-            </div>
-
-            {/* Quick Route Filter Pills inside Search Card footer */}
-            <div className="mt-3 pt-3 border-t border-rule/60 flex flex-wrap items-center gap-2 text-xs">
-              <span className="font-bold text-ink-2 flex items-center gap-1">
-                <Sparkles className="h-3.5 w-3.5 text-sun" />
-                {t('hero.hot')}:
-              </span>
-              {POPULAR_ROUTES.slice(0, 5).map((route) => (
-                <button
-                  key={route.id}
-                  type="button"
-                  onClick={() => setSelectedZone(route.filterKey)}
-                  className={`rounded-pill px-3 py-1 text-xs font-bold transition-all border ${
-                    selectedZone === route.filterKey
-                      ? 'bg-accent text-white border-accent shadow-xs'
-                      : 'bg-paper text-ink-2 border-rule hover:border-accent/40 hover:text-ink'
-                  }`}
-                >
-                  {t(`route.${route.id}.name` as DictKey)}
-                </button>
-              ))}
             </div>
           </form>
         </div>
