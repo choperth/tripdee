@@ -97,7 +97,16 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDriverSelfService }) => {
                   <span>🚐 จัดการสถานะรถ & ราคา (สำหรับคนขับ)</span>
                 </li>
               )}
-              <li className="hover:text-white transition-colors cursor-pointer">ติดต่อลงโฆษณาที่พัก & สปอนเซอร์</li>
+              <li>
+                <a
+                  href="https://line.me/R/ti/p/@tripdee"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-emerald-400 hover:text-emerald-300 transition-colors inline-flex items-center gap-1 font-semibold"
+                >
+                  <span>🤝 ร่วมเป็นพันธมิตรธุรกิจ (LINE @tripdee)</span>
+                </a>
+              </li>
             </ul>
           </div>
         </div>

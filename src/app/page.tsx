@@ -6,7 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { VehicleCard } from '@/components/VehicleCard';
 import { SponsorBanner } from '@/components/SponsorBanner';
-import { OfficialPartnersMarquee } from '@/components/OfficialPartnersMarquee';
+import { PlatformShowcase } from '@/components/PlatformShowcase';
 import { SponsorSidebar } from '@/components/SponsorSidebar';
 import { CorporateSection } from '@/components/CorporateSection';
 import { VehicleDetailModal } from '@/components/VehicleDetailModal';
@@ -502,8 +502,17 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Official Partners Marquee (Clean, non-cluttering brand showcase) */}
-        <OfficialPartnersMarquee />
+        {/* Platform Showcase & House Features (100% Authentic, 0% Mock Brands) */}
+        <PlatformShowcase
+          onOpenRegister={() => setIsRegisterModalOpen(true)}
+          onSelectCorporate={() => {
+            setActiveTab('corporate');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          onScrollToSearch={() => {
+            document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+        />
 
         {/* Index band */}
         <nav aria-label={t('home.indexAria')} className="td-elev-card mb-12 grid grid-cols-1 gap-6 rounded-card bg-paper-2 p-6 sm:grid-cols-2 sm:p-8">

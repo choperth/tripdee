@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Vehicle, STANDARD_TERMS, formatTHB, getContextualSponsor } from '@/data/mockData';
+import { Vehicle, STANDARD_TERMS, formatTHB } from '@/data/mockData';
 import { maskPhoneNumber, maskPlateNumber, getPublicDriverName } from '@/lib/privacy';
-import { X, ShieldCheck, Star, Phone, MessageCircle, MapPin, Check, Info, Users, CheckCircle2, Clock, Calendar, Copy, Award, FileCheck2, ExternalLink } from 'lucide-react';
+import { X, ShieldCheck, Star, Phone, MessageCircle, MapPin, Check, Info, Users, CheckCircle2, Clock, Calendar, Copy, Award, FileCheck2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import type { DictKey } from '@/i18n/dictionaries';
@@ -15,16 +15,9 @@ interface VehicleDetailModalProps {
 
 export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle, onClose }) => {
   const { t } = useLanguage();
-  const { trackCall, trackSponsor } = useAnalytics();
+  const { trackCall } = useAnalytics();
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isPhoneRevealed, setIsPhoneRevealed] = useState<boolean>(false);
-
-  const contextualSponsor = vehicle
-    ? getContextualSponsor({
-        region: vehicle.region,
-        isSelfDrive: vehicle.type === 'car' || vehicle.title.toLowerCase().includes('เช่าขับเอง'),
-      })
-    : null;
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -354,60 +347,37 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle,
             </div>
           </div>
 
-          {/* Contextual Sponsor Offer (Tailored by Region & Vehicle Type) */}
-          {contextualSponsor && (
-            <aside
-              aria-label="สิทธิพิเศษพันธมิตรสำหรับทริปนี้"
-              className="mt-4 rounded-card border border-amber-300/80 bg-gradient-to-br from-amber-50/70 to-sun-soft/50 p-4 transition-all hover:border-amber-400 shadow-2xs"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-sun text-base shadow-2xs">
-                    {contextualSponsor.category === 'hotel' ? '🏨' : contextualSponsor.category === 'insurance' ? '🛡️' : '⛽'}
-                  </span>
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-accent-deep">
-                      สิทธิพิเศษสำหรับทริปนี้ · {contextualSponsor.categoryLabel}
-                    </span>
-                    <h4 className="text-xs sm:text-sm font-black text-ink">
-                      {contextualSponsor.title}
-                    </h4>
-                  </div>
-                </div>
-                <span className="shrink-0 rounded-pill bg-amber-200/80 px-2 py-0.5 text-[10px] font-extrabold text-amber-950">
-                  {contextualSponsor.badgeText}
-                </span>
+          {/* TripDee Verified Direct Booking Guarantee & Safety Standards Card */}
+          <div className="mt-4 rounded-card border border-leaf/30 bg-leaf-soft/40 p-4 shadow-2xs">
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="grid h-7 w-7 place-items-center rounded-lg bg-leaf text-white shadow-2xs">
+                <ShieldCheck className="h-4 w-4" />
+              </span>
+              <div>
+                <h4 className="text-xs font-black text-ink">
+                  มั่นใจทุกการเดินทาง · มาตรฐาน TripDee Verified
+                </h4>
+                <p className="text-[11px] font-medium text-ink-2">
+                  0% ค่านายหน้า ดีลตรงกับคนขับ ตรวจสอบประวัติแล้ว
+                </p>
               </div>
+            </div>
 
-              <p className="mt-2 text-xs font-semibold text-ink-2 leading-relaxed">
-                {contextualSponsor.tagline}
-              </p>
-
-              <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-amber-200/70 pt-3">
-                <span className="text-xs font-bold text-amber-900">
-                  🏷️ {contextualSponsor.discountText}
-                </span>
-                <a
-                  href={contextualSponsor.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() =>
-                    trackSponsor({
-                      sponsorId: contextualSponsor.id,
-                      sponsorTitle: contextualSponsor.title,
-                      category: contextualSponsor.category,
-                      variant: 'strip',
-                      targetUrl: contextualSponsor.link,
-                    })
-                  }
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-ink px-3 py-1.5 text-xs font-extrabold text-paper hover:bg-ink/80 transition-colors shadow-2xs"
-                >
-                  <span>รับสิทธิ์ / จองตรง</span>
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </div>
-            </aside>
-          )}
+            <ul className="space-y-1.5 pt-2 border-t border-leaf/20 text-[11px] font-semibold text-ink-2">
+              <li className="flex items-start gap-1.5">
+                <Check className="h-3.5 w-3.5 text-leaf shrink-0 mt-0.5" strokeWidth={3} />
+                <span>ติดต่อและตกลงราคากับคนขับโดยตรง ไม่มีการบวกเพิ่มส่วนต่างใดๆ</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <Check className="h-3.5 w-3.5 text-leaf shrink-0 mt-0.5" strokeWidth={3} />
+                <span>ตรวจสอบข้อมูลยานพาหนะและใบขับขี่ประจำตัวคนขับทุกคัน</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <Check className="h-3.5 w-3.5 text-leaf shrink-0 mt-0.5" strokeWidth={3} />
+                <span>แนะนำสอบถามจุดรับ-ส่ง เวลาเดินทาง และเงื่อนไขน้ำมันให้ชัดเจนก่อนออกทริป</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
