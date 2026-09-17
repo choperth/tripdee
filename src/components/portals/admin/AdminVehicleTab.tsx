@@ -80,6 +80,12 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
       driverWhatsapp: (formData.get('driverWhatsapp') as string) || undefined,
       region: formData.get('region') as 'north' | 'central' | 'south' | 'east' | 'isan',
       location: formData.get('location') as string,
+      plateType: (formData.get('plateType') as 'yellow' | 'blue') || 'yellow',
+      plateNumber: (formData.get('plateNumber') as string) || undefined,
+      canIssueTaxInvoice: formData.get('canIssueTaxInvoice') === 'true',
+      isAvailable: formData.get('isAvailable') !== 'false',
+      rentalType: (formData.get('rentalType') as 'with_driver' | 'self_drive') || (formData.get('type') === 'van' ? 'with_driver' : 'self_drive'),
+      transmission: (formData.get('transmission') as 'auto' | 'manual') || 'auto',
       rating: Number(formData.get('rating')) || 5.0,
       isVerified: formData.get('isVerified') === 'true',
       zoneRates: {
@@ -267,6 +273,31 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="font-bold text-ink block mb-1">รูปแบบบริการ *</label>
+                  <select
+                    name="rentalType"
+                    defaultValue={editingVehicle?.rentalType || (editingVehicle?.type === 'van' ? 'with_driver' : 'self_drive')}
+                    className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
+                  >
+                    <option value="with_driver">🚐 รถตู้พร้อมคนขับ</option>
+                    <option value="self_drive">🚗 รถเช่าขับเอง</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-ink block mb-1">ระบบเกียร์ *</label>
+                  <select
+                    name="transmission"
+                    defaultValue={editingVehicle?.transmission || 'auto'}
+                    className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
+                  >
+                    <option value="auto">⚙️ เกียร์อัตโนมัติ (Auto)</option>
+                    <option value="manual">🕹️ เกียร์ธรรมดา (Manual)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="font-bold text-ink block mb-1">ชื่อคนขับ *</label>
                   <input
                     name="driverName"
@@ -338,6 +369,52 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                     defaultValue={editingVehicle?.location || 'เชียงใหม่ / ม่อนแจ่ม / ดอยอินทนนท์'}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   />
+                </div>
+              </div>
+
+              {/* License Plate & Corporate Tax Metadata */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-xl bg-paper border border-rule">
+                <div>
+                  <label className="font-bold text-ink block mb-1">ประเภทป้ายทะเบียน</label>
+                  <select
+                    name="plateType"
+                    defaultValue={editingVehicle?.plateType || 'yellow'}
+                    className="w-full p-2 rounded-xl bg-card border border-rule text-ink text-xs font-bold"
+                  >
+                    <option value="yellow">🟡 ป้ายเหลือง 30 (ขนส่งสาธารณะ)</option>
+                    <option value="blue">🔵 ป้ายฟ้า (รถตู้ส่วนบุคคล/VIP)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-ink block mb-1">เลขทะเบียนรถ</label>
+                  <input
+                    name="plateNumber"
+                    defaultValue={editingVehicle?.plateNumber || ''}
+                    placeholder="เช่น 30-1425 ชม."
+                    className="w-full p-2 rounded-xl bg-card border border-rule text-ink font-mono text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-ink block mb-1">ออกใบกำกับภาษี</label>
+                  <select
+                    name="canIssueTaxInvoice"
+                    defaultValue={editingVehicle?.canIssueTaxInvoice ? 'true' : 'false'}
+                    className="w-full p-2 rounded-xl bg-card border border-rule text-ink text-xs font-bold"
+                  >
+                    <option value="true">✓ ออกใบกำกับภาษีได้ (หัก 3%)</option>
+                    <option value="false">บุคคลธรรมดา (ไม่ออกภาษี)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-ink block mb-1">สถานะรับงาน</label>
+                  <select
+                    name="isAvailable"
+                    defaultValue={editingVehicle?.isAvailable !== false ? 'true' : 'false'}
+                    className="w-full p-2 rounded-xl bg-card border border-rule text-ink text-xs font-bold"
+                  >
+                    <option value="true">พร้อมรับงาน (Available)</option>
+                    <option value="false">คิวเต็มชั่วคราว (Busy)</option>
+                  </select>
                 </div>
               </div>
 

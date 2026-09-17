@@ -89,6 +89,10 @@ export const TripBoard: React.FC = () => {
   const [form, setForm] = useState<PostFormState>(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Honeypot anti-spam fields
+  const [hpWebsite, setHpWebsite] = useState('');
+  const [formMountedAt, setFormMountedAt] = useState<number>(Date.now());
+
   // Self-Service Close Post Modal State
   const [closingPost, setClosingPost] = useState<BoardPost | null>(null);
   const [closePin, setClosePin] = useState('');
@@ -156,13 +160,18 @@ export const TripBoard: React.FC = () => {
       await fetch('/api/board', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(post),
+        body: JSON.stringify({
+          ...post,
+          hp_website: hpWebsite,
+          _hp_timestamp: formMountedAt,
+        }),
       });
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
     } catch (err) {
       console.debug('Failed to persist post to server/Supabase:', err);
     } finally {
       setIsSubmitting(false);
+      setHpWebsite('');
     }
   };
 
@@ -202,7 +211,7 @@ export const TripBoard: React.FC = () => {
   };
 
   return (
-    <section id="trip-board" aria-label={t('board.aria')} className="scroll-mt-28 rounded-card bg-card border border-rule shadow-card p-5 sm:p-7">
+    <section id="trip-board" aria-label={t('board.aria')} className="scroll-mt-28 rounded-card bg-card border border-rule shadow-card p-4 sm:p-7">
       {/* Header */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-rule">
         <div className="flex items-center gap-3">
@@ -223,7 +232,15 @@ export const TripBoard: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setFormOpen((open) => !open)}
+          onClick={() => {
+            setFormOpen((open) => {
+              if (!open) {
+                setFormMountedAt(Date.now());
+                setHpWebsite('');
+              }
+              return !open;
+            });
+          }}
           aria-expanded={formOpen}
           className="td-btn inline-flex shrink-0 items-center gap-1.5 rounded-input bg-accent hover:bg-accent-deep px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs transition-all active:scale-[0.98]"
         >
@@ -237,7 +254,34 @@ export const TripBoard: React.FC = () => {
 
       {/* Post Form Drawer */}
       {formOpen && (
-        <form onSubmit={handleSubmit} className="td-panel-enter mb-6 rounded-card bg-paper p-4 sm:p-6 border border-rule shadow-inner">
+        <form onSubmit={handleSubmit} className="td-panel-enter mb-6 rounded-card bg-paper p-4 sm:p-6 border border-rule shadow-inner relative">
+          {/* Honeypot Spam Trap (Hidden from real users, filled by bots) */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              left: '-9999px',
+              top: '-9999px',
+              opacity: 0,
+              height: 0,
+              width: 0,
+              overflow: 'hidden',
+              pointerEvents: 'none',
+            }}
+            tabIndex={-1}
+          >
+            <label htmlFor="board-hp-website">Website URL (leave blank)</label>
+            <input
+              type="text"
+              id="board-hp-website"
+              name="hp_website"
+              value={hpWebsite}
+              onChange={(e) => setHpWebsite(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
+
           <div className="mb-4">
             <h3 className="text-sm font-bold text-ink mb-2">เลือกประเภทการประกาศ</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -518,7 +562,7 @@ export const TripBoard: React.FC = () => {
       )}
 
       {/* Filter Tabs */}
-      <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label={t('board.filterGroup')}>
+      <div className="mb-4 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-0.5 px-0.5 sm:flex-wrap sm:overflow-visible" role="group" aria-label={t('board.filterGroup')}>
         {FILTERS.map((f) => {
           const active = f.id === filter;
           return (
@@ -526,7 +570,7 @@ export const TripBoard: React.FC = () => {
               key={f.id}
               onClick={() => setFilter(f.id)}
               aria-pressed={active}
-              className={`rounded-pill px-3.5 py-1.5 text-xs font-bold transition-all border ${
+              className={`rounded-pill px-3.5 py-1.5 text-xs font-bold transition-all border shrink-0 whitespace-nowrap ${
                 active
                   ? 'bg-accent text-white border-accent shadow-xs'
                   : 'border-rule bg-paper text-ink-2 hover:border-accent/40 hover:text-ink'
@@ -554,7 +598,7 @@ export const TripBoard: React.FC = () => {
             return (
               <article
                 key={post.id}
-                className="flex flex-col gap-3 rounded-card border border-rule bg-paper p-4 transition-all hover:border-accent/30 hover:shadow-xs sm:p-5 lg:flex-row lg:items-center lg:justify-between"
+                className="flex flex-col gap-3 rounded-card border border-rule bg-paper p-3.5 transition-all hover:border-accent/30 hover:shadow-xs sm:p-5 lg:flex-row lg:items-center lg:justify-between overflow-hidden"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -615,20 +659,22 @@ export const TripBoard: React.FC = () => {
                 </div>
 
                 {/* Right side: Price & Action */}
-                <div className="shrink-0 flex sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-rule/60">
-                  <div className="text-left lg:text-right">
-                    <span className="text-[11px] font-semibold text-ink-2 block">
-                      {isRequest ? t('board.priceReq') : t('board.priceOffer')}
-                    </span>
-                    <p className="td-fig text-xl font-extrabold text-ink leading-tight">
-                      {formatTHB(post.price)}
-                    </p>
-                    <span className="text-[11px] text-ink-2">
+                <div className="shrink-0 flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end justify-between gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-rule/60 w-full lg:w-auto">
+                  <div className="flex items-baseline justify-between sm:block text-left lg:text-right">
+                    <div>
+                      <span className="text-[11px] font-semibold text-ink-2 block">
+                        {isRequest ? t('board.priceReq') : t('board.priceOffer')}
+                      </span>
+                      <p className="td-fig text-xl font-extrabold text-ink leading-tight">
+                        {formatTHB(post.price)}
+                      </p>
+                    </div>
+                    <span className="text-[11px] text-ink-2 text-right sm:text-left lg:text-right">
                       {post.priceNote ?? (post.days > 1 ? t('board.avgPerDay', { price: formatTHB(Math.round(post.price / post.days)) }) : t('board.totalTrip'))}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 w-full sm:w-auto">
                     <a
                       href={`tel:${post.authorPhone}`}
                       onClick={() => {
@@ -641,19 +687,19 @@ export const TripBoard: React.FC = () => {
                         });
                       }}
                       data-analytics-call={post.id}
-                      className="td-btn inline-flex items-center gap-1 rounded-input bg-accent hover:bg-accent-deep px-3 py-2 text-xs font-bold text-white shadow-xs"
+                      className="td-btn flex-1 sm:flex-initial inline-flex items-center justify-center gap-1 rounded-input bg-accent hover:bg-accent-deep px-3 py-2 text-xs font-bold text-white shadow-xs transition-all active:scale-[0.98] min-w-0"
                     >
-                      <Phone className="h-3.5 w-3.5" />
-                      <span>{isRequest ? t('board.acceptJob') : t('board.bookNow')} ({maskPhoneNumber(post.authorPhone)})</span>
+                      <Phone className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{isRequest ? t('board.acceptJob') : t('board.bookNow')} ({maskPhoneNumber(post.authorPhone)})</span>
                     </a>
                     {post.authorLine && post.authorLine.startsWith('http') && (
                       <a
                         href={post.authorLine}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="td-btn inline-flex items-center gap-1 rounded-input bg-[#06C755] hover:bg-[#05b34c] px-3 py-2 text-xs font-bold text-white shadow-xs"
+                        className="td-btn inline-flex shrink-0 items-center justify-center gap-1 rounded-input bg-[#06C755] hover:bg-[#05b34c] px-3 py-2 text-xs font-bold text-white shadow-xs transition-all active:scale-[0.98]"
                       >
-                        <MessageCircle className="h-3.5 w-3.5" />
+                        <MessageCircle className="h-3.5 w-3.5 shrink-0" />
                         <span>{t('board.lineChat')}</span>
                       </a>
                     )}
@@ -666,10 +712,10 @@ export const TripBoard: React.FC = () => {
                         setCloseError('');
                         setCloseSuccess('');
                       }}
-                      className="td-btn inline-flex items-center gap-1 rounded-input border border-rule bg-card hover:bg-leaf/10 hover:border-leaf/40 hover:text-leaf text-ink-2 px-2.5 py-2 text-xs font-bold transition-all"
+                      className="td-btn inline-flex shrink-0 items-center justify-center gap-1 rounded-input border border-rule bg-card hover:bg-leaf/10 hover:border-leaf/40 hover:text-leaf text-ink-2 px-2.5 py-2 text-xs font-bold transition-all active:scale-[0.98]"
                       title="ได้รถแล้ว / ปิดประกาศนี้"
                     >
-                      <CheckCircle2 className="h-3.5 w-3.5 text-leaf" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-leaf shrink-0" />
                       <span className="hidden sm:inline">ปิดงานแล้ว</span>
                     </button>
                   </div>

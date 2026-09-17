@@ -50,6 +50,8 @@ export async function POST(req: NextRequest) {
       canIssueTaxInvoice: Boolean(body.canIssueTaxInvoice),
       businessType: body.businessType === 'company' ? 'company' : 'individual',
       isAvailable: body.isAvailable !== false,
+      rentalType: body.rentalType === 'self_drive' ? 'self_drive' : (body.type === 'van' ? 'with_driver' : (body.rentalType || 'self_drive')),
+      transmission: body.transmission === 'manual' ? 'manual' : 'auto',
       images: Array.isArray(body.images) && body.images.length > 0
         ? body.images
         : ['https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80'],

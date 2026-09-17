@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchDriverLeads, saveDriverLead, verifyDriverLead, updateDriverLead, deleteDriverLead } from '@/lib/supabase/service';
+import { validateHoneypot } from '@/lib/honeypot';
 
 export async function GET() {
   const drivers = await fetchDriverLeads();
@@ -13,6 +14,21 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+
+    // Check Honeypot spam trap
+    const hpResult = validateHoneypot(body);
+    if (hpResult.isSpam) {
+      console.warn(`[Driver Registration Spam Blocked] reason=${hpResult.reason}, nickname="${body.nickname}"`);
+      // Return simulated success
+      return NextResponse.json({
+        success: true,
+        message: 'ลงทะเบียนคนขับพาร์ตเนอร์สำเร็จ ข้อมูลเข้าสู่ระบบการตรวจสอบแล้ว',
+        lead: {
+          id: `drv-spm-${Date.now().toString().slice(-6)}`,
+          nickname: String(body.nickname || ''),
+        },
+      });
+    }
 
     if (body.action === 'approve' && body.id) {
       const ok = await verifyDriverLead(String(body.id));

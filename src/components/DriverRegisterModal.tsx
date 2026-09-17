@@ -45,8 +45,14 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
   const [isCustomModel, setIsCustomModel] = useState(false);
   const [customModelText, setCustomModelText] = useState('');
 
+  // Honeypot anti-spam fields
+  const [hpWebsite, setHpWebsite] = useState('');
+  const [formMountedAt, setFormMountedAt] = useState<number>(Date.now());
+
   useEffect(() => {
     if (!isOpen) return;
+    setFormMountedAt(Date.now());
+    setHpWebsite('');
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
@@ -71,6 +77,8 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
         body: JSON.stringify({
           ...formData,
           vehicleModel: finalModel,
+          hp_website: hpWebsite,
+          _hp_timestamp: formMountedAt,
         }),
       });
     } catch (err) {
@@ -164,7 +172,34 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5 relative">
+              {/* Honeypot Spam Trap (Hidden from real users, filled by bots) */}
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  left: '-9999px',
+                  top: '-9999px',
+                  opacity: 0,
+                  height: 0,
+                  width: 0,
+                  overflow: 'hidden',
+                  pointerEvents: 'none',
+                }}
+                tabIndex={-1}
+              >
+                <label htmlFor="driver-hp-website">Website (leave blank)</label>
+                <input
+                  type="text"
+                  id="driver-hp-website"
+                  name="hp_website"
+                  value={hpWebsite}
+                  onChange={(e) => setHpWebsite(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
+
               <div>
                 <h3 className="font-display text-xl font-black tracking-tight text-ink">
                   {t('reg.formTitle')}

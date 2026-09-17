@@ -69,6 +69,9 @@ export type Database = {
           plate_number: string | null;
           routes: string;
           status: 'pending' | 'verified' | 'rejected';
+          plate_type: 'yellow' | 'blue' | null;
+          can_issue_tax_invoice: boolean | null;
+          business_type: 'company' | 'individual' | null;
           created_at: string;
         };
         Insert: {
@@ -82,6 +85,9 @@ export type Database = {
           plate_number?: string | null;
           routes?: string;
           status?: 'pending' | 'verified' | 'rejected';
+          plate_type?: 'yellow' | 'blue' | null;
+          can_issue_tax_invoice?: boolean | null;
+          business_type?: 'company' | 'individual' | null;
           created_at?: string;
         };
         Update: {
@@ -95,6 +101,9 @@ export type Database = {
           plate_number?: string | null;
           routes?: string;
           status?: 'pending' | 'verified' | 'rejected';
+          plate_type?: 'yellow' | 'blue' | null;
+          can_issue_tax_invoice?: boolean | null;
+          business_type?: 'company' | 'individual' | null;
           created_at?: string;
         };
         Relationships: [];
@@ -129,6 +138,8 @@ export type Database = {
           can_issue_tax_invoice: boolean | null;
           business_type: 'company' | 'individual' | null;
           is_available: boolean | null;
+          rental_type?: 'with_driver' | 'self_drive' | null;
+          transmission?: 'auto' | 'manual' | null;
           created_at: string;
         };
         Insert: {
@@ -160,6 +171,8 @@ export type Database = {
           can_issue_tax_invoice?: boolean | null;
           business_type?: 'company' | 'individual' | null;
           is_available?: boolean | null;
+          rental_type?: 'with_driver' | 'self_drive' | null;
+          transmission?: 'auto' | 'manual' | null;
           created_at?: string;
         };
         Update: {
@@ -191,6 +204,8 @@ export type Database = {
           can_issue_tax_invoice?: boolean | null;
           business_type?: 'company' | 'individual' | null;
           is_available?: boolean | null;
+          rental_type?: 'with_driver' | 'self_drive' | null;
+          transmission?: 'auto' | 'manual' | null;
           created_at?: string;
         };
         Relationships: [];

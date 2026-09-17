@@ -226,6 +226,9 @@ export async function fetchDriverLeads(): Promise<DriverLead[]> {
         vehicleModel: row.vehicle_model || '',
         seats: row.seats || '',
         plateNumber: row.plate_number || undefined,
+        plateType: (row.plate_type as 'yellow' | 'blue') || undefined,
+        canIssueTaxInvoice: row.can_issue_tax_invoice !== null ? Boolean(row.can_issue_tax_invoice) : undefined,
+        businessType: (row.business_type as 'company' | 'individual') || undefined,
         routes: row.routes || '',
         submittedAt: row.created_at,
         status: row.status,
@@ -266,6 +269,9 @@ export async function saveDriverLead(lead: {
         vehicle_model: lead.vehicleModel,
         seats: lead.seats,
         plate_number: lead.plateNumber || null,
+        plate_type: lead.plateType || null,
+        can_issue_tax_invoice: lead.canIssueTaxInvoice ?? null,
+        business_type: lead.businessType || null,
         routes: lead.routes,
         status: 'pending',
       })
@@ -287,6 +293,9 @@ export async function saveDriverLead(lead: {
         vehicleModel: data.vehicle_model,
         seats: data.seats,
         plateNumber: data.plate_number || undefined,
+        plateType: (data.plate_type as 'yellow' | 'blue') || undefined,
+        canIssueTaxInvoice: data.can_issue_tax_invoice !== null ? Boolean(data.can_issue_tax_invoice) : undefined,
+        businessType: (data.business_type as 'company' | 'individual') || undefined,
         routes: data.routes,
         submittedAt: data.created_at,
         status: data.status,
@@ -313,6 +322,9 @@ export async function updateDriverLead(id: string, updates: Partial<DriverLead>)
     if (updates.vehicleModel) supabaseUpdates.vehicle_model = updates.vehicleModel;
     if (updates.seats) supabaseUpdates.seats = updates.seats;
     if (updates.plateNumber !== undefined) supabaseUpdates.plate_number = updates.plateNumber;
+    if (updates.plateType !== undefined) supabaseUpdates.plate_type = updates.plateType;
+    if (updates.canIssueTaxInvoice !== undefined) supabaseUpdates.can_issue_tax_invoice = updates.canIssueTaxInvoice;
+    if (updates.businessType !== undefined) supabaseUpdates.business_type = updates.businessType;
     if (updates.routes) supabaseUpdates.routes = updates.routes;
     if (updates.status) supabaseUpdates.status = updates.status;
 
@@ -402,6 +414,11 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
         popular_routes: newVehicle.popularRoutes,
         amenities: newVehicle.amenities,
         description: newVehicle.description,
+        plate_type: newVehicle.plateType || null,
+        plate_number: newVehicle.plateNumber || null,
+        can_issue_tax_invoice: newVehicle.canIssueTaxInvoice ?? null,
+        business_type: newVehicle.businessType || null,
+        is_available: newVehicle.isAvailable ?? true,
       });
     }
 
@@ -469,6 +486,8 @@ export async function fetchVehicles(): Promise<Vehicle[]> {
         canIssueTaxInvoice: row.can_issue_tax_invoice !== null ? Boolean(row.can_issue_tax_invoice) : undefined,
         businessType: (row.business_type as 'company' | 'individual') || undefined,
         isAvailable: row.is_available !== null ? Boolean(row.is_available) : true,
+        rentalType: (row.rental_type as 'with_driver' | 'self_drive') || (row.type === 'van' ? 'with_driver' : 'self_drive'),
+        transmission: (row.transmission as 'auto' | 'manual') || undefined,
       }));
     }
 
@@ -526,6 +545,8 @@ export async function saveVehicle(vehicle: Vehicle): Promise<Vehicle> {
       can_issue_tax_invoice: vehicle.canIssueTaxInvoice ?? null,
       business_type: vehicle.businessType || null,
       is_available: vehicle.isAvailable ?? true,
+      rental_type: vehicle.rentalType || (vehicle.type === 'van' ? 'with_driver' : 'self_drive'),
+      transmission: vehicle.transmission || null,
     });
   } catch (err) {
     console.warn('[TripDee Supabase] Exception saving vehicle:', err);
@@ -573,6 +594,8 @@ export async function updateVehicle(id: string, updates: Partial<Vehicle>): Prom
     if (updates.canIssueTaxInvoice !== undefined) supabaseUpdates.can_issue_tax_invoice = updates.canIssueTaxInvoice;
     if (updates.businessType !== undefined) supabaseUpdates.business_type = updates.businessType;
     if (updates.isAvailable !== undefined) supabaseUpdates.is_available = updates.isAvailable;
+    if (updates.rentalType !== undefined) supabaseUpdates.rental_type = updates.rentalType;
+    if (updates.transmission !== undefined) supabaseUpdates.transmission = updates.transmission;
 
     await (supabase.from('vehicles') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
   } catch (err) {
@@ -962,3 +985,92 @@ export async function logAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
     console.debug('[TripDee Supabase] Analytics log skipped:', err);
   }
 }
+
+// ==============================================================================
+// 7. SUPABASE CONNECTION HEALTH CHECK
+// ==============================================================================
+
+export interface SupabaseHealthStatus {
+  connected: boolean;
+  timestamp: string;
+  latencyMs?: number;
+  urlConfigured: boolean;
+  keyConfigured: boolean;
+  tables: {
+    vehicles: boolean;
+    driver_leads: boolean;
+    quotations: boolean;
+    board_posts: boolean;
+  };
+  error?: string;
+}
+
+export async function checkSupabaseHealth(): Promise<SupabaseHealthStatus> {
+  const supabase = getSupabase();
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (!supabase || !url || !key) {
+    return {
+      connected: false,
+      timestamp: new Date().toISOString(),
+      urlConfigured: Boolean(url),
+      keyConfigured: Boolean(key),
+      tables: {
+        vehicles: false,
+        driver_leads: false,
+        quotations: false,
+        board_posts: false,
+      },
+      error: 'Supabase URL or Key environment variables are missing.',
+    };
+  }
+
+  const start = Date.now();
+  const tables = {
+    vehicles: false,
+    driver_leads: false,
+    quotations: false,
+    board_posts: false,
+  };
+
+  try {
+    const [vRes, dRes, qRes, bRes] = await Promise.all([
+      supabase.from('vehicles').select('id').limit(1),
+      supabase.from('driver_leads').select('id').limit(1),
+      supabase.from('quotations').select('id').limit(1),
+      supabase.from('board_posts').select('id').limit(1),
+    ]);
+
+    tables.vehicles = !vRes.error;
+    tables.driver_leads = !dRes.error;
+    tables.quotations = !qRes.error;
+    tables.board_posts = !bRes.error;
+
+    const latency = Date.now() - start;
+    const isOk = tables.vehicles || tables.driver_leads;
+
+    return {
+      connected: isOk,
+      timestamp: new Date().toISOString(),
+      latencyMs: latency,
+      urlConfigured: true,
+      keyConfigured: true,
+      tables,
+      error: isOk ? undefined : (vRes.error?.message || dRes.error?.message || 'Tables not accessible'),
+    };
+  } catch (err) {
+    return {
+      connected: false,
+      timestamp: new Date().toISOString(),
+      latencyMs: Date.now() - start,
+      urlConfigured: true,
+      keyConfigured: true,
+      tables,
+      error: String(err),
+    };
+  }
+}
+

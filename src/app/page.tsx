@@ -123,7 +123,9 @@ export default function HomePage() {
   const filteredVehicles = useMemo(() => {
     return vehicles.filter((vehicle) => {
       const matchesTab =
-        activeTab === 'van' ? vehicle.type === 'van' : vehicle.type !== 'van';
+        activeTab === 'van'
+          ? (vehicle.type === 'van' && vehicle.rentalType !== 'self_drive')
+          : (vehicle.type !== 'van' || vehicle.rentalType === 'self_drive');
       
       const matchesRegion =
         (selectedZone === 'bkk' && (vehicle.region === 'central' || vehicle.location.includes('กรุงเทพ') || vehicle.location.includes('กทม'))) ||
@@ -213,7 +215,7 @@ export default function HomePage() {
         />
       )}
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-20 md:pb-8 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 md:pb-8 sm:px-6 lg:px-8">
         {activeTab === 'hotel' ? (
           <div key="hotel" className="td-panel-enter pb-16">
             <div>
@@ -241,7 +243,11 @@ export default function HomePage() {
               <SectionHead
                 title={t(activeTab === 'van' ? 'home.vanTitle' : 'home.carTitle')}
                 count={t('home.vehicleCount', { count: filteredVehicles.length })}
-                caption={t('home.resultsCaption')}
+                caption={
+                  activeTab === 'van'
+                    ? t('home.resultsCaption')
+                    : 'ร้านพันธมิตรรถเช่าขับเองในจังหวัดท่องเที่ยว ติดต่อตกลงเงื่อนไขกับร้านโดยตรง 0% คอมมิชชั่น'
+                }
                 action={
                   hasFilters ? (
                     <button
@@ -256,7 +262,9 @@ export default function HomePage() {
 
               {/* Quick Filter: Transport Category & Legal Type */}
               <div className="mb-6 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold text-ink-2 mr-1">ประเภทรถ/เอกสาร:</span>
+                <span className="text-xs font-bold text-ink-2 mr-1">
+                  {activeTab === 'van' ? 'ประเภทรถ/เอกสาร:' : 'ประเภทร้าน/เอกสาร:'}
+                </span>
                 <button
                   type="button"
                   onClick={() => setPlateFilter('all')}
@@ -266,32 +274,49 @@ export default function HomePage() {
                       : 'bg-card text-ink-2 hover:text-ink border border-rule'
                   }`}
                 >
-                  ทั้งหมด ({vehicles.filter(v => activeTab === 'van' ? v.type === 'van' : v.type !== 'van').length})
+                  ทั้งหมด ({vehicles.filter((v) => activeTab === 'van' ? (v.type === 'van' && v.rentalType !== 'self_drive') : (v.type !== 'van' || v.rentalType === 'self_drive')).length})
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setPlateFilter('yellow')}
-                  className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
-                    plateFilter === 'yellow'
-                      ? 'bg-amber-400 text-amber-950 ring-2 ring-amber-500 shadow-sm'
-                      : 'bg-card text-ink hover:bg-amber-50 border border-amber-300/80 text-amber-900'
-                  }`}
-                >
-                  <span className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-amber-300"></span>
-                  <span>🟡 ป้ายเหลือง 30 (รับงานองค์กร/ราชการ)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPlateFilter('blue')}
-                  className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
-                    plateFilter === 'blue'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-card text-ink hover:bg-blue-50 border border-blue-200 text-blue-800'
-                  }`}
-                >
-                  <span className="h-2 w-2 rounded-full bg-blue-500 ring-2 ring-blue-200"></span>
-                  <span>🔵 ป้ายฟ้า (ท่องเที่ยวทั่วไป/ส่วนบุคคล)</span>
-                </button>
+                {activeTab === 'van' ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setPlateFilter('yellow')}
+                      className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                        plateFilter === 'yellow'
+                          ? 'bg-amber-400 text-amber-950 ring-2 ring-amber-500 shadow-sm'
+                          : 'bg-card text-ink hover:bg-amber-50 border border-amber-300/80 text-amber-900'
+                      }`}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-amber-300"></span>
+                      <span>🟡 ป้ายเหลือง 30 (รับงานองค์กร/ราชการ)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPlateFilter('blue')}
+                      className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                        plateFilter === 'blue'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'bg-card text-ink hover:bg-blue-50 border border-blue-200 text-blue-800'
+                      }`}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-blue-500 ring-2 ring-blue-200"></span>
+                      <span>🔵 ป้ายฟ้า (ท่องเที่ยวทั่วไป/ส่วนบุคคล)</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setPlateFilter('blue')}
+                    className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                      plateFilter === 'blue'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-card text-ink hover:bg-blue-50 border border-blue-200 text-blue-800'
+                    }`}
+                  >
+                    <span className="h-2 w-2 rounded-full bg-blue-500 ring-2 ring-blue-200"></span>
+                    <span>🔵 รถเช่าบุคคล/ทั่วไป</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setPlateFilter('tax')}

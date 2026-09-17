@@ -38,6 +38,13 @@ create table if not exists public.driver_leads (
     vehicle_model text,
     seats text,
     plate_number text,
+    plate_type text check (plate_type in ('yellow', 'blue')) default 'yellow',
+    can_issue_tax_invoice boolean default false,
+    business_type text default 'individual',
+    service_type text default 'with_driver',
+    deposit_terms text,
+    amenities text,
+    pickup_location text,
     routes text,
     status text default 'pending' check (status in ('pending', 'verified', 'rejected')),
     created_at timestamptz default now()
@@ -73,12 +80,19 @@ create table if not exists public.vehicles (
     popular_routes text[] not null,
     amenities text[] not null,
     description text,
-    created_at timestamptz default now()
+    plate_type text check (plate_type in ('yellow', 'blue')) default 'yellow',
+    plate_number text,
+    can_issue_tax_invoice boolean default false,
+    business_type text default 'individual',
+    is_available boolean default true,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
 );
 
 create index if not exists idx_vehicles_type on public.vehicles(type);
 create index if not exists idx_vehicles_is_verified on public.vehicles(is_verified);
 create index if not exists idx_vehicles_region on public.vehicles(region);
+create index if not exists idx_vehicles_is_available on public.vehicles(is_available);
 
 -- ------------------------------------------------------------------------------
 -- 5. TABLE: board_posts (กระดานเว็บบอร์ด หาคนหาร / หารถตู้เที่ยว)
@@ -100,12 +114,16 @@ create table if not exists public.board_posts (
     detail text not null,
     posted_at text default 'เมื่อสักครู่',
     is_verified boolean default false,
+    category text default 'general' check (category in ('general', 'corporate')),
+    pin text,
+    is_closed boolean default false,
     created_at timestamptz default now()
 );
 
 create index if not exists idx_board_posts_type on public.board_posts(type);
 create index if not exists idx_board_posts_zone_id on public.board_posts(zone_id);
 create index if not exists idx_board_posts_created_at on public.board_posts(created_at desc);
+create index if not exists idx_board_posts_category on public.board_posts(category);
 
 -- ------------------------------------------------------------------------------
 -- 6. TABLE: analytics_events (สถิติการใช้งาน และ Click-to-Contact)
@@ -276,7 +294,29 @@ create policy "Allow public select on analytics_events"
     using (true);
 
 -- ------------------------------------------------------------------------------
--- 8. INITIAL SEED DATA (ข้อมูลเริ่มต้น)
+-- 8. MIGRATION: ALTER EXISTING TABLES (SAFE UPGRADE FOR EXISTING DATABASES)
+-- ------------------------------------------------------------------------------
+alter table public.vehicles add column if not exists plate_type text check (plate_type in ('yellow', 'blue')) default 'yellow';
+alter table public.vehicles add column if not exists plate_number text;
+alter table public.vehicles add column if not exists can_issue_tax_invoice boolean default false;
+alter table public.vehicles add column if not exists business_type text default 'individual';
+alter table public.vehicles add column if not exists is_available boolean default true;
+alter table public.vehicles add column if not exists updated_at timestamptz default now();
+
+alter table public.driver_leads add column if not exists plate_type text check (plate_type in ('yellow', 'blue')) default 'yellow';
+alter table public.driver_leads add column if not exists can_issue_tax_invoice boolean default false;
+alter table public.driver_leads add column if not exists business_type text default 'individual';
+alter table public.driver_leads add column if not exists service_type text default 'with_driver';
+alter table public.driver_leads add column if not exists deposit_terms text;
+alter table public.driver_leads add column if not exists amenities text;
+alter table public.driver_leads add column if not exists pickup_location text;
+
+alter table public.board_posts add column if not exists category text default 'general';
+alter table public.board_posts add column if not exists pin text;
+alter table public.board_posts add column if not exists is_closed boolean default false;
+
+-- ------------------------------------------------------------------------------
+-- 9. INITIAL SEED DATA & PILOT DRIVERS (ข้อมูลเริ่มต้นและกลุ่มรถจริงนำร่อง)
 -- ------------------------------------------------------------------------------
 
 -- Seed Quotations

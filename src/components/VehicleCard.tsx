@@ -38,6 +38,8 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
     });
   };
 
+  const isSelfDrive = vehicle.rentalType === 'self_drive' || (vehicle.type !== 'van' && vehicle.rentalType !== 'with_driver');
+
   return (
     <article className="group flex flex-col overflow-hidden rounded-card bg-card border border-rule transition-all duration-200 hover:border-accent/40 hover:shadow-lift">
       {/* Vehicle Photo with 16:10 ratio */}
@@ -57,6 +59,11 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
 
         {/* Top Floating Badges */}
         <div className="absolute left-3 top-3 flex items-center gap-1.5 flex-wrap max-w-[80%]">
+          {isSelfDrive && (
+            <span className="inline-flex items-center gap-1 rounded-pill bg-accent backdrop-blur-xs px-2.5 py-1 text-xs font-bold text-white shadow-xs">
+              <span>🚗 ขับเอง</span>
+            </span>
+          )}
           <span className="inline-flex items-center gap-1 rounded-pill bg-black/70 backdrop-blur-xs px-2.5 py-1 text-xs font-bold text-white shadow-xs">
             <Users className="h-3 w-3 text-accent" aria-hidden="true" strokeWidth={2.5} />
             <span>{vehicle.seats} {t('vehicle.seats', { n: vehicle.seats }).replace(`${vehicle.seats} `, '')}</span>
@@ -82,17 +89,17 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
 
         {/* Bottom image overlay: Starting price sneak peek */}
         <div className="absolute bottom-2.5 left-3 right-3 flex items-baseline justify-between text-white drop-shadow-sm">
-          <span className="text-xs font-semibold text-white/90">
-            {getPublicDriverName(vehicle.driverName, vehicle.driverNickname)} • {vehicle.location}
+          <span className="text-xs font-semibold text-white/90 truncate mr-2">
+            {getPublicDriverName(vehicle.driverName, vehicle.driverNickname)} • {vehicle.location.split('/')[0].trim()}
           </span>
-          <span className="text-xs font-bold text-white/95 bg-black/40 px-2 py-0.5 rounded-pill backdrop-blur-xs">
-            {t('vehicle.priceNote1')} {formatTHB(vehicle.zoneRates?.city || 1900)}{t('vehicle.perDay')}
+          <span className="text-xs font-bold text-white/95 bg-black/50 px-2 py-0.5 rounded-pill backdrop-blur-xs shrink-0">
+            {isSelfDrive ? 'เริ่มต้น' : t('vehicle.priceNote1')} {formatTHB(vehicle.zoneRates?.city || 1900)}{t('vehicle.perDay')}
           </span>
         </div>
       </button>
 
       <div className="flex flex-1 flex-col p-4 sm:p-5">
-        {/* Driver & Rating Row */}
+        {/* Driver / Shop & Rating Row */}
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2 min-w-0">
             <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-soft text-xs font-extrabold text-accent border border-accent/20">
@@ -121,10 +128,18 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
           {vehicle.title}
         </h3>
 
-        {/* Trust Badges Bar (Legal & Safety Verification + Language badges) */}
+        {/* Trust Badges Bar */}
         <div className="mb-3 flex flex-wrap items-center gap-1.5">
-          {/* Plate Type Badge */}
-          {vehicle.plateType === 'yellow' ? (
+          {/* Service Type or Plate Type Badge */}
+          {isSelfDrive ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-pill bg-sky-500/15 text-sky-800 dark:text-sky-200 border border-sky-500/30 px-2.5 py-0.5 text-[11px] font-bold"
+              title="รถเช่าขับเอง ตกลงเงื่อนไขกับร้านโดยตรง"
+            >
+              <Award className="h-3 w-3 text-sky-600 dark:text-sky-400" />
+              🚗 รถเช่าขับเอง
+            </span>
+          ) : vehicle.plateType === 'yellow' ? (
             <span
               className="inline-flex items-center gap-1 rounded-pill bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/30 px-2.5 py-0.5 text-[11px] font-bold"
               title="รถตู้ป้ายเหลือง 30 (ขนส่งสาธารณะ) เหมาะสำหรับหน่วยงานราชการ บริษัท สัมมนา และทั่วไป"
@@ -134,11 +149,18 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
             </span>
           ) : (
             <span
-              className="inline-flex items-center gap-1 rounded-pill bg-sky-500/15 text-sky-800 dark:text-sky-200 border border-sky-500/30 px-2.5 py-0.5 text-[11px] font-bold"
+              className="inline-flex items-center gap-1.5 rounded-pill border border-sky-600/50 bg-sky-100 px-2.5 py-0.5 text-[11px] font-extrabold text-sky-950 shadow-sm dark:border-sky-400/60 dark:bg-sky-900 dark:text-white"
               title="รถตู้ป้ายฟ้า (ส่วนบุคคล) เหมาะสำหรับท่องเที่ยวทั่วไป ครอบครัว หรือองค์กรที่ไม่ติดเงื่อนไขใบประกอบการ"
             >
-              <Award className="h-3 w-3 text-sky-600 dark:text-sky-400" />
-              🔵 ป้ายฟ้า (ส่วนบุคคล)
+              <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-sky-600 ring-2 ring-sky-600/25"></span>
+              ป้ายฟ้า (ส่วนบุคคล)
+            </span>
+          )}
+
+          {/* Transmission Badge for Self-Drive */}
+          {isSelfDrive && vehicle.transmission && (
+            <span className="inline-flex items-center gap-1 rounded-pill bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 text-[11px] font-semibold border border-rule">
+              ⚙️ {vehicle.transmission === 'auto' ? 'เกียร์ออโต้' : 'เกียร์ธรรมดา'}
             </span>
           )}
 
@@ -153,10 +175,12 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
             </span>
           )}
 
-          <span className="inline-flex items-center gap-1 rounded-pill bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 text-[11px] font-medium border border-rule">
-            <ShieldCheck className="h-3 w-3 text-leaf" />
-            {t('vehicle.insured')}
-          </span>
+          {!isSelfDrive && (
+            <span className="inline-flex items-center gap-1 rounded-pill bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 text-[11px] font-medium border border-rule">
+              <ShieldCheck className="h-3 w-3 text-leaf" />
+              {t('vehicle.insured')}
+            </span>
+          )}
 
           {vehicle.languages && vehicle.languages.length > 1 && (
             <div className="flex items-center gap-1 ml-auto">
@@ -196,7 +220,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
           <div className="mb-2.5 flex items-end justify-between gap-2">
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-2 block">
-                ราคาเริ่มต้นโดยประมาณ
+                {isSelfDrive ? 'ราคาเช่าขับเองต่อวัน' : 'ราคาเริ่มต้นโดยประมาณ'}
               </span>
               <p className="td-fig text-2xl font-extrabold text-ink leading-none mt-0.5">
                 {formatTHB(vehicle.zoneRates?.city || 1900)}
@@ -204,14 +228,23 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
               </p>
             </div>
             <p className="text-right text-[11px] font-medium text-ink-2 leading-tight">
-              ตกลงราคากับคนขับโดยตรง<br />
-              <span className="text-accent font-bold">ตามระยะทางจริง</span>
+              {isSelfDrive ? (
+                <>
+                  ติดต่อจองกับร้านโดยตรง<br />
+                  <span className="text-accent font-bold">ไม่รวมน้ำมัน (24 ชม.)</span>
+                </>
+              ) : (
+                <>
+                  ตกลงราคากับคนขับโดยตรง<br />
+                  <span className="text-accent font-bold">ตามระยะทางจริง</span>
+                </>
+              )}
             </p>
           </div>
 
-          {/* Clean Rate Note (No destination zones) */}
+          {/* Clean Rate Note */}
           <div className="mb-3 flex items-center justify-between text-[11px] text-ink-2 bg-paper px-2.5 py-1.5 rounded-input border border-rule/60">
-            <span>รวมคนขับ & ยานพาหนะ</span>
+            <span>{isSelfDrive ? '🚗 รถเช่าขับเอง · ดีลตรงกับร้าน' : 'รวมคนขับ & ยานพาหนะ'}</span>
             <span className="font-semibold text-leaf">0% คอมมิชชั่น ดีลตรง</span>
           </div>
 

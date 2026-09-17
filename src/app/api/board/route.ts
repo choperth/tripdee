@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchBoardPosts, saveBoardPost, updateBoardPost, deleteBoardPost, closeBoardPost } from '@/lib/supabase/service';
 import { sendPushToDrivers } from '@/lib/pushService';
 import { ZoneId } from '@/data/mockData';
+import { validateHoneypot } from '@/lib/honeypot';
 
 export async function GET() {
   try {
@@ -22,6 +23,21 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+
+    // Check Honeypot spam trap
+    const hpResult = validateHoneypot(body);
+    if (hpResult.isSpam) {
+      console.warn(`[TripBoard Spam Blocked] reason=${hpResult.reason}, title="${body.title}"`);
+      // Return simulated success so bots don't adapt
+      return NextResponse.json({
+        success: true,
+        message: 'โพสต์ประกาศลงกระดานเรียบร้อยแล้ว',
+        post: {
+          id: `b-spm-${Date.now().toString().slice(-6)}`,
+          title: String(body.title || ''),
+        },
+      });
+    }
 
     // Check if user is closing their post
     if (body.action === 'close' && body.id) {

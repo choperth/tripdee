@@ -309,3 +309,64 @@ h1, h2 { overflow-wrap: anywhere; }
 :root { --td-banner-h: 40px; --td-bar-h: 64px; --td-head-h: calc(var(--td-banner-h) + var(--td-bar-h)); }
 html[data-nav="dismissed"] { --td-banner-h: 0px; }
 
+/* ==============================================================================
+ * Standard A4 Print Stylesheet (For Booking Confirmation Sheet & Invoices)
+ * ============================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 14mm;
+  }
+
+  body {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide interactive web chrome during print */
+  nav,
+  header,
+  footer,
+  .no-print,
+  .td-mobile-bar,
+  .td-scrim-enter,
+  [data-no-print="true"] {
+    display: none !important;
+  }
+
+  /* Reset modal containers so the printable document expands fully */
+  .td-scrim-enter,
+  [role="dialog"] {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  .print-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Prevent page break inside cards and summary sections */
+  .print-page > div,
+  .print-page section,
+  table,
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+

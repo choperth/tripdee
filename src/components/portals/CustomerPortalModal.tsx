@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { X, Briefcase, Download, Printer, Plus, LogOut, Check } from 'lucide-react';
+import { X, Briefcase, Download, Printer, Plus, LogOut, Check, FileText } from 'lucide-react';
+import { BookingConfirmationSheet, BookingSheetData } from '@/components/BookingConfirmationSheet';
+import { QuotationLead } from '@/lib/leadsStore';
 
 interface CustomerPortalModalProps {
   isOpen: boolean;
@@ -20,6 +22,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'quotes' | 'taxProfile'>('quotes');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [activeSheetData, setActiveSheetData] = useState<Partial<BookingSheetData> | null>(null);
 
   // Tax Profile Form State
   const [companyName, setCompanyName] = useState(user?.companyName || '');
@@ -28,6 +31,28 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
   const [branch, setBranch] = useState(user?.branch || t('pcus.branchHq'));
 
   if (!isOpen || !user) return null;
+
+  const handleOpenBookingSheet = (q: (typeof quotations)[0]) => {
+    const deposit = Math.round(q.estimatedPrice * 0.3);
+    setActiveSheetData({
+      bookingId: q.id.startsWith('TD-') ? q.id : `TD-${q.id.toUpperCase()}`,
+      customerName: user.companyName || user.name || 'บจก. สยามอินโนเวชั่น เทรดดิ้ง',
+      customerPhone: user.emailOrPhone || '081-998-7766',
+      customerLine: user.lineId || '',
+      passengers: q.passengers || '10-15 ท่าน',
+      travelDates: q.date || '15-17 ธ.ค. 2569 (3 วัน 2 คืน)',
+      totalDays: q.totalDays || 2,
+      pickupLocation: 'กรุงเทพฯ หรือ จุดนัดรับตามตกลง',
+      pickupTime: '07:30 น.',
+      routeDetails: q.route || 'กรุงเทพฯ - เชียงใหม่ - ม่อนแจ่ม',
+      dailyRate: Math.round(q.estimatedPrice / (q.totalDays || 2)),
+      totalPrice: q.estimatedPrice,
+      depositAmount: deposit,
+      remainingAmount: q.estimatedPrice - deposit,
+      canIssueTaxInvoice: Boolean(q.needsTaxInvoice),
+      status: q.status === 'confirmed' ? 'confirmed' : 'deposit_paid',
+    });
+  };
 
   const handleSaveTaxProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,14 +175,16 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
 
                   <div className="flex gap-2">
                     <button
-                      onClick={() => alert(t('pcus.printAlert', { id: q.id }))}
-                      className="td-btn inline-flex items-center gap-1 rounded-pill bg-card px-3 py-1 text-xs font-extrabold text-ink hover:bg-paper-2"
+                      type="button"
+                      onClick={() => handleOpenBookingSheet(q)}
+                      className="td-btn inline-flex items-center gap-1 rounded-pill bg-card px-3 py-1 text-xs font-extrabold text-ink hover:bg-paper-2 border border-rule shadow-2xs"
                     >
                       <Printer className="h-3.5 w-3.5" />
                       <span>{t('pcus.print')}</span>
                     </button>
                     <button
-                      onClick={() => alert(t('pcus.pdfAlert', { id: q.id }))}
+                      type="button"
+                      onClick={() => handleOpenBookingSheet(q)}
                       className="td-btn inline-flex items-center gap-1 rounded-pill bg-sun px-3 py-1 text-xs font-extrabold text-sun-ink"
                     >
                       <Download className="h-3.5 w-3.5" />
@@ -266,6 +293,15 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
           </form>
         )}
       </div>
+
+      {/* Booking Confirmation Sheet Modal */}
+      {activeSheetData && (
+        <BookingConfirmationSheet
+          initialData={activeSheetData}
+          isModal={true}
+          onClose={() => setActiveSheetData(null)}
+        />
+      )}
     </div>
   );
 };
