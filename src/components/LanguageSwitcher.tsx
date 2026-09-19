@@ -71,7 +71,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={t('lang.switch')}
-        className="inline-flex items-center gap-1 rounded-pill px-2.5 py-2 text-[13px] font-extrabold text-ink-2 transition duration-220 ease-out hover:bg-paper-2 hover:text-ink"
+        className="inline-flex items-center gap-0.5 sm:gap-1 rounded-pill px-1.5 sm:px-2.5 py-1 sm:py-2 text-xs sm:text-[13px] font-extrabold text-ink-2 transition duration-220 ease-out hover:bg-paper-2 hover:text-ink"
       >
         <Globe className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
         <span>{current.short}</span>

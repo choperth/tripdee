@@ -146,9 +146,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           scrolled ? 'shadow-sm' : ''
         }`}
       >
-        <div className="h-16 sm:h-20 max-w-7xl mx-auto px-margin lg:px-gutter flex items-center justify-between gap-space-md">
+        <div className="h-16 sm:h-20 max-w-7xl mx-auto px-margin lg:px-gutter flex items-center justify-between gap-2 sm:gap-space-md">
           {/* LEFT: Official Logo */}
-          <div className="flex items-center">
+          <div className="flex items-center shrink-0">
             <button
               type="button"
               onClick={() => selectTab('van')}
@@ -160,7 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 alt="TripDee ทริปดี"
                 width={140}
                 height={36}
-                className="h-8 sm:h-9 w-auto object-contain block dark:hidden"
+                className="h-7 sm:h-9 w-auto object-contain block dark:hidden"
                 priority
               />
               <Image
@@ -168,7 +168,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 alt="TripDee ทริปดี"
                 width={140}
                 height={36}
-                className="h-8 sm:h-9 w-auto object-contain hidden dark:block"
+                className="h-7 sm:h-9 w-auto object-contain hidden dark:block"
                 priority
               />
             </button>
@@ -218,13 +218,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* RIGHT: Actions, Language Switcher, Driver Portal, Customer Post CTA */}
-          <div className="flex items-center gap-space-xs sm:gap-space-sm">
+          <div className="flex items-center gap-1 sm:gap-space-sm shrink-0 min-w-0">
             {/* Dark / Light Toggle */}
             <button
               type="button"
               onClick={toggleTheme}
               aria-label={theme === 'dark' ? t('nav.toLight') : t('nav.toDark')}
-              className="p-2 rounded-lg text-ink-secondary hover:text-navy-deep hover:bg-paper-surface-muted dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+              className="hidden sm:flex p-2 rounded-lg text-ink-secondary hover:text-navy-deep hover:bg-paper-surface-muted dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
             >
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-accent" /> : <Moon className="w-4 h-4 text-slate-700" />}
             </button>
@@ -257,7 +257,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 const trigger = document.getElementById('open-post-modal-btn');
                 if (trigger) trigger.click();
               }}
-              className="inline-flex items-center gap-space-2xs bg-blue-action hover:bg-blue-action-hover text-on-primary font-body-medium text-body-medium px-space-sm sm:px-space-md py-space-xs rounded-lg shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
+              className="inline-flex items-center gap-1 sm:gap-space-2xs bg-blue-action hover:bg-blue-action-hover text-on-primary font-body-medium px-2 sm:px-space-md py-1.5 sm:py-space-xs rounded-lg shadow-sm transition-all active:scale-[0.98] whitespace-nowrap text-xs sm:text-body-medium"
             >
               <PlusCircle className="w-4 h-4" />
               <span className="hidden sm:inline">{t('nav.postJob')}</span>
@@ -269,12 +269,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onOpenPortal}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-navy-deep text-surface hover:bg-navy-surface transition-all"
+                className="inline-flex items-center gap-1 sm:gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold bg-navy-deep text-surface hover:bg-navy-surface transition-all"
               >
                 {user.role === 'driver' && <CarFront className="h-3.5 w-3.5" />}
                 {user.role === 'customer' && <Briefcase className="h-3.5 w-3.5" />}
                 {user.role === 'admin' && <Crown className="h-3.5 w-3.5" />}
-                <span className="max-w-[90px] truncate">
+                <span className="hidden sm:inline max-w-[90px] truncate">
                   {user.role === 'driver' && (user.driverNickname || user.name)}
                   {user.role === 'customer' && (user.companyName || user.name)}
                   {user.role === 'admin' && t('nav.admin')}
@@ -284,7 +284,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onOpenLoginModal}
-                className="w-9 h-9 rounded-full bg-navy-deep text-surface hover:bg-navy-surface flex items-center justify-center transition-colors shadow-sm"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-navy-deep text-surface hover:bg-navy-surface flex items-center justify-center transition-colors shadow-sm"
                 aria-label={t('nav.login')}
                 title={t('nav.login')}
               >
@@ -296,7 +296,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="lg:hidden p-2 rounded-lg text-ink-primary dark:text-slate-200 hover:bg-paper-surface-muted transition-colors"
+              className="lg:hidden p-1.5 sm:p-2 rounded-lg text-ink-primary dark:text-slate-200 hover:bg-paper-surface-muted transition-colors"
               aria-label={menuOpen ? t('nav.menuClose') : t('nav.menuOpen')}
             >
               {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -307,6 +307,22 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* MOBILE SLIDE-DOWN DRAWER */}
         {menuOpen && (
           <div className="lg:hidden bg-paper-elevated dark:bg-slate-900 border-b border-border-subtle px-margin py-space-md space-y-space-sm shadow-xl">
+            {/* Quick Actions in Mobile Drawer: Language Row + Theme Toggle */}
+            <div className="flex items-center justify-between gap-2 pb-space-xs border-b border-border-subtle">
+              <div className="flex-1">
+                <LanguageSwitcher variant="row" onPick={() => setMenuOpen(false)} />
+              </div>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={theme === 'dark' ? t('nav.toLight') : t('nav.toDark')}
+                className="h-9 px-2.5 rounded-xl bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-slate-200 font-body-medium text-xs flex items-center gap-1.5 shrink-0"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-accent" /> : <Moon className="w-4 h-4 text-slate-700" />}
+                <span className="hidden xs:inline">{theme === 'dark' ? t('nav.toLight') : t('nav.toDark')}</span>
+              </button>
+            </div>
+
             <div className="grid grid-cols-2 gap-space-xs pb-space-xs">
               <button
                 type="button"

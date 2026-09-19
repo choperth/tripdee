@@ -275,7 +275,7 @@ export default function HomePage() {
 
       <main id="main-content" className="mx-auto w-full max-w-7xl flex-1 px-margin lg:px-gutter pb-36 md:pb-8">
         {activeTab === 'hotel' ? (
-          <div key="hotel" className="td-panel-enter pb-16">
+          <div key="hotel" className="td-panel-enter pt-24 sm:pt-28 pb-36 md:pb-16">
             <div>
               <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
                 {t('home.hotelTitle')}
@@ -291,7 +291,7 @@ export default function HomePage() {
             </div>
           </div>
         ) : activeTab === 'corporate' ? (
-          <div key="corporate" className="td-panel-enter pb-16">
+          <div key="corporate" className="td-panel-enter pt-24 sm:pt-28 pb-36 md:pb-16">
             <CorporateSection />
           </div>
         ) : (
