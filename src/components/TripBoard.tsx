@@ -6,6 +6,7 @@ import { useAnalytics } from '@/context/AnalyticsContext';
 import {
   BOARD_POSTS,
   ZONE_RATE_CARDS,
+  SPONSORS,
   BoardPost,
   BoardPostType,
   ZoneId,
@@ -63,7 +64,7 @@ const EMPTY_FORM: PostFormState = {
 
 export const TripBoard: React.FC = () => {
 
-  const { trackCall } = useAnalytics();
+  const { trackCall, trackSponsor } = useAnalytics();
   const { t } = useLanguage();
   const [posts, setPosts] = useState<BoardPost[]>(BOARD_POSTS);
   const [filter, setFilter] = useState<BoardFilter>('all');
@@ -503,6 +504,54 @@ export const TripBoard: React.FC = () => {
             <span className="material-symbols-outlined text-amber-accent text-[26px]">domain</span>
           </div>
         </div>
+
+        {/* 3.5 Driver & Traveler Partner Benefit Strip */}
+        {SPONSORS[3] && (
+          <div className="mb-space-lg rounded-2xl bg-gradient-to-r from-emerald-500/10 via-amber-500/10 to-blue-500/10 dark:from-emerald-950/30 dark:via-amber-950/20 dark:to-slate-900 border border-emerald-300/50 dark:border-emerald-800/40 p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <span className="material-symbols-outlined text-[22px]">local_gas_station</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+                    สิทธิพิเศษคนขับและผู้เดินทาง
+                  </span>
+                  <span className="font-bold text-xs sm:text-sm text-navy-deep dark:text-white truncate">
+                    {SPONSORS[3].title}
+                  </span>
+                </div>
+                <p className="text-xs text-ink-muted dark:text-slate-400 truncate mt-0.5">
+                  {SPONSORS[3].tagline}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 hidden md:inline">
+                {SPONSORS[3].discountText}
+              </span>
+              <a
+                href={SPONSORS[3].link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  trackSponsor({
+                    sponsorId: SPONSORS[3].id,
+                    sponsorTitle: SPONSORS[3].title,
+                    category: SPONSORS[3].category,
+                    variant: 'strip',
+                    targetUrl: SPONSORS[3].link,
+                  });
+                }}
+                className="w-full sm:w-auto h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 transition-all shadow-xs"
+              >
+                <span>รับสิทธิ์ฟรี</span>
+                <span className="material-symbols-outlined text-[15px]">open_in_new</span>
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* 4. Filter Console (Segment Tabs & Search) */}
         <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-md border border-border-subtle dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-space-md mb-space-lg">

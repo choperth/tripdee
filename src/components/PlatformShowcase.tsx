@@ -141,7 +141,7 @@ export const PlatformShowcase: React.FC<PlatformShowcaseProps> = ({
             </div>
           </div>
           <a
-            href="https://line.me/R/ti/p/@tripdee"
+            href="https://line.me/R/ti/p/@731ruvzj"
             target="_blank"
             rel="noopener noreferrer"
             className="px-space-lg py-space-sm bg-line-green hover:bg-line-green-hover text-on-primary rounded-xl font-title-card text-title-card flex items-center gap-space-2xs shadow-md transition-all active:scale-[0.98] whitespace-nowrap"

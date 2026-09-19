@@ -62,13 +62,13 @@ export const Footer: React.FC<FooterProps> = ({
 
             <div className="flex flex-wrap items-center gap-space-sm pt-space-xs">
               <a
-                href="https://line.me/R/ti/p/@tripdee"
+                href="https://line.me/R/ti/p/@731ruvzj"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-space-xs bg-line-green hover:bg-line-green-hover text-surface px-space-md py-space-xs rounded-lg font-body-medium text-body-medium transition-colors shadow-sm"
               >
                 <span className="material-symbols-outlined text-[18px]">chat</span>
-                <span>LINE: @tripdee</span>
+                <span>LINE: @731ruvzj</span>
               </a>
 
               <a

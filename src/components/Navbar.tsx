@@ -119,7 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div className="flex items-center gap-space-md shrink-0">
               <a
-                href="https://line.me/R/ti/p/@tripdee"
+                href="https://line.me/R/ti/p/@731ruvzj"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden md:inline-flex items-center gap-1 text-blue-subtle hover:text-white font-bold transition-colors"

@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
-import { Vehicle, STANDARD_TERMS } from '@/data/mockData';
+import { Vehicle, STANDARD_TERMS, SPONSORS } from '@/data/mockData';
 import { maskPhoneNumber, maskPlateNumber, getPublicDriverName } from '@/lib/privacy';
 import {
   X,
@@ -34,7 +34,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: !!vehicle });
 
-  const { trackCall } = useAnalytics();
+  const { trackCall, trackSponsor } = useAnalytics();
   const { t } = useLanguage();
   const [isPhoneRevealed, setIsPhoneRevealed] = useState<boolean>(false);
   const [showBookingSheet, setShowBookingSheet] = useState<boolean>(false);
@@ -635,6 +635,47 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                   <p>{t('detail.guarantee1')}</p>
                   <p>{t('detail.guarantee2')}</p>
                 </div>
+
+                {/* Traveler Partner Perk Sponsor Box */}
+                {SPONSORS[2] && (
+                  <div className="p-space-sm rounded-2xl bg-gradient-to-br from-amber-50/70 via-paper-elevated to-paper-canvas dark:from-amber-950/25 dark:via-slate-900 dark:to-slate-900 border border-amber-300/50 dark:border-amber-900/40 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-900 dark:text-amber-300 font-bold text-[11px] flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[13px] text-amber-600 dark:text-amber-400">verified</span>
+                        <span>สิทธิพิเศษผู้เดินทาง</span>
+                      </span>
+                      <span className="text-[10px] text-ink-muted dark:text-slate-400">พันธมิตร TripDee</span>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <h4 className="font-bold text-xs text-navy-deep dark:text-white leading-tight">
+                        {SPONSORS[2].title}
+                      </h4>
+                      <p className="text-[11px] text-ink-secondary dark:text-slate-300 line-clamp-2">
+                        {SPONSORS[2].tagline}
+                      </p>
+                    </div>
+
+                    <a
+                      href={SPONSORS[2].link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => {
+                        trackSponsor({
+                          sponsorId: SPONSORS[2].id,
+                          sponsorTitle: SPONSORS[2].title,
+                          category: SPONSORS[2].category,
+                          variant: 'card',
+                          targetUrl: SPONSORS[2].link,
+                        });
+                      }}
+                      className="w-full py-1.5 px-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 dark:bg-amber-500 dark:hover:bg-amber-600 text-amber-950 font-bold text-xs flex items-center justify-center gap-1 transition-colors shadow-xs"
+                    >
+                      <span className="truncate">{SPONSORS[2].discountText}</span>
+                      <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           </div>

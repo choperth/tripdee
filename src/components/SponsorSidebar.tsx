@@ -33,7 +33,18 @@ export const SponsorSidebar: React.FC = () => {
     }
   };
 
-  const primarySponsor = SPONSORS[0]; // หมอกฟ้า พูลวิลล่า & แกลมปิ้ง ม่อนแจ่ม
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isPaused) return;
+    const interval = setInterval(() => {
+      setSelectedIdx((prev) => (prev + 1) % SPONSORS.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [isPaused]);
+
+  const activeSponsor = SPONSORS[selectedIdx] || SPONSORS[0];
 
   return (
     <aside aria-label={t('spn.aria')} className="space-y-space-lg">
@@ -102,26 +113,74 @@ export const SponsorSidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Verified Hotel & Resort Partner Sponsor (Stitch Redesign) */}
-      {primarySponsor && (
-        <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl overflow-hidden border border-border-subtle dark:border-slate-800 shadow-md hover:shadow-xl transition-all">
+      {/* 2. Multi-Sponsor Partner Showcase (Interactive & Auto-Rotating) */}
+      {activeSponsor && (
+        <div
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          className="bg-paper-elevated dark:bg-slate-900 rounded-2xl overflow-hidden border border-border-subtle dark:border-slate-800 shadow-md hover:shadow-xl transition-all"
+        >
+          {/* Sponsor Category Switcher Tabs */}
+          <div className="grid grid-cols-4 gap-1 p-2 bg-paper-surface-muted dark:bg-slate-800 border-b border-border-subtle dark:border-slate-700/60">
+            {SPONSORS.map((s, idx) => {
+              const isActive = idx === selectedIdx;
+              const icon =
+                s.category === 'hotel'
+                  ? 'bed'
+                  : s.category === 'insurance'
+                  ? 'shield'
+                  : s.category === 'fuel'
+                  ? 'local_gas_station'
+                  : 'build';
+              const label =
+                s.category === 'hotel'
+                  ? 'ที่พัก'
+                  : s.category === 'insurance'
+                  ? 'ประกัน'
+                  : s.category === 'fuel'
+                  ? 'น้ำมัน'
+                  : 'อู่รถ';
+
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedIdx(idx);
+                    setIsPaused(true);
+                  }}
+                  className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-navy-deep text-white shadow-xs dark:bg-blue-600'
+                      : 'text-ink-muted hover:text-navy-deep dark:text-slate-400 dark:hover:text-white'
+                  }`}
+                  aria-label={`ดูสิทธิพิเศษ ${s.title}`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">{icon}</span>
+                  <span className="text-[10px] truncate leading-tight mt-0.5">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+
           <div className="relative h-44 w-full overflow-hidden bg-navy-deep">
             <Image
-              src={primarySponsor.image}
-              alt={primarySponsor.title}
+              key={activeSponsor.id}
+              src={activeSponsor.image}
+              alt={activeSponsor.title}
               fill
               sizes="(max-width: 1024px) 100vw, 320px"
               className="object-cover transition-transform duration-500 hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/80 via-transparent to-transparent pointer-events-none" />
             <span className="absolute top-3 left-3 px-space-xs py-space-2xs rounded bg-surface/90 text-navy-deep font-bold text-label-badge shadow-sm">
-              {t('spn.hotelBadge')}
+              {activeSponsor.categoryLabel}
             </span>
             <span
               suppressHydrationWarning
               className="absolute bottom-2 right-2 rounded-md bg-navy-deep/80 px-2 py-0.5 text-[10px] font-bold text-surface backdrop-blur-xs"
             >
-              {t('spn.clicks', { n: mounted ? getSponsorClickCount(primarySponsor.id) : 0 })}
+              {t('spn.clicks', { n: mounted ? getSponsorClickCount(activeSponsor.id) : 0 })}
             </span>
           </div>
 
@@ -130,33 +189,35 @@ export const SponsorSidebar: React.FC = () => {
               <span className="material-symbols-outlined text-[14px] text-blue-action">
                 location_on
               </span>
-              <span>{primarySponsor.location}</span>
+              <span className="truncate">{activeSponsor.location}</span>
             </div>
 
             <h4 className="font-title-card text-title-card text-navy-deep dark:text-white line-clamp-2">
-              {primarySponsor.title}
+              {activeSponsor.title}
             </h4>
 
             <p className="font-body-subtext text-body-subtext text-ink-secondary dark:text-slate-300 line-clamp-2">
-              {primarySponsor.tagline}
+              {activeSponsor.tagline}
             </p>
 
             <div className="rounded-xl border border-dashed border-amber-accent/40 bg-taxi-yellow-soft dark:bg-amber-950/40 p-space-xs text-body-subtext font-bold text-on-tertiary-fixed-variant dark:text-amber-300 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px] text-amber-accent">
+              <span className="material-symbols-outlined text-[16px] text-amber-accent shrink-0">
                 loyalty
               </span>
-              <span className="line-clamp-1">{primarySponsor.discountText}</span>
+              <span className="line-clamp-1">{activeSponsor.discountText}</span>
             </div>
 
             <a
-              href={primarySponsor.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => handleSponsorClick(primarySponsor)}
+              href={activeSponsor.link}
+              target={activeSponsor.link.startsWith('tel:') ? undefined : '_blank'}
+              rel={activeSponsor.link.startsWith('tel:') ? undefined : 'noopener noreferrer'}
+              onClick={() => handleSponsorClick(activeSponsor)}
               className="mt-space-xs w-full h-10 bg-navy-deep hover:bg-navy-surface text-surface rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98]"
             >
-              <span>{t('sponsor.cta')}</span>
-              <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+              <span>{activeSponsor.link.startsWith('tel:') ? 'โทรรับสิทธิ์' : t('sponsor.cta')}</span>
+              <span className="material-symbols-outlined text-[16px]">
+                {activeSponsor.link.startsWith('tel:') ? 'call' : 'open_in_new'}
+              </span>
             </a>
           </div>
         </div>
@@ -206,7 +267,7 @@ export const SponsorSidebar: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-space-xs pt-space-2xs">
           <a
-            href="https://line.me/R/ti/p/@tripdee"
+            href="https://line.me/R/ti/p/@731ruvzj"
             target="_blank"
             rel="noopener noreferrer"
             className="h-9 bg-line-green hover:bg-line-green-hover text-surface rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 transition-all"
@@ -215,7 +276,7 @@ export const SponsorSidebar: React.FC = () => {
             <span>{t('spn.adsAdvertise')}</span>
           </a>
           <a
-            href="https://line.me/R/ti/p/@tripdee"
+            href="https://line.me/R/ti/p/@731ruvzj"
             target="_blank"
             rel="noopener noreferrer"
             className="h-9 bg-surface/20 hover:bg-surface/30 text-surface rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 transition-all"

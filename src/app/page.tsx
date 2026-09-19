@@ -6,6 +6,7 @@ import { VEHICLES, SPONSORS, POPULAR_ROUTES, Vehicle } from '@/data/mockData';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { VehicleCard } from '@/components/VehicleCard';
+import { InFeedSponsorCard } from '@/components/InFeedSponsorCard';
 import { SponsorBanner } from '@/components/SponsorBanner';
 import { PlatformShowcase } from '@/components/PlatformShowcase';
 import { SponsorSidebar } from '@/components/SponsorSidebar';
@@ -470,15 +471,27 @@ export default function HomePage() {
 
                   {filteredVehicles.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
-                      {filteredVehicles.map((vehicle) => (
-                        <VehicleCard
-                          key={vehicle.id}
-                          vehicle={vehicle}
-                          allVehicles={vehicles}
-                          onSelectDetail={handleSelectDetail}
-                          onViewFleet={handleViewFleet}
-                        />
-                      ))}
+                      {filteredVehicles.map((vehicle, index) => {
+                        const showInFeedAd = (index + 1) % 4 === 0 && index < filteredVehicles.length - 1;
+                        const sponsorIndex = Math.floor(index / 4) % SPONSORS.length;
+                        const currentSponsor = SPONSORS[sponsorIndex];
+
+                        return (
+                          <React.Fragment key={vehicle.id}>
+                            <VehicleCard
+                              vehicle={vehicle}
+                              allVehicles={vehicles}
+                              onSelectDetail={handleSelectDetail}
+                              onViewFleet={handleViewFleet}
+                            />
+                            {showInFeedAd && currentSponsor && (
+                              <div className="col-span-1 md:col-span-2 my-1">
+                                <InFeedSponsorCard sponsor={currentSponsor} />
+                              </div>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="rounded-card border-2 border-dashed border-rule bg-card px-6 py-12 text-center">
@@ -508,7 +521,7 @@ export default function HomePage() {
                           <ArrowRight className="h-3.5 w-3.5" />
                         </a>
                         <a
-                          href="https://line.me"
+                          href="https://line.me/R/ti/p/@731ruvzj"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="td-btn inline-flex items-center gap-1.5 rounded-pill bg-line-green/10 text-line-green border border-line-green/30 px-4 py-2.5 text-xs font-extrabold hover:bg-line-green hover:text-white transition-all"

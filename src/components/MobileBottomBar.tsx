@@ -52,7 +52,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
   // Driver chat URLs
   const lineUrl = activeVehicle?.driverLine
     ? activeVehicle.driverLine
-    : 'https://line.me/R/ti/p/@tripdee';
+    : 'https://line.me/R/ti/p/@731ruvzj';
 
   const whatsappUrl = activeVehicle?.driverWhatsapp
     ? activeVehicle.driverWhatsapp

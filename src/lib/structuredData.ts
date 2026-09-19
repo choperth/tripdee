@@ -23,7 +23,7 @@ export function getStructuredData() {
       areaServed: 'TH',
       availableLanguage: ['Thai', 'English', 'Chinese'],
     },
-    sameAs: ['https://line.me/R/ti/p/@tripdee'],
+    sameAs: ['https://line.me/R/ti/p/@731ruvzj'],
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Chiang Mai',
