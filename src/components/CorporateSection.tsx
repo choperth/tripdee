@@ -1,84 +1,83 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Check, Send, Briefcase, PartyPopper, Loader2, FileCheck, Building2, ShieldCheck, PhoneCall, ArrowRight, Award } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
-import type { DictKey } from '@/i18n/dictionaries';
-
-const inputCls =
-  'w-full rounded-input border border-rule bg-paper px-3.5 py-2.5 text-sm font-semibold text-ink transition-colors placeholder:font-normal placeholder:text-ink-2/60 hover:border-accent/50 focus:border-accent focus:bg-card focus:outline-none';
-const labelCls = 'mb-1 block text-xs font-bold uppercase tracking-wider text-ink-2';
-
-const POINTS: { key: DictKey; icon: React.FC<{ className?: string }> }[] = [
-  { key: 'corp.point1', icon: FileCheck },
-  { key: 'corp.point2', icon: ShieldCheck },
-  { key: 'corp.point3', icon: Building2 },
-  { key: 'corp.point4', icon: PhoneCall },
-];
+import {
+  CheckCircle2,
+  Loader2,
+  Phone,
+} from 'lucide-react';
 
 export const CorporateSection: React.FC = () => {
   const { t } = useLanguage();
   const { addQuotation } = useAuth();
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [formData, setFormData] = useState({
     companyName: '',
+    contactName: '',
     phone: '',
+    email: '',
+    route: 'เชียงใหม่ - ม่อนแจ่ม / ดอยอินทนนท์',
+    caravanSize: '2-3 คัน',
     travelDate: '',
-    passengers: '10-20',
+    totalDays: 2,
     needsTaxInvoice: true,
-    details: '',
+    note: '',
   });
 
-  const handleGoYellowPlate = () => {
-    window.dispatchEvent(new CustomEvent('tripdee-filter-plate', { detail: 'yellow' }));
-    const el = document.getElementById('results');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const estimatedPricePerDay =
+    formData.caravanSize === '1 คัน'
+      ? 2200
+      : formData.caravanSize === '2-3 คัน'
+      ? 5500
+      : formData.caravanSize === '4-6 คัน'
+      ? 11000
+      : 22000;
+
+  const totalEstimate = estimatedPricePerDay * formData.totalDays;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
     try {
       addQuotation({
         companyName: formData.companyName,
-        route: formData.details || 'โปรแกรมตามที่ลูกค้ากำหนด',
-        totalDays: 1,
-        passengers: `${formData.passengers} คน`,
-        estimatedPrice: 3500,
+        route: formData.route,
+        totalDays: formData.totalDays,
+        passengers: `คาราวาน ${formData.caravanSize}`,
+        estimatedPrice: totalEstimate,
         needsTaxInvoice: formData.needsTaxInvoice,
       });
 
-      // Automatically post to Trip Board as corporate request
+      // Post to TripBoard as corporate caravan request
       await fetch('/api/board', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'request',
           category: 'corporate',
-          title: `[งานองค์กร] หารถตู้คาราวาน (${formData.passengers}) โดย ${formData.companyName}`,
+          title: `[งานองค์กร/ราชการ] คาราวาน ${formData.caravanSize} ${formData.route} (${formData.companyName})`,
           zoneId: 'city',
-          date: formData.travelDate || 'เร็วๆ นี้',
-          days: 1,
-          seats: formData.passengers.includes('50') ? 50 : 20,
-          price: 0,
+          date: formData.travelDate || 'ตามระบุในใบเสนอราคา',
+          days: formData.totalDays,
+          seats: 20,
+          price: totalEstimate,
           priceNote: formData.needsTaxInvoice ? 'ต้องการใบกำกับภาษี/หัก 3%' : 'ตามตกลง',
-          authorName: formData.companyName,
+          authorName: formData.contactName ? `${formData.companyName} (${formData.contactName})` : formData.companyName,
           authorPhone: formData.phone,
           authorLine: '',
-          detail: `${formData.details || 'โปรแกรมตามที่ลูกค้ากำหนด'} (${formData.needsTaxInvoice ? 'ต้องการรถป้ายเหลือง 30 / ออกใบกำกับภาษีได้' : 'ป้ายฟ้าหรือป้ายเหลืองก็ได้'})`,
-          isVerified: false,
-          pin: formData.phone.replace(/\D/g, '').slice(-4),
+          detail: `เส้นทาง: ${formData.route} · จำนวน: ${formData.caravanSize} · ระยะเวลา: ${formData.totalDays} วัน · ${formData.note || 'ต้องการรถป้ายเหลือง 30 สะอาด สีสุภาพ พร้อมคนขับสุภาพ'}`,
+          pin: formData.phone.replace(/\D/g, '').slice(-4) || '1234',
         }),
       });
 
-      // Dispatch event to refresh community board in real-time
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
     } catch (err) {
-      console.error('Submit corporate board request error:', err);
+      console.debug('Failed to post corporate quote request:', err);
     } finally {
       setIsSubmitting(false);
       setSubmitted(true);
@@ -86,193 +85,361 @@ export const CorporateSection: React.FC = () => {
   };
 
   return (
-    <section id="corporate-section" aria-label={t('corp.aria')} className="scroll-mt-28 overflow-hidden rounded-card bg-[#0F172A] text-white border border-slate-800 shadow-lift">
-      <div className="grid grid-cols-1 gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,6fr)_minmax(0,6fr)] lg:gap-10 lg:p-10">
-        {/* Left Column: B2B Procurement Pitch */}
-        <div className="min-w-0 flex flex-col justify-between">
-          <div>
-            <div className="inline-flex items-center gap-1.5 rounded-pill bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 text-xs font-bold">
-              <Briefcase className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2.5} />
+    <section
+      id="corporate"
+      aria-label={t('nav.corpService')}
+      className="w-full py-space-3xl bg-navy-deep text-surface rounded-3xl my-12 overflow-hidden relative shadow-2xl transition-colors"
+    >
+      {/* Subtle glow circles */}
+      <div className="absolute -right-32 -top-32 w-96 h-96 bg-blue-action/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute left-10 -bottom-20 w-80 h-80 bg-amber-accent/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-margin lg:px-gutter relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-center">
+          {/* Left: Value Proposition Details (7 of 12 cols) */}
+          <div className="lg:col-span-7 space-y-space-md">
+            <div className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-primary-container text-surface font-label-badge text-label-badge border border-white/10">
+              <span className="material-symbols-outlined text-taxi-yellow-30 text-[16px]">
+                corporate_fare
+              </span>
               <span>{t('corp.badge')}</span>
             </div>
 
-            <h2 className="mt-4 font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight text-white">
+            <h2 className="font-display-hero text-display-hero text-surface tracking-tight">
               {t('corp.titleA')}
-              <br />
-              <span className="text-blue-400">{t('corp.titleB')}</span>
+              <span className="text-taxi-yellow-30 block">{t('corp.titleB')}</span>
             </h2>
 
-            <p className="mt-3 text-sm sm:text-base font-normal leading-relaxed text-slate-300">
+            <p className="font-body-large text-body-large text-surface-container-high opacity-90 leading-relaxed max-w-2xl">
               {t('corp.desc')}
             </p>
 
-            {/* Direct Yellow Plate CTA Button */}
-            <div className="mt-5">
-              <button
-                type="button"
-                onClick={handleGoYellowPlate}
-                className="inline-flex items-center gap-2 rounded-input bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 text-xs sm:text-sm shadow-sm transition-all active:scale-[0.98]"
-              >
-                <Award className="h-4 w-4 text-slate-950 shrink-0" />
-                <span>🟡 ดูรถตู้ป้ายเหลือง 30 & ออกใบกำกับภาษี (ดีลตรงทันที)</span>
-                <ArrowRight className="h-4 w-4 shrink-0" />
-              </button>
+            {/* 4 Trust Pillars (2x2 Grid) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md pt-space-xs">
+              {/* Pillar 1 */}
+              <div className="p-space-md bg-white/5 rounded-2xl border border-white/10 flex items-start gap-space-sm">
+                <div className="w-10 h-10 rounded-xl bg-amber-accent/20 text-amber-accent flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[24px]">verified_user</span>
+                </div>
+                <div>
+                  <h3 className="font-title-card text-title-card text-surface">
+                    {t('corp.p1Title')}
+                  </h3>
+                  <p className="font-body-subtext text-body-subtext text-surface-container-high mt-1 opacity-80">
+                    {t('corp.p1Desc')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Pillar 2 */}
+              <div className="p-space-md bg-white/5 rounded-2xl border border-white/10 flex items-start gap-space-sm">
+                <div className="w-10 h-10 rounded-xl bg-verified-emerald/20 text-verified-emerald flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[24px]">receipt_long</span>
+                </div>
+                <div>
+                  <h3 className="font-title-card text-title-card text-surface">
+                    {t('corp.p2Title')}
+                  </h3>
+                  <p className="font-body-subtext text-body-subtext text-surface-container-high mt-1 opacity-80">
+                    {t('corp.p2Desc')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Pillar 3 */}
+              <div className="p-space-md bg-white/5 rounded-2xl border border-white/10 flex items-start gap-space-sm">
+                <div className="w-10 h-10 rounded-xl bg-blue-action/20 text-blue-action flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[24px]">minor_crash</span>
+                </div>
+                <div>
+                  <h3 className="font-title-card text-title-card text-surface">
+                    {t('corp.p3Title')}
+                  </h3>
+                  <p className="font-body-subtext text-body-subtext text-surface-container-high mt-1 opacity-80">
+                    {t('corp.p3Desc')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Pillar 4 */}
+              <div className="p-space-md bg-white/5 rounded-2xl border border-white/10 flex items-start gap-space-sm">
+                <div className="w-10 h-10 rounded-xl bg-line-green/20 text-line-green flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[24px]">handshake</span>
+                </div>
+                <div>
+                  <h3 className="font-title-card text-title-card text-surface">
+                    {t('corp.p4Title')}
+                  </h3>
+                  <p className="font-body-subtext text-body-subtext text-surface-container-high mt-1 opacity-80">
+                    {t('corp.p4Desc')}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* Corporate Value Props Checklist */}
-            <ul className="mt-6 flex flex-col gap-2.5">
-              {POINTS.map((point) => (
-                <li key={point.key} className="flex items-center gap-3 rounded-input bg-slate-800/80 border border-slate-700/60 px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-200">
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-blue-500/20 text-blue-400">
-                    <Check className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={3} />
-                  </span>
-                  <span>{t(point.key)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
-            <span>✓ รองรับการเบิกจ่ายทุกองค์กรภาครัฐและเอกชน • ออกเอกสารโดยนิติบุคคลถูกต้อง</span>
-          </div>
-        </div>
-
-        {/* Right Column: Clean Quotation Request Card */}
-        <div className="min-w-0 rounded-input bg-card p-5 sm:p-6 text-ink border border-rule shadow-card">
-          {submitted ? (
-            <div className="py-10 text-center">
-              <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-leaf-soft text-leaf">
-                <PartyPopper className="h-7 w-7" aria-hidden="true" />
-              </span>
-              <h3 className="font-display text-xl font-extrabold text-ink">
-                {t('corp.doneTitle')}
-              </h3>
-              <p className="mx-auto mt-2 max-w-[45ch] text-xs sm:text-sm font-medium leading-relaxed text-ink-2">
-                {t('corp.doneDesc')}
-              </p>
-              <button
-                onClick={() => setSubmitted(false)}
-                className="td-btn mt-5 rounded-input bg-accent hover:bg-accent-deep text-white px-4 py-2 text-xs font-bold transition-colors"
-              >
-                {t('corp.doneMore')}
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+            {/* Metric Counters Strip */}
+            <div className="pt-space-sm flex flex-wrap items-center gap-space-xl text-surface">
               <div>
-                <h3 className="font-display text-lg font-extrabold tracking-tight text-ink">
-                  {t('corp.formTitle')}
+                <div className="font-headline-xl text-headline-xl text-surface font-black">
+                  580+
+                </div>
+                <div className="font-body-subtext text-body-subtext text-surface-container-high opacity-75">
+                  {t('corp.statSuccess')}
+                </div>
+              </div>
+              <div className="h-8 w-px bg-white/20 hidden sm:block" />
+              <div>
+                <div className="font-headline-xl text-headline-xl text-taxi-yellow-30 font-black">
+                  4.97 ★
+                </div>
+                <div className="font-body-subtext text-body-subtext text-surface-container-high opacity-75">
+                  {t('corp.statRating')}
+                </div>
+              </div>
+              <div className="h-8 w-px bg-white/20 hidden sm:block" />
+              <div>
+                <div className="font-headline-xl text-headline-xl text-verified-emerald font-black">
+                  100%
+                </div>
+                <div className="font-body-subtext text-body-subtext text-surface-container-high opacity-75">
+                  {t('corp.statLegal')}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Instant RFQ Quotation Builder Card (5 of 12 cols) */}
+          <div className="lg:col-span-5 bg-paper-elevated text-navy-deep dark:bg-slate-900 dark:text-white rounded-3xl p-space-md lg:p-space-lg shadow-2xl space-y-space-sm border border-border-subtle dark:border-slate-800">
+            {submitted ? (
+              <div className="py-space-xl text-center space-y-space-sm">
+                <div className="w-16 h-16 rounded-full bg-verified-emerald-soft text-verified-emerald mx-auto flex items-center justify-center">
+                  <CheckCircle2 className="w-9 h-9" />
+                </div>
+                <h3 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
+                  {t('corp.successTitle')}
                 </h3>
-                <p className="text-xs text-ink-2 mt-0.5">กรอกข้อมูลเบื้องต้นเพื่อรับใบเสนอราคาภายใน 15-30 นาที</p>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="td-co" className={labelCls}>
-                    {t('corp.fCompany')}
-                  </label>
-                  <input
-                    id="td-co"
-                    type="text"
-                    required
-                    placeholder={t('corp.fCompanyPh')}
-                    value={formData.companyName}
-                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="td-cophone" className={labelCls}>
-                    {t('corp.fPhone')}
-                  </label>
-                  <input
-                    id="td-cophone"
-                    type="text"
-                    required
-                    placeholder={t('corp.fPhonePh')}
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className={inputCls}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="td-codate" className={labelCls}>
-                    {t('corp.fDate')}
-                  </label>
-                  <input
-                    id="td-codate"
-                    type="text"
-                    placeholder={t('corp.fDatePh')}
-                    value={formData.travelDate}
-                    onChange={(e) => setFormData({ ...formData, travelDate: e.target.value })}
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="td-copax" className={labelCls}>
-                    {t('corp.fPax')}
-                  </label>
-                  <select
-                    id="td-copax"
-                    value={formData.passengers}
-                    onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                    className={inputCls}
+                <p className="font-body-base text-body-base text-ink-secondary dark:text-slate-300">
+                  {t('corp.successDesc', { company: formData.companyName, phone: formData.phone })}
+                </p>
+                <div className="pt-space-xs">
+                  <button
+                    type="button"
+                    onClick={() => setSubmitted(false)}
+                    className="px-space-md py-space-xs bg-navy-deep text-surface rounded-xl font-body-medium text-body-medium hover:bg-navy-surface transition-colors cursor-pointer"
                   >
-                    <option value="1-9">{t('corp.pax1')}</option>
-                    <option value="10-20">{t('corp.pax2')}</option>
-                    <option value="21-50">{t('corp.pax3')}</option>
-                    <option value="50+">{t('corp.pax4')}</option>
-                  </select>
+                    {t('corp.successMore')}
+                  </button>
                 </div>
               </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between border-b border-border-subtle dark:border-slate-800 pb-space-xs">
+                  <div>
+                    <h3 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
+                      {t('corp.rfqTitle')}
+                    </h3>
+                    <p className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400">
+                      {t('corp.rfqSubtitle')}
+                    </p>
+                  </div>
+                  <span className="px-space-xs py-space-2xs rounded-full bg-verified-emerald-soft text-verified-emerald font-label-badge text-label-badge font-bold">
+                    {t('corp.rfqBadge')}
+                  </span>
+                </div>
 
-              <div>
-                <label htmlFor="td-codetail" className={labelCls}>
-                  {t('corp.fDetail')}
-                </label>
-                <textarea
-                  id="td-codetail"
-                  rows={2}
-                  placeholder={t('corp.fDetailPh')}
-                  value={formData.details}
-                  onChange={(e) => setFormData({ ...formData, details: e.target.value })}
-                  className={`${inputCls} min-h-20 resize-y`}
-                />
-              </div>
+                <form onSubmit={handleSubmit} className="space-y-space-sm">
+                  {/* Company & Contact */}
+                  <div className="grid grid-cols-2 gap-space-xs">
+                    <div>
+                      <label htmlFor="corp-company-name" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                        {t('corp.fCompany')}
+                      </label>
+                      <input
+                        id="corp-company-name"
+                        type="text"
+                        required
+                        value={formData.companyName}
+                        onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                        placeholder={t('corp.fCompanyPh')}
+                        className="w-full h-10 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="corp-contact-name" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                        {t('corp.fContact')}
+                      </label>
+                      <input
+                        id="corp-contact-name"
+                        type="text"
+                        required
+                        value={formData.contactName}
+                        onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
+                        placeholder={t('corp.fContactPh')}
+                        className="w-full h-10 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action"
+                      />
+                    </div>
+                  </div>
 
-              <label htmlFor="td-cotax" className="flex cursor-pointer items-center gap-2.5 rounded-input bg-paper p-3 text-xs font-semibold text-ink border border-rule hover:border-accent/40 transition-colors">
-                <input
-                  id="td-cotax"
-                  type="checkbox"
-                  checked={formData.needsTaxInvoice}
-                  onChange={(e) => setFormData({ ...formData, needsTaxInvoice: e.target.checked })}
-                  className="h-4 w-4 shrink-0 rounded accent-accent"
-                />
-                <span>{t('corp.taxLabel')}</span>
-              </label>
+                  {/* Phone & Email */}
+                  <div className="grid grid-cols-2 gap-space-xs">
+                    <div>
+                      <label htmlFor="corp-phone" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                        {t('corp.fPhone')}
+                      </label>
+                      <input
+                        id="corp-phone"
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="08x-xxx-xxxx"
+                        className="w-full h-10 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="corp-email" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                        {t('corp.fEmail')}
+                      </label>
+                      <input
+                        id="corp-email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="procurement@company.com"
+                        className="w-full h-10 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action"
+                      />
+                    </div>
+                  </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="td-btn inline-flex w-full items-center justify-center gap-2 rounded-input bg-accent hover:bg-accent-deep disabled:opacity-60 px-4 py-3 text-sm font-bold text-white shadow-xs transition-all active:scale-[0.98]"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>กำลังส่งข้อมูล...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-                    <span>{t('corp.submit')}</span>
-                  </>
-                )}
-              </button>
-            </form>
-          )}
+                  {/* Route & Caravan Size */}
+                  <div className="grid grid-cols-2 gap-space-xs">
+                    <div>
+                      <label htmlFor="corp-route" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                        {t('corp.fRoute')}
+                      </label>
+                      <input
+                        id="corp-route"
+                        type="text"
+                        required
+                        value={formData.route}
+                        onChange={(e) => setFormData({ ...formData, route: e.target.value })}
+                        placeholder={t('corp.fRoutePh')}
+                        className="w-full h-10 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="corp-caravan-size" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                        {t('corp.fFleet')}
+                      </label>
+                      <select
+                        id="corp-caravan-size"
+                        value={formData.caravanSize}
+                        onChange={(e) => setFormData({ ...formData, caravanSize: e.target.value })}
+                        className="w-full h-10 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action cursor-pointer"
+                      >
+                        <option value="1 คัน">{t('corp.fleet1')}</option>
+                        <option value="2-3 คัน">{t('corp.fleet2')}</option>
+                        <option value="4-6 คัน">{t('corp.fleet4')}</option>
+                        <option value="7-10+ คัน">{t('corp.fleet7')}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Dates & Days */}
+                  <div className="grid grid-cols-2 gap-space-xs">
+                    <div>
+                      <label htmlFor="corp-travel-date" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                        {t('corp.fDate')}
+                      </label>
+                      <input
+                        id="corp-travel-date"
+                        type="text"
+                        value={formData.travelDate}
+                        onChange={(e) => setFormData({ ...formData, travelDate: e.target.value })}
+                        placeholder={t('corp.fDatePh')}
+                        className="w-full h-10 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="corp-total-days" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                        {t('corp.fDays')}
+                      </label>
+                      <select
+                        id="corp-total-days"
+                        value={formData.totalDays}
+                        onChange={(e) => setFormData({ ...formData, totalDays: Number(e.target.value) })}
+                        className="w-full h-10 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action cursor-pointer"
+                      >
+                        <option value={1}>{t('corp.days1')}</option>
+                        <option value={2}>{t('corp.days2')}</option>
+                        <option value={3}>{t('corp.days3')}</option>
+                        <option value={4}>{t('corp.days4')}</option>
+                        <option value={5}>{t('corp.days5')}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Tax Invoice Toggle */}
+                  <div className="p-space-xs rounded-xl bg-paper-surface-muted dark:bg-slate-800 flex items-center justify-between">
+                    <label htmlFor="corp-tax-invoice" className="flex items-center gap-2 cursor-pointer flex-1">
+                      <span className="material-symbols-outlined text-[18px] text-verified-emerald">
+                        description
+                      </span>
+                      <span className="font-body-subtext text-body-subtext text-navy-deep dark:text-white font-bold">
+                        {t('corp.taxCheck')}
+                      </span>
+                    </label>
+                    <input
+                      id="corp-tax-invoice"
+                      type="checkbox"
+                      checked={formData.needsTaxInvoice}
+                      onChange={(e) => setFormData({ ...formData, needsTaxInvoice: e.target.checked })}
+                      className="w-4 h-4 text-blue-action rounded focus:ring-blue-action cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Estimated Price Bar */}
+                  <div className="bg-blue-subtle dark:bg-blue-950/60 p-space-xs rounded-xl flex items-center justify-between">
+                    <span className="font-body-subtext text-body-subtext text-ink-secondary dark:text-slate-300">
+                      {t('corp.estPrefix', { days: formData.totalDays })}
+                    </span>
+                    <span className="font-price-headline text-price-headline text-blue-action">
+                      ฿{totalEstimate.toLocaleString()}
+                    </span>
+                  </div>
+
+                  {/* Submit CTA */}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full h-11 bg-blue-action hover:bg-blue-action-hover text-on-primary font-title-card text-title-card rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>{t('corp.submitting')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[20px]">description</span>
+                        <span>{t('corp.btnRfq')}</span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="text-center pt-1">
+                    <a
+                      href="tel:081-234-5678"
+                      className="inline-flex items-center gap-1 text-body-subtext font-body-subtext text-ink-muted dark:text-slate-400 hover:text-navy-deep dark:hover:text-white transition-colors"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-taxi-yellow-30" />
+                      <span>{t('corp.hotline')}</span>
+                    </a>
+                  </div>
+                </form>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </section>

@@ -1,12 +1,21 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Menu, X, Plus, Sun, Moon, CarFront, KeyRound, BedDouble, Briefcase, UserCheck, LogIn, Crown, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import {
+  Menu,
+  X,
+  Sun,
+  Moon,
+  CarFront,
+  Briefcase,
+  User,
+  Crown,
+  PlusCircle,
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import type { DictKey } from '@/i18n/dictionaries';
-
 interface NavbarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
@@ -15,13 +24,6 @@ interface NavbarProps {
   onOpenPortal: () => void;
   onOpenDriverSelfService?: () => void;
 }
-
-const TABS = [
-  { id: 'van', labelKey: 'nav.van' as DictKey, icon: CarFront },
-  { id: 'car', labelKey: 'nav.car' as DictKey, icon: KeyRound },
-  { id: 'hotel', labelKey: 'nav.hotel' as DictKey, icon: BedDouble },
-  { id: 'corporate', labelKey: 'nav.corp' as DictKey, icon: Briefcase },
-] as const;
 
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
@@ -35,171 +37,244 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const [compact, setCompact] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const lastY = useRef(0);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('td-theme');
       if (saved === 'dark') {
-        setTheme('dark');
-        document.documentElement.setAttribute('data-theme', 'dark');
+        queueMicrotask(() => {
+          setTheme('dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.classList.add('dark');
+        });
       }
     } catch {}
   }, []);
 
   useEffect(() => {
+    let rafId: number | null = null;
     const onScroll = () => {
-      const y = window.scrollY;
-      setScrolled(y > 10);
-      if (dismissed) {
-        setCompact(false);
-        lastY.current = y;
-        return;
-      }
-      if (y <= 0) {
-        setCompact(false);
-      } else if (y > 60 && y > lastY.current + 4) {
-        setCompact(true);
-      } else if (y < lastY.current - 8) {
-        setCompact(false);
-      }
-      lastY.current = y;
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        setScrolled(window.scrollY > 10);
+      });
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [dismissed]);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (dismissed) {
-      root.setAttribute('data-nav', 'dismissed');
-    } else {
-      root.removeAttribute('data-nav');
-    }
-  }, [dismissed]);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   const toggleTheme = () => {
     const next = theme === 'light' ? 'dark' : 'light';
     setTheme(next);
-    document.documentElement.setAttribute('data-theme', next);
+    if (next === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    }
     try {
       localStorage.setItem('td-theme', next);
     } catch {}
   };
 
-  const pick = (tab: string) => {
+  const scrollTo = (id: string) => {
+    setMenuOpen(false);
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const selectTab = (tab: string) => {
     setActiveTab(tab);
     setMenuOpen(false);
+    const el = document.getElementById('results');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-200 transition-transform duration-300 ease-out ${
-        compact && !dismissed ? '-translate-y-[var(--td-banner-h)]' : 'translate-y-0'
-      }`}
-    >
-      {/* Top Banner */}
+    <header className="fixed top-0 left-0 right-0 w-full z-200">
+      {/* 1. TOP ANNOUNCEMENT RIBBON (Stitch Theme) */}
       {!dismissed && (
-        <div role="region" aria-label={t('nav.promo')} className="flex h-[var(--td-banner-h)] items-center justify-between gap-2 bg-slate-900 text-white px-4 text-xs font-semibold">
-          <div className="mx-auto flex items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
-            <span className="flex h-2 w-2 rounded-full bg-leaf animate-pulse" />
-            <span>{t('nav.promo')}</span>
-            <button onClick={onOpenRegisterModal} className="font-extrabold text-blue-400 hover:text-blue-300 underline underline-offset-2">
-              {t('nav.promoCta')}
-            </button>
+        <div className="bg-primary-container text-surface px-margin py-space-xs transition-all">
+          <div className="max-w-7xl mx-auto flex items-center justify-between font-body-subtext text-body-subtext">
+            <div className="flex items-center gap-space-sm overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
+              <span className="material-symbols-outlined text-[16px] text-taxi-yellow-30 shrink-0">
+                airport_shuttle
+              </span>
+              <span className="truncate">
+                🚐 {t('nav.promo')}
+              </span>
+            </div>
+            <div className="flex items-center gap-space-md shrink-0">
+              <a
+                href="https://line.me/R/ti/p/@tripdee"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden md:inline-flex items-center gap-1 text-blue-subtle hover:text-white font-bold transition-colors"
+              >
+                <span>{t('nav.lineCoord')}</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => setDismissed(true)}
+                aria-label={t('nav.promoClose')}
+                className="text-surface/70 hover:text-white transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => {
-              setDismissed(true);
-              setCompact(false);
-            }}
-            aria-label={t('nav.promoClose')}
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-slate-400 hover:text-white"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
         </div>
       )}
 
-      {/* Main Navbar */}
+      {/* 2. MAIN NAVBAR (Stitch Glassmorphism & Navy Accents) */}
       <nav
         aria-label={t('nav.main')}
-        className={`border-b bg-card/95 backdrop-blur-md transition-colors ${
-          scrolled ? 'border-rule shadow-xs' : 'border-rule/80'
+        className={`w-full bg-paper-elevated/95 dark:bg-slate-950/95 backdrop-blur-xl border-b border-border-subtle dark:border-slate-800 transition-all ${
+          scrolled ? 'shadow-sm' : ''
         }`}
       >
-        <div className="mx-auto flex h-[var(--td-bar-h)] w-full max-w-6xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
-          {/* Logo */}
-          <div className="flex items-center gap-6">
+        <div className="h-16 sm:h-20 max-w-7xl mx-auto px-margin lg:px-gutter flex items-center justify-between gap-space-md">
+          {/* LEFT: Official Logo */}
+          <div className="flex items-center">
             <button
-              onClick={() => pick('van')}
-              className="flex shrink-0 items-center py-1 transition-transform hover:scale-[1.02] focus:outline-none"
+              type="button"
+              onClick={() => selectTab('van')}
+              className="flex shrink-0 items-center py-1 transition-transform hover:scale-[1.02] focus:outline-none cursor-pointer"
               aria-label={t('nav.home')}
             >
-              <img
+              <Image
                 src="/logo.png"
                 alt="TripDee ทริปดี"
-                className="h-8 sm:h-9 w-auto object-contain"
+                width={140}
+                height={36}
+                className="h-8 sm:h-9 w-auto object-contain block dark:hidden"
+                priority
+              />
+              <Image
+                src="/logo-white.png"
+                alt="TripDee ทริปดี"
+                width={140}
+                height={36}
+                className="h-8 sm:h-9 w-auto object-contain hidden dark:block"
+                priority
               />
             </button>
-
-            {/* Desktop Navigation Tabs */}
-            <ul className="hidden items-center gap-1 md:flex">
-              {TABS.map((tab) => {
-                const Icon = tab.icon;
-                const active = activeTab === tab.id;
-                return (
-                  <li key={tab.id}>
-                    <button
-                      onClick={() => pick(tab.id)}
-                      aria-current={active ? 'page' : undefined}
-                      className={`inline-flex items-center gap-1.5 rounded-input px-3.5 py-2 text-xs font-bold transition-colors ${
-                        active
-                          ? 'bg-accent-soft text-accent border border-accent/20'
-                          : 'text-ink-2 hover:bg-paper hover:text-ink'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" aria-hidden="true" strokeWidth={2.2} />
-                      <span>{t(tab.labelKey)}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
           </div>
 
-          {/* Right Action Icons & CTAs */}
-          <div className="flex items-center gap-2">
-            {/* Theme Toggle */}
+          {/* CENTER: Navigation Links */}
+          <div className="hidden lg:flex items-center gap-space-xs xl:gap-space-sm">
             <button
+              type="button"
+              onClick={() => selectTab('van')}
+              className={`transition-colors font-body-medium text-body-medium rounded-lg px-space-sm py-space-xs ${
+                activeTab === 'van'
+                  ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white font-bold shadow-xs'
+                  : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
+              }`}
+            >
+              {t('nav.van')}
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollTo('tripboard')}
+              className="font-body-medium text-body-medium text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white transition-colors rounded-lg px-space-sm py-space-xs"
+            >
+              {t('nav.tripboard')}
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollTo('routes')}
+              className="font-body-medium text-body-medium text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white transition-colors rounded-lg px-space-sm py-space-xs"
+            >
+              {t('nav.routes')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                selectTab('corporate');
+                scrollTo('corporate');
+              }}
+              className={`transition-colors font-body-medium text-body-medium rounded-lg px-space-sm py-space-xs ${
+                activeTab === 'corporate'
+                  ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white font-bold shadow-xs'
+                  : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
+              }`}
+            >
+              {t('nav.b2b')}
+            </button>
+          </div>
+
+          {/* RIGHT: Actions, Language Switcher, Driver Portal, Customer Post CTA */}
+          <div className="flex items-center gap-space-xs sm:gap-space-sm">
+            {/* Dark / Light Toggle */}
+            <button
+              type="button"
               onClick={toggleTheme}
               aria-label={theme === 'dark' ? t('nav.toLight') : t('nav.toDark')}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-input text-ink-2 transition-colors hover:bg-paper hover:text-ink border border-rule/60"
+              className="p-2 rounded-lg text-ink-secondary hover:text-navy-deep hover:bg-paper-surface-muted dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
             >
-              {theme === 'dark' ? (
-                <Sun className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <Moon className="h-4 w-4" aria-hidden="true" />
-              )}
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-accent" /> : <Moon className="w-4 h-4 text-slate-700" />}
             </button>
 
             {/* Language Switcher */}
             <LanguageSwitcher />
 
-            {/* User Auth or Login Button */}
+            {/* Driver Portal CTA */}
+            {onOpenDriverSelfService && (
+              <button
+                type="button"
+                onClick={onOpenDriverSelfService}
+                className="hidden md:inline-flex items-center gap-space-2xs bg-paper-surface-muted hover:bg-surface-variant dark:bg-slate-900 dark:hover:bg-slate-800 text-navy-deep dark:text-slate-200 font-body-medium text-body-medium px-space-sm py-space-xs rounded-lg border border-border-subtle dark:border-slate-700 shadow-sm transition-all active:scale-[0.98]"
+              >
+                <span className="material-symbols-outlined text-[18px] text-amber-accent">
+                  airport_shuttle
+                </span>
+                <span className="font-bold whitespace-nowrap">{t('nav.driverCta')}</span>
+                <span className="px-space-xs py-0.5 rounded-full bg-verified-emerald-soft text-verified-emerald font-label-badge text-[10px] font-bold">
+                  {t('nav.free')}
+                </span>
+              </button>
+            )}
+
+            {/* Customer Post Request Button (Stitch Action) */}
+            <button
+              type="button"
+              onClick={() => {
+                scrollTo('tripboard');
+                const trigger = document.getElementById('open-post-modal-btn');
+                if (trigger) trigger.click();
+              }}
+              className="inline-flex items-center gap-space-2xs bg-blue-action hover:bg-blue-action-hover text-on-primary font-body-medium text-body-medium px-space-sm sm:px-space-md py-space-xs rounded-lg shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('nav.postJob')}</span>
+              <span className="sm:hidden">{t('nav.postJobShort')}</span>
+            </button>
+
+            {/* User Login/Portal */}
             {user ? (
               <button
+                type="button"
                 onClick={onOpenPortal}
-                className="hidden shrink-0 items-center gap-1.5 rounded-input bg-accent text-white px-3 py-2 text-xs font-bold shadow-xs hover:bg-accent-deep md:inline-flex"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-navy-deep text-surface hover:bg-navy-surface transition-all"
               >
-                {user.role === 'driver' && <CarFront className="h-3.5 w-3.5" strokeWidth={2.5} />}
-                {user.role === 'customer' && <Briefcase className="h-3.5 w-3.5" strokeWidth={2.5} />}
-                {user.role === 'admin' && <Crown className="h-3.5 w-3.5" strokeWidth={2.5} />}
-
-                <span className="max-w-[120px] truncate">
+                {user.role === 'driver' && <CarFront className="h-3.5 w-3.5" />}
+                {user.role === 'customer' && <Briefcase className="h-3.5 w-3.5" />}
+                {user.role === 'admin' && <Crown className="h-3.5 w-3.5" />}
+                <span className="max-w-[90px] truncate">
                   {user.role === 'driver' && (user.driverNickname || user.name)}
                   {user.role === 'customer' && (user.companyName || user.name)}
                   {user.role === 'admin' && t('nav.admin')}
@@ -207,130 +282,112 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             ) : (
               <button
-                onClick={onOpenLoginModal}
-                className="hidden shrink-0 items-center gap-1 rounded-input border border-rule bg-paper px-3 py-2 text-xs font-bold text-ink hover:bg-paper-2 md:inline-flex"
-              >
-                <LogIn className="h-3.5 w-3.5 text-accent" strokeWidth={2.5} />
-                <span>{t('nav.login')}</span>
-              </button>
-            )}
-
-            {/* Driver Self-Service Quick Action */}
-            {onOpenDriverSelfService && (
-              <button
                 type="button"
-                onClick={onOpenDriverSelfService}
-                className="hidden shrink-0 items-center gap-1.5 rounded-input border border-amber-300/80 bg-amber-50/90 hover:bg-amber-100 text-amber-900 px-3 py-2 text-xs font-bold shadow-2xs transition-colors md:inline-flex"
-                title="สำหรับคนขับ: ปรับสถานะว่าง/คิวเต็ม และแก้ไขราคา"
+                onClick={onOpenLoginModal}
+                className="w-9 h-9 rounded-full bg-navy-deep text-surface hover:bg-navy-surface flex items-center justify-center transition-colors shadow-sm"
+                aria-label={t('nav.login')}
+                title={t('nav.login')}
               >
-                <CarFront className="h-3.5 w-3.5 text-amber-700" strokeWidth={2.5} />
-                <span>คนขับ: จัดการรถ</span>
+                <User className="w-4 h-4" />
               </button>
             )}
 
-            {/* Register Free Driver Button */}
+            {/* Mobile Hamburger Toggle */}
             <button
-              onClick={onOpenRegisterModal}
-              className="hidden shrink-0 items-center gap-1.5 rounded-input bg-accent hover:bg-accent-deep text-white px-3.5 py-2 text-xs font-bold shadow-xs transition-colors md:inline-flex"
-            >
-              <Plus className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2.5} />
-              <span>{t('nav.registerFree')}</span>
-            </button>
-
-            {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-expanded={menuOpen}
+              type="button"
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="lg:hidden p-2 rounded-lg text-ink-primary dark:text-slate-200 hover:bg-paper-surface-muted transition-colors"
               aria-label={menuOpen ? t('nav.menuClose') : t('nav.menuOpen')}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-input text-ink border border-rule md:hidden"
             >
-              {menuOpen ? (
-                <X className="h-5 w-5" aria-hidden="true" />
-              ) : (
-                <Menu className="h-5 w-5" aria-hidden="true" />
-              )}
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu Dropdown */}
+        {/* MOBILE SLIDE-DOWN DRAWER */}
         {menuOpen && (
-          <div className="border-t border-rule bg-card p-3 md:hidden shadow-lg">
-            <ul className="flex flex-col gap-1.5">
-              <li>
-                <LanguageSwitcher variant="row" onPick={() => setMenuOpen(false)} />
-              </li>
-              {TABS.map((tab) => {
-                const Icon = tab.icon;
-                const active = activeTab === tab.id;
-                return (
-                  <li key={tab.id}>
-                    <button
-                      onClick={() => pick(tab.id)}
-                      aria-current={active ? 'page' : undefined}
-                      className={`inline-flex w-full items-center gap-2 rounded-input px-3 py-2.5 text-left text-xs font-bold transition-colors ${
-                        active
-                          ? 'bg-accent text-white'
-                          : 'text-ink hover:bg-paper'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-                      <span>{t(tab.labelKey)}</span>
-                    </button>
-                  </li>
-                );
-              })}
+          <div className="lg:hidden bg-paper-elevated dark:bg-slate-900 border-b border-border-subtle px-margin py-space-md space-y-space-sm shadow-xl">
+            <div className="grid grid-cols-2 gap-space-xs pb-space-xs">
+              <button
+                type="button"
+                onClick={() => selectTab('van')}
+                className={`px-space-md py-space-sm rounded-xl font-body-medium text-body-medium text-left flex items-center gap-2 ${
+                  activeTab === 'van'
+                    ? 'bg-blue-subtle text-blue-action font-bold'
+                    : 'bg-paper-surface-muted text-ink-primary'
+                }`}
+              >
+                <span>🚐</span>
+                <span>{t('nav.van')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  selectTab('corporate');
+                  scrollTo('corporate');
+                }}
+                className={`px-space-md py-space-sm rounded-xl font-body-medium text-body-medium text-left flex items-center gap-2 ${
+                  activeTab === 'corporate'
+                    ? 'bg-blue-subtle text-blue-action font-bold'
+                    : 'bg-paper-surface-muted text-ink-primary'
+                }`}
+              >
+                <span>🏢</span>
+                <span>{t('nav.b2b')}</span>
+              </button>
+            </div>
 
-              <li className="pt-2 border-t border-rule flex flex-col gap-2">
-                {user ? (
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onOpenPortal();
-                    }}
-                    className="flex w-full items-center justify-center gap-1.5 rounded-input bg-accent text-white py-2.5 text-xs font-bold"
-                  >
-                    <span>{t('nav.dashboard', { name: user.driverNickname || user.companyName || user.name })}</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onOpenLoginModal();
-                    }}
-                    className="flex w-full items-center justify-center gap-1.5 rounded-input border border-rule bg-paper py-2.5 text-xs font-bold text-ink"
-                  >
-                    <LogIn className="h-4 w-4 text-accent" />
-                    <span>{t('nav.login')}</span>
-                  </button>
-                )}
+            <div className="flex flex-col gap-1 border-t border-border-subtle pt-space-xs">
+              <button
+                type="button"
+                onClick={() => scrollTo('tripboard')}
+                className="py-2.5 px-3 rounded-lg text-left font-body-medium text-ink-primary hover:bg-paper-surface-muted transition-colors"
+              >
+                📋 {t('nav.boardJobs')}
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollTo('routes')}
+                className="py-2.5 px-3 rounded-lg text-left font-body-medium text-ink-primary hover:bg-paper-surface-muted transition-colors"
+              >
+                🗺️ {t('nav.routesPopular')}
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollTo('corporate')}
+                className="py-2.5 px-3 rounded-lg text-left font-body-medium text-ink-primary hover:bg-paper-surface-muted transition-colors"
+              >
+                🏢 {t('nav.corpService')}
+              </button>
+            </div>
 
-                {onOpenDriverSelfService && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onOpenDriverSelfService();
-                    }}
-                    className="flex w-full items-center justify-center gap-1.5 rounded-input border border-amber-300 bg-amber-50 py-2.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition-colors"
-                  >
-                    <CarFront className="h-4 w-4 text-amber-700" />
-                    <span>🚐 สำหรับคนขับ: จัดการสถานะรถ & ราคา</span>
-                  </button>
-                )}
-
+            <div className="border-t border-border-subtle pt-space-sm flex flex-col gap-space-xs">
+              {onOpenDriverSelfService && (
                 <button
+                  type="button"
                   onClick={() => {
                     setMenuOpen(false);
-                    onOpenRegisterModal();
+                    onOpenDriverSelfService();
                   }}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-input bg-accent hover:bg-accent-deep py-2.5 text-xs font-bold text-white"
+                  className="w-full h-11 bg-navy-deep text-surface rounded-xl font-body-medium flex items-center justify-center gap-2"
                 >
-                  <Plus className="h-4 w-4" />
-                  <span>{t('nav.registerFree')}</span>
+                  <span className="material-symbols-outlined text-[18px] text-amber-accent">
+                    airport_shuttle
+                  </span>
+                  <span>{t('nav.driverManage')}</span>
                 </button>
-              </li>
-            </ul>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onOpenRegisterModal();
+                }}
+                className="w-full h-10 border border-border-subtle rounded-xl text-ink-primary font-body-medium text-center hover:bg-paper-surface-muted"
+              >
+                {t('nav.driverJoin')}
+              </button>
+            </div>
           </div>
         )}
       </nav>

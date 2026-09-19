@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import Image from 'next/image';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { Vehicle } from '@/data/mockData';
 import {
   X,
@@ -11,11 +13,10 @@ import {
   CarFront,
   Save,
   ArrowLeft,
-  Sparkles,
-  ToggleLeft,
-  ToggleRight,
+  Loader2,
 } from 'lucide-react';
 import { DriverPushBell } from '@/components/notifications/DriverPushBell';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface DriverSelfServiceModalProps {
   isOpen: boolean;
@@ -36,8 +37,11 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose, enabled: isOpen });
+  const { t } = useLanguage();
 
-  // Editable fields for the selected vehicle
+  // Editable fields
   const [isAvailable, setIsAvailable] = useState(true);
   const [plateType, setPlateType] = useState<'yellow' | 'blue'>('blue');
   const [plateNumber, setPlateNumber] = useState('');
@@ -117,390 +121,513 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
         driverPhone: driverPhone.trim(),
         driverLine: driverLine.trim() || undefined,
         zoneRates: {
-          ...(selectedVehicle.zoneRates || {}),
+          ...(selectedVehicle.zoneRates || { city: 1900, midHill: 2100, highHill: 2300, crossProvince: 2700 }),
           city: Number(cityRate) || 1900,
           highHill: Number(highHillRate) || 2300,
         },
       };
 
       const res = await fetch('/api/vehicles', {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: selectedVehicle.id,
-          ...updatedData,
-        }),
+        body: JSON.stringify({ id: selectedVehicle.id, ...updatedData }),
       });
 
-      const result = await res.json();
-      if (!res.ok || !result.success) {
-        throw new Error(result.error || 'Failed to update vehicle');
+      if (!res.ok) {
+        throw new Error('บันทึกข้อมูลไม่สำเร็จ');
       }
 
-      // Update local vehicle reference
-      setSelectedVehicle((prev) => (prev ? { ...prev, ...updatedData } : null));
       setSaveSuccess(true);
       window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
-
-      setTimeout(() => {
-        setSaveSuccess(false);
-      }, 3000);
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+      setErrorMessage((err as Error).message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const resetSearch = () => {
-    setSelectedVehicle(null);
-    setMatchedVehicles([]);
-    setHasSearched(false);
-    setErrorMessage('');
-    setSaveSuccess(false);
-  };
-
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 z-400 flex items-center justify-center overflow-y-auto bg-navy-deep/75 backdrop-blur-sm p-3 sm:p-4 animate-fade-in"
+      onClick={onClose}
+      role="presentation"
     >
-      <div className="relative w-full max-w-xl rounded-2xl bg-card p-5 sm:p-7 shadow-2xl border border-rule my-6 max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 text-ink">
-        {/* Close Button */}
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="ปิดหน้าต่าง"
-          className="absolute top-4 right-4 grid h-8 w-8 place-items-center rounded-full bg-paper text-ink-2 hover:text-ink border border-rule transition-all"
-        >
-          <X className="h-4 w-4" />
-        </button>
-
-        {/* Modal Title */}
-        <div className="flex items-center gap-3 pb-4 border-b border-rule pr-8">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-accent text-white shadow-xs">
-            <CarFront className="h-5 w-5" />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('pself.aria')}
+        onClick={(e) => e.stopPropagation()}
+        className="relative flex flex-col w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 shadow-2xl text-ink-primary dark:text-slate-100"
+      >
+        {/* Header Bar */}
+        <div className="sticky top-0 z-30 flex items-center justify-between px-space-md py-space-sm bg-paper-elevated/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-border-subtle dark:border-slate-800">
+          <div className="flex items-center gap-space-xs">
+            <span className="material-symbols-outlined text-[24px] text-amber-accent">
+              airport_shuttle
+            </span>
+            <div>
+              <h2 className="font-headline-md text-headline-md text-navy-deep dark:text-white leading-tight">
+                {t('pself.title')}
+              </h2>
+              <span className="font-label-badge text-label-badge text-ink-muted dark:text-slate-400">
+                {t('pself.subtitle')}
+              </span>
+            </div>
           </div>
-          <div>
-            <h2 className="font-display text-lg sm:text-xl font-extrabold text-ink">
-              ระบบคนขับจัดการตนเอง (Driver Self-Service)
-            </h2>
-            <p className="text-xs text-ink-2 font-medium">
-              อัปเดตสถานะคิวงาน ปรับราคา หรือแก้ไขข้อมูลติดต่อได้ด้วยตัวเองทันที
-            </p>
+
+          <div className="flex items-center gap-space-xs">
+            <DriverPushBell />
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-paper-surface-muted dark:bg-slate-800 flex items-center justify-center text-ink-secondary hover:text-ink-primary transition-colors"
+            >
+              <X className="w-4 h-4" aria-label={t('auth.close')} />
+            </button>
           </div>
         </div>
 
-        {/* Step 1: Phone Search (if no vehicle selected) */}
-        {!selectedVehicle && (
-          <div className="mt-6 space-y-4">
-            <div className="rounded-xl bg-accent-soft/40 border border-accent/20 p-3.5 text-xs text-ink leading-relaxed">
-              <span className="font-bold text-accent">💡 ไม่ต้องจำรหัสผ่าน:</span>{' '}
-              เพียงระบุเบอร์โทรศัพท์ที่ใช้ลงทะเบียนไว้กับ TripDee ระบบจะค้นหารถตู้ของคุณเพื่อให้คุณปรับสถานะว่าง/คิวเต็มได้ทันที
-            </div>
+        <div className="p-space-md lg:p-space-lg space-y-space-md">
+          {/* STEP 1: Phone Search Lookup if no vehicle selected */}
+          {!selectedVehicle && (
+            <div className="max-w-xl mx-auto py-space-lg space-y-space-md text-center">
+              <div className="w-16 h-16 rounded-full bg-blue-subtle dark:bg-blue-950 text-blue-action mx-auto flex items-center justify-center">
+                <Phone className="w-8 h-8" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
+                  {t('pself.searchTitle')}
+                </h3>
+                <p className="font-body-base text-body-base text-ink-secondary dark:text-slate-400">
+                  {t('pself.searchDesc')}
+                </p>
+              </div>
 
-            <form onSubmit={handleSearch} className="space-y-3">
-              <div>
-                <label htmlFor="driver-search-phone" className="block text-xs font-bold uppercase tracking-wider text-ink-2 mb-1">
-                  เบอร์โทรศัพท์ที่ลงทะเบียน
-                </label>
+              <form onSubmit={handleSearch} className="space-y-space-sm">
                 <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted text-[20px]">
+                    call
+                  </span>
                   <input
-                    id="driver-search-phone"
                     type="tel"
                     required
-                    placeholder="เช่น 081-234-5678"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full rounded-input border border-rule bg-card px-3.5 py-2.5 pl-10 text-sm font-semibold text-ink placeholder:text-ink-2/60 focus:border-accent focus:outline-none"
+                    placeholder={t('pself.phonePh')}
+                    className="w-full h-12 pl-11 pr-4 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-headline-md font-bold focus:outline-none focus:ring-2 focus:ring-blue-action text-center"
                   />
-                  <Phone className="absolute left-3 top-3 h-4 w-4 text-ink-2/60" />
                 </div>
-              </div>
 
-              {errorMessage && (
-                <div className="rounded-lg bg-rose-50 border border-rose-200 p-2.5 text-xs text-rose-700 flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
+                {errorMessage && (
+                  <div className="p-3 bg-rose-50 dark:bg-rose-950/50 text-rose-600 rounded-xl text-body-subtext font-bold">
+                    {errorMessage}
+                  </div>
+                )}
 
-              <button
-                type="submit"
-                disabled={isSearching}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-input bg-accent hover:bg-accent-deep py-2.5 text-sm font-bold text-white shadow-xs transition-all disabled:opacity-50"
-              >
-                <Search className="h-4 w-4" />
-                <span>{isSearching ? 'กำลังค้นหา...' : 'ค้นหารถของฉัน'}</span>
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={isSearching}
+                  className="w-full h-12 bg-blue-action hover:bg-blue-action-hover text-on-primary font-title-card text-title-card rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>{t('pself.searching')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-5 h-5" />
+                      <span>{t('pself.searchBtn')}</span>
+                    </>
+                  )}
+                </button>
+              </form>
 
-            {/* If searched and multiple found */}
-            {hasSearched && matchedVehicles.length > 1 && (
-              <div className="mt-4 space-y-2">
-                <p className="text-xs font-bold text-ink-2">พบรถตู้ที่ตรงกับเบอร์นี้ {matchedVehicles.length} คัน:</p>
-                <div className="space-y-2">
-                  {matchedVehicles.map((v) => (
-                    <div
-                      key={v.id}
-                      onClick={() => selectVehicle(v)}
-                      className="p-3 rounded-xl border border-rule bg-paper hover:border-accent cursor-pointer transition-all flex items-center justify-between"
-                    >
-                      <div>
-                        <p className="text-xs font-bold text-ink">{v.title}</p>
-                        <p className="text-[11px] text-ink-2">คนขับ: {v.driverName} ({v.driverNickname})</p>
-                      </div>
-                      <span className="text-xs font-bold text-accent">เลือกจัดการ &rarr;</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* If searched and none found */}
-            {hasSearched && matchedVehicles.length === 0 && !isSearching && (
-              <div className="mt-4 rounded-xl border border-dashed border-rule p-5 text-center bg-paper">
-                <CarFront className="mx-auto h-8 w-8 text-ink-2/40 mb-2" />
-                <p className="text-xs font-bold text-ink">ไม่พบข้อมูลรถที่ตรงกับเบอร์ {phoneNumber}</p>
-                <p className="text-[11px] text-ink-2 mt-1">คุณอาจยังไม่ได้ลงทะเบียน หรือระบุเบอร์โทรผิด</p>
-                {onOpenRegisterModal && (
+              {hasSearched && matchedVehicles.length === 0 && (
+                <div className="pt-space-md border-t border-border-subtle dark:border-slate-800 space-y-space-xs">
+                  <p className="text-body-subtext text-ink-muted dark:text-slate-400">
+                    {t('pself.notFound')}
+                  </p>
                   <button
                     type="button"
                     onClick={() => {
                       onClose();
-                      onOpenRegisterModal();
+                      if (onOpenRegisterModal) onOpenRegisterModal();
                     }}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-pill bg-sun px-4 py-1.5 text-xs font-extrabold text-sun-ink hover:brightness-95 transition-all"
+                    className="px-space-md py-space-xs bg-navy-deep text-surface rounded-xl font-body-medium text-body-medium hover:bg-navy-surface transition-colors"
                   >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    <span>ลงทะเบียนรถฟรี (0% คอมมิชชั่น)</span>
+                    {t('pself.registerCta')}
                   </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Step 2: Vehicle Self-Service Editor */}
-        {selectedVehicle && (
-          <form onSubmit={handleSave} className="mt-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={resetSearch}
-                className="inline-flex items-center gap-1 text-xs font-bold text-ink-2 hover:text-ink transition-colors"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span>เปลี่ยนเบอร์ / ค้นหาใหม่</span>
-              </button>
-              <span className="text-xs text-ink-2 font-medium">รหัสรถ: {selectedVehicle.id}</span>
-            </div>
-
-            {/* Vehicle Summary Card */}
-            <div className="flex items-center gap-3 rounded-xl bg-paper p-3 border border-rule">
-              <img
-                src={selectedVehicle.images[0] || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=300&q=80'}
-                alt={selectedVehicle.title}
-                className="h-14 w-20 rounded-lg object-cover border border-rule/60"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="font-bold text-xs text-ink line-clamp-1">{selectedVehicle.title}</p>
-                <p className="text-[11px] text-ink-2 mt-0.5">
-                  คนขับ: <span className="text-ink font-semibold">{selectedVehicle.driverName}</span> ({selectedVehicle.driverNickname})
-                </p>
-                <span className="text-[11px] text-ink-2">{selectedVehicle.location}</span>
-              </div>
-            </div>
-
-            {/* Web Push Notification Setting for Driver */}
-            <DriverPushBell compact={true} />
-
-            {/* 1. Quick Availability Toggle */}
-            <div className="rounded-xl border border-rule bg-card p-3.5 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xs font-bold text-ink flex items-center gap-1.5">
-                    {isAvailable ? (
-                      <span className="h-2.5 w-2.5 rounded-full bg-leaf ring-2 ring-leaf/20" />
-                    ) : (
-                      <span className="h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-rose-200" />
-                    )}
-                    สถานะการรับงานปัจจุบัน
-                  </h3>
-                  <p className="text-[11px] text-ink-2 mt-0.5">
-                    {isAvailable ? '🟢 ว่าง พร้อมรับงาน' : '⏸️ คิวเต็มชั่วคราว (ไม่รับงาน)'}
-                  </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsAvailable(!isAvailable)}
-                  className={`inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-xs font-extrabold transition-all ${
-                    isAvailable
-                      ? 'bg-leaf-soft text-leaf border border-leaf/30 hover:bg-leaf hover:text-white'
-                      : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-600 hover:text-white'
-                  }`}
-                >
-                  {isAvailable ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
-                  <span>{isAvailable ? 'เปลี่ยนเป็น "คิวเต็ม"' : 'เปลี่ยนเป็น "ว่างรับงาน"'}</span>
-                </button>
-              </div>
-              <p className="text-[11px] text-ink-2/80 mt-2">
-                * หากติดคิวงาน ลูกค้าจะไม่โทรติดต่อซ้ำซ้อน ช่วยให้คุณทำงานได้โดยไม่ถูกรบกวน
-              </p>
+              )}
+
+              {matchedVehicles.length > 1 && (
+                <div className="space-y-space-xs text-left pt-space-xs">
+                  <h4 className="font-title-card text-title-card text-navy-deep dark:text-white">
+                    {t('pself.pickTitle', { n: matchedVehicles.length })}
+                  </h4>
+                  <div className="space-y-2">
+                    {matchedVehicles.map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => selectVehicle(v)}
+                        className="w-full p-3 rounded-xl border border-border-subtle bg-paper-canvas dark:bg-slate-800 hover:border-blue-action transition-all text-left flex items-center justify-between"
+                      >
+                        <div>
+                          <div className="font-bold text-navy-deep dark:text-white">{v.title}</div>
+                          <div className="text-xs text-ink-muted">{v.location}</div>
+                        </div>
+                        <span className="text-blue-action font-bold text-xs">{t('pself.pickBtn')}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
+          )}
 
-            {/* 2. Plate Type & Corporate Invoicing */}
-            <div className="space-y-3 rounded-xl border border-rule bg-card p-3.5 shadow-2xs">
-              <h3 className="text-xs font-bold text-ink">ประเภทป้ายทะเบียน & การออกเอกสารภาษี</h3>
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPlateType('yellow')}
-                  className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
-                    plateType === 'yellow'
-                      ? 'border-amber-400 bg-amber-50 text-amber-950 ring-1 ring-amber-400'
-                      : 'border-rule bg-paper text-ink-2 hover:text-ink'
-                  }`}
-                >
-                  <span className="block text-amber-900 font-extrabold">🟡 ป้ายเหลือง 30</span>
-                  <span className="block text-[10px] text-amber-800/80 font-normal mt-0.5">
-                    รับงานองค์กร / ราชการ / บริษัท
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPlateType('blue')}
-                  className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
-                    plateType === 'blue'
-                      ? 'border-blue-400 bg-blue-50 text-blue-950 ring-1 ring-blue-400'
-                      : 'border-rule bg-paper text-ink-2 hover:text-ink'
-                  }`}
-                >
-                  <span className="block text-blue-900 font-extrabold">🔵 ป้ายฟ้า (ส่วนบุคคล)</span>
-                  <span className="block text-[10px] text-blue-800/80 font-normal mt-0.5">
-                    รับงานบุคคล / ครอบครัว / ท่องเที่ยว
-                  </span>
-                </button>
-              </div>
-
-              <div>
-                <label htmlFor="driver-plate-num" className="block text-[11px] font-bold text-ink-2 mb-1">
-                  หมายเลขทะเบียนรถ
-                </label>
-                <input
-                  id="driver-plate-num"
-                  type="text"
-                  placeholder="เช่น 30-1234 เชียงใหม่ หรือ นข-5678"
-                  value={plateNumber}
-                  onChange={(e) => setPlateNumber(e.target.value)}
-                  className="w-full rounded-input border border-rule bg-paper px-3 py-2 text-xs font-semibold text-ink focus:border-accent focus:outline-none"
-                />
-              </div>
-
-              <label className="flex items-center gap-2 cursor-pointer pt-1">
-                <input
-                  type="checkbox"
-                  checked={canIssueTaxInvoice}
-                  onChange={(e) => setCanIssueTaxInvoice(e.target.checked)}
-                  className="rounded border-rule text-accent focus:ring-accent h-4 w-4"
-                />
-                <span className="text-xs font-semibold text-ink">
-                  🏢 สามารถออกใบเสร็จรับเงิน / ใบกำกับภาษีได้ (สำหรับบริษัทและองค์กร)
-                </span>
-              </label>
-            </div>
-
-            {/* 3. Contact Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="driver-edit-phone" className="block text-[11px] font-bold text-ink-2 mb-1">
-                  เบอร์โทรติดต่อลูกค้า
-                </label>
-                <input
-                  id="driver-edit-phone"
-                  type="tel"
-                  required
-                  value={driverPhone}
-                  onChange={(e) => setDriverPhone(e.target.value)}
-                  className="w-full rounded-input border border-rule bg-card px-3 py-2 text-xs font-semibold text-ink focus:border-accent focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="driver-edit-line" className="block text-[11px] font-bold text-ink-2 mb-1">
-                  LINE ID หรือ ลิงก์ LINE
-                </label>
-                <input
-                  id="driver-edit-line"
-                  type="text"
-                  placeholder="https://line.me/ti/p/... หรือ @lineid"
-                  value={driverLine}
-                  onChange={(e) => setDriverLine(e.target.value)}
-                  className="w-full rounded-input border border-rule bg-card px-3 py-2 text-xs font-semibold text-ink focus:border-accent focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* 4. Pricing (Daily Rental Rate) */}
-            <div>
-              <label htmlFor="driver-city-rate" className="block text-[11px] font-bold text-ink-2 mb-1">
-                ราคาค่าบริการเริ่มต้นต่อวัน (บาท/วัน)
-              </label>
-              <input
-                id="driver-city-rate"
-                type="number"
-                min={500}
-                step={100}
-                value={cityRate}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setCityRate(val);
-                  setHighHillRate(val + 400);
-                }}
-                className="w-full rounded-input border border-rule bg-card px-3 py-2 text-xs font-semibold text-ink focus:border-accent focus:outline-none"
-              />
-              <p className="text-[10px] text-ink-2 mt-1">
-                * ราคารวมคนขับและยานพาหนะ (คุยตกลงค่าน้ำมันและเส้นทางกับลูกค้าโดยตรง 0% ค่าคอมมิชชั่น)
-              </p>
-            </div>
-
-            {errorMessage && (
-              <div className="rounded-lg bg-rose-50 border border-rose-200 p-2.5 text-xs text-rose-700 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{errorMessage}</span>
-              </div>
-            )}
-
-            {saveSuccess && (
-              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-2.5 text-xs text-emerald-800 font-bold flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span>✓ บันทึกข้อมูลสำเร็จ ข้อมูลหน้าเว็บอัปเดตทันทีเรียบร้อยแล้ว</span>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex items-center gap-2 pt-2 border-t border-rule">
+          {/* STEP 2: Driver Dashboard View when vehicle selected (Stitch Redesign) */}
+          {selectedVehicle && (
+            <div className="space-y-space-lg animate-fade-in">
+              {/* Back to search */}
               <button
                 type="button"
-                onClick={onClose}
-                className="flex-1 rounded-input border border-rule bg-card py-2.5 text-xs font-bold text-ink-2 hover:bg-paper"
+                onClick={() => setSelectedVehicle(null)}
+                className="inline-flex items-center gap-1 text-body-subtext font-body-medium text-ink-muted hover:text-navy-deep dark:hover:text-white transition-colors"
               >
-                ปิดหน้าต่าง
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>{t('pself.backToSearch')}</span>
               </button>
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-input bg-accent hover:bg-accent-deep py-2.5 text-xs font-bold text-white shadow-xs transition-all disabled:opacity-50"
-              >
-                <Save className="h-4 w-4" />
-                <span>{isSaving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}</span>
-              </button>
+
+              {/* Driver Profile & Live Dispatch Bar (Stitch Redesign) */}
+              <div className="w-full bg-navy-deep text-on-primary p-space-lg rounded-2xl relative overflow-hidden shadow-md space-y-space-md">
+                <div className="absolute -right-16 -top-16 w-96 h-96 rounded-full bg-blue-action/10 blur-3xl pointer-events-none" />
+                <div className="absolute left-1/3 -bottom-20 w-80 h-80 rounded-full bg-amber-accent/10 blur-3xl pointer-events-none" />
+
+                <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-lg">
+                  <div className="flex items-center gap-space-md">
+                    <div className="relative">
+                      <div className="w-18 h-18 rounded-full bg-blue-subtle text-blue-action font-bold flex items-center justify-center text-3xl shadow-md border-2 border-white/20">
+                        {selectedVehicle.driverNickname.charAt(0) || 'พ'}
+                      </div>
+                      <span className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-verified-emerald flex items-center justify-center text-on-primary shadow-sm ring-2 ring-navy-deep">
+                        <span className="material-symbols-outlined text-[16px]">verified</span>
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-space-2xs">
+                        <h3 className="font-headline-xl text-headline-xl text-surface font-bold tracking-tight">
+                          {selectedVehicle.driverNickname}
+                        </h3>
+                        {selectedVehicle.plateNumber && (
+                          <span className="px-space-xs py-[2px] bg-taxi-yellow-soft text-on-tertiary-fixed-variant rounded font-label-badge text-label-badge font-bold flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[13px] text-amber-accent">
+                              shield
+                            </span>
+                            <span>{selectedVehicle.plateNumber}</span>
+                          </span>
+                        )}
+                        <span className="px-space-xs py-[2px] bg-verified-emerald-soft text-verified-emerald rounded font-label-badge text-label-badge font-bold">
+                          {t('pself.verifiedBadge')}
+                        </span>
+                      </div>
+                      <p className="font-body-base text-body-base text-surface-container-high">
+                        {selectedVehicle.title}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Real-time Status Switcher (Stitch Header Control) */}
+                  <div className="flex items-center bg-paper-elevated dark:bg-slate-800 text-ink-primary dark:text-white p-space-sm rounded-2xl shadow-lg w-full lg:w-auto justify-between gap-space-md border border-border-subtle dark:border-slate-700">
+                    <div className="flex items-center gap-space-sm">
+                      <span
+                        className={`w-3.5 h-3.5 rounded-full ${
+                          isAvailable ? 'bg-verified-emerald animate-pulse' : 'bg-rose-500'
+                        }`}
+                      />
+                      <div className="flex flex-col">
+                        <span className="font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider">
+                          {t('pself.statusLabel')}
+                        </span>
+                        <span className="font-title-card text-title-card text-navy-deep dark:text-white">
+                          {isAvailable ? t('pself.statusOn') : t('pself.statusOff')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-space-2xs bg-paper-surface-muted dark:bg-slate-900 p-1 rounded-xl">
+                      <button
+                        type="button"
+                        onClick={() => setIsAvailable(true)}
+                        className={`px-space-md py-space-xs rounded-lg font-body-medium text-body-medium transition-all flex items-center gap-1 ${
+                          isAvailable
+                            ? 'bg-line-green text-surface shadow-sm font-bold'
+                            : 'text-ink-secondary dark:text-slate-400 hover:text-navy-deep'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">
+                          radio_button_checked
+                        </span>
+                        <span>{t('pself.availOn')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsAvailable(false)}
+                        className={`px-space-md py-space-xs rounded-lg font-body-medium text-body-medium transition-all flex items-center gap-1 ${
+                          !isAvailable
+                            ? 'bg-rose-600 text-surface shadow-sm font-bold'
+                            : 'text-ink-secondary dark:text-slate-400 hover:text-navy-deep'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">block</span>
+                        <span>{t('pself.availOff')}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4 Performance Metrics (Stitch Redesign Cards) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+                <div className="bg-paper-canvas dark:bg-slate-800/80 p-space-md rounded-xl border border-border-subtle dark:border-slate-700 shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400">
+                      {t('pself.metricJobs')}
+                    </span>
+                    <span className="p-space-2xs bg-blue-subtle text-blue-action rounded-lg">
+                      <span className="material-symbols-outlined text-[20px]">task_alt</span>
+                    </span>
+                  </div>
+                  <div className="mt-space-sm flex items-baseline justify-between">
+                    <span className="font-price-headline text-price-headline text-navy-deep dark:text-white">
+                      14 <span className="font-body-base text-body-base font-normal text-ink-muted">{t('pself.unitTrips')}</span>
+                    </span>
+                    <span className="font-label-badge text-label-badge text-verified-emerald font-bold">
+                      +3 สัปดาห์นี้
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-paper-canvas dark:bg-slate-800/80 p-space-md rounded-xl border border-border-subtle dark:border-slate-700 shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400">
+                      {t('corp.statRating')}
+                    </span>
+                    <span className="p-space-2xs bg-taxi-yellow-soft text-amber-accent rounded-lg">
+                      <span className="material-symbols-outlined text-[20px]">hotel_class</span>
+                    </span>
+                  </div>
+                  <div className="mt-space-sm flex items-baseline justify-between">
+                    <span className="font-price-headline text-price-headline text-navy-deep dark:text-white">
+                      {selectedVehicle.rating || '4.96'} <span className="text-amber-accent font-bold">★</span>
+                    </span>
+                    <span className="font-label-badge text-label-badge text-ink-muted dark:text-slate-400">
+                      จาก {selectedVehicle.reviewCount || 48} รีวิว
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-paper-canvas dark:bg-slate-800/80 p-space-md rounded-xl border border-border-subtle dark:border-slate-700 shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400">
+                      {t('pself.metricCalls')}
+                    </span>
+                    <span className="p-space-2xs bg-verified-emerald-soft text-verified-emerald rounded-lg">
+                      <span className="material-symbols-outlined text-[20px]">ring_volume</span>
+                    </span>
+                  </div>
+                  <div className="mt-space-sm flex items-baseline justify-between">
+                    <span className="font-price-headline text-price-headline text-navy-deep dark:text-white">
+                      62 <span className="font-body-base text-body-base font-normal text-ink-muted">{t('pself.unitTimes')}</span>
+                    </span>
+                    <span className="font-label-badge text-label-badge text-verified-emerald font-bold">
+                      +18 สัปดาห์นี้
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-paper-canvas dark:bg-slate-800/80 p-space-md rounded-xl border border-border-subtle dark:border-slate-700 shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <span className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400">
+                      {t('pself.metricComm')}
+                    </span>
+                    <span className="p-space-2xs bg-primary-container text-surface rounded-lg">
+                      <span className="material-symbols-outlined text-[20px]">savings</span>
+                    </span>
+                  </div>
+                  <div className="mt-space-sm flex items-baseline justify-between">
+                    <span className="font-price-headline text-price-headline text-navy-deep dark:text-white">
+                      ฿0
+                    </span>
+                    <span className="font-label-badge text-label-badge text-verified-emerald font-bold">
+                      {t('pself.commNote')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Vehicle Fleet Settings & Pricing Form */}
+              <form onSubmit={handleSave} className="bg-paper-canvas dark:bg-slate-800/60 p-space-lg rounded-2xl border border-border-subtle dark:border-slate-700 space-y-space-md">
+                <h4 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
+                  {t('pself.formTitle')}
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+                  <div>
+                    <label className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                      {t('pself.fPlateType')}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPlateType('yellow')}
+                        className={`h-11 rounded-xl font-body-medium text-body-medium border transition-all ${
+                          plateType === 'yellow'
+                            ? 'bg-taxi-yellow-soft border-amber-400 text-on-tertiary-fixed-variant font-bold shadow-xs'
+                            : 'bg-paper-elevated dark:bg-slate-800 border-border-subtle text-ink-secondary'
+                        }`}
+                      >
+                        {t('pself.plateYellow')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPlateType('blue')}
+                        className={`h-11 rounded-xl font-body-medium text-body-medium border transition-all ${
+                          plateType === 'blue'
+                            ? 'bg-blue-subtle border-blue-400 text-blue-action font-bold shadow-xs'
+                            : 'bg-paper-elevated dark:bg-slate-800 border-border-subtle text-ink-secondary'
+                        }`}
+                      >
+                        {t('pself.plateBlue')}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                      {t('pself.fPlateNo')}
+                    </label>
+                    <input
+                      type="text"
+                      value={plateNumber}
+                      onChange={(e) => setPlateNumber(e.target.value)}
+                      placeholder={t('pself.fPlateNoPh')}
+                      className="w-full h-11 px-3 bg-paper-elevated dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base border border-border-subtle focus:outline-none focus:ring-2 focus:ring-blue-action"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+                  <div>
+                    <label className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                      {t('pself.fRateCity')}
+                    </label>
+                    <input
+                      type="number"
+                      step={100}
+                      value={cityRate}
+                      onChange={(e) => setCityRate(Number(e.target.value))}
+                      className="w-full h-11 px-3 bg-paper-elevated dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base border border-border-subtle focus:outline-none focus:ring-2 focus:ring-blue-action"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                      {t('pself.fRateHigh')}
+                    </label>
+                    <input
+                      type="number"
+                      step={100}
+                      value={highHillRate}
+                      onChange={(e) => setHighHillRate(Number(e.target.value))}
+                      className="w-full h-11 px-3 bg-paper-elevated dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base border border-border-subtle focus:outline-none focus:ring-2 focus:ring-blue-action"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+                  <div>
+                    <label className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                      {t('pself.fPhone')}
+                    </label>
+                    <input
+                      type="tel"
+                      value={driverPhone}
+                      onChange={(e) => setDriverPhone(e.target.value)}
+                      className="w-full h-11 px-3 bg-paper-elevated dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base border border-border-subtle focus:outline-none focus:ring-2 focus:ring-blue-action"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                      {t('pself.fLine')}
+                    </label>
+                    <input
+                      type="text"
+                      value={driverLine}
+                      onChange={(e) => setDriverLine(e.target.value)}
+                      className="w-full h-11 px-3 bg-paper-elevated dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base border border-border-subtle focus:outline-none focus:ring-2 focus:ring-blue-action"
+                    />
+                  </div>
+                </div>
+
+                {/* Tax invoice toggle */}
+                <div className="p-space-sm rounded-xl bg-paper-elevated dark:bg-slate-800 border border-border-subtle flex items-center justify-between">
+                  <div>
+                    <span className="font-body-medium text-navy-deep dark:text-white font-bold block">
+                      {t('pself.fTax')}
+                    </span>
+                    <span className="font-body-subtext text-ink-muted dark:text-slate-400">
+                      {t('pself.taxDesc')}
+                    </span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={canIssueTaxInvoice}
+                    onChange={(e) => setCanIssueTaxInvoice(e.target.checked)}
+                    className="w-5 h-5 text-blue-action rounded focus:ring-blue-action cursor-pointer"
+                  />
+                </div>
+
+                {saveSuccess && (
+                  <div className="p-3 bg-verified-emerald-soft text-verified-emerald rounded-xl font-body-medium flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    <span>{t('pself.saved')}</span>
+                  </div>
+                )}
+
+                {errorMessage && (
+                  <div className="p-3 bg-rose-50 text-rose-600 rounded-xl font-body-medium flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="w-full h-12 bg-blue-action hover:bg-blue-action-hover text-on-primary font-title-card text-title-card rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>{t('pself.saving')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      <span>{t('pself.save')}</span>
+                    </>
+                  )}
+                </button>
+              </form>
             </div>
-          </form>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

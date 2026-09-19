@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -30,6 +31,8 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
   const [licenseDoc, setLicenseDoc] = useState(user?.uploadedDocs?.driverLicense || '');
   const [regDoc, setRegDoc] = useState(user?.uploadedDocs?.vehicleRegistration || '');
   const [docSubmitted, setDocSubmitted] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
   if (!isOpen || !user) return null;
 
@@ -62,8 +65,10 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="driver-portal-title"
       className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
     >
       <div className="td-elev-lift relative w-full max-w-2xl rounded-modal bg-card p-6 sm:p-8 text-ink my-6 max-h-[92vh] overflow-y-auto">
@@ -84,7 +89,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                 <CarFront className="h-5 w-5" strokeWidth={2.5} />
               </span>
               <div>
-                <h2 className="font-display text-2xl font-extrabold text-ink">
+                <h2 id="driver-portal-title" className="font-display text-2xl font-extrabold text-ink">
                   {t('pdrv.title')}
                 </h2>
                 <p className="text-xs font-bold text-ink-2">
@@ -186,10 +191,11 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-nick" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
                   {t('pdrv.fNick')}
                 </label>
                 <input
+                  id="drv-nick"
                   type="text"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
@@ -199,10 +205,11 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-phone" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
                   {t('pdrv.fPhone')}
                 </label>
                 <input
+                  id="drv-phone"
                   type="text"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -212,10 +219,11 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-line" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
                   {t('pdrv.fLine')}
                 </label>
                 <input
+                  id="drv-line"
                   type="text"
                   value={lineId}
                   onChange={(e) => setLineId(e.target.value)}
@@ -225,10 +233,11 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-plate" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
                   {t('pdrv.fPlate')}
                 </label>
                 <input
+                  id="drv-plate"
                   type="text"
                   value={vehiclePlate}
                   onChange={(e) => setVehiclePlate(e.target.value)}
@@ -238,10 +247,11 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
               </div>
 
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-vehicle" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
                   {t('pdrv.fVehicle')}
                 </label>
                 <input
+                  id="drv-vehicle"
                   type="text"
                   value={vehicleTitle}
                   onChange={(e) => setVehicleTitle(e.target.value)}
@@ -251,10 +261,11 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-seats" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
                   {t('pdrv.fSeats')}
                 </label>
                 <select
+                  id="drv-seats"
                   value={seats}
                   onChange={(e) => setSeats(Number(e.target.value))}
                   className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
@@ -306,11 +317,12 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
 
             <div className="space-y-3">
               <div className="rounded-2xl border-2 border-dashed border-rule bg-paper p-4">
-                <label className="block text-xs font-extrabold uppercase text-ink mb-1 flex items-center justify-between">
+                <label htmlFor="drv-doc-license" className="block text-xs font-extrabold uppercase text-ink mb-1 flex items-center justify-between">
                   <span>{t('pdrv.doc1')}</span>
                   {licenseDoc && <span className="text-leaf text-[11px]">{t('pdrv.hasData')}</span>}
                 </label>
                 <input
+                  id="drv-doc-license"
                   type="text"
                   placeholder={t('pdrv.doc1Ph')}
                   value={licenseDoc}
@@ -320,11 +332,12 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
               </div>
 
               <div className="rounded-2xl border-2 border-dashed border-rule bg-paper p-4">
-                <label className="block text-xs font-extrabold uppercase text-ink mb-1 flex items-center justify-between">
+                <label htmlFor="drv-doc-reg" className="block text-xs font-extrabold uppercase text-ink mb-1 flex items-center justify-between">
                   <span>{t('pdrv.doc2')}</span>
                   {regDoc && <span className="text-leaf text-[11px]">{t('pdrv.hasData')}</span>}
                 </label>
                 <input
+                  id="drv-doc-reg"
                   type="text"
                   placeholder={t('pdrv.doc2Ph')}
                   value={regDoc}

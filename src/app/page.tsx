@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { VEHICLES, SPONSORS, POPULAR_ROUTES, Vehicle } from '@/data/mockData';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
@@ -9,14 +10,40 @@ import { SponsorBanner } from '@/components/SponsorBanner';
 import { PlatformShowcase } from '@/components/PlatformShowcase';
 import { SponsorSidebar } from '@/components/SponsorSidebar';
 import { CorporateSection } from '@/components/CorporateSection';
-import { VehicleDetailModal } from '@/components/VehicleDetailModal';
+import { PopularRoutesSection } from '@/components/PopularRoutesSection';
 import { TripBoard } from '@/components/TripBoard';
-import { DriverRegisterModal } from '@/components/DriverRegisterModal';
-import { LoginModal } from '@/components/LoginModal';
-import { DriverPortalModal } from '@/components/portals/DriverPortalModal';
-import { DriverSelfServiceModal } from '@/components/portals/DriverSelfServiceModal';
-import { CustomerPortalModal } from '@/components/portals/CustomerPortalModal';
-import { AdminPortalModal } from '@/components/portals/AdminPortalModal';
+const VehicleDetailModal = dynamic(
+  () => import('@/components/VehicleDetailModal').then((m) => m.VehicleDetailModal),
+  { ssr: false }
+);
+const DriverFleetModal = dynamic(
+  () => import('@/components/DriverFleetModal').then((m) => m.DriverFleetModal),
+  { ssr: false }
+);
+const DriverRegisterModal = dynamic(
+  () => import('@/components/DriverRegisterModal').then((m) => m.DriverRegisterModal),
+  { ssr: false }
+);
+const LoginModal = dynamic(
+  () => import('@/components/LoginModal').then((m) => m.LoginModal),
+  { ssr: false }
+);
+const DriverPortalModal = dynamic(
+  () => import('@/components/portals/DriverPortalModal').then((m) => m.DriverPortalModal),
+  { ssr: false }
+);
+const DriverSelfServiceModal = dynamic(
+  () => import('@/components/portals/DriverSelfServiceModal').then((m) => m.DriverSelfServiceModal),
+  { ssr: false }
+);
+const CustomerPortalModal = dynamic(
+  () => import('@/components/portals/CustomerPortalModal').then((m) => m.CustomerPortalModal),
+  { ssr: false }
+);
+const AdminPortalModal = dynamic(
+  () => import('@/components/portals/AdminPortalModal').then((m) => m.AdminPortalModal),
+  { ssr: false }
+);
 import { useAuth } from '@/context/AuthContext';
 import { Footer } from '@/components/Footer';
 import { MobileBottomBar } from '@/components/MobileBottomBar';
@@ -120,6 +147,31 @@ export default function HomePage() {
   const [isPortalOpen, setIsPortalOpen] = useState<boolean>(false);
   const [isDriverSelfServiceOpen, setIsDriverSelfServiceOpen] = useState<boolean>(false);
 
+  const [driverFleetModal, setDriverFleetModal] = useState<{
+    isOpen: boolean;
+    driverPhone: string;
+    driverName: string;
+    fleetVehicles: Vehicle[];
+  }>({
+    isOpen: false,
+    driverPhone: '',
+    driverName: '',
+    fleetVehicles: [],
+  });
+
+  const handleSelectDetail = useCallback((v: Vehicle) => {
+    setFocusedVehicle(v);
+    setSelectedVehicleDetail(v);
+  }, []);
+
+  const handleViewFleet = useCallback((driverPhone: string, driverName: string, fleetVehicles: Vehicle[]) => {
+    setDriverFleetModal({
+      isOpen: true,
+      driverPhone,
+      driverName,
+      fleetVehicles,
+    });
+  }, []);
   const filteredVehicles = useMemo(() => {
     return vehicles.filter((vehicle) => {
       const matchesTab =
@@ -212,10 +264,16 @@ export default function HomePage() {
           searchKeyword={searchKeyword}
           setSearchKeyword={setSearchKeyword}
           resultCount={filteredVehicles.length}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          plateFilter={plateFilter}
+          setPlateFilter={setPlateFilter}
+          totalVanCount={vehicles.filter((v) => v.type === 'van' && v.rentalType !== 'self_drive').length}
+          totalCarCount={vehicles.filter((v) => v.type !== 'van' || v.rentalType === 'self_drive').length}
         />
       )}
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 md:pb-8 sm:px-6 lg:px-8">
+      <main id="main-content" className="mx-auto w-full max-w-7xl flex-1 px-margin lg:px-gutter pb-36 md:pb-8">
         {activeTab === 'hotel' ? (
           <div key="hotel" className="td-panel-enter pb-16">
             <div>
@@ -246,13 +304,13 @@ export default function HomePage() {
                 caption={
                   activeTab === 'van'
                     ? t('home.resultsCaption')
-                    : 'ร้านพันธมิตรรถเช่าขับเองในจังหวัดท่องเที่ยว ติดต่อตกลงเงื่อนไขกับร้านโดยตรง 0% คอมมิชชั่น'
+                    : t('home.carCaption')
                 }
                 action={
                   hasFilters ? (
                     <button
                       onClick={resetFilters}
-                      className="td-btn shrink-0 rounded-pill border border-rule bg-card px-4 py-2 text-[13px] font-extrabold text-ink transition-transform duration-220 ease-spring hover:-translate-y-0.5"
+                      className="td-btn shrink-0 rounded-pill border border-rule bg-card px-4 py-2 text-[13px] font-extrabold text-ink transition-transform duration-220 ease-out hover:-translate-y-0.5"
                     >
                       {t('home.clearFilters')}
                     </button>
@@ -260,47 +318,51 @@ export default function HomePage() {
                 }
               />
 
-              {/* Quick Filter: Transport Category & Legal Type */}
-              <div className="mb-6 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold text-ink-2 mr-1">
-                  {activeTab === 'van' ? 'ประเภทรถ/เอกสาร:' : 'ประเภทร้าน/เอกสาร:'}
+              {/* Quick Filter: Transport Category & Legal Type (Stitch Segment Badges) */}
+              <div className="mb-6 flex flex-wrap items-center gap-space-xs text-body-subtext font-body-medium">
+                <span className="text-ink-muted dark:text-slate-400 font-label-badge text-label-badge uppercase mr-1">
+                  {activeTab === 'van' ? t('home.plateGroupVan') : t('home.plateGroupCar')}
                 </span>
                 <button
                   type="button"
                   onClick={() => setPlateFilter('all')}
-                  className={`rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                  className={`px-space-sm py-space-xs rounded-full font-bold shadow-sm transition-all ${
                     plateFilter === 'all'
-                      ? 'bg-ink text-paper shadow-sm'
-                      : 'bg-card text-ink-2 hover:text-ink border border-rule'
+                      ? 'bg-navy-deep text-on-primary'
+                      : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
                   }`}
                 >
-                  ทั้งหมด ({vehicles.filter((v) => activeTab === 'van' ? (v.type === 'van' && v.rentalType !== 'self_drive') : (v.type !== 'van' || v.rentalType === 'self_drive')).length})
+                  {t('home.plateAll', {
+                    count: vehicles.filter((v) =>
+                      activeTab === 'van'
+                        ? v.type === 'van' && v.rentalType !== 'self_drive'
+                        : v.type !== 'van' || v.rentalType === 'self_drive'
+                    ).length,
+                  })}
                 </button>
                 {activeTab === 'van' ? (
                   <>
                     <button
                       type="button"
                       onClick={() => setPlateFilter('yellow')}
-                      className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                      className={`inline-flex items-center gap-1 px-space-sm py-space-xs rounded-full font-bold transition-all ${
                         plateFilter === 'yellow'
                           ? 'bg-amber-400 text-amber-950 ring-2 ring-amber-500 shadow-sm'
-                          : 'bg-card text-ink hover:bg-amber-50 border border-amber-300/80 text-amber-900'
+                          : 'bg-taxi-yellow-soft text-on-tertiary-container hover:bg-yellow-100 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300/40'
                       }`}
                     >
-                      <span className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-amber-300"></span>
-                      <span>🟡 ป้ายเหลือง 30 (รับงานองค์กร/ราชการ)</span>
+                      <span>{t('home.plateYellow')}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setPlateFilter('blue')}
-                      className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                      className={`inline-flex items-center gap-1 px-space-sm py-space-xs rounded-full font-bold transition-all ${
                         plateFilter === 'blue'
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-card text-ink hover:bg-blue-50 border border-blue-200 text-blue-800'
+                          ? 'bg-blue-action text-white shadow-sm'
+                          : 'bg-blue-subtle text-blue-action hover:bg-blue-100 dark:bg-blue-950/70 dark:text-blue-300'
                       }`}
                     >
-                      <span className="h-2 w-2 rounded-full bg-blue-500 ring-2 ring-blue-200"></span>
-                      <span>🔵 ป้ายฟ้า (ท่องเที่ยวทั่วไป/ส่วนบุคคล)</span>
+                      <span>{t('home.plateBlue')}</span>
                     </button>
                   </>
                 ) : (
@@ -310,46 +372,46 @@ export default function HomePage() {
                     className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
                       plateFilter === 'blue'
                         ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-card text-ink hover:bg-blue-50 border border-blue-200 text-blue-800'
+                          : 'bg-plate-blue-bg text-plate-blue-text hover:brightness-95 border border-plate-blue-border'
                     }`}
                   >
                     <span className="h-2 w-2 rounded-full bg-blue-500 ring-2 ring-blue-200"></span>
-                    <span>🔵 รถเช่าบุคคล/ทั่วไป</span>
+                    <span>{t('home.plateCarBlue')}</span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => setPlateFilter('tax')}
-                  className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                  className={`inline-flex items-center gap-1 px-space-sm py-space-xs rounded-full font-bold transition-all ${
                     plateFilter === 'tax'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-card text-ink hover:bg-emerald-50 border border-emerald-300 text-emerald-800'
+                      ? 'bg-verified-emerald text-white shadow-sm'
+                      : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-slate-300 hover:bg-surface-variant'
                   }`}
                 >
-                  <span>🏢 ออกใบกำกับภาษี/ใบเสร็จได้</span>
+                  <span>{t('home.plateTax')}</span>
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-                {/* Main Vehicle Grid */}
-                <div className="min-w-0">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl">
+                {/* Main Vehicle Listings Column (8 of 12) */}
+                <div className="lg:col-span-8 min-w-0">
                   {hasFilters && (
                     <div className="mb-4 flex flex-wrap items-center gap-2 rounded-card bg-card p-3 border border-rule shadow-xs">
                       <span className="text-xs font-bold text-ink-2 flex items-center gap-1.5 mr-1">
                         <SlidersHorizontal className="h-3.5 w-3.5 text-accent" />
-                        ตัวกรองที่เลือก:
+                        {t('home.activeFilters')}
                       </span>
                       {plateFilter !== 'all' && (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-paper text-ink px-3 py-1 text-xs font-extrabold border border-rule">
                           <span>
-                            {plateFilter === 'yellow' && '🟡 ป้ายเหลือง 30'}
-                            {plateFilter === 'blue' && '🔵 ป้ายฟ้า'}
-                            {plateFilter === 'tax' && '🏢 ออกใบกำกับภาษีได้'}
+                            {plateFilter === 'yellow' && t('home.chipYellow')}
+                            {plateFilter === 'blue' && t('home.chipBlue')}
+                            {plateFilter === 'tax' && t('home.chipTax')}
                           </span>
                           <button
                             type="button"
                             onClick={() => setPlateFilter('all')}
-                            aria-label="ลบตัวกรองป้ายทะเบียน"
+                            aria-label={t('home.rmPlateAria')}
                             className="rounded-full p-0.5 hover:bg-rule transition-colors"
                           >
                             <X className="h-3.5 w-3.5" />
@@ -358,11 +420,11 @@ export default function HomePage() {
                       )}
                       {selectedZone !== 'all' && (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft text-accent px-3 py-1 text-xs font-extrabold border border-accent/20">
-                          <span>📍 โซน: {selectedZone}</span>
+                          <span>{t('home.chipZone', { zone: selectedZone })}</span>
                           <button
                             type="button"
                             onClick={() => setSelectedZone('all')}
-                            aria-label="ลบตัวกรองโซน"
+                            aria-label={t('home.rmZoneAria')}
                             className="rounded-full p-0.5 hover:bg-accent hover:text-white transition-colors"
                           >
                             <X className="h-3.5 w-3.5" />
@@ -371,11 +433,11 @@ export default function HomePage() {
                       )}
                       {selectedSeats !== 'all' && (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-sun-soft text-sun-ink px-3 py-1 text-xs font-extrabold border border-sun/20">
-                          <span>👥 {selectedSeats} ที่นั่ง</span>
+                          <span>{t('home.chipSeats', { n: selectedSeats })}</span>
                           <button
                             type="button"
                             onClick={() => setSelectedSeats('all')}
-                            aria-label="ลบตัวกรองที่นั่ง"
+                            aria-label={t('home.rmSeatsAria')}
                             className="rounded-full p-0.5 hover:bg-sun hover:text-white transition-colors"
                           >
                             <X className="h-3.5 w-3.5" />
@@ -388,7 +450,7 @@ export default function HomePage() {
                           <button
                             type="button"
                             onClick={() => setSearchKeyword('')}
-                            aria-label="ลบคำค้นหา"
+                            aria-label={t('home.rmSearchAria')}
                             className="rounded-full p-0.5 hover:bg-rule transition-colors"
                           >
                             <X className="h-3.5 w-3.5" />
@@ -407,15 +469,14 @@ export default function HomePage() {
                   )}
 
                   {filteredVehicles.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
                       {filteredVehicles.map((vehicle) => (
                         <VehicleCard
                           key={vehicle.id}
                           vehicle={vehicle}
-                          onSelectDetail={(v) => {
-                            setFocusedVehicle(v);
-                            setSelectedVehicleDetail(v);
-                          }}
+                          allVehicles={vehicles}
+                          onSelectDetail={handleSelectDetail}
+                          onViewFleet={handleViewFleet}
                         />
                       ))}
                     </div>
@@ -443,17 +504,17 @@ export default function HomePage() {
                           href="#tripboard"
                           className="td-btn inline-flex items-center gap-1.5 rounded-pill border border-rule bg-paper-2 px-4 py-2.5 text-xs font-extrabold text-ink hover:bg-card transition-all"
                         >
-                          <span>โพสต์ประกาศหาคนขับบน TripBoard</span>
+                          <span>{t('home.emptyBoard')}</span>
                           <ArrowRight className="h-3.5 w-3.5" />
                         </a>
                         <a
                           href="https://line.me"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="td-btn inline-flex items-center gap-1.5 rounded-pill bg-[#06C755]/10 text-[#06C755] border border-[#06C755]/30 px-4 py-2.5 text-xs font-extrabold hover:bg-[#06C755] hover:text-white transition-all"
+                          className="td-btn inline-flex items-center gap-1.5 rounded-pill bg-line-green/10 text-line-green border border-line-green/30 px-4 py-2.5 text-xs font-extrabold hover:bg-line-green hover:text-white transition-all"
                         >
                           <MessageCircle className="h-3.5 w-3.5" />
-                          <span>สอบถามคิวรถด่วนทาง LINE</span>
+                          <span>{t('home.emptyLine')}</span>
                         </a>
                       </div>
 
@@ -462,13 +523,13 @@ export default function HomePage() {
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div>
                             <div className="inline-flex items-center gap-1.5 rounded-pill bg-emerald-600/10 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-700 mb-1.5">
-                              <span>🚐 สำหรับผู้ให้บริการรถตู้ / รถเช่า</span>
+                              <span>{t('home.emptyDriverBadge')}</span>
                             </div>
                             <h4 className="text-sm font-extrabold text-ink">
-                              คุณเป็นคนขับหรือเจ้าของรถในพื้นที่นี้ใช่หรือไม่?
+                              {t('home.emptyDriverTitle')}
                             </h4>
                             <p className="mt-0.5 text-xs font-medium text-ink-2">
-                              ร่วมเป็นพาร์ทเนอร์คนขับคันแรก รับงานตรงจากนักท่องเที่ยว 0% คอมมิชชั่น
+                              {t('home.emptyDriverDesc')}
                             </p>
                           </div>
                           <button
@@ -477,7 +538,7 @@ export default function HomePage() {
                             className="td-btn inline-flex shrink-0 items-center justify-center gap-1.5 rounded-pill bg-emerald-600 px-4 py-2 text-xs font-extrabold text-white shadow-xs hover:bg-emerald-700 transition-all"
                           >
                             <UserPlus className="h-3.5 w-3.5" />
-                            <span>ลงทะเบียนคนขับฟรี</span>
+                            <span>{t('home.emptyDriverCta')}</span>
                           </button>
                         </div>
                       </div>
@@ -485,8 +546,8 @@ export default function HomePage() {
                   )}
                 </div>
 
-                {/* Right Sticky Sidebar Ad Placement (แถบโฆษณาด้านข้าง) */}
-                <div className="hidden lg:block">
+                {/* Right Sticky Sidebar Ad Placement (4 of 12) */}
+                <div className="hidden lg:block lg:col-span-4">
                   <div className="sticky top-28">
                     <SponsorSidebar />
                   </div>
@@ -494,67 +555,18 @@ export default function HomePage() {
               </div>
             </section>
 
-            {/* Secondary Matching / Community Fallback: TripBoard */}
-            <section id="tripboard" aria-label="กระดานจับคู่ทริปและประกาศหาคนขับ" className="mt-16 pt-8 border-t border-rule scroll-mt-28">
-              <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 rounded-pill bg-accent-soft px-3 py-1 text-xs font-bold text-accent mb-2 border border-accent/20">
-                    <span>💡 ไม่พบคันที่ถูกใจ? หรือต้องการเส้นทางเฉพาะ</span>
-                  </div>
-                  <h2 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight text-ink">
-                    กระดานประกาศหาคนขับ & คิวรถว่าง (TripBoard)
-                  </h2>
-                  <p className="mt-1 text-[13px] font-medium text-ink-2">
-                    โพสต์ประกาศให้คนขับติดต่อกลับโดยตรง หรือเลือกรับงานคิวรถว่างในเชียงใหม่และภาคเหนือ
-                  </p>
-                </div>
-              </div>
+            {/* Secondary Matching / Community Fallback: TripBoard (Stitch Section 3) */}
+            <div className="mt-16">
               <TripBoard />
-            </section>
+            </div>
 
-            {/* Routes strip */}
-            <section aria-label={t('home.routesAria')} className="mt-12">
-              <SectionHead
-                title={t('home.routesTitle')}
-                count={t('home.routesCount', { count: POPULAR_ROUTES.length })}
-                caption={t('home.routesCaption')}
-              />
-              <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
-                {POPULAR_ROUTES.map((route, i) => (
-                  <button
-                    key={route.id}
-                    onClick={() => setSelectedZone(route.filterKey)}
-                    className="td-card-hover group w-72 shrink-0 snap-start overflow-hidden rounded-card bg-card text-left sm:w-80"
-                  >
-                    <span className="relative block aspect-[16/10] w-full overflow-hidden border-b border-rule">
-                      <img
-                        src={route.image}
-                        alt={t(`route.${route.id}.name` as DictKey)}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
-                      />
-                      <span className="td-sticker absolute left-3 top-3 rounded-pill bg-card px-2.5 py-1 text-[11px] font-extrabold text-ink">
-                        {t(`route.${route.id}.zone` as DictKey)}
-                      </span>
-                    </span>
-                    <span className="block p-4 bg-card border-t border-rule/60">
-                      <span className="block font-display text-[15px] font-extrabold text-ink">{t(`route.${route.id}.name` as DictKey)}</span>
-                      <span className="mt-0.5 block line-clamp-2 text-xs font-medium leading-relaxed text-ink/70">
-                        {t(`route.${route.id}.highlight` as DictKey)}
-                      </span>
-                      <span className="mt-3 flex items-center justify-between border-t border-rule pt-3">
-                        <span className="td-fig text-xs font-extrabold text-ink">
-                          {t(`route.${route.id}.price` as DictKey)}
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded-input bg-accent text-white px-2.5 py-1 text-xs font-bold shadow-2xs">
-                          {t('home.viewCars')} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                        </span>
-                      </span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </section>
+            {/* Routes strip: Popular Routes Carousel (Google Stitch Redesign) */}
+            <PopularRoutesSection
+              onSelectRoute={(filterKey) => {
+                setSelectedZone(filterKey);
+                document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            />
 
             {/* Corporate strip */}
             <div className="mt-12">
@@ -575,60 +587,43 @@ export default function HomePage() {
           }}
         />
 
-        {/* Index band */}
-        <nav aria-label={t('home.indexAria')} className="td-elev-card mb-12 grid grid-cols-1 gap-6 rounded-card bg-paper-2 p-6 sm:grid-cols-2 sm:p-8">
-          <div>
-            <h2 className="mb-3 font-display text-base font-extrabold text-ink">
-              {t('home.servicesTitle')}
-            </h2>
-            <ul className="flex flex-col gap-2.5">
-              {SERVICE_ACTIONS.map((item) => (
-                <li key={item.key}>
-                  <button
-                    onClick={() => {
-                      setActiveTab(item.tab);
-                      if (item.zone) setSelectedZone(item.zone);
-                      if (item.seats) setSelectedSeats(item.seats);
-                      if (item.tab === 'van') {
-                        document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
-                      } else {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }
-                    }}
-                    className="td-footlink text-left text-sm font-bold text-ink-2 transition-colors duration-220 ease-out hover:text-accent"
-                  >
-                    {t(item.key)}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h2 className="mb-3 font-display text-base font-extrabold text-ink">
-              {t('home.routesRecTitle')}
-            </h2>
-            <ul className="flex flex-col gap-2.5">
-              {ROUTE_LINKS.map((link) => (
-                <li key={link.key}>
-                  <button
-                    onClick={() => {
-                      setActiveTab('van');
-                      setSelectedZone(link.value);
-                    }}
-                    className="td-footlink text-sm font-bold text-ink-2 transition-colors duration-220 ease-out hover:text-ink"
-                  >
-                    {t(link.key)}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </nav>
       </main>
 
-      <Footer onOpenDriverSelfService={() => setIsDriverSelfServiceOpen(true)} />
+      <Footer
+        onOpenDriverSelfService={() => setIsDriverSelfServiceOpen(true)}
+        onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
+        onSelectZone={(zone) => {
+          setSelectedZone(zone);
+          document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onSelectTab={(tab) => {
+          setActiveTab(tab);
+          if (tab === 'van' || tab === 'car') {
+            document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }}
+      />
 
-      <VehicleDetailModal vehicle={selectedVehicleDetail} onClose={() => setSelectedVehicleDetail(null)} />
+      <VehicleDetailModal
+        vehicle={selectedVehicleDetail}
+        onClose={() => setSelectedVehicleDetail(null)}
+        allVehicles={vehicles}
+        onSelectVehicle={(v) => setSelectedVehicleDetail(v)}
+      />
+      <DriverFleetModal
+        isOpen={driverFleetModal.isOpen}
+        onClose={() => setDriverFleetModal((prev) => ({ ...prev, isOpen: false }))}
+        driverPhone={driverFleetModal.driverPhone}
+        driverName={driverFleetModal.driverName}
+        fleetVehicles={driverFleetModal.fleetVehicles}
+        onSelectVehicleDetail={handleSelectDetail}
+        onFilterFleetOnHome={(keyword) => {
+          setSearchKeyword(keyword);
+          document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
       <DriverRegisterModal isOpen={isRegisterModalOpen} onClose={() => setIsRegisterModalOpen(false)} />
       <DriverSelfServiceModal
         isOpen={isDriverSelfServiceOpen}

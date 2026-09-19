@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -48,6 +49,8 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
   const [quoteLeads, setQuoteLeads] = useState<QuotationLead[]>([]);
   const [boardPosts, setBoardPosts] = useState<BoardPost[]>([]);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
   const refreshAll = useCallback(() => {
     fetch('/api/vehicles')
@@ -118,8 +121,10 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="admin-portal-title"
       className="fixed inset-0 z-[400] flex items-center justify-center p-3 sm:p-4 bg-ink/65 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
     >
       <div className="td-elev-lift relative w-full max-w-4xl rounded-modal bg-card p-5 sm:p-7 text-ink my-6 max-h-[94vh] overflow-y-auto">
@@ -139,11 +144,11 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
               <Crown className="h-6 w-6" strokeWidth={2.5} />
             </span>
             <div>
-              <h2 className="font-display text-2xl font-extrabold text-ink">
+              <h2 id="admin-portal-title" className="font-display text-2xl font-extrabold text-ink">
                 {t('padm.title')}
               </h2>
               <p className="text-xs font-bold text-ink-2">
-                ระบบจัดการข้อมูลและบริหารแพลตฟอร์ม TripDee Backoffice
+                {t('padm.tagline')}
               </p>
             </div>
           </div>
@@ -171,7 +176,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
             }`}
           >
             <CarFront className="h-3.5 w-3.5" />
-            <span>จัดการรถ ({vehicles.length})</span>
+            <span>{t('padm.tabVehicles', { n: vehicles.length })}</span>
           </button>
 
           {/* Tab 2: Driver Leads */}
@@ -182,7 +187,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
             }`}
           >
             <Users className="h-3.5 w-3.5" />
-            <span>คนขับรอตรวจ</span>
+            <span>{t('padm.tabDrivers', { n: pendingDriversCount })}</span>
             {pendingDriversCount > 0 && (
               <span className="h-2 w-2 rounded-full bg-sun animate-pulse" />
             )}
@@ -196,7 +201,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
             }`}
           >
             <FileText className="h-3.5 w-3.5" />
-            <span>ใบเสนอราคา ({quoteLeads.length})</span>
+            <span>{t('padm.tabQuotesLive', { n: quoteLeads.length })}</span>
             {pendingQuotesCount > 0 && (
               <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
             )}
@@ -210,7 +215,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
             }`}
           >
             <MessageSquare className="h-3.5 w-3.5" />
-            <span>กระดานชุมชน ({boardPosts.length})</span>
+            <span>{t('padm.tabBoard', { n: boardPosts.length })}</span>
           </button>
 
           {/* Tab 5: Sponsors */}
@@ -221,7 +226,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
             }`}
           >
             <Building2 className="h-3.5 w-3.5" />
-            <span>สปอนเซอร์ ({sponsors.length || SPONSORS.length})</span>
+            <span>{t('padm.tabSponsorsLive', { n: sponsors.length || SPONSORS.length })}</span>
           </button>
 
           {/* Tab 6: Analytics */}
@@ -232,7 +237,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
             }`}
           >
             <BarChart3 className="h-3.5 w-3.5" />
-            <span>สถิติ</span>
+            <span>{t('padm.tabStats')}</span>
           </button>
         </div>
 
@@ -300,7 +305,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="rounded-2xl bg-paper p-4">
                 <div className="flex items-center justify-between text-xs font-bold text-ink-2">
-                  <span>การโทรติดต่อตรง</span>
+                  <span>{t('padm.statCalls')}</span>
                   <PhoneCall className="h-4 w-4 text-leaf" />
                 </div>
                 <p className="td-fig mt-2 text-2xl font-extrabold text-ink">
@@ -310,7 +315,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
 
               <div className="rounded-2xl bg-paper p-4">
                 <div className="flex items-center justify-between text-xs font-bold text-ink-2">
-                  <span>คลิกสปอนเซอร์</span>
+                  <span>{t('padm.statSponsor')}</span>
                   <MousePointerClick className="h-4 w-4 text-berry" />
                 </div>
                 <p className="td-fig mt-2 text-2xl font-extrabold text-ink">
@@ -320,7 +325,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
 
               <div className="rounded-2xl bg-paper p-4">
                 <div className="flex items-center justify-between text-xs font-bold text-ink-2">
-                  <span>เหตุการณ์ทั้งหมด</span>
+                  <span>{t('padm.statEvents')}</span>
                   <BarChart3 className="h-4 w-4 text-accent-deep" />
                 </div>
                 <p className="td-fig mt-2 text-2xl font-extrabold text-ink">
@@ -364,7 +369,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                           className="td-btn td-pop inline-flex items-center gap-1 rounded-pill bg-berry px-3 py-1 text-xs font-extrabold text-white shadow-sm"
                         >
                           <FileSpreadsheet className="h-3 w-3" />
-                          รายงาน 1 หน้า
+                          {t('padm.report1page')}
                         </button>
                       </div>
                     </div>
@@ -417,11 +422,11 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                   Google Analytics 4 (GA4) Dual-Tracking
                 </span>
                 <span className="rounded-pill bg-leaf-soft px-2.5 py-0.5 text-[11px] font-extrabold text-leaf">
-                  พร้อมใช้งาน (Auto Event Sync)
+                  {t('padm.gaReady')}
                 </span>
               </div>
               <p className="text-ink-2 text-[11px] leading-relaxed">
-                ระบบเชื่อมต่อ Event อัตโนมัติ (<code>sponsor_click</code>, <code>call_click</code>) ส่งตรงเข้า Google Analytics 4 สำหรับวัดสถิติระดับสากล
+                {t('padm.gaDesc')}
               </p>
             </div>
           </div>

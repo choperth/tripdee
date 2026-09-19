@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth, UserRole } from '@/context/AuthContext';
 import { X, ShieldCheck, CarFront, Briefcase, Crown, MessageCircle, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
@@ -18,6 +19,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
   const [phoneOrEmail, setPhoneOrEmail] = useState('');
   const [name, setName] = useState('');
   const [loginMethod, setLoginMethod] = useState<'demo' | 'direct'>('demo');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
   if (!isOpen) return null;
 
@@ -34,8 +37,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="login-modal-title"
       className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
     >
       <div className="td-elev-lift relative w-full max-w-lg rounded-modal bg-card p-6 sm:p-8 text-ink">
@@ -54,7 +59,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
             <ShieldCheck className="h-4 w-4 text-leaf" strokeWidth={2.5} />
             {t('auth.badge')}
           </span>
-          <h2 className="font-display mt-2 text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
+          <h2 id="login-modal-title" className="font-display mt-2 text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
             {t('auth.title')}
           </h2>
           <p className="mt-1 text-sm font-medium text-ink-2">
@@ -110,7 +115,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
             <span className="text-xs font-extrabold uppercase tracking-wider text-ink-2">
               {t('auth.demoTitle')}
             </span>
-            <span className="rounded-pill bg-leaf-soft px-2 py-0.5 text-[11px] font-extrabold text-leaf">
+            <span className="rounded-pill bg-leaf-soft px-2 py-0.5 text-[11px] font-extrabold text-leaf-deep">
               {t('auth.demoNote')}
             </span>
           </div>
@@ -194,10 +199,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
           ) : (
             <form onSubmit={handleDirectSubmit} className="space-y-3 pt-2 text-left">
               <div>
-                <label className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
+                <label htmlFor="login-name" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
                   {t('auth.fName')}
                 </label>
                 <input
+                  id="login-name"
                   type="text"
                   required
                   placeholder={t('auth.fNamePh')}
@@ -208,10 +214,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
               </div>
 
               <div>
-                <label className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
+                <label htmlFor="login-phone" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
                   {t('auth.fPhone')}
                 </label>
                 <input
+                  id="login-phone"
                   type="text"
                   required
                   placeholder={t('auth.fPhonePh')}

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Sponsor } from '@/data/mockData';
 import { MapPin, BadgePercent, ArrowUpRight, Wrench, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
@@ -70,11 +71,12 @@ export const SponsorBanner: React.FC<SponsorBannerProps> = ({ sponsor, variant =
       className="td-elev-card grid grid-cols-1 gap-5 overflow-hidden rounded-card bg-card p-5 sm:p-6 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:items-center"
     >
       <figure className="relative m-0 aspect-[16/10] min-w-0 overflow-hidden rounded-card md:aspect-auto md:h-full md:min-h-44">
-        <img
+        <Image
           src={sponsor.image}
           alt={sponsor.title}
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover"
+          fill
+          sizes="(max-width: 768px) 100vw, 400px"
+          className="object-cover"
         />
         <span className="td-sticker absolute left-3 top-3 inline-flex items-center gap-1 rounded-pill bg-berry px-2.5 py-1 text-[11px] font-extrabold text-white">
           <Sparkles className="h-3 w-3" aria-hidden="true" strokeWidth={2.5} />
@@ -103,7 +105,7 @@ export const SponsorBanner: React.FC<SponsorBannerProps> = ({ sponsor, variant =
             rel="noopener noreferrer"
             onClick={handleSponsorClick}
             data-analytics-sponsor={sponsor.id}
-            className="td-btn td-pop inline-flex shrink-0 items-center justify-center gap-1.5 rounded-pill bg-berry px-5 py-2.5 text-[13px] font-extrabold text-white"
+            className="td-btn td-pop inline-flex shrink-0 items-center justify-center gap-1.5 rounded-pill bg-ink hover:opacity-90 px-5 py-2.5 text-[13px] font-extrabold text-paper"
           >
             {t('sponsor.cta')}
             <ArrowUpRight className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />

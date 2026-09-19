@@ -154,7 +154,7 @@ export const ScrollQualityMonitor: React.FC = () => {
                 <Activity className="h-4 w-4" />
               </span>
               <div>
-                <h4 className="text-xs font-extrabold text-ink">Scroll Quality Monitor</h4>
+                <p className="text-xs font-extrabold text-ink">Scroll Quality Monitor</p>
                 <p className="text-[10px] text-ink-2">มอนิเตอร์ความลื่นไหล & Layout Shift</p>
               </div>
             </div>
@@ -162,12 +162,14 @@ export const ScrollQualityMonitor: React.FC = () => {
               <button
                 onClick={resetMetrics}
                 title="รีเซ็ตสถิติ"
+                aria-label="รีเซ็ตสถิติตัววัดคุณภาพการเลื่อน"
                 className="grid h-6 w-6 place-items-center rounded-md hover:bg-paper text-ink-2"
               >
                 <RotateCcw className="h-3 w-3" />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
+                aria-label="ปิดเครื่องมือวัดคุณภาพการเลื่อน"
                 className="grid h-6 w-6 place-items-center rounded-md hover:bg-paper text-ink-2 font-bold text-xs"
               >
                 ✕

@@ -8,19 +8,22 @@ import { getStructuredData } from "@/lib/structuredData";
 const nunito = Nunito({
   variable: "--font-nunito",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: ["400", "600", "700", "800"],
+  display: "swap",
 });
 
 const notoThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
   subsets: ["thai", "latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "600", "700", "800"],
+  display: "swap",
 });
 
 const notoSC = Noto_Sans_SC({
   variable: "--font-noto-sc",
   subsets: ["latin"],
-  weight: ["400", "500", "700", "900"],
+  weight: ["400", "700"],
+  display: "swap",
 });
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tripdee.co';
@@ -115,7 +118,15 @@ export default function RootLayout({
   return (
     <html lang="th" suppressHydrationWarning className={`${nunito.variable} ${notoThai.variable} ${notoSC.variable} h-full antialiased`}>
       <head>
-        {/* JSON-LD Structured Data for AEO (Answer Engine Optimization) & Google Search */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,300..900;1,6..12,300..900&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('td-theme');if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}else{document.documentElement.removeAttribute('data-theme');document.documentElement.classList.remove('dark');document.documentElement.style.colorScheme='light';}}catch(e){}})();`,
+          }}
+        />
         {Object.entries(getStructuredData()).map(([key, schema]) => (
           <script
             key={key}
@@ -137,6 +148,12 @@ export default function RootLayout({
         )}
       </head>
       <body className="min-h-full flex flex-col bg-paper text-ink font-body">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[500] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white"
+        >
+          ข้ามไปยังเนื้อหาหลัก
+        </a>
         <LanguageProvider>
           <AuthProvider>
             <AnalyticsProvider>{children}</AnalyticsProvider>

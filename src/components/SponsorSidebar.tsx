@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { SPONSORS } from '@/data/mockData';
-import { Sparkles, MapPin, BadgePercent, ArrowUpRight, Megaphone, Phone, ExternalLink, ShieldCheck } from 'lucide-react';
 import { useAnalytics } from '@/context/AnalyticsContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 export const SponsorSidebar: React.FC = () => {
   const { trackSponsor, trackCall, getSponsorClickCount } = useAnalytics();
+  const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -32,141 +34,193 @@ export const SponsorSidebar: React.FC = () => {
   };
 
   const primarySponsor = SPONSORS[0]; // หมอกฟ้า พูลวิลล่า & แกลมปิ้ง ม่อนแจ่ม
-  const secondarySponsor = SPONSORS[1]; // ซีเอ็นเอ็กซ์ เซอร์วิสแอนด์ไทร์
 
   return (
-    <aside aria-label="โฆษณาและสิทธิพิเศษพาร์ตเนอร์" className="space-y-4">
-      {/* 1. Primary Featured Sponsor (Sticky Sidebar Card) */}
+    <aside aria-label={t('spn.aria')} className="space-y-space-lg">
+      {/* 1. Quick Hub Navigation Card (Stitch Redesign) */}
+      <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-md border border-border-subtle dark:border-slate-800 shadow-sm space-y-space-sm">
+        <div className="flex items-center gap-space-2xs text-navy-deep dark:text-white font-title-card text-title-card">
+          <span className="material-symbols-outlined text-blue-action text-[20px]">
+            recommend
+          </span>
+          <span>{t('spn.hubTitle')}</span>
+        </div>
+        <div className="space-y-space-xs text-body-subtext font-body-medium">
+          <button
+            type="button"
+            onClick={() => {
+              document.getElementById('corporate')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="w-full flex items-center justify-between p-space-xs rounded-xl bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-slate-200 hover:bg-blue-subtle dark:hover:bg-blue-950/50 hover:text-blue-action transition-all text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-space-2xs">
+              <span className="material-symbols-outlined text-[18px] text-amber-accent">
+                corporate_fare
+              </span>
+              <span>{t('spn.hubCorp')}</span>
+            </div>
+            <span className="material-symbols-outlined text-[16px] text-ink-muted">
+              chevron_right
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="w-full flex items-center justify-between p-space-xs rounded-xl bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-slate-200 hover:bg-blue-subtle dark:hover:bg-blue-950/50 hover:text-blue-action transition-all text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-space-2xs">
+              <span className="material-symbols-outlined text-[18px] text-blue-action">
+                airline_seat_recline_extra
+              </span>
+              <span>{t('spn.hubVan')}</span>
+            </div>
+            <span className="material-symbols-outlined text-[16px] text-ink-muted">
+              chevron_right
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              document.getElementById('tripboard')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="w-full flex items-center justify-between p-space-xs rounded-xl bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-slate-200 hover:bg-blue-subtle dark:hover:bg-blue-950/50 hover:text-blue-action transition-all text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-space-2xs">
+              <span className="material-symbols-outlined text-[18px] text-line-green">
+                local_taxi
+              </span>
+              <span>{t('spn.hubBoard')}</span>
+            </div>
+            <span className="material-symbols-outlined text-[16px] text-ink-muted">
+              chevron_right
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2. Verified Hotel & Resort Partner Sponsor (Stitch Redesign) */}
       {primarySponsor && (
-        <div className="td-elev-card overflow-hidden rounded-card border border-rule bg-card text-ink shadow-card transition-all hover:shadow-lift hover:border-accent/30">
-          {/* Top image with badge */}
-          <div className="relative aspect-[16/10] w-full overflow-hidden bg-paper-2">
-            <img
+        <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl overflow-hidden border border-border-subtle dark:border-slate-800 shadow-md hover:shadow-xl transition-all">
+          <div className="relative h-44 w-full overflow-hidden bg-navy-deep">
+            <Image
               src={primarySponsor.image}
               alt={primarySponsor.title}
-              className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+              fill
+              sizes="(max-width: 1024px) 100vw, 320px"
+              className="object-cover transition-transform duration-500 hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-
-            <span className="td-sticker absolute left-3 top-3 inline-flex items-center gap-1 rounded-pill bg-berry px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm">
-              <Sparkles className="h-3 w-3" strokeWidth={2.5} />
-              สปอนเซอร์แถบข้างแนะนำ
+            <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/80 via-transparent to-transparent pointer-events-none" />
+            <span className="absolute top-3 left-3 px-space-xs py-space-2xs rounded bg-surface/90 text-navy-deep font-bold text-label-badge shadow-sm">
+              {t('spn.hotelBadge')}
             </span>
             <span
               suppressHydrationWarning
-              className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-xs"
+              className="absolute bottom-2 right-2 rounded-md bg-navy-deep/80 px-2 py-0.5 text-[10px] font-bold text-surface backdrop-blur-xs"
             >
-              คลิก: {mounted ? getSponsorClickCount(primarySponsor.id) : 0} ครั้ง
+              {t('spn.clicks', { n: mounted ? getSponsorClickCount(primarySponsor.id) : 0 })}
             </span>
           </div>
 
-          <div className="p-4 sm:p-5">
-            <div className="flex items-center gap-1 text-xs font-bold text-ink-2">
-              <MapPin className="h-3.5 w-3.5 text-accent" />
+          <div className="p-space-md space-y-space-xs">
+            <div className="flex items-center gap-1 text-body-subtext font-body-subtext text-ink-muted dark:text-slate-400">
+              <span className="material-symbols-outlined text-[14px] text-blue-action">
+                location_on
+              </span>
               <span>{primarySponsor.location}</span>
             </div>
 
-            <h4 className="font-display mt-1 text-base font-extrabold text-ink line-clamp-2">
+            <h4 className="font-title-card text-title-card text-navy-deep dark:text-white line-clamp-2">
               {primarySponsor.title}
             </h4>
 
-            <p className="mt-1 text-xs text-ink-2 line-clamp-2 leading-relaxed">
+            <p className="font-body-subtext text-body-subtext text-ink-secondary dark:text-slate-300 line-clamp-2">
               {primarySponsor.tagline}
             </p>
 
-            {/* Discount Pill */}
-            <div className="mt-3 rounded-xl border border-dashed border-berry/30 bg-berry-soft p-2.5 text-xs font-extrabold text-berry flex items-center gap-1.5">
-              <BadgePercent className="h-4 w-4 shrink-0 text-berry" />
+            <div className="rounded-xl border border-dashed border-amber-accent/40 bg-taxi-yellow-soft dark:bg-amber-950/40 p-space-xs text-body-subtext font-bold text-on-tertiary-fixed-variant dark:text-amber-300 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px] text-amber-accent">
+                loyalty
+              </span>
               <span className="line-clamp-1">{primarySponsor.discountText}</span>
             </div>
 
-            {/* CTA Button */}
             <a
               href={primarySponsor.link}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => handleSponsorClick(primarySponsor)}
-              data-analytics-sponsor={primarySponsor.id}
-              data-analytics-variant="sidebar"
-              className="td-btn td-pop mt-3.5 flex w-full items-center justify-center gap-1.5 rounded-full bg-berry hover:bg-berry-deep py-2.5 text-xs font-extrabold text-white shadow-sm transition-all"
+              className="mt-space-xs w-full h-10 bg-navy-deep hover:bg-navy-surface text-surface rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98]"
             >
-              <span>ติดต่อรับสิทธิ์ / จองตรง</span>
-              <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+              <span>{t('sponsor.cta')}</span>
+              <span className="material-symbols-outlined text-[16px]">open_in_new</span>
             </a>
           </div>
         </div>
       )}
 
-      {/* 2. Secondary Service Partner (Compact Card) */}
-      {secondarySponsor && (
-        <div className="rounded-card border border-rule bg-sun-soft/50 p-4 text-ink shadow-xs">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-xs font-extrabold text-ink">
-              <ShieldCheck className="h-4 w-4 text-leaf" />
-              <span>บริการแนะนำสำหรับคนขับ & รถเช่า</span>
-            </div>
-            <span
-              suppressHydrationWarning
-              className="text-[10px] font-bold text-sun-ink bg-sun-soft px-2 py-0.5 rounded-pill border border-sun/20"
-            >
-              คลิก: {mounted ? getSponsorClickCount(secondarySponsor.id) : 0}
-            </span>
-          </div>
-
-          <h5 className="font-display mt-2 text-sm font-extrabold text-ink line-clamp-1">
-            {secondarySponsor.title}
-          </h5>
-
-          <p className="mt-1 text-xs text-ink-2 font-medium line-clamp-2">
-            {secondarySponsor.discountText}
-          </p>
-
-          <a
-            href={secondarySponsor.link}
-            onClick={() => handleSponsorClick(secondarySponsor)}
-            data-analytics-sponsor={secondarySponsor.id}
-            data-analytics-variant="sidebar"
-            className="td-btn td-pop mt-3 inline-flex items-center gap-1.5 rounded-full bg-card border border-rule px-3.5 py-1.5 text-xs font-extrabold text-ink hover:border-accent/40 shadow-xs transition-all"
-          >
-            {secondarySponsor.link.startsWith('tel:') ? (
-              <>
-                <Phone className="h-3.5 w-3.5 text-leaf" />
-                <span>โทรด่วน</span>
-              </>
-            ) : (
-              <>
-                <ExternalLink className="h-3.5 w-3.5 text-accent" />
-                <span>ดูรายละเอียด</span>
-              </>
-            )}
-          </a>
+      {/* 3. Driver Vacancy Highlight Card */}
+      <div className="bg-paper-canvas dark:bg-slate-900/60 rounded-2xl p-space-md border border-border-subtle dark:border-slate-800 space-y-space-xs">
+        <div className="flex items-center justify-between">
+          <span className="px-space-xs py-space-2xs rounded bg-verified-emerald-soft text-verified-emerald font-bold text-label-badge">
+            {t('spn.vacBadge')}
+          </span>
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-verified-emerald opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-verified-emerald" />
+          </span>
         </div>
-      )}
-
-      {/* 3. "Ad Space Available" Pitch Box */}
-      <div className="rounded-card border border-dashed border-rule bg-paper p-4 text-ink">
-        <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-accent">
-          <Megaphone className="h-4 w-4" />
-          <span>พื้นที่โฆษณาแถบข้าง (ว่าง 1 จุด)</span>
-        </div>
-
-        <h5 className="font-display mt-1 text-sm font-extrabold text-ink">
-          สนใจโปรโมตรีสอร์ต / ธุรกิจของคุณ?
+        <h5 className="font-title-card text-title-card text-navy-deep dark:text-white">
+          {t('spn.vacTitle')}
         </h5>
-
-        <p className="mt-1 text-xs text-ink-2 leading-relaxed">
-          แสดงผลเคียงข้างรถตู้ทุกคัน เข้าถึงนักท่องเที่ยวเชียงใหม่กว่า 5,000+ ครั้ง/เดือน พร้อมรายงานสถิติ คลิกจริง
+        <p className="font-body-subtext text-body-subtext text-ink-secondary dark:text-slate-300">
+          {t('spn.vacDesc')}
         </p>
+        <button
+          type="button"
+          onClick={() => {
+            document.getElementById('tripboard')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="w-full mt-1 text-center text-body-subtext font-bold text-blue-action hover:underline cursor-pointer"
+        >
+          {t('spn.vacCta')}
+        </button>
+      </div>
 
-        <div className="mt-3 flex items-center justify-between border-t border-dashed border-rule pt-2.5">
-          <span className="text-xs font-extrabold text-leaf">เริ่มต้น ฿1,500/เดือน</span>
+      {/* 4. Package Stats & Advertising (Stitch Redesign Card) */}
+      <div className="bg-gradient-to-br from-primary-container to-navy-surface text-surface rounded-2xl p-space-md space-y-space-sm shadow-md">
+        <div className="space-y-space-2xs">
+          <span className="font-label-badge text-label-badge text-taxi-yellow-30 uppercase tracking-wider">
+            Sponsorship & Ads
+          </span>
+          <h4 className="font-title-card text-title-card text-surface">
+            {t('spn.adsTitle')}
+          </h4>
+          <p className="font-body-subtext text-body-subtext text-surface-container-high opacity-90">
+            {t('spn.adsDesc')}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-space-xs pt-space-2xs">
           <a
-            href="https://line.me"
+            href="https://line.me/R/ti/p/@tripdee"
             target="_blank"
             rel="noopener noreferrer"
-            className="td-btn rounded-pill border border-rule bg-card px-3 py-1 text-[11px] font-extrabold text-ink hover:bg-paper-2 transition-colors"
+            className="h-9 bg-line-green hover:bg-line-green-hover text-surface rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 transition-all"
           >
-            ทักไลน์ @tripdee
+            <span className="material-symbols-outlined text-[16px]">chat</span>
+            <span>{t('spn.adsAdvertise')}</span>
+          </a>
+          <a
+            href="https://line.me/R/ti/p/@tripdee"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-9 bg-surface/20 hover:bg-surface/30 text-surface rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 transition-all"
+          >
+            <span>{t('spn.adsStats')}</span>
           </a>
         </div>
       </div>

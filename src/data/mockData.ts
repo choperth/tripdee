@@ -80,6 +80,14 @@ export interface TravelRoute {
   recommendedVehicle: string;
   /** Thai match key for vehicle filtering; stable across display languages */
   filterKey: string;
+  regionCategory?: 'north' | 'south' | 'east' | 'central' | 'all';
+  distanceTime?: string;
+  regionBadge?: string;
+  plateBadge?: string;
+  badgeTags?: string[];
+  startingDailyRate?: number;
+  otaStandardRate?: number;
+  savingsAmount?: number;
 }
 
 export const ZONE_RATE_CARDS: ZoneRateCard[] = [
@@ -140,18 +148,16 @@ export const POPULAR_ROUTES: TravelRoute[] = [
     zone: 'ภาคเหนือ / ธรรมชาติ',
     highlight: 'ทุ่งดอกไม้ สวนส้ม ทะเลหมอก คาเฟ่วิวเขา',
     image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
-    estimatedPrice: '1,800 - 2,200 บ./วัน',
-    recommendedVehicle: 'รถตู้ VIP / SUV'
-  },
-  {
-    id: 'bkk-pattaya',
-    name: 'กรุงเทพฯ - พัทยา - สัตหีบ',
-    filterKey: 'พัทยา',
-    zone: 'ภาคตะวันออก / ทะเล',
-    highlight: 'แหลมบาลีฮาย สวนนงนุช เกาะล้าน ท่องเที่ยวชายทะเล',
-    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
-    estimatedPrice: '2,000 - 2,500 บ./วัน',
-    recommendedVehicle: 'Toyota Majesty / VIP Van'
+    estimatedPrice: '2,500 บ./วัน',
+    recommendedVehicle: 'รถตู้ VIP / SUV',
+    regionCategory: 'north',
+    distanceTime: '42 km · 1.1 hrs จากตัวเมืองเชียงใหม่',
+    regionBadge: 'ภาคเหนือ · เชียงใหม่',
+    plateBadge: 'ป้ายเหลือง 30',
+    badgeTags: ['ไร่ชาขั้นบันได', 'ทุ่งดอกไม้', 'แวะคาเฟ่ยอดฮิต', 'ทางลาดชันขับปลอดภัย'],
+    startingDailyRate: 2500,
+    otaStandardRate: 3200,
+    savingsAmount: 700,
   },
   {
     id: 'inthanon',
@@ -160,8 +166,16 @@ export const POPULAR_ROUTES: TravelRoute[] = [
     zone: 'ภาคเหนือ / ดอยสูง',
     highlight: 'จุดสูงสุดแดนสยาม พระมหาธาตุฯ น้ำตกวชิรธาร เส้นทางศึกษาธรรมชาติ',
     image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
-    estimatedPrice: '2,200 - 2,500 บ./วัน',
-    recommendedVehicle: 'รถตู้ VIP เครื่องแรงชำนาญทาง'
+    estimatedPrice: '2,800 บ./วัน',
+    recommendedVehicle: 'รถตู้ VIP เครื่องแรงชำนาญทาง',
+    regionCategory: 'north',
+    distanceTime: '106 km · 2.2 hrs สู่ยอดดอยสูงสุด',
+    regionBadge: 'ภาคเหนือ · ดอยสูงสุด',
+    plateBadge: 'ป้ายเหลือง 30',
+    badgeTags: ['จุดชมวิวทะเลหมอก', 'เส้นทางเดินศึกษาธรรมชาติ', 'พระมหาธาตุเจดีย์', 'คนขับชำนาญทางดอย'],
+    startingDailyRate: 2800,
+    otaStandardRate: 3800,
+    savingsAmount: 1000,
   },
   {
     id: 'phuket-phangnga',
@@ -170,8 +184,16 @@ export const POPULAR_ROUTES: TravelRoute[] = [
     zone: 'ภาคใต้ / ทะเลอันดามัน',
     highlight: 'จุดชมวิวอ่าวพังงา หาดป่าตอง เมืองเก่าภูเก็ต แหลมพรหมเทพ',
     image: 'https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?auto=format&fit=crop&w=800&q=80',
-    estimatedPrice: '2,200 - 2,600 บ./วัน',
-    recommendedVehicle: 'All New Commuter VIP'
+    estimatedPrice: '3,000 บ./วัน',
+    recommendedVehicle: 'All New Commuter VIP',
+    regionCategory: 'south',
+    distanceTime: '85 km · 1.5 hrs ทริปอันดามัน',
+    regionBadge: 'ภาคใต้ · ทะเลอันดามัน',
+    plateBadge: 'ป้ายเหลือง 30',
+    badgeTags: ['เสม็ดนางชี', 'ท่าเรืออ่าวพังงา', 'เกาะเจหลี', 'รับส่งสนามบินภูเก็ต (HKT)'],
+    startingDailyRate: 3000,
+    otaStandardRate: 4200,
+    savingsAmount: 1200,
   },
   {
     id: 'khao-yai',
@@ -180,8 +202,34 @@ export const POPULAR_ROUTES: TravelRoute[] = [
     zone: 'ภาคอีสาน / อากาศบริสุทธิ์',
     highlight: 'อุทยานแห่งชาติเขาใหญ่ ไร่องุ่น คาเฟ่ธรรมชาติ สัมมนากลุ่ม',
     image: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80',
-    estimatedPrice: '2,000 - 2,400 บ./วัน',
-    recommendedVehicle: 'Toyota Commuter / SUV 4WD'
+    estimatedPrice: '2,700 บ./วัน',
+    recommendedVehicle: 'Toyota Commuter / SUV 4WD',
+    regionCategory: 'central',
+    distanceTime: '165 km · 2.5 hrs จากกรุงเทพฯ',
+    regionBadge: 'ภาคอีสาน · มรดกโลก',
+    plateBadge: 'ป้ายเหลือง 30',
+    badgeTags: ['อุทยานแห่งชาติ', 'ไร่องุ่น & คาเฟ่', 'ที่พักสไตล์ยุโรป', 'เหมาะสำหรับครอบครัว'],
+    startingDailyRate: 2700,
+    otaStandardRate: 3500,
+    savingsAmount: 800,
+  },
+  {
+    id: 'bkk-pattaya',
+    name: 'กรุงเทพฯ - พัทยา - สัตหีบ',
+    filterKey: 'พัทยา',
+    zone: 'ภาคตะวันออก / ทะเล',
+    highlight: 'แหลมบาลีฮาย สวนนงนุช เกาะล้าน ท่องเที่ยวชายทะเล',
+    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+    estimatedPrice: '2,400 บ./วัน',
+    recommendedVehicle: 'Toyota Majesty / VIP Van',
+    regionCategory: 'east',
+    distanceTime: '140 km · 1.8 hrs ชายทะเลตะวันออก',
+    regionBadge: 'ภาคตะวันออก · อ่าวไทย',
+    plateBadge: 'ป้ายเหลือง 30',
+    badgeTags: ['หาดทรายแก้ว', 'สวนนงนุช', 'เรือรบหลวงจักรีนฤเบศร', 'รับส่งสุวรรณภูมิ/อู่ตะเภา'],
+    startingDailyRate: 2400,
+    otaStandardRate: 3100,
+    savingsAmount: 700,
   },
   {
     id: 'bkk-huahin',
@@ -190,8 +238,16 @@ export const POPULAR_ROUTES: TravelRoute[] = [
     zone: 'ภาคกลาง / พักผ่อนตากอากาศ',
     highlight: 'ชายหาดหัวหิน ตลาดซิเคด้า พระราชนิเวศน์มฤคทายวัน',
     image: 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=800&q=80',
-    estimatedPrice: '2,200 - 2,600 บ./วัน',
-    recommendedVehicle: 'Toyota Majesty / VIP Van'
+    estimatedPrice: '2,600 บ./วัน',
+    recommendedVehicle: 'Toyota Majesty / VIP Van',
+    regionCategory: 'central',
+    distanceTime: '190 km · 2.8 hrs พักผ่อนตากอากาศ',
+    regionBadge: 'ภาคกลาง · ชายหาดหัวหิน',
+    plateBadge: 'ป้ายเหลือง 30',
+    badgeTags: ['ชายหาดหัวหิน', 'ตลาดซิเคด้า', 'พระราชนิเวศน์มฤคทายวัน', 'ขับนุ่มสบายครอบครัว'],
+    startingDailyRate: 2600,
+    otaStandardRate: 3400,
+    savingsAmount: 800,
   }
 ];
 
@@ -296,6 +352,43 @@ export const VEHICLES: Vehicle[] = [
     isAvailable: true,
   },
   {
+    id: 'v-1b',
+    title: 'Toyota Fortuner 2.8 4WD 7 ที่นั่ง ลุยดอยสูงพร้อมคนขับ (พี่ชัย รถตู้เชียงใหม่)',
+    type: 'suv',
+    rentalType: 'with_driver',
+    seats: 7,
+    driverName: 'นายสุรชัย ใจดี',
+    driverNickname: 'พี่ชัย รถตู้เชียงใหม่',
+    driverPhone: '081-234-5678',
+    driverLine: 'https://line.me',
+    driverWhatsapp: 'https://wa.me/66812345678',
+    driverWechat: 'chaicnx_van',
+    driverKakao: 'chaivan_cnx',
+    languages: ['th', 'en'],
+    region: 'north',
+    rating: 4.9,
+    reviewCount: 31,
+    isVerified: true,
+    images: [
+      'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80',
+    ],
+    zoneRates: { city: 2000, midHill: 2200, highHill: 2400, crossProvince: 2800 },
+    location: 'เชียงใหม่ / ม่อนแจ่ม / ดอยอินทนนท์ / ภาคเหนือ',
+    popularRoutes: ['ม่อนแจ่ม', 'ดอยอินทนนท์', 'แม่กำปอง', 'เชียงดาว', 'ปาย'],
+    amenities: [
+      'ระบบขับเคลื่อน 4 ล้อแท้ ขึ้นดอยชันปลอดภัย',
+      'เบาะหนัง 7 ที่นั่ง แอร์เย็นฉ่ำทุกแถว',
+      'คนขับชำนาญทางดอยอินทนนท์และแม่ฮ่องสอน',
+      'ประกันภัยผู้โดยสารชั้น 1',
+    ],
+    description: 'SUV 4WD ลุยเขาดอยสูง สำหรับลูกค้ากลุ่มเล็ก 4-6 ท่านที่ต้องการความคล่องตัว นั่งสบาย คนขับคนเดิมชำนาญทาง มั่นใจในความปลอดภัย',
+    plateType: 'blue',
+    plateNumber: 'กข-9821 ชม.',
+    canIssueTaxInvoice: true,
+    businessType: 'company',
+    isAvailable: true,
+  },
+  {
     id: 'v-2',
     title: 'Toyota Majesty Executive 7 ที่นั่ง เบาะ Captain Seat พรีเมียม (กทม. & พัทยา & หัวหิน)',
     type: 'van',
@@ -328,6 +421,43 @@ export const VEHICLES: Vehicle[] = [
     description: 'ระดับพรีเมียมสำหรับรับรองแขก VIP ลูกค้าองค์กร ชาวต่างชาติ หรือทริปครอบครัวที่ต้องการความหรูหราและความเป็นส่วนตัวสูงสุด ออกใบกำกับภาษีในนามบริษัทได้',
     plateType: 'yellow',
     plateNumber: '30-1122 กทม.',
+    canIssueTaxInvoice: true,
+    businessType: 'company',
+    isAvailable: true,
+  },
+  {
+    id: 'v-2b',
+    title: 'Toyota Alphard SC Package VIP 7 ที่นั่ง สไตล์ผู้บริหาร (พี่พจน์ VIP Limo)',
+    type: 'van',
+    rentalType: 'with_driver',
+    seats: 7,
+    driverName: 'นายวรพจน์ กานต์ธนา',
+    driverNickname: 'พี่พจน์ VIP Limo',
+    driverPhone: '086-555-1234',
+    driverLine: 'https://line.me',
+    driverWhatsapp: 'https://wa.me/66865551234',
+    driverWechat: 'bkk_limo_vip',
+    languages: ['th', 'en', 'zh'],
+    region: 'central',
+    rating: 5.0,
+    reviewCount: 26,
+    isVerified: true,
+    images: [
+      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80',
+    ],
+    zoneRates: { city: 3800, midHill: 4000, highHill: 4200, crossProvince: 4800 },
+    rateNote: 'หรูหราพรีเมียมสูงสุด ออกใบกำกับภาษีได้',
+    location: 'กรุงเทพฯ & ปริมณฑล / พัทยา / หัวหิน / อยุธยา',
+    popularRoutes: ['กรุงเทพฯ', 'สนามบินสุวรรณภูมิ', 'พัทยา', 'หัวหิน'],
+    amenities: [
+      'เบาะ Mickey Mouse ปรับไฟฟ้าพร้อมที่รองน่อง',
+      'หลังคามูนรูฟคู่ Twin Moonroof',
+      'ระบบเสียงรอบทิศทาง',
+      'คนขับแต่งกายสุภาพ สื่อสารภาษาอังกฤษและจีนได้',
+    ],
+    description: 'รถตู้หรูระดับลักชัวรี่ นุ่มนวล เงียบสนิท เหมาะสำหรับรับรองแขกระดับ VIP งานประชุมระดับนานาชาติ หรือทริปครอบครัวสุดพิเศษ',
+    plateType: 'yellow',
+    plateNumber: '30-8899 กทม.',
     canIssueTaxInvoice: true,
     businessType: 'company',
     isAvailable: true,
@@ -1000,6 +1130,19 @@ export const VEHICLES: Vehicle[] = [
 
 export type BoardPostType = 'request' | 'offer';
 
+export interface BoardQuote {
+  id: string;
+  postId: string;
+  driverName: string;
+  driverPhone: string;
+  driverLine?: string;
+  vehicleModel: string;
+  price: number;
+  priceNote?: string;
+  message?: string;
+  createdAt: string;
+}
+
 export interface BoardPost {
   id: string;
   /** request = ลูกค้าตั้งงบหารถ, offer = คนขับตั้งราคาประกาศว่าง */
@@ -1027,6 +1170,14 @@ export interface BoardPost {
   isClosed?: boolean;
   /** วันที่สร้าง ISO string สำหรับใช้คำนวณ Auto-expire */
   createdAt?: string;
+  /** โหมดราคาตามตกลง / รอคนขับยื่นใบเสนอราคา */
+  isNegotiable?: boolean;
+  /** จำนวนโควตารับใบเสนอราคาสูงสุด (ค่าเริ่มต้น 3) */
+  maxQuotes?: number;
+  /** จำนวนใบเสนอราคาที่ได้รับแล้ว */
+  quoteCount?: number;
+  /** รหัสใบเสนอราคาที่ลูกค้ายอมรับแล้ว */
+  acceptedQuoteId?: string;
 }
 
 export const BOARD_POSTS: BoardPost[] = [
@@ -1131,5 +1282,25 @@ export const BOARD_POSTS: BoardPost[] = [
     detail: 'รับผู้บริหารจากสนามบิน ตระเวนประชุมในเมืองทั้งวัน คนขับสวมสูท ตรงเวลา มีเอกสารใบกำกับภาษีเต็มรูป',
     postedAt: '2 วันที่แล้ว',
     isVerified: true,
+  },
+  {
+    id: 'b-7',
+    type: 'request',
+    title: 'หารถตู้ VIP 10 ที่นั่ง เชียงใหม่-ปาย-ปางอุ๋ง 3 วัน 2 คืน (รอคนขับเสนอราคา)',
+    zoneId: 'highHill',
+    date: '3-5 ต.ค. 69',
+    days: 3,
+    seats: 9,
+    price: 0,
+    priceNote: 'รอคนขับเสนอราคา',
+    isNegotiable: true,
+    maxQuotes: 3,
+    quoteCount: 1,
+    authorName: 'คุณวรัญญา (กลุ่มเพื่อน 9 ท่าน)',
+    authorPhone: '081-999-8877',
+    authorLine: 'https://line.me',
+    pin: '1234',
+    detail: 'เดินทาง 9 คน กระเป๋าคนละใบ จุดเริ่มสนามบินเชียงใหม่ แวะคาเฟ่ ปาย ถนนคนเดิน ปางอุ๋ง ขอคนขับใจเย็น ชำนาญโค้งทางเขา',
+    postedAt: '10 นาทีที่แล้ว',
   },
 ];

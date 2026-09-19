@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 
 interface AdminDeleteModalProps {
@@ -20,12 +21,16 @@ export const AdminDeleteModal: React.FC<AdminDeleteModalProps> = ({
   onClose,
   isDeleting,
 }) => {
-  if (!isOpen) return null;
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
+  if (!isOpen) return null;
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="admin-delete-title"
       className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-ink/70 backdrop-blur-sm animate-in fade-in duration-150"
     >
       <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl border border-rule text-ink relative">
@@ -41,7 +46,7 @@ export const AdminDeleteModal: React.FC<AdminDeleteModalProps> = ({
             <AlertTriangle className="h-5 w-5" />
           </span>
           <div>
-            <h3 className="font-display font-extrabold text-lg text-ink">{title}</h3>
+            <h3 id="admin-delete-title" className="font-display font-extrabold text-lg text-ink">{title}</h3>
             <p className="text-xs text-ink-2">การดำเนินการนี้ไม่สามารถย้อนกลับได้</p>
           </div>
         </div>

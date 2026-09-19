@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { Vehicle, STANDARD_TERMS, formatTHB } from '@/data/mockData';
 import {
   Printer,
@@ -72,13 +74,19 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
   onClose,
   isModal = false,
 }) => {
-  // Generate default booking ID based on timestamp
-  const defaultBookingId = `TD-BK-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
-  const todayThai = new Intl.DateTimeFormat('th-TH', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date());
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose, enabled: isModal });
+  const { t } = useLanguage();
+  const [defaultBookingId] = useState(
+    () => `TD-BK-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`
+  );
+  const [todayThai] = useState(() =>
+    new Intl.DateTimeFormat('th-TH', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(new Date())
+  );
 
   const rateFromVehicle = vehicle?.zoneRates?.city || 1900;
   const daysDefault = initialData?.totalDays || 2;
@@ -202,7 +210,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
           >
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            <span>{copied ? 'คัดลอกข้อความแล้ว!' : 'ก๊อปปี้ส่ง LINE'}</span>
+            <span>{copied ? 'คัดลอกข้อความแล้ว!' : t('sheet.copyLine')}</span>
           </button>
 
           <button
@@ -211,7 +219,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
             className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-extrabold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all"
           >
             <Printer className="h-4 w-4" />
-            <span>พิมพ์ / เซฟ PDF</span>
+            <span>{t('sheet.print')}</span>
           </button>
 
           {isModal && onClose && (
@@ -219,7 +227,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               type="button"
               onClick={onClose}
               className="ml-2 text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-800 transition-colors"
-              aria-label="ปิด"
+              aria-label={t('auth.close')}
             >
               <X className="h-5 w-5" />
             </button>
@@ -229,15 +237,16 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
 
       {/* Editing Drawer (Screen-only) */}
       {isEditing && (
-        <div className="no-print bg-slate-50 p-5 border-b border-slate-200 text-xs space-y-4">
-          <h4 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-            <Edit3 className="h-4 w-4 text-blue-600" />
+        <div className="no-print bg-slate-50 dark:bg-slate-900 p-5 border-b border-slate-200 dark:border-slate-800 text-xs space-y-4">
+          <h4 className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+            <Edit3 className="h-4 w-4 text-blue-500" />
             <span>ปรับแต่งข้อมูลในใบสรุปการจองก่อนพิมพ์</span>
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block font-bold text-slate-700 mb-1">ชื่อผู้ว่าจ้าง/ผู้ติดต่อ</label>
+              <label htmlFor="sheet-cust-name" className="block font-bold text-slate-700 mb-1">ชื่อผู้ว่าจ้าง/ผู้ติดต่อ</label>
               <input
+                id="sheet-cust-name"
                 type="text"
                 value={data.customerName}
                 onChange={(e) => setData({ ...data, customerName: e.target.value })}
@@ -245,8 +254,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 mb-1">เบอร์โทรผู้ว่าจ้าง</label>
+              <label htmlFor="sheet-cust-phone" className="block font-bold text-slate-700 mb-1">เบอร์โทรผู้ว่าจ้าง</label>
               <input
+                id="sheet-cust-phone"
                 type="text"
                 value={data.customerPhone}
                 onChange={(e) => setData({ ...data, customerPhone: e.target.value })}
@@ -254,8 +264,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 mb-1">จำนวนผู้โดยสาร</label>
+              <label htmlFor="sheet-passengers" className="block font-bold text-slate-700 mb-1">จำนวนผู้โดยสาร</label>
               <input
+                id="sheet-passengers"
                 type="text"
                 value={data.passengers}
                 onChange={(e) => setData({ ...data, passengers: e.target.value })}
@@ -263,8 +274,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 mb-1">วันเดินทาง</label>
+              <label htmlFor="sheet-travel-dates" className="block font-bold text-slate-700 mb-1">วันเดินทาง</label>
               <input
+                id="sheet-travel-dates"
                 type="text"
                 value={data.travelDates}
                 onChange={(e) => setData({ ...data, travelDates: e.target.value })}
@@ -272,8 +284,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 mb-1">จำนวนวันเดินทาง</label>
+              <label htmlFor="sheet-total-days" className="block font-bold text-slate-700 mb-1">จำนวนวันเดินทาง</label>
               <input
+                id="sheet-total-days"
                 type="number"
                 min="1"
                 value={data.totalDays}
@@ -282,8 +295,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 mb-1">ราคาต่อวัน (บาท)</label>
+              <label htmlFor="sheet-daily-rate" className="block font-bold text-slate-700 mb-1">ราคาต่อวัน (บาท)</label>
               <input
+                id="sheet-daily-rate"
                 type="number"
                 min="0"
                 value={data.dailyRate}
@@ -292,8 +306,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 mb-1">จุดนัดรับ</label>
+              <label htmlFor="sheet-pickup-loc" className="block font-bold text-slate-700 mb-1">จุดนัดรับ</label>
               <input
+                id="sheet-pickup-loc"
                 type="text"
                 value={data.pickupLocation}
                 onChange={(e) => setData({ ...data, pickupLocation: e.target.value })}
@@ -301,8 +316,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 mb-1">เวลานัดหมาย</label>
+              <label htmlFor="sheet-pickup-time" className="block font-bold text-slate-700 mb-1">เวลานัดหมาย</label>
               <input
+                id="sheet-pickup-time"
                 type="text"
                 value={data.pickupTime}
                 onChange={(e) => setData({ ...data, pickupTime: e.target.value })}
@@ -310,8 +326,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 mb-1">ยอดเงินมัดจำ (บาท)</label>
+              <label htmlFor="sheet-deposit" className="block font-bold text-slate-700 mb-1">ยอดเงินมัดจำ (บาท)</label>
               <input
+                id="sheet-deposit"
                 type="number"
                 value={data.depositAmount}
                 onChange={(e) => {
@@ -326,8 +343,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               />
             </div>
             <div className="sm:col-span-3">
-              <label className="block font-bold text-slate-700 mb-1">เส้นทางและสถานที่ท่องเที่ยว</label>
+              <label htmlFor="sheet-route-details" className="block font-bold text-slate-700 mb-1">เส้นทางและสถานที่ท่องเที่ยว</label>
               <input
+                id="sheet-route-details"
                 type="text"
                 value={data.routeDetails}
                 onChange={(e) => setData({ ...data, routeDetails: e.target.value })}
@@ -581,19 +599,19 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
             <div className="h-14 border-b border-dashed border-slate-400 mx-auto max-w-[200px]" />
             <p className="font-bold text-slate-800 mt-2">({data.customerName})</p>
             <p className="text-[11px] text-slate-500">ผู้ว่าจ้าง / ผู้โดยสาร</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">วันที่ _____/_____/_________</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">วันที่ _____/_____/_________</p>
           </div>
 
           <div>
             <div className="h-14 border-b border-dashed border-slate-400 mx-auto max-w-[200px]" />
             <p className="font-bold text-slate-800 mt-2">({data.driverName})</p>
             <p className="text-[11px] text-slate-500">คนขับผู้ให้บริการ / เจ้าของรถ</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">วันที่ _____/_____/_________</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">วันที่ _____/_____/_________</p>
           </div>
         </div>
 
         {/* Document Footer */}
-        <div className="mt-8 pt-3 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-400">
+        <div className="mt-8 pt-3 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-500">
           <span>TripDee Verified System · ระบบพิมพ์ใบสรุปการจองมาตรฐาน</span>
           <span>หน้า 1 จาก 1 · บันทึกเป็นหลักฐานได้ทั้งลูกค้าและคนขับ</span>
         </div>
@@ -609,8 +627,10 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
         role="presentation"
       >
         <div
+          ref={dialogRef}
           role="dialog"
           aria-modal="true"
+          aria-label="ใบสรุปการจองรถ TripDee"
           onClick={(e) => e.stopPropagation()}
           className="relative my-auto w-full max-w-4xl max-h-[95vh] overflow-y-auto rounded-2xl"
         >

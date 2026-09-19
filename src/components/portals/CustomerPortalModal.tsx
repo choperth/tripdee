@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { X, Briefcase, Download, Printer, Plus, LogOut, Check, FileText } from 'lucide-react';
@@ -23,6 +24,8 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
   const [activeTab, setActiveTab] = useState<'quotes' | 'taxProfile'>('quotes');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [activeSheetData, setActiveSheetData] = useState<Partial<BookingSheetData> | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
   // Tax Profile Form State
   const [companyName, setCompanyName] = useState(user?.companyName || '');
@@ -68,8 +71,10 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="customer-portal-title"
       className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
     >
       <div className="td-elev-lift relative w-full max-w-2xl rounded-modal bg-card p-6 sm:p-8 text-ink my-6 max-h-[92vh] overflow-y-auto">
@@ -90,7 +95,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
                 <Briefcase className="h-5 w-5" strokeWidth={2.5} />
               </span>
               <div>
-                <h2 className="font-display text-2xl font-extrabold text-ink">
+                <h2 id="customer-portal-title" className="font-display text-2xl font-extrabold text-ink">
                   {t('pcus.title')}
                 </h2>
                 <p className="text-xs font-bold text-ink-2">
@@ -206,10 +211,11 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
 
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="cus-company" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
                   {t('pcus.fCompany')}
                 </label>
                 <input
+                  id="cus-company"
                   type="text"
                   required
                   placeholder={t('pcus.fCompanyPh')}
@@ -221,10 +227,11 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                  <label htmlFor="cus-taxid" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
                     {t('pcus.fTaxId')}
                   </label>
                   <input
+                    id="cus-taxid"
                     type="text"
                     required
                     placeholder="0105559088123"
@@ -235,10 +242,11 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                  <label htmlFor="cus-branch" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
                     {t('pcus.fBranch')}
                   </label>
                   <input
+                    id="cus-branch"
                     type="text"
                     placeholder={t('pcus.fBranchPh')}
                     value={branch}
@@ -249,10 +257,11 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="cus-addr" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
                   {t('pcus.fAddr')}
                 </label>
                 <textarea
+                  id="cus-addr"
                   rows={2}
                   required
                   placeholder={t('pcus.fAddrPh')}

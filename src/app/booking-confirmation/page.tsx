@@ -5,13 +5,14 @@ import { useSearchParams } from 'next/navigation';
 import { BookingConfirmationSheet, BookingSheetData } from '@/components/BookingConfirmationSheet';
 import { VEHICLES, Vehicle } from '@/data/mockData';
 import Link from 'next/link';
-import { ArrowLeft, Home, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 function BookingConfirmationContent() {
   const searchParams = useSearchParams();
   const vehicleId = searchParams.get('vehicleId');
   const quoteId = searchParams.get('quoteId');
-
+  const { t } = useLanguage();
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [initialData, setInitialData] = useState<Partial<BookingSheetData>>({});
 
@@ -20,7 +21,7 @@ function BookingConfirmationContent() {
     if (vehicleId) {
       const found = VEHICLES.find((v) => v.id === vehicleId);
       if (found) {
-        setVehicle(found);
+        queueMicrotask(() => setVehicle(found));
       } else {
         fetch('/api/vehicles')
           .then((res) => res.json())
@@ -55,25 +56,29 @@ function BookingConfirmationContent() {
     if (route) overrides.routeDetails = route;
     if (driver) overrides.driverName = driver;
 
-    setInitialData(overrides);
+    queueMicrotask(() => setInitialData(overrides));
   }, [vehicleId, quoteId, searchParams]);
 
   return (
     <main className="min-h-screen bg-slate-100 py-6 sm:py-10 px-3 sm:px-6">
       {/* Navigation breadcrumbs (hidden in print) */}
-      <div className="no-print max-w-4xl mx-auto mb-4 flex items-center justify-between text-xs font-bold text-slate-600">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          <span>กลับหน้าแรก TripDee</span>
-        </Link>
+      <nav aria-label="Breadcrumb" className="no-print max-w-4xl mx-auto mb-4 flex items-center justify-between text-xs font-bold text-slate-600">
+        <ol className="flex items-center">
+          <li>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>{t('book.backHome')}</span>
+            </Link>
+          </li>
+        </ol>
         <span className="flex items-center gap-1 text-slate-400">
           <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-          <span>TripDee Verified · เอกสารยืนยันมาตรฐาน</span>
+          <span>{t('book.verified')}</span>
         </span>
-      </div>
+      </nav>
 
       <BookingConfirmationSheet
         vehicle={vehicle}

@@ -9,6 +9,7 @@ export type SponsorClickVariant = 'split' | 'strip' | 'card' | 'footer' | 'sideb
 export type CallTargetType =
   | 'vehicle_card'
   | 'vehicle_detail'
+  | 'driver_fleet'
   | 'trip_board'
   | 'sponsor'
   | 'admin_fleet'
@@ -86,6 +87,7 @@ export function createEmptySummary(): AnalyticsSummary {
       byTargetType: {
         vehicle_card: 0,
         vehicle_detail: 0,
+        driver_fleet: 0,
         trip_board: 0,
         sponsor: 0,
         admin_fleet: 0,

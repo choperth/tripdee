@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CarFront, Briefcase, ShieldCheck, ArrowRight, MessageCircle } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface PlatformShowcaseProps {
   onOpenRegister?: () => void;
@@ -14,145 +14,170 @@ export const PlatformShowcase: React.FC<PlatformShowcaseProps> = ({
   onSelectCorporate,
   onScrollToSearch,
 }) => {
+  const { t } = useLanguage();
+
   return (
-    <section aria-label="บริการหลักของแพลตฟอร์ม TripDee" className="my-14">
-      {/* Section Heading */}
-      <div className="text-center max-w-2xl mx-auto mb-8">
-        <div className="inline-flex items-center gap-1.5 rounded-pill bg-accent-soft px-3 py-1 text-xs font-bold text-accent mb-2 border border-accent/20">
-          <span>🚀 OPEN MOBILITY PLATFORM</span>
+    <section aria-label={t('show.title')} className="w-full py-space-3xl bg-paper-canvas dark:bg-slate-950 transition-colors">
+      <div className="max-w-7xl mx-auto px-margin lg:px-gutter">
+        {/* Platform Header (Stitch Redesign) */}
+        <div className="text-center max-w-2xl mx-auto space-y-space-xs mb-space-2xl">
+          <h2 className="font-headline-xl text-headline-xl text-navy-deep dark:text-white tracking-tight">
+            {t('show.title')}
+          </h2>
+          <p className="font-body-base text-body-base text-ink-secondary dark:text-slate-300">
+            {t('show.subtitle')}
+          </p>
         </div>
-        <h2 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
-          ร่วมขับเคลื่อนการเดินทางกับ TripDee
-        </h2>
-        <p className="mt-2 text-xs sm:text-sm font-medium text-ink-2">
-          ศูนย์รวมรถตู้ VIP และรถเช่าคุณภาพสูง ดีลตรงระหว่างผู้เดินทางและคนขับ 0% ค่าคอมมิชชั่น
-        </p>
-      </div>
 
-      {/* 3 Real Feature Cards (House Ads) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card 1: For Drivers */}
-        <div className="td-elev-card flex flex-col justify-between rounded-card bg-card border border-rule p-6 hover:border-accent/50 transition-all">
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-4">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-accent text-white shadow-xs">
-                <CarFront className="h-5 w-5" />
-              </span>
-              <span className="rounded-pill bg-leaf-soft px-2.5 py-0.5 text-[11px] font-bold text-leaf border border-leaf/20">
-                0% คอมมิชชั่น
-              </span>
+        {/* 3 Strategic Feature Cards (Stitch 3-Column Layout) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-space-lg mb-space-2xl">
+          {/* Feature 1: 0% Commission */}
+          <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-lg shadow-md hover:shadow-xl border border-border-subtle dark:border-slate-800 transition-all flex flex-col justify-between space-y-space-md">
+            <div className="space-y-space-sm">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-blue-subtle text-blue-action dark:bg-blue-950 dark:text-blue-300 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[28px]">percent</span>
+                </div>
+                <span className="px-space-xs py-space-2xs rounded-full bg-verified-emerald-soft text-verified-emerald font-bold text-label-badge">
+                  {t('show.badgeZero')}
+                </span>
+              </div>
+              <h3 className="font-title-card text-title-card text-navy-deep dark:text-white">
+                {t('show.card1Title')}
+              </h3>
+              <p className="font-body-base text-body-base text-ink-secondary dark:text-slate-300">
+                {t('show.card1Desc')}
+              </p>
             </div>
-
-            <h3 className="font-display text-base font-extrabold text-ink mb-2">
-              มีรถตู้ VIP หรือรถเช่า? ร่วมรับงานตรงกับเรา
-            </h3>
-            <p className="text-xs font-medium text-ink-2 leading-relaxed">
-              เปิดรับสมัครคนขับและผู้ประกอบการรถเช่าทั่วไทย ลงทะเบียนฟรี ไม่มีหักค่าหัวคิว มีระบบจัดการสถานะรถว่างด้วยตนเอง 24 ชม.
-            </p>
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-rule/60">
             <button
               type="button"
               onClick={onOpenRegister}
-              className="td-btn w-full inline-flex items-center justify-center gap-1.5 rounded-pill bg-accent hover:bg-accent-deep text-white px-4 py-2.5 text-xs font-extrabold shadow-xs transition-all"
+              className="w-full h-10 bg-blue-action hover:bg-blue-action-hover text-on-primary rounded-xl font-body-medium text-body-medium transition-all shadow-sm cursor-pointer"
             >
-              <span>ลงทะเบียนพาร์ทเนอร์ฟรี</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+              {t('show.card1Cta')}
             </button>
           </div>
-        </div>
 
-        {/* Card 2: For Corporate Clients */}
-        <div className="td-elev-card flex flex-col justify-between rounded-card bg-card border border-rule p-6 hover:border-accent/50 transition-all">
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-4">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-600 text-white shadow-xs">
-                <Briefcase className="h-5 w-5" />
-              </span>
-              <span className="rounded-pill bg-blue-50 text-blue-700 px-2.5 py-0.5 text-[11px] font-bold border border-blue-200">
-                ใบกำกับภาษี & หัก 3%
-              </span>
+          {/* Feature 2: Corporate Caravan & Tax Invoices */}
+          <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-lg shadow-md hover:shadow-xl border border-border-subtle dark:border-slate-800 transition-all flex flex-col justify-between space-y-space-md">
+            <div className="space-y-space-sm">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-taxi-yellow-soft text-on-tertiary-container dark:bg-amber-950 dark:text-amber-300 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[26px]">receipt_long</span>
+                </div>
+                <span className="px-space-xs py-space-2xs rounded-full bg-taxi-yellow-soft text-on-tertiary-container dark:bg-amber-950/70 dark:text-amber-300 font-bold text-label-badge border border-amber-300/40">
+                  {t('show.badgeTax')}
+                </span>
+              </div>
+              <h3 className="font-title-card text-title-card text-navy-deep dark:text-white">
+                {t('show.card2Title')}
+              </h3>
+              <p className="font-body-base text-body-base text-ink-secondary dark:text-slate-300">
+                {t('show.card2Desc')}
+              </p>
             </div>
-
-            <h3 className="font-display text-base font-extrabold text-ink mb-2">
-              จัดคาราวานรถตู้สัมมนา & เดินทางดูงานองค์กร
-            </h3>
-            <p className="text-xs font-medium text-ink-2 leading-relaxed">
-              รวมรถตู้ VIP ป้ายเหลือง 30 ถูกต้องตามกฎหมาย มีประกันภัยผู้โดยสาร ออกใบเสร็จรับเงิน/ใบกำกับภาษีเต็มรูปแบบ ดีลตรงกับเจ้าของรถ
-            </p>
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-rule/60">
             <button
               type="button"
-              onClick={onSelectCorporate}
-              className="td-btn w-full inline-flex items-center justify-center gap-1.5 rounded-pill bg-paper-2 hover:bg-card border border-rule text-ink px-4 py-2.5 text-xs font-extrabold shadow-2xs transition-all"
+              onClick={() => {
+                if (onSelectCorporate) {
+                  onSelectCorporate();
+                } else {
+                  document.getElementById('corporate')?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="w-full h-10 bg-paper-surface-muted dark:bg-slate-800 hover:bg-surface-variant dark:hover:bg-slate-700 text-navy-deep dark:text-white rounded-xl font-body-medium text-body-medium transition-all shadow-sm cursor-pointer"
             >
-              <span>ดูข้อมูลรถองค์กร B2B</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+              {t('show.card2Cta')}
             </button>
           </div>
-        </div>
 
-        {/* Card 3: For Travelers / Peace of Mind */}
-        <div className="td-elev-card flex flex-col justify-between rounded-card bg-card border border-rule p-6 hover:border-accent/50 transition-all">
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-4">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-leaf text-white shadow-xs">
-                <ShieldCheck className="h-5 w-5" />
-              </span>
-              <span className="rounded-pill bg-leaf-soft px-2.5 py-0.5 text-[11px] font-bold text-leaf border border-leaf/20">
-                ตรวจเอกสารแล้ว
-              </span>
+          {/* Feature 3: Verified & Safe Deal Direct */}
+          <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-lg shadow-md hover:shadow-xl border border-border-subtle dark:border-slate-800 transition-all flex flex-col justify-between space-y-space-md">
+            <div className="space-y-space-sm">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-verified-emerald-soft text-verified-emerald dark:bg-emerald-950 dark:text-emerald-300 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[26px]">verified_user</span>
+                </div>
+                <span className="px-space-xs py-space-2xs rounded-full bg-verified-emerald-soft text-verified-emerald dark:bg-emerald-950/70 dark:text-emerald-300 font-bold text-label-badge">
+                  {t('hero.verifiedSticker')}
+                </span>
+              </div>
+              <h3 className="font-title-card text-title-card text-navy-deep dark:text-white">
+                {t('show.card3Title')}
+              </h3>
+              <p className="font-body-base text-body-base text-ink-secondary dark:text-slate-300">
+                {t('show.card3Desc')}
+              </p>
             </div>
-
-            <h3 className="font-display text-base font-extrabold text-ink mb-2">
-              ดีลตรง มั่นใจ ปลอดภัยและโปร่งใส 100%
-            </h3>
-            <p className="text-xs font-medium text-ink-2 leading-relaxed">
-              ตรวจสอบใบขับขี่และข้อมูลรถก่อนขึ้นระบบ พร้อมระบบเซ็นเซอร์ข้อมูลส่วนตัวเพื่อความปลอดภัย ตกลงราคาเหมาตรงกับคนขับตามระยะทางจริง
-            </p>
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-rule/60">
             <button
               type="button"
-              onClick={onScrollToSearch}
-              className="td-btn w-full inline-flex items-center justify-center gap-1.5 rounded-pill bg-paper-2 hover:bg-card border border-rule text-ink px-4 py-2.5 text-xs font-extrabold shadow-2xs transition-all"
+              onClick={() => {
+                if (onScrollToSearch) {
+                  onScrollToSearch();
+                } else {
+                  document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="w-full h-10 bg-paper-surface-muted dark:bg-slate-800 hover:bg-surface-variant dark:hover:bg-slate-700 text-navy-deep dark:text-white rounded-xl font-body-medium text-body-medium transition-all shadow-sm cursor-pointer"
             >
-              <span>ค้นหารถตู้ & รถเช่า</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+              {t('show.card3Cta')}
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Genuine Business Collaboration Banner */}
-      <div className="mt-8 rounded-card border border-rule/80 bg-paper-2 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 text-center sm:text-left">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-card border border-rule text-xl">
-            🤝
-          </span>
-          <div>
-            <h4 className="text-xs sm:text-sm font-extrabold text-ink">
-              สนใจร่วมเป็นพันธมิตรธุรกิจ หรือมอบสิทธิพิเศษให้นักท่องเที่ยว?
-            </h4>
-            <p className="text-xs font-medium text-ink-2 mt-0.5">
-              เจ้าของโรงแรม รีสอร์ต หรือบริการท่องเที่ยว ติดต่อทีมงาน TripDee เพื่อร่วมงานกันได้โดยตรง
-            </p>
+        {/* Partner Banner: Hotel & Resort Owners (Stitch Redesign) */}
+        <div className="bg-gradient-to-r from-primary-container via-navy-deep to-navy-surface rounded-3xl p-space-lg lg:p-space-xl text-surface shadow-xl flex flex-col md:flex-row items-center justify-between gap-space-lg">
+          <div className="flex items-center gap-space-md">
+            <div className="w-14 h-14 rounded-2xl bg-surface/10 flex items-center justify-center text-[28px] shrink-0">
+              🤝
+            </div>
+            <div className="space-y-space-2xs">
+              <h4 className="font-headline-md text-headline-md text-surface">
+                {t('show.bannerTitle')}
+              </h4>
+              <p className="font-body-base text-body-base text-surface-container-high opacity-90 max-w-2xl">
+                {t('show.bannerDesc')}
+              </p>
+            </div>
           </div>
+          <a
+            href="https://line.me/R/ti/p/@tripdee"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-space-lg py-space-sm bg-line-green hover:bg-line-green-hover text-on-primary rounded-xl font-title-card text-title-card flex items-center gap-space-2xs shadow-md transition-all active:scale-[0.98] whitespace-nowrap"
+          >
+            <span className="material-symbols-outlined text-[20px]">chat</span>
+            <span>{t('show.bannerCta')}</span>
+          </a>
         </div>
 
-        <a
-          href="https://line.me/R/ti/p/@tripdee"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="td-btn shrink-0 inline-flex items-center gap-1.5 rounded-pill bg-[#06C755] hover:bg-[#05b34c] text-white px-4 py-2 text-xs font-bold shadow-xs transition-all"
-        >
-          <MessageCircle className="h-3.5 w-3.5" />
-          <span>ติดต่อร่วมงาน (LINE @tripdee)</span>
-        </a>
+        {/* SEO Footnote Reference Directory (Stitch Redesign) */}
+        <div className="mt-space-2xl grid grid-cols-1 md:grid-cols-2 gap-space-lg bg-paper-elevated dark:bg-slate-900 p-space-lg rounded-2xl border border-border-subtle dark:border-slate-800 shadow-sm text-body-subtext">
+          <div>
+            <h5 className="font-title-card text-title-card text-navy-deep dark:text-white mb-space-xs">
+              {t('home.servicesTitle')}
+            </h5>
+            <ul className="space-y-1 text-ink-secondary dark:text-slate-300">
+              <li>• {t('home.service1')}</li>
+              <li>• {t('home.service2')}</li>
+              <li>• {t('home.service3')}</li>
+              <li>• {t('home.service4')}</li>
+              <li>• {t('home.service5')}</li>
+            </ul>
+          </div>
+          <div>
+            <h5 className="font-title-card text-title-card text-navy-deep dark:text-white mb-space-xs">
+              {t('home.routesRecTitle')}
+            </h5>
+            <ul className="space-y-1 text-ink-secondary dark:text-slate-300">
+              <li>• {t('home.routeLink1')}</li>
+              <li>• {t('home.routeLink2')}</li>
+              <li>• {t('home.routeLink3')}</li>
+              <li>• {t('home.routeLink4')}</li>
+              <li>• {t('home.routeLink5')}</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </section>
   );

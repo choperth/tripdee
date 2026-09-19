@@ -13,7 +13,7 @@
  */
 
 import { getSupabase } from './client';
-import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, ZoneId } from '@/data/mockData';
+import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, ZoneId, BoardQuote } from '@/data/mockData';
 import {
   QuotationLead,
   DriverLead,
@@ -51,6 +51,22 @@ type DynamicTableQuery = {
 
 // In-memory deleted board posts tracking to ensure instant UI sync across all modes
 const deletedBoardPostIds: string[] = [];
+
+// In-memory quotes store for board posts
+const localBoardQuotes: BoardQuote[] = [
+  {
+    id: 'q-demo-1',
+    postId: 'b-7',
+    driverName: 'พี่สมชาย VIP Lanna',
+    driverPhone: '081-555-4321',
+    driverLine: 'https://line.me',
+    vehicleModel: 'Toyota Commuter VIP 9 ที่นั่ง (เบาะนวดไฟฟ้า)',
+    price: 6500,
+    priceNote: 'ราคารวม 3 วัน ไม่รวมน้ำมัน (เติมตามจริง)',
+    message: 'คนขับชำนาญทางดอยอินทนนท์-ปาย ประสบการณ์ 12 ปี มีที่พักคนขับเตรียมไว้เรียบร้อยครับ',
+    createdAt: new Date().toISOString(),
+  }
+];
 
 // ==============================================================================
 // 1. QUOTATION LEADS SERVICE
@@ -644,7 +660,11 @@ export async function fetchBoardPosts(): Promise<BoardPost[]> {
     return BOARD_POSTS
       .filter((p) => !deletedBoardPostIds.includes(p.id))
       .filter((p) => !p.isClosed)
-      .filter((p) => !isPostExpired(p));
+      .filter((p) => !isPostExpired(p))
+      .map((p) => ({
+        ...p,
+        quoteCount: localBoardQuotes.filter((q) => q.postId === p.id).length || p.quoteCount || 0,
+      }));
   }
 
   try {
@@ -657,7 +677,11 @@ export async function fetchBoardPosts(): Promise<BoardPost[]> {
       return BOARD_POSTS
         .filter((p) => !deletedBoardPostIds.includes(p.id))
         .filter((p) => !p.isClosed)
-        .filter((p) => !isPostExpired(p));
+        .filter((p) => !isPostExpired(p))
+        .map((p) => ({
+          ...p,
+          quoteCount: localBoardQuotes.filter((q) => q.postId === p.id).length || p.quoteCount || 0,
+        }));
     }
 
     return data
@@ -685,13 +709,21 @@ export async function fetchBoardPosts(): Promise<BoardPost[]> {
         pin: row.pin || undefined,
         isClosed: Boolean(row.is_closed),
         createdAt: row.created_at,
+        isNegotiable: Boolean((row as any).is_negotiable),
+        maxQuotes: Number((row as any).max_quotes) || 3,
+        quoteCount: localBoardQuotes.filter((q) => q.postId === row.id).length || Number((row as any).quote_count) || 0,
+        acceptedQuoteId: (row as any).accepted_quote_id || undefined,
       }));
   } catch (err) {
     console.warn('[TripDee Supabase] Error fetching board posts, using mock data:', err);
     return BOARD_POSTS
       .filter((p) => !deletedBoardPostIds.includes(p.id))
       .filter((p) => !p.isClosed)
-      .filter((p) => !isPostExpired(p));
+      .filter((p) => !isPostExpired(p))
+      .map((p) => ({
+        ...p,
+        quoteCount: localBoardQuotes.filter((q) => q.postId === p.id).length || p.quoteCount || 0,
+      }));
   }
 }
 
@@ -704,6 +736,9 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
     category: post.category || 'general',
     isClosed: false,
     createdAt: new Date().toISOString(),
+    isNegotiable: Boolean(post.isNegotiable),
+    maxQuotes: post.maxQuotes || 3,
+    quoteCount: 0,
   };
 
   const supabase = getSupabase();
@@ -732,7 +767,9 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
         category: post.category || 'general',
         pin: post.pin || null,
         is_closed: false,
-      })
+        is_negotiable: Boolean(post.isNegotiable),
+        max_quotes: post.maxQuotes || 3,
+      } as any)
       .select()
       .single();
 
@@ -763,6 +800,9 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
         pin: data.pin || undefined,
         isClosed: Boolean(data.is_closed),
         createdAt: data.created_at,
+        isNegotiable: Boolean((data as any).is_negotiable),
+        maxQuotes: Number((data as any).max_quotes) || 3,
+        quoteCount: 0,
       };
     }
   } catch (err) {
@@ -801,6 +841,10 @@ export async function updateBoardPost(id: string, updates: Partial<BoardPost>): 
     if (updates.category !== undefined) supabaseUpdates.category = updates.category;
     if (updates.pin !== undefined) supabaseUpdates.pin = updates.pin;
     if (updates.isClosed !== undefined) supabaseUpdates.is_closed = updates.isClosed;
+    if (updates.isNegotiable !== undefined) supabaseUpdates.is_negotiable = updates.isNegotiable;
+    if (updates.maxQuotes !== undefined) supabaseUpdates.max_quotes = updates.maxQuotes;
+    if (updates.quoteCount !== undefined) supabaseUpdates.quote_count = updates.quoteCount;
+    if (updates.acceptedQuoteId !== undefined) supabaseUpdates.accepted_quote_id = updates.acceptedQuoteId;
 
     await (supabase.from('board_posts') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
   } catch (err) {
@@ -853,6 +897,181 @@ export async function closeBoardPost(id: string, inputPin: string): Promise<{ su
   }
 
   return { success: true, message: 'ปิดประกาศเรียบร้อยแล้ว ขอบคุณที่ใช้บริการ TripDee' };
+}
+
+/**
+ * Fetch quotes for a specific post.
+ * Author verification: if post has a PIN, author must provide PIN or last 4 digits of phone.
+ */
+export async function fetchBoardQuotes(
+  postId: string,
+  inputPin?: string
+): Promise<{ success: boolean; quotes?: BoardQuote[]; message?: string; authorContact?: { phone: string; line: string } }> {
+  const posts = await fetchBoardPosts();
+  const post = posts.find((p) => p.id === postId);
+  if (!post) {
+    return { success: false, message: 'ไม่พบประกาศที่ระบุ' };
+  }
+
+  // Check pin authentication if post has PIN
+  if (post.pin) {
+    const cleanInput = (inputPin || '').trim();
+    const cleanPhone = (post.authorPhone || '').replace(/\D/g, '');
+    const phoneLast4 = cleanPhone.slice(-4);
+    const correctPin = post.pin.trim();
+
+    const isMatch = (correctPin && cleanInput === correctPin) || (phoneLast4 && cleanInput === phoneLast4);
+    if (!isMatch) {
+      return { success: false, message: 'รหัส PIN หรือเลข 4 ตัวท้ายของเบอร์โทรศัพท์ไม่ถูกต้อง ไม่สามารถเปิดดูใบเสนอราคาได้' };
+    }
+  }
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('board_quotes')
+        .select('*')
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true });
+
+      if (!error && data && Array.isArray(data) && data.length > 0) {
+        return {
+          success: true,
+          quotes: data.map((r: any) => ({
+            id: String(r.id),
+            postId: String(r.post_id),
+            driverName: String(r.driver_name),
+            driverPhone: String(r.driver_phone),
+            driverLine: r.driver_line ? String(r.driver_line) : undefined,
+            vehicleModel: String(r.vehicle_model),
+            price: Number(r.price) || 0,
+            priceNote: r.price_note ? String(r.price_note) : undefined,
+            message: r.message ? String(r.message) : undefined,
+            createdAt: String(r.created_at || new Date().toISOString()),
+          })),
+          authorContact: { phone: post.authorPhone, line: post.authorLine },
+        };
+      }
+    } catch (err) {
+      console.warn('[TripDee Supabase] Error fetching quotes from db:', err);
+    }
+  }
+
+  const quotes = localBoardQuotes.filter((q) => q.postId === postId);
+  return {
+    success: true,
+    quotes,
+    authorContact: { phone: post.authorPhone, line: post.authorLine },
+  };
+}
+
+/**
+ * Submit a quote for a post. Enforces maxQuotes quota (default 3).
+ */
+export async function saveBoardQuote(quote: Omit<BoardQuote, 'id' | 'createdAt'>): Promise<{
+  success: boolean;
+  message: string;
+  quote?: BoardQuote;
+  remainingQuota?: number;
+}> {
+  const posts = await fetchBoardPosts();
+  const post = posts.find((p) => p.id === quote.postId);
+  if (!post) {
+    return { success: false, message: 'ไม่พบประกาศนี้ในระบบ หรือประกาศอาจถูกปิดแล้ว' };
+  }
+  if (post.isClosed) {
+    return { success: false, message: 'ประกาศนี้ได้รถและปิดรับข้อเสนอแล้ว ขอบคุณที่สนใจครับ' };
+  }
+
+  const maxQuotes = post.maxQuotes || 3;
+  const currentQuotes = localBoardQuotes.filter((q) => q.postId === quote.postId);
+  if (currentQuotes.length >= maxQuotes) {
+    return {
+      success: false,
+      message: `ประกาศนี้ได้รับข้อเสนอครบโควตา ${maxQuotes} เจ้าแล้ว เพื่อรักษาความเป็นส่วนตัวของผู้โดยสาร`,
+    };
+  }
+
+  const newQuote: BoardQuote = {
+    ...quote,
+    id: `q-${Date.now().toString().slice(-6)}`,
+    createdAt: new Date().toISOString(),
+  };
+
+  localBoardQuotes.push(newQuote);
+
+  const newCount = currentQuotes.length + 1;
+  await updateBoardPost(quote.postId, { quoteCount: newCount });
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      await (supabase as any).from('board_quotes').insert({
+        id: newQuote.id,
+        post_id: newQuote.postId,
+        driver_name: newQuote.driverName,
+        driver_phone: newQuote.driverPhone,
+        driver_line: newQuote.driverLine || null,
+        vehicle_model: newQuote.vehicleModel,
+        price: newQuote.price,
+        price_note: newQuote.priceNote || null,
+        message: newQuote.message || null,
+      });
+    } catch (err) {
+      console.warn('[TripDee Supabase] Error inserting board quote:', err);
+    }
+  }
+
+  const remaining = Math.max(0, maxQuotes - newCount);
+  return {
+    success: true,
+    message: `ส่งใบเสนอราคาเรียบร้อยแล้ว (เหลือโควตาอีก ${remaining} เจ้า)`,
+    quote: newQuote,
+    remainingQuota: remaining,
+  };
+}
+
+/**
+ * Customer accepts a specific quote: closes the post and marks chosen quote
+ */
+export async function acceptBoardQuote(
+  postId: string,
+  quoteId: string,
+  inputPin: string
+): Promise<{ success: boolean; message: string; selectedQuote?: BoardQuote }> {
+  const posts = await fetchBoardPosts();
+  const post = posts.find((p) => p.id === postId);
+  if (!post) {
+    return { success: false, message: 'ไม่พบประกาศ' };
+  }
+
+  // Verify PIN
+  const cleanInput = inputPin.trim();
+  const cleanPhone = (post.authorPhone || '').replace(/\D/g, '');
+  const phoneLast4 = cleanPhone.slice(-4);
+  const correctPin = (post.pin || '').trim();
+  const isMatch = (correctPin && cleanInput === correctPin) || (phoneLast4 && cleanInput === phoneLast4);
+
+  if (!isMatch) {
+    return { success: false, message: 'รหัส PIN ไม่ถูกต้อง' };
+  }
+
+  const quote = localBoardQuotes.find((q) => q.id === quoteId && q.postId === postId);
+  if (!quote) {
+    return { success: false, message: 'ไม่พบใบเสนอราคาที่เลือก' };
+  }
+
+  await updateBoardPost(postId, {
+    isClosed: true,
+    acceptedQuoteId: quoteId,
+  });
+
+  return {
+    success: true,
+    message: `คุณได้เลือกข้อเสนอของ ${quote.driverName} เรียบร้อยแล้ว ระบบได้ปิดประกาศอัตโนมัติแล้วครับ`,
+    selectedQuote: quote,
+  };
 }
 
 // ==============================================================================

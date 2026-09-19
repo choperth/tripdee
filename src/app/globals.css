@@ -1,16 +1,73 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --color-navy-deep: #0B2545;
+  --color-navy-surface: #133E87;
+  --color-blue-action: #2563EB;
+  --color-blue-action-hover: #1D4ED8;
+  --color-blue-subtle: #EFF6FF;
+  --color-amber-accent: #F59E0B;
+  --color-taxi-yellow-30: #EAB308;
+  --color-taxi-yellow-soft: #FEFCE8;
+  --color-verified-emerald: #10B981;
+  --color-verified-emerald-soft: #ECFDF5;
+  --color-line-green: #06C755;
+  --color-line-green-hover: #05B04B;
+  --color-paper-canvas: #F8FAFC;
+  --color-paper-elevated: #FFFFFF;
+  --color-paper-surface-muted: #F1F5F9;
+  --color-border-subtle: #E2E8F0;
+  --color-border-strong: #CBD5E1;
+  --color-ink-primary: #0F172A;
+  --color-ink-secondary: #475569;
+  --color-ink-muted: #94A3B8;
+  --color-surface: #FAF8FF;
+  --color-surface-dim: #D2D9F4;
+  --color-surface-bright: #FAF8FF;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container-low: #F2F3FF;
+  --color-surface-container: #EAEDFF;
+  --color-surface-container-high: #E2E7FF;
+  --color-surface-container-highest: #DAE2FD;
+  --color-surface-variant: #DAE2FD;
+  --color-primary-container: #0B2545;
+  --color-on-primary-container: #778DB2;
+  --color-on-primary: #FFFFFF;
+  --color-on-surface: #131B2E;
+  --color-on-surface-variant: #44474E;
+  --color-on-tertiary-fixed-variant: #653E00;
+  --color-on-tertiary-container: #C47D00;
+  --color-secondary: #0051D5;
+  --color-secondary-container: #316BF3;
+
+  --spacing-margin: 1rem;
+  --spacing-gutter: 1.25rem;
+  --spacing-space-2xs: 0.25rem;
+  --spacing-space-xs: 0.375rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-space-md: 0.75rem;
+  --spacing-space-base: 1rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-xl: 2rem;
+  --spacing-space-2xl: 3rem;
+  --spacing-space-3xl: 4.5rem;
+}
+
 /* TripDee · Clean Utility Marketplace (Airbnb / Booking style)
  * Clean slate-50/white canvas, authoritative blue accent, high-contrast typography,
  * crisp 1px borders, subtle layered shadows, and high-efficiency utility controls.
  */
 
 :root {
+  color-scheme: light;
   --color-paper:      #F8FAFC;
   --color-paper-2:    #F1F5F9;
   --color-card:       #FFFFFF;
   --color-ink:        #0F172A;
   --color-ink-2:      #475569;
+  --color-ink-3:      #64748B;
   --color-ink-deep:   #020617;
   --color-rule:       #E2E8F0;
   --color-rule-2:     #CBD5E1;
@@ -22,6 +79,10 @@
   --color-accent-soft:#EFF6FF;
   --color-accent-cast:rgba(37, 99, 235, 0.18);
   --color-focus:      #2563EB;
+
+  /* Institutional navy (Stitch navy-deep/navy-surface) — trust surfaces only */
+  --color-navy:         #0B2545;
+  --color-navy-surface: #133E87;
 
   --color-sun:        #D97706;
   --color-sun-soft:   #FFFBEB;
@@ -39,6 +100,19 @@
   --color-grape-deep: #6D28D9;
   --color-grape-soft: #F5F3FF;
   --color-coral:      #EA580C;
+  --color-line:       #06C755;
+  --color-line-deep:  #05A847;
+  --color-whatsapp:   #25D366;
+  --color-wechat:     #07C160;
+  --color-kakao:      #FEE500;
+  --color-gold:       #F59E0B;
+  --color-gold-bright:#EAB308;
+  --color-plate-yellow-bg:     #FEF3C7;
+  --color-plate-yellow-text:   #92400E;
+  --color-plate-yellow-border: #FCD34D;
+  --color-plate-blue-bg:       #EFF6FF;
+  --color-plate-blue-text:     #1E40AF;
+  --color-plate-blue-border:   #BFDBFE;
 
   --font-display: var(--font-nunito), var(--font-noto-thai), var(--font-noto-sc), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Sukhumvit Set", "Thonburi", sans-serif;
   --font-body: var(--font-nunito), var(--font-noto-thai), var(--font-noto-sc), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Sukhumvit Set", "Thonburi", sans-serif;
@@ -52,7 +126,7 @@
   --text-display: clamp(2.5rem, 4.5vw + 1rem, 4rem);
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
@@ -76,13 +150,14 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --color-paper:      #090D16;
   --color-paper-2:    #0F172A;
   --color-card:       #131C31;
   --color-ink:        #F8FAFC;
   --color-ink-2:      #94A3B8;
+  --color-ink-3:      #94A3B8;
   --color-ink-deep:   #64748B;
-  --color-rule:       #1E293B;
   --color-rule-2:     #334155;
   --color-shadow:     rgba(0, 0, 0, 0.6);
 
@@ -93,9 +168,21 @@
   --color-accent-cast:rgba(59, 130, 246, 0.3);
   --color-focus:      #3B82F6;
 
+  /* Institutional navy — lifted for dark canvas, white text stays contrast-safe */
+  --color-navy:         #16294D;
+  --color-navy-surface: #1E3A66;
+
   --color-sun:        #F59E0B;
   --color-sun-soft:   rgba(245, 158, 11, 0.15);
   --color-sun-ink:    #FEF3C7;
+  --color-gold:       #F59E0B;
+  --color-gold-bright:#EAB308;
+  --color-plate-yellow-bg:     rgba(245, 158, 11, 0.15);
+  --color-plate-yellow-text:   #FCD34D;
+  --color-plate-yellow-border: rgba(245, 158, 11, 0.4);
+  --color-plate-blue-bg:       rgba(59, 130, 246, 0.15);
+  --color-plate-blue-text:     #BFDBFE;
+  --color-plate-blue-border:   rgba(59, 130, 246, 0.4);
   --color-leaf:       #10B981;
   --color-leaf-deep:  #059669;
   --color-leaf-soft:  rgba(16, 185, 129, 0.15);
@@ -121,24 +208,42 @@
   --color-card: var(--color-card);
   --color-ink: var(--color-ink);
   --color-ink-2: var(--color-ink-2);
+  --color-ink-3: var(--color-ink-3);
   --color-rule: var(--color-rule);
   --color-accent: var(--color-accent);
   --color-accent-deep: var(--color-accent-deep);
   --color-accent-ink: var(--color-accent-ink);
   --color-accent-soft: var(--color-accent-soft);
+  --color-navy: var(--color-navy);
+  --color-navy-surface: var(--color-navy-surface);
   --color-focus: var(--color-focus);
   --color-sun: var(--color-sun);
   --color-sun-soft: var(--color-sun-soft);
   --color-sun-ink: var(--color-sun-ink);
   --color-leaf: var(--color-leaf);
+  --color-leaf-deep: var(--color-leaf-deep);
   --color-leaf-soft: var(--color-leaf-soft);
   --color-sky: var(--color-sky);
   --color-sky-soft: var(--color-sky-soft);
   --color-berry: var(--color-berry);
+  --color-berry-deep: var(--color-berry-deep);
   --color-berry-soft: var(--color-berry-soft);
   --color-grape: var(--color-grape);
   --color-grape-soft: var(--color-grape-soft);
   --color-coral: var(--color-coral);
+  --color-line: var(--color-line);
+  --color-line-deep: var(--color-line-deep);
+  --color-whatsapp: var(--color-whatsapp);
+  --color-wechat: var(--color-wechat);
+  --color-kakao: var(--color-kakao);
+  --color-gold: var(--color-gold);
+  --color-gold-bright: var(--color-gold-bright);
+  --color-plate-yellow-bg: var(--color-plate-yellow-bg);
+  --color-plate-yellow-text: var(--color-plate-yellow-text);
+  --color-plate-yellow-border: var(--color-plate-yellow-border);
+  --color-plate-blue-bg: var(--color-plate-blue-bg);
+  --color-plate-blue-text: var(--color-plate-blue-text);
+  --color-plate-blue-border: var(--color-plate-blue-border);
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
@@ -286,8 +391,41 @@ h1, h2 { overflow-wrap: anywhere; }
   to { transform: translateX(-50%); }
 }
 
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility animate-fade-in {
+  animation: td-fade-in 200ms ease-out forwards;
+}
 @media (pointer: coarse) {
   .td-btn { min-height: 44px; }
+  /* WCAG 2.5.5 / 2.5.8 Touch Targets: ensure interactive elements and chips have 44px hit bounds */
+  button[class*="rounded-pill"],
+  button[class*="rounded-full"],
+  button[class*="rounded-xl"],
+  button[class*="rounded-lg"] {
+    position: relative;
+  }
+  button[class*="rounded-pill"]::after,
+  button[class*="rounded-full"]::after,
+  button[class*="rounded-xl"]::after,
+  button[class*="rounded-lg"]::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
+    width: 100%;
+    height: 100%;
+    pointer-events: auto;
+  }
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -306,7 +444,7 @@ h1, h2 { overflow-wrap: anywhere; }
 }
 
 /* Head-height sync */
-:root { --td-banner-h: 40px; --td-bar-h: 64px; --td-head-h: calc(var(--td-banner-h) + var(--td-bar-h)); }
+:root { --td-banner-h: 40px; --td-bar-h: 72px; --td-head-h: calc(var(--td-banner-h) + var(--td-bar-h)); }
 html[data-nav="dismissed"] { --td-banner-h: 0px; }
 
 /* ==============================================================================
@@ -368,5 +506,113 @@ html[data-nav="dismissed"] { --td-banner-h: 0px; }
     break-inside: avoid;
     page-break-inside: avoid;
   }
+}
+
+/* ==========================================================================
+   Stitch Typography Architecture & Font Scale Classes
+   ========================================================================== */
+.font-display-hero {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 40px;
+  line-height: 48px;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+}
+@media (max-width: 768px) {
+  .font-display-hero {
+    font-size: 28px;
+    line-height: 36px;
+  }
+}
+.font-display-hero-mobile {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 28px;
+  line-height: 36px;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+}
+.font-headline-xl {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 30px;
+  line-height: 38px;
+  letter-spacing: -0.015em;
+  font-weight: 700;
+}
+@media (max-width: 768px) {
+  .font-headline-xl {
+    font-size: 24px;
+    line-height: 32px;
+  }
+}
+.font-headline-xl-mobile {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 24px;
+  line-height: 32px;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+}
+.font-headline-lg {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 700;
+}
+.font-headline-md {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 700;
+}
+.font-title-card {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+}
+.font-body-large {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+}
+.font-body-base {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 14px;
+  line-height: 21px;
+  font-weight: 400;
+}
+.font-body-medium {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.font-body-subtext {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 400;
+}
+.font-label-badge {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+.font-price-headline {
+  font-family: var(--font-nunito), 'Nunito Sans', var(--font-noto-thai), sans-serif;
+  font-size: 22px;
+  line-height: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Material Symbols alignment helper */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
 }
 

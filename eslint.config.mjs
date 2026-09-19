@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    ".claude/**",
+    ".grok/**",
+    "stitch_tripdee_ui_redesign_system/**",
   ]),
 ]);
 

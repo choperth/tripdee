@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { Sponsor } from '@/data/mockData';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -37,6 +39,8 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [isGeneratingImg, setIsGeneratingImg] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
   if (!isOpen || !sponsor) return null;
 
@@ -246,15 +250,17 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="sponsor-report-title"
       className="fixed inset-0 z-[500] flex items-center justify-center p-3 sm:p-4 bg-ink/65 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
     >
       <div className="td-elev-lift relative w-full max-w-3xl rounded-modal bg-card p-5 sm:p-7 text-ink my-6 max-h-[92vh] overflow-y-auto">
         {/* Top Close Button */}
         <button
           onClick={onClose}
-          aria-label="ปิดหน้าต่างรายงาน"
+          aria-label={t('auth.close')}
           className="absolute top-4 right-4 grid h-9 w-9 place-items-center rounded-full bg-paper-2 text-ink hover:bg-paper transition-colors"
         >
           <X className="h-4.5 w-4.5" strokeWidth={2.5} />
@@ -267,11 +273,11 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
               <FileSpreadsheet className="h-5 w-5" strokeWidth={2.5} />
             </span>
             <div>
-              <h2 className="font-display text-xl font-extrabold text-ink leading-tight">
-                รายงานสรุปสถิติสปอนเซอร์ 1 หน้า
+              <h2 id="sponsor-report-title" className="font-display text-xl font-extrabold text-ink leading-tight">
+                {t('spn.reportTitle')}
               </h2>
               <p className="text-xs font-bold text-ink-2">
-                Sponsor Performance Report • พร้อมส่ง LINE ให้เจ้าของที่พัก
+                {t('spn.reportSubtitle')}
               </p>
             </div>
           </div>
@@ -284,7 +290,7 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
               className="td-btn td-pop inline-flex items-center gap-1.5 rounded-pill bg-[#06C755] hover:bg-[#05b34c] px-3.5 py-2 text-xs font-extrabold text-white shadow-sm transition-transform"
             >
               <Share2 className="h-4 w-4" />
-              <span>ส่งเข้า LINE</span>
+              <span>{t('spn.sendLine')}</span>
             </button>
 
             <button
@@ -293,7 +299,7 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
               className="td-btn inline-flex items-center gap-1.5 rounded-pill border border-rule bg-paper px-3 py-2 text-xs font-extrabold text-ink hover:bg-paper-2 transition-colors"
             >
               {copied ? <Check className="h-4 w-4 text-leaf" /> : <Copy className="h-4 w-4 text-ink-2" />}
-              <span>{copied ? 'คัดลอกแล้ว!' : 'คัดลอกข้อความ'}</span>
+              <span>{copied ? t('spn.copied') : t('spn.copy')}</span>
             </button>
 
             <button
@@ -303,13 +309,13 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
               className="td-btn inline-flex items-center gap-1.5 rounded-pill border border-rule bg-card px-3 py-2 text-xs font-extrabold text-ink hover:bg-paper-2 transition-colors"
             >
               <Download className="h-4 w-4 text-accent-deep" />
-              <span>{isGeneratingImg ? 'กำลังเซฟ...' : 'บันทึกภาพ PNG'}</span>
+              <span>{isGeneratingImg ? t('spn.saving') : t('spn.savePng')}</span>
             </button>
 
             <button
               type="button"
               onClick={() => window.print()}
-              aria-label="พิมพ์รายงาน"
+              aria-label={t('spn.print')}
               className="hidden sm:inline-flex p-2 rounded-full border border-rule text-ink-2 hover:text-ink hover:bg-paper-2"
             >
               <Printer className="h-4 w-4" />
@@ -328,31 +334,35 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
               <div className="flex items-center gap-1.5 font-display text-2xl font-extrabold text-ink">
                 TripDee
                 <span className="inline-block h-2 w-2 rounded-full bg-accent" />
-                <span className="text-sm font-bold text-ink-2">| เชียงใหม่</span>
+                <span className="text-sm font-bold text-ink-2">{t('spn.brandSuffix')}</span>
               </div>
               <p className="text-xs font-bold text-ink-2 mt-0.5">
-                รายงานผลการแสดงผลและยอดคลิกสปอนเซอร์อย่างเป็นทางการ
+                {t('spn.officialNote')}
               </p>
             </div>
             <div className="text-right">
               <span className="rounded-pill bg-grape-soft px-3 py-1 text-xs font-extrabold text-grape inline-flex items-center gap-1">
                 <Sparkles className="h-3 w-3" />
-                รายงานประจำงวด
+                {t('spn.periodBadge')}
               </span>
-              <p className="text-[11px] text-ink-2 mt-1 font-mono">วันที่ {reportDate}</p>
+              <p className="text-[11px] text-ink-2 mt-1 font-mono">{t('spn.asOf', { date: reportDate })}</p>
             </div>
           </div>
 
           {/* Sponsor Profile Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl bg-card p-4 border border-rule">
-            <img
-              src={sponsor.image}
-              alt={sponsor.title}
-              className="h-20 w-28 rounded-xl object-cover border border-rule shrink-0 shadow-sm"
-            />
+            <div className="relative h-20 w-28 rounded-xl overflow-hidden border border-rule shrink-0 shadow-sm">
+              <Image
+                src={sponsor.image}
+                alt={sponsor.title}
+                fill
+                sizes="112px"
+                className="object-cover"
+              />
+            </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="rounded-pill bg-berry-soft px-2.5 py-0.5 text-[10px] font-extrabold text-berry">
+                <span className="rounded-pill bg-berry-soft px-2.5 py-0.5 text-[10px] font-extrabold text-berry-deep">
                   {sponsor.categoryLabel}
                 </span>
                 <span className="text-xs font-bold text-ink-2 flex items-center gap-1">
@@ -374,41 +384,41 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="rounded-2xl bg-berry-soft/30 p-4 border border-berry/10">
               <div className="flex items-center justify-between text-xs font-bold text-berry">
-                <span>ยอดคลิกรับสิทธิ์ / จองตรง</span>
+                <span>{t('spn.mClicks')}</span>
                 <MousePointerClick className="h-4 w-4" />
               </div>
               <p className="td-fig mt-2 text-3xl font-extrabold text-berry">
                 {clickCount}
-                <span className="text-xs font-bold ml-1 text-ink-2">ครั้ง</span>
+                <span className="text-xs font-bold ml-1 text-ink-2">{t('spn.times')}</span>
               </p>
               <p className="text-[11px] text-ink-2 mt-1">
                 {lastClickedAt
-                  ? `คลิกล่าสุด: ${new Date(lastClickedAt).toLocaleTimeString('th-TH')}`
-                  : 'บันทึกผ่านปุ่ม CTA เรียลไทม์'}
+                  ? t('padm.lastClicked', { time: new Date(lastClickedAt).toLocaleTimeString() })
+                  : t('spn.noClickNote')}
               </p>
             </div>
 
             <div className="rounded-2xl bg-sky-soft/40 p-4 border border-sky/10">
               <div className="flex items-center justify-between text-xs font-bold text-sky">
-                <span>ยอดแสดงผลโดยประมาณ</span>
+                <span>{t('spn.mImpr')}</span>
                 <Users className="h-4 w-4" />
               </div>
               <p className="td-fig mt-2 text-3xl font-extrabold text-ink">
                 {baselineImpressions.toLocaleString('th-TH')}
-                <span className="text-xs font-bold ml-1 text-ink-2">ครั้ง</span>
+                <span className="text-xs font-bold ml-1 text-ink-2">{t('spn.times')}</span>
               </p>
-              <p className="text-[11px] text-ink-2 mt-1">การแสดงผลป้ายบนหน้าแรกและแท็บที่พัก</p>
+              <p className="text-[11px] text-ink-2 mt-1">{t('spn.mImprNote')}</p>
             </div>
 
             <div className="rounded-2xl bg-leaf-soft/40 p-4 border border-leaf/10">
               <div className="flex items-center justify-between text-xs font-bold text-leaf">
-                <span>อัตราการคลิก (CTR)</span>
+                <span>{t('spn.mCtr')}</span>
                 <TrendingUp className="h-4 w-4" />
               </div>
               <p className="td-fig mt-2 text-3xl font-extrabold text-leaf">
                 {ctrPercentage}%
               </p>
-              <p className="text-[11px] text-ink-2 mt-1">สูงกว่าค่าเฉลี่ยแบนเนอร์ทั่วไป</p>
+              <p className="text-[11px] text-ink-2 mt-1">{t('spn.mCtrNote')}</p>
             </div>
           </div>
 
@@ -416,38 +426,38 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
           <div className="rounded-2xl bg-card p-4 border border-rule space-y-2 text-xs">
             <h4 className="font-extrabold text-ink flex items-center gap-1.5 text-xs uppercase tracking-wide">
               <Clock className="h-3.5 w-3.5 text-accent-deep" />
-              ข้อมูลวิเคราะห์พฤติกรรมผู้เข้าชม
+              {t('spn.insightsTitle')}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-ink-2">
               <div className="rounded-xl bg-paper p-2.5">
-                <span className="font-bold text-ink block mb-0.5">กลุ่มผู้เข้าชมหลัก:</span>
-                นักท่องเที่ยวครอบครัว และกลุ่มจัดสัมมนาองค์กร ที่กำลังมองหารถตู้และที่พักในเชียงใหม่
+                <span className="font-bold text-ink block mb-0.5">{t('spn.audLabel')}</span>
+                {t('spn.audBody')}
               </div>
               <div className="rounded-xl bg-paper p-2.5">
-                <span className="font-bold text-ink block mb-0.5">ช่วงเวลาเข้าชมสูงสุด:</span>
-                ศุกร์ - อาทิตย์ เวลา 10:00 - 15:00 น. และช่วงวันหยุดยาว
+                <span className="font-bold text-ink block mb-0.5">{t('spn.peakLabel')}</span>
+                {t('spn.peakBody')}
               </div>
             </div>
           </div>
 
           {/* Footer note */}
           <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-rule text-[11px] text-ink-2">
-            <span>TripDee Chiang Mai • ระบบรายงานอัตโนมัติ</span>
-            <span className="font-mono">ID: {sponsor.id} • Verified Partner</span>
+            <span>{t('spn.autoFooter')}</span>
+            <span className="font-mono">{t('spn.idBadge', { id: sponsor.id })}</span>
           </div>
         </div>
 
         {/* Bottom Fast Action Prompt */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 bg-sun-soft p-3.5 rounded-card">
           <p className="text-xs font-bold text-ink">
-            💡 <strong>คำแนะนำแอดมิน:</strong> กดปุ่ม <strong>&quot;ส่งเข้า LINE&quot;</strong> หรือ <strong>&quot;บันทึกภาพ PNG&quot;</strong> เพื่อแนบส่งสรุปผลงานให้เจ้าของที่พักได้ทันที
+            {t('spn.adminTip')}
           </p>
           <button
             type="button"
             onClick={handleOpenLineShare}
             className="td-btn td-pop shrink-0 rounded-pill bg-[#06C755] px-4 py-1.5 text-xs font-extrabold text-white"
           >
-            ส่งผลสรุปให้พาร์ตเนอร์
+            {t('spn.sendSummary')}
           </button>
         </div>
       </div>

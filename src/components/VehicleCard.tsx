@@ -1,23 +1,36 @@
 'use client';
 
-import React from 'react';
-import { Vehicle, formatTHB } from '@/data/mockData';
+import React, { memo } from 'react';
+import Image from 'next/image';
+import { Vehicle } from '@/data/mockData';
 import { maskPhoneNumber, maskPlateNumber, getPublicDriverName } from '@/lib/privacy';
-import { ShieldCheck, Star, Users, Phone, MessageCircle, MapPin, ArrowRight, Award, FileCheck2, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
-import type { DictKey } from '@/i18n/dictionaries';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
   onSelectDetail: (vehicle: Vehicle) => void;
+  allVehicles?: Vehicle[];
+  onViewFleet?: (driverPhone: string, driverName: string, fleetVehicles: Vehicle[]) => void;
 }
 
-export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetail }) => {
+export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelectDetail, allVehicles, onViewFleet }) => {
   const { t, locale } = useLanguage();
   const { trackCall } = useAnalytics();
   const [copiedWechat, setCopiedWechat] = React.useState(false);
   const [isPhoneRevealed, setIsPhoneRevealed] = React.useState(false);
+
+  const cleanPhone = vehicle.driverPhone ? vehicle.driverPhone.replace(/\D/g, '') : '';
+  const companionVehicles = React.useMemo(() => {
+    if (!allVehicles || allVehicles.length === 0) return [];
+    return allVehicles.filter((v) => {
+      if (v.id === vehicle.id) return false;
+      const otherPhone = v.driverPhone ? v.driverPhone.replace(/\D/g, '') : '';
+      if (cleanPhone && otherPhone && cleanPhone === otherPhone) return true;
+      if (vehicle.driverNickname && v.driverNickname && vehicle.driverNickname === v.driverNickname) return true;
+      return false;
+    });
+  }, [allVehicles, vehicle.id, cleanPhone, vehicle.driverNickname]);
 
   const handleWechatClick = (e: React.MouseEvent) => {
     if (vehicle.driverWechat) {
@@ -39,275 +52,290 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onSelectDetai
   };
 
   const isSelfDrive = vehicle.rentalType === 'self_drive' || (vehicle.type !== 'van' && vehicle.rentalType !== 'with_driver');
+  const basePrice = vehicle.zoneRates?.city || (isSelfDrive ? 1200 : 1900);
+  const publicName = getPublicDriverName(vehicle.driverName, vehicle.driverNickname);
+  const shortLocation = vehicle.location.split('/')[0].trim();
+
+  // Helper icons for amenities
+  const getAmenityIcon = (text: string, index: number) => {
+    if (text.includes('เบาะ') || text.includes('ที่นั่ง')) return 'airline_seat_recline_extra';
+    if (text.includes('เกะ') || text.includes('TV') || text.includes('จอ')) return 'mic';
+    if (text.includes('WiFi') || text.includes('เน็ต')) return 'wifi';
+    if (text.includes('ชาร์จ') || text.includes('USB')) return 'power';
+    if (text.includes('สไลด์') || text.includes('ประตู')) return 'sensor_door';
+    if (text.includes('ฟอกอากาศ') || text.includes('แอร์')) return 'air';
+    return index === 0 ? 'airline_seat_recline_extra' : index === 1 ? 'tv' : 'verified_user';
+  };
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-card bg-card border border-rule transition-all duration-200 hover:border-accent/40 hover:shadow-lift">
-      {/* Vehicle Photo with 16:10 ratio */}
-      <button
-        onClick={() => onSelectDetail(vehicle)}
-        className="relative block aspect-[16/10] w-full overflow-hidden text-left active:opacity-95 focus:outline-none"
-        aria-label={t('vehicle.detailAria', { title: vehicle.title })}
-      >
-        <img
-          src={vehicle.images[0]}
-          alt={vehicle.title}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        {/* Subtle overlay vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+    <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl overflow-hidden shadow-md hover:shadow-xl border border-border-subtle dark:border-slate-800 transition-all flex flex-col justify-between group">
+      <div>
+        {/* 1. Vehicle Media Cover with Stitch Overlays */}
+        <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-navy-deep">
+          <button
+            type="button"
+            onClick={() => onSelectDetail(vehicle)}
+            className="w-full h-full relative block text-left"
+            aria-label={t('vehicle.detailAria', { title: vehicle.title })}
+          >
+            <Image
+              src={vehicle.images[0]}
+              alt={vehicle.title}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            {/* Dark gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/85 via-navy-deep/20 to-transparent pointer-events-none" />
 
-        {/* Top Floating Badges */}
-        <div className="absolute left-3 top-3 flex items-center gap-1.5 flex-wrap max-w-[80%]">
-          {isSelfDrive && (
-            <span className="inline-flex items-center gap-1 rounded-pill bg-accent backdrop-blur-xs px-2.5 py-1 text-xs font-bold text-white shadow-xs">
-              <span>🚗 ขับเอง</span>
-            </span>
-          )}
-          <span className="inline-flex items-center gap-1 rounded-pill bg-black/70 backdrop-blur-xs px-2.5 py-1 text-xs font-bold text-white shadow-xs">
-            <Users className="h-3 w-3 text-accent" aria-hidden="true" strokeWidth={2.5} />
-            <span>{vehicle.seats} {t('vehicle.seats', { n: vehicle.seats }).replace(`${vehicle.seats} `, '')}</span>
-          </span>
-          {vehicle.plateNumber && (
-            <span className="inline-flex items-center gap-1 rounded-pill bg-black/60 backdrop-blur-xs px-2 py-0.5 text-[11px] font-mono font-semibold text-white/90 shadow-xs border border-white/20">
-              {maskPlateNumber(vehicle.plateNumber)}
-            </span>
-          )}
-          {vehicle.isAvailable === false && (
-            <span className="inline-flex items-center gap-1 rounded-pill bg-rose-600/90 backdrop-blur-xs px-2 py-0.5 text-[11px] font-bold text-white shadow-xs">
-              ⏸️ คิวเต็มชั่วคราว
-            </span>
-          )}
+            {/* Top-left pills: Seats and Plate */}
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 pointer-events-none">
+              <span className="px-space-xs py-space-2xs rounded-md bg-navy-deep/90 text-surface font-bold text-label-badge shadow-sm">
+                {t('vehicle.seats', { n: vehicle.seats })}
+              </span>
+              {vehicle.plateNumber && (
+                <span className="px-space-xs py-space-2xs rounded-md bg-surface/90 text-navy-deep font-bold text-label-badge shadow-sm">
+                  {maskPlateNumber(vehicle.plateNumber)}
+                </span>
+              )}
+            </div>
+
+            {/* Top-right pill: Verified */}
+            <div className="absolute top-3 right-3 pointer-events-none">
+              {vehicle.isVerified && (
+                <span className="px-space-xs py-space-2xs rounded-full bg-verified-emerald text-on-primary font-bold text-label-badge flex items-center gap-1 shadow-sm">
+                  <span className="material-symbols-outlined text-[13px]">verified</span>
+                  <span>{t('hero.verifiedSticker')}</span>
+                </span>
+              )}
+            </div>
+
+            {/* Bottom photo overlay: Driver name & price banner */}
+            <div className="absolute bottom-3 left-3 right-3 text-surface pointer-events-none">
+              <div className="flex items-center gap-1.5 font-body-subtext text-body-subtext opacity-85 truncate">
+                <span className="truncate">{publicName} • {shortLocation}</span>
+                {companionVehicles.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-blue-600/90 text-[10px] font-bold text-white shrink-0 shadow-xs">
+                    {t('vehicle.fleetCount', { n: companionVehicles.length + 1 })}
+                  </span>
+                )}
+              </div>
+              <p className="font-bold text-[13px] text-taxi-yellow-30">
+                {t('vehicle.priceNote1')} ฿{basePrice.toLocaleString()}{t('vehicle.perDay')}
+              </p>
+            </div>
+          </button>
         </div>
 
-        {vehicle.isVerified && (
-          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-pill bg-card/95 backdrop-blur-xs px-2.5 py-1 text-xs font-extrabold text-leaf shadow-sm">
-            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2.5} />
-            <span>{t('hero.verifiedSticker')}</span>
-          </span>
-        )}
+        {/* 2. Content Details */}
+        <div className="p-space-md space-y-space-sm">
+          {/* Driver identity & Rating */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-space-xs min-w-0">
+              <div className="w-9 h-9 rounded-full bg-blue-subtle text-blue-action dark:bg-blue-950 dark:text-blue-300 font-bold flex items-center justify-center text-headline-md shrink-0 border border-blue-action/20">
+                {publicName.charAt(0)}
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-title-card text-title-card text-navy-deep dark:text-white leading-tight truncate">
+                  {publicName}
+                </h3>
+                <p className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400 truncate">
+                  {vehicle.location}
+                </p>
+              </div>
+            </div>
 
-        {/* Bottom image overlay: Starting price sneak peek */}
-        <div className="absolute bottom-2.5 left-3 right-3 flex items-baseline justify-between text-white drop-shadow-sm">
-          <span className="text-xs font-semibold text-white/90 truncate mr-2">
-            {getPublicDriverName(vehicle.driverName, vehicle.driverNickname)} • {vehicle.location.split('/')[0].trim()}
-          </span>
-          <span className="text-xs font-bold text-white/95 bg-black/50 px-2 py-0.5 rounded-pill backdrop-blur-xs shrink-0">
-            {isSelfDrive ? 'เริ่มต้น' : t('vehicle.priceNote1')} {formatTHB(vehicle.zoneRates?.city || 1900)}{t('vehicle.perDay')}
-          </span>
-        </div>
-      </button>
-
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        {/* Driver / Shop & Rating Row */}
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-soft text-xs font-extrabold text-accent border border-accent/20">
-              {getPublicDriverName(vehicle.driverName, vehicle.driverNickname).charAt(0)}
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-extrabold text-ink">
-                {getPublicDriverName(vehicle.driverName, vehicle.driverNickname)}
-              </p>
-              <p className="flex items-center gap-1 text-xs font-medium text-ink-2 truncate">
-                <MapPin className="h-3 w-3 shrink-0 text-accent" aria-hidden="true" />
-                <span>{vehicle.location}</span>
-              </p>
+            {/* Rating */}
+            <div className="flex items-center gap-1 bg-taxi-yellow-soft dark:bg-amber-950/60 border border-amber-300/40 px-space-xs py-space-2xs rounded-md shrink-0">
+              <span className="material-symbols-outlined text-amber-accent text-[14px]">star</span>
+              <span className="font-bold text-body-subtext text-navy-deep dark:text-amber-300">
+                {vehicle.rating}
+              </span>
+              <span className="text-ink-muted dark:text-slate-400 text-label-badge">
+                ({vehicle.reviewCount})
+              </span>
             </div>
           </div>
 
-          <span className="td-fig inline-flex shrink-0 items-center gap-1 rounded-pill bg-sun-soft px-2.5 py-1 text-xs font-bold text-sun-ink border border-sun/20">
-            <Star className="h-3.5 w-3.5 fill-sun text-sun" aria-hidden="true" />
-            <span>{vehicle.rating}</span>
-            <span className="text-ink-2 font-normal">({vehicle.reviewCount})</span>
-          </span>
-        </div>
-
-        {/* Vehicle Title */}
-        <h3 className="mb-2 line-clamp-2 font-display text-base font-extrabold leading-snug text-ink group-hover:text-accent transition-colors">
-          {vehicle.title}
-        </h3>
-
-        {/* Trust Badges Bar */}
-        <div className="mb-3 flex flex-wrap items-center gap-1.5">
-          {/* Service Type or Plate Type Badge */}
-          {isSelfDrive ? (
-            <span
-              className="inline-flex items-center gap-1 rounded-pill bg-sky-500/15 text-sky-800 dark:text-sky-200 border border-sky-500/30 px-2.5 py-0.5 text-[11px] font-bold"
-              title="รถเช่าขับเอง ตกลงเงื่อนไขกับร้านโดยตรง"
+          {/* Other Fleet Vehicles Pill Link */}
+          {companionVehicles.length > 0 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onViewFleet) {
+                  onViewFleet(vehicle.driverPhone, publicName, [vehicle, ...companionVehicles]);
+                } else {
+                  onSelectDetail(companionVehicles[0]);
+                }
+              }}
+              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-blue-50/80 hover:bg-blue-100/90 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 border border-blue-200/70 dark:border-blue-800/60 text-blue-action dark:text-blue-300 transition-all text-left group/fleet cursor-pointer shadow-xs"
+              aria-label={t('vehicle.fleetAria', { name: publicName, n: companionVehicles.length })}
             >
-              <Award className="h-3 w-3 text-sky-600 dark:text-sky-400" />
-              🚗 รถเช่าขับเอง
-            </span>
-          ) : vehicle.plateType === 'yellow' ? (
-            <span
-              className="inline-flex items-center gap-1 rounded-pill bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/30 px-2.5 py-0.5 text-[11px] font-bold"
-              title="รถตู้ป้ายเหลือง 30 (ขนส่งสาธารณะ) เหมาะสำหรับหน่วยงานราชการ บริษัท สัมมนา และทั่วไป"
-            >
-              <Award className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-              🟡 ป้ายเหลือง 30
-            </span>
-          ) : (
-            <span
-              className="inline-flex items-center gap-1.5 rounded-pill border border-sky-600/50 bg-sky-100 px-2.5 py-0.5 text-[11px] font-extrabold text-sky-950 shadow-sm dark:border-sky-400/60 dark:bg-sky-900 dark:text-white"
-              title="รถตู้ป้ายฟ้า (ส่วนบุคคล) เหมาะสำหรับท่องเที่ยวทั่วไป ครอบครัว หรือองค์กรที่ไม่ติดเงื่อนไขใบประกอบการ"
-            >
-              <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-sky-600 ring-2 ring-sky-600/25"></span>
-              ป้ายฟ้า (ส่วนบุคคล)
-            </span>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="w-5 h-5 rounded-md bg-blue-600/10 dark:bg-blue-400/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[14px]">garage_home</span>
+                </span>
+                <span className="truncate text-body-subtext font-bold text-navy-deep dark:text-blue-200">
+                  {t('vehicle.fleetMore', { n: companionVehicles.length })}
+                </span>
+                <span className="text-[11px] text-ink-muted dark:text-slate-400 truncate hidden sm:inline">
+                  ({companionVehicles.map((ov) => (ov.type === 'van' ? t('vehicle.typeVan') : ov.type === 'suv' ? 'SUV' : t('vehicle.typeSedan'))).join(', ')})
+                </span>
+              </div>
+              <span className="text-label-badge font-bold shrink-0 ml-1 flex items-center text-blue-600 dark:text-blue-400 group-hover/fleet:translate-x-0.5 transition-transform">
+                {t('vehicle.viewAll')}
+              </span>
+            </button>
           )}
 
-          {/* Transmission Badge for Self-Drive */}
-          {isSelfDrive && vehicle.transmission && (
-            <span className="inline-flex items-center gap-1 rounded-pill bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 text-[11px] font-semibold border border-rule">
-              ⚙️ {vehicle.transmission === 'auto' ? 'เกียร์ออโต้' : 'เกียร์ธรรมดา'}
-            </span>
-          )}
-
-          {/* Tax Invoice Badge */}
-          {vehicle.canIssueTaxInvoice && (
-            <span
-              className="inline-flex items-center gap-1 rounded-pill bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-bold"
-              title="สามารถออกใบเสร็จรับเงิน / ใบกำกับภาษีเต็มรูปแบบ / หักภาษี ณ ที่จ่าย 3% ได้"
+          {/* Vehicle Title */}
+          <h4 className="font-title-card text-title-card text-ink-primary dark:text-slate-100 group-hover:text-blue-action transition-colors line-clamp-2">
+            <button
+              type="button"
+              onClick={() => onSelectDetail(vehicle)}
+              className="text-left cursor-pointer hover:underline"
             >
-              <FileCheck2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-              🏢 ใบกำกับภาษี
-            </span>
-          )}
+              {vehicle.title}
+            </button>
+          </h4>
 
-          {!isSelfDrive && (
-            <span className="inline-flex items-center gap-1 rounded-pill bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 text-[11px] font-medium border border-rule">
-              <ShieldCheck className="h-3 w-3 text-leaf" />
+          {/* Document Badges */}
+          <div className="flex flex-wrap items-center gap-space-2xs text-label-badge">
+            {isSelfDrive ? (
+              <span className="px-space-xs py-space-2xs rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold">
+                🚗 {t('vehicle.selfDrive')}
+              </span>
+            ) : vehicle.plateType === 'yellow' ? (
+              <span className="px-space-xs py-space-2xs rounded bg-taxi-yellow-soft text-on-tertiary-container dark:bg-amber-950/70 dark:text-amber-300 font-bold border border-amber-300/40">
+                🟡 {t('hero.quickYellow')}
+              </span>
+            ) : (
+              <span className="px-space-xs py-space-2xs rounded bg-blue-subtle text-blue-action dark:bg-blue-950/70 dark:text-blue-300 font-bold">
+                {t('vehicle.bluePlate')}
+              </span>
+            )}
+
+            {vehicle.canIssueTaxInvoice && (
+              <span className="px-space-xs py-space-2xs rounded bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 font-bold">
+                🏢 {t('vehicle.taxInvoice')}
+              </span>
+            )}
+
+            <span className="px-space-xs py-space-2xs rounded bg-verified-emerald-soft text-verified-emerald dark:bg-emerald-950/70 dark:text-emerald-300 font-bold">
               {t('vehicle.insured')}
             </span>
-          )}
 
-          {vehicle.languages && vehicle.languages.length > 1 && (
-            <div className="flex items-center gap-1 ml-auto">
-              {vehicle.languages.includes('en') && (
-                <span className="rounded-pill bg-paper px-2 py-0.5 text-[10px] font-bold text-ink-2 border border-rule" title={t('vehicle.langEn')}>
-                  🇬🇧 EN
-                </span>
-              )}
-              {vehicle.languages.includes('zh') && (
-                <span className="rounded-pill bg-paper px-2 py-0.5 text-[10px] font-bold text-ink-2 border border-rule" title={t('vehicle.langZh')}>
-                  🇨🇳 中文
-                </span>
-              )}
-              {vehicle.languages.includes('ko') && (
-                <span className="rounded-pill bg-paper px-2 py-0.5 text-[10px] font-bold text-ink-2 border border-rule" title={t('vehicle.langKo')}>
-                  🇰🇷 한국어
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Amenities Chips */}
-        <div className="mb-4 flex flex-wrap gap-1.5">
-          {vehicle.amenities.slice(0, 3).map((item) => (
-            <span
-              key={item}
-              className="rounded-pill bg-paper px-2.5 py-0.5 text-[11px] font-semibold text-ink-2 border border-rule"
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-
-        {/* Transparent Rates Grid */}
-        <div className="mt-auto border-t border-rule pt-3.5">
-          <div className="mb-2.5 flex items-end justify-between gap-2">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-2 block">
-                {isSelfDrive ? 'ราคาเช่าขับเองต่อวัน' : 'ราคาเริ่มต้นโดยประมาณ'}
+            {vehicle.languages?.includes('en') && (
+              <span className="px-space-xs py-space-2xs rounded bg-surface-container dark:bg-slate-800 text-ink-secondary dark:text-slate-300">
+                🇬🇧 EN
               </span>
-              <p className="td-fig text-2xl font-extrabold text-ink leading-none mt-0.5">
-                {formatTHB(vehicle.zoneRates?.city || 1900)}
-                <span className="text-xs font-semibold text-ink-2"> /วัน</span>
-              </p>
-            </div>
-            <p className="text-right text-[11px] font-medium text-ink-2 leading-tight">
-              {isSelfDrive ? (
-                <>
-                  ติดต่อจองกับร้านโดยตรง<br />
-                  <span className="text-accent font-bold">ไม่รวมน้ำมัน (24 ชม.)</span>
-                </>
-              ) : (
-                <>
-                  ตกลงราคากับคนขับโดยตรง<br />
-                  <span className="text-accent font-bold">ตามระยะทางจริง</span>
-                </>
-              )}
-            </p>
-          </div>
-
-          {/* Clean Rate Note */}
-          <div className="mb-3 flex items-center justify-between text-[11px] text-ink-2 bg-paper px-2.5 py-1.5 rounded-input border border-rule/60">
-            <span>{isSelfDrive ? '🚗 รถเช่าขับเอง · ดีลตรงกับร้าน' : 'รวมคนขับ & ยานพาหนะ'}</span>
-            <span className="font-semibold text-leaf">0% คอมมิชชั่น ดีลตรง</span>
-          </div>
-
-          {/* Direct Contact Dual Action Buttons (Smart Dynamic based on locale) */}
-          <div className="grid grid-cols-2 gap-2">
-            <a
-              href={`tel:${vehicle.driverPhone}`}
-              onClick={() => {
-                setIsPhoneRevealed(true);
-                handleCallClick();
-              }}
-              data-analytics-call={vehicle.id}
-              className="td-btn inline-flex items-center justify-center gap-1.5 rounded-input bg-accent hover:bg-accent-deep px-3 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-xs transition-all active:scale-[0.98]"
-            >
-              <Phone className="h-4 w-4 shrink-0" aria-hidden="true" strokeWidth={2.5} />
-              <span className="truncate">
-                {isPhoneRevealed ? vehicle.driverPhone : `${maskPhoneNumber(vehicle.driverPhone)} โทร`}
+            )}
+            {vehicle.languages?.includes('zh') && (
+              <span className="px-space-xs py-space-2xs rounded bg-surface-container dark:bg-slate-800 text-ink-secondary dark:text-slate-300">
+                🇨🇳 中文
               </span>
-            </a>
-
-            {locale === 'zh' && vehicle.driverWechat ? (
-              <button
-                type="button"
-                onClick={handleWechatClick}
-                title={`WeChat ID: ${vehicle.driverWechat}`}
-                className="td-btn inline-flex items-center justify-center gap-1.5 rounded-input bg-[#07C160] hover:bg-[#06ad56] px-2 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-xs transition-all active:scale-[0.98]"
-              >
-                <MessageCircle className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-                <span className="truncate">{copiedWechat ? t('vehicle.wechatCopied') : t('vehicle.wechat')}</span>
-              </button>
-            ) : locale === 'en' && vehicle.driverWhatsapp ? (
-              <a
-                href={vehicle.driverWhatsapp}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="td-btn inline-flex items-center justify-center gap-1.5 rounded-input bg-[#25D366] hover:bg-[#20bd5a] px-2 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-xs transition-all active:scale-[0.98]"
-              >
-                <MessageCircle className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-                <span className="truncate">{t('vehicle.whatsapp')}</span>
-              </a>
-            ) : (
-              <a
-                href={vehicle.driverLine}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="td-btn inline-flex items-center justify-center gap-1.5 rounded-input bg-[#06C755] hover:bg-[#05b34c] px-3 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-xs transition-all active:scale-[0.98]"
-              >
-                <MessageCircle className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-                <span>{t('vehicle.lineChat')}</span>
-              </a>
             )}
           </div>
 
-          {/* Details & Reviews Link */}
-          <button
-            onClick={() => onSelectDetail(vehicle)}
-            className="td-btn mt-2.5 inline-flex w-full items-center justify-center gap-1 py-1 text-xs font-bold text-ink-2 hover:text-accent transition-colors"
-          >
-            <span>{t('vehicle.detailsReviews')}</span>
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
+          {/* Amenity Spec Checklist (Stitch 3-bullet block) */}
+          <ul className="space-y-1 text-body-subtext text-ink-secondary dark:text-slate-300 bg-paper-surface-muted/60 dark:bg-slate-800/60 p-space-xs rounded-xl">
+            {vehicle.amenities.slice(0, 3).map((item, idx) => {
+              const iconName = getAmenityIcon(item, idx);
+              return (
+                <li key={item} className="flex items-center gap-1.5 truncate">
+                  <span className="material-symbols-outlined text-verified-emerald text-[14px] shrink-0">
+                    {iconName}
+                  </span>
+                  <span className="truncate">{item}</span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </div>
-    </article>
+
+      {/* 3. Price and Action Footer */}
+      <div className="p-space-md pt-0">
+        {/* Pricing Row */}
+        <div className="flex items-baseline justify-between pt-space-xs mb-space-sm border-t border-border-subtle/70 dark:border-slate-800">
+          <div>
+            <span className="text-body-subtext text-ink-muted dark:text-slate-400 block">
+              {t('vehicle.priceFrom')}
+            </span>
+            <div className="flex items-baseline gap-1">
+              <span className="font-price-headline text-price-headline text-navy-deep dark:text-white">
+                ฿{basePrice.toLocaleString()}
+              </span>
+              <span className="text-body-subtext text-ink-muted dark:text-slate-400">{t('vehicle.perDay')}</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-[11px] text-ink-muted dark:text-slate-400 block">
+              {t('vehicle.dealDirect')}
+            </span>
+            <span className="text-[11px] text-ink-muted dark:text-slate-400 block">
+              {t('vehicle.perDistance')}
+            </span>
+          </div>
+        </div>
+
+        {/* 0% Commission Strip */}
+        <div className="text-center font-label-badge text-label-badge text-ink-muted dark:text-slate-400 bg-paper-surface-muted dark:bg-slate-800 py-1 rounded-md mb-space-xs">
+          {t('vehicle.noCommission')}
+        </div>
+
+        {/* Dual CTAs: Phone Call & LINE */}
+        <div className="grid grid-cols-2 gap-space-xs">
+          {/* Action 1: Call Button */}
+          <a
+            href={`tel:${vehicle.driverPhone}`}
+            onClick={() => {
+              setIsPhoneRevealed(true);
+              handleCallClick();
+            }}
+            className="h-10 bg-navy-deep hover:bg-navy-surface text-on-primary rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98]"
+          >
+            <span className="material-symbols-outlined text-[16px]">call</span>
+            <span className="truncate">
+              {isPhoneRevealed ? vehicle.driverPhone : t('vehicle.callMasked', { phone: maskPhoneNumber(vehicle.driverPhone) })}
+            </span>
+          </a>
+
+          {/* Action 2: Chat Button (LINE or WeChat/WhatsApp) */}
+          {locale === 'zh' && vehicle.driverWechat ? (
+            <button
+              type="button"
+              onClick={handleWechatClick}
+              className="h-10 bg-emerald-600 hover:bg-emerald-700 text-on-primary rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98]"
+            >
+              <span className="material-symbols-outlined text-[16px]">chat</span>
+              <span className="truncate">{copiedWechat ? t('vehicle.wechatCopied') : 'WeChat'}</span>
+            </button>
+          ) : (
+            <a
+              href={vehicle.driverLine}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-10 bg-line-green hover:bg-line-green-hover text-on-primary rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98]"
+            >
+              <span className="material-symbols-outlined text-[16px]">chat</span>
+              <span className="truncate">{t('vehicle.lineChat')}</span>
+            </a>
+          )}
+        </div>
+
+        {/* Details & Reviews Button */}
+        <button
+          type="button"
+          onClick={() => onSelectDetail(vehicle)}
+          className="w-full text-center text-body-subtext text-ink-muted dark:text-slate-400 hover:text-blue-action dark:hover:text-blue-400 pt-space-xs block font-body-medium transition-colors cursor-pointer"
+        >
+          {t('vehicle.detailsReviews')} +
+        </button>
+      </div>
+    </div>
   );
-};
+});
+
+VehicleCard.displayName = 'VehicleCard';
