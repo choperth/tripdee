@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Sponsor } from '@/data/mockData';
 import { useAnalytics } from '@/context/AnalyticsContext';
-import { Sparkles, MapPin, Tag, ExternalLink, Phone } from 'lucide-react';
+import { MapPin, Tag, ExternalLink, Phone } from 'lucide-react';
 
 interface InFeedSponsorCardProps {
   sponsor: Sponsor;
@@ -41,7 +41,6 @@ export const InFeedSponsorCard: React.FC<InFeedSponsorCardProps> = ({ sponsor })
       {/* Top Banner Tag */}
       <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-transparent border-b border-amber-200/50 dark:border-amber-900/40">
         <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 dark:text-amber-300">
-          <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
           <span>{sponsor.badgeText || 'สิทธิพิเศษพันธมิตร TripDee'}</span>
           <span className="text-amber-600/60 dark:text-amber-400/60 font-normal">|</span>
           <span className="font-semibold text-ink-muted dark:text-slate-400">{sponsor.categoryLabel}</span>

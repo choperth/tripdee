@@ -35,6 +35,11 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'thumb.wikimedia.org',
+        pathname: '/wikipedia/commons/thumb/**',
+      },
     ],
   },
   async headers() {

@@ -16,6 +16,8 @@ interface StitchRoute {
   zoneTag: string;
   subtitle: string;
   image: string;
+  photoCredit: string;
+  photoSource: string;
   priceRange: string;
 }
 
@@ -25,8 +27,11 @@ const STITCH_ROUTES: StitchRoute[] = [
     name: 'ม่อนแจ่ม - แม่ริม (เชียงใหม่)',
     filterKey: 'ม่อนแจ่ม',
     zoneTag: 'ภาคเหนือ / ธรรมชาติ',
-    subtitle: 'ทุ่งดอกไม้ สวนส้ม ทะเลหมอก คาเฟ่วิวเขา',
-    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
+    subtitle: 'จุดชมวิวสันเขา หมู่บ้านม้งหนองหอย และแปลงพืชเมืองหนาว',
+    // Mae Rim flower fields, Chiang Mai — Photo by Putra Mahirudin on Unsplash.
+    image: 'https://images.unsplash.com/photo-1770740098141-4db5fb079dd1?auto=format&fit=crop&w=800&q=80',
+    photoCredit: 'Putra Mahirudin / Unsplash',
+    photoSource: 'https://unsplash.com/photos/a-scenic-mountain-village-with-colorful-flower-fields-e8kXBEOAeck',
     priceRange: '1,800 - 2,200 บ./วัน',
   },
   {
@@ -34,8 +39,10 @@ const STITCH_ROUTES: StitchRoute[] = [
     name: 'กรุงเทพฯ - พัทยา - สัตหีบ',
     filterKey: 'พัทยา',
     zoneTag: 'ภาคตะวันออก / ชายทะเล',
-    subtitle: 'แหลมบาลีฮาย สวนนงนุช เกาะล้าน ท่องเที่ยวชายทะเล',
-    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+    subtitle: 'เกาะล้าน ท่าเรือแหลมบาลีฮาย สวนนงนุช และชายฝั่งสัตหีบ',
+    image: 'https://images.unsplash.com/photo-1620374710130-51526b5200f7?auto=format&fit=crop&w=800&q=80',
+    photoCredit: 'Ashwani Verma / Unsplash',
+    photoSource: 'https://unsplash.com/photos/people-on-beach-during-daytime-Hb6Gvz6Puew',
     priceRange: '2,000 - 2,500 บ./วัน',
   },
   {
@@ -43,8 +50,10 @@ const STITCH_ROUTES: StitchRoute[] = [
     name: 'ดอยอินทนนท์ - กิ่วแม่ปาน (เชียงใหม่)',
     filterKey: 'ดอยอินทนนท์',
     zoneTag: 'ภาคเหนือ / ขึ้นดอยสูง',
-    subtitle: 'จุดสูงสุดแดนสยาม พระมหาธาตุฯ น้ำตกวชิรธาร เส้นทางศึกษาธรรมชาติ',
-    image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
+    subtitle: 'ยอดดอยสูงสุดของไทย พระมหาธาตุฯ น้ำตกวชิรธาร และกิ่วแม่ปาน',
+    image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/Doi_inthanon_03.jpg/960px-Doi_inthanon_03.jpg',
+    photoCredit: 'Peerawat.b / Wikimedia Commons',
+    photoSource: 'https://commons.wikimedia.org/wiki/File:Doi_inthanon_03.jpg',
     priceRange: '2,200 - 2,500 บ./วัน',
   },
   {
@@ -52,8 +61,10 @@ const STITCH_ROUTES: StitchRoute[] = [
     name: 'ภูเก็ต - พังงา - เสม็ดนางชี',
     filterKey: 'ภูเก็ต',
     zoneTag: 'ภาคใต้ / ทะเลอันดามัน',
-    subtitle: 'จุดชมวิวอ่าวพังงา หาดป่าตอง เมืองเก่าภูเก็ต แหลมพรหมเทพ',
-    image: 'https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?auto=format&fit=crop&w=800&q=80',
+    subtitle: 'เสม็ดนางชี อ่าวพังงา เกาะตาปู และเมืองเก่าภูเก็ต',
+    image: 'https://images.unsplash.com/photo-1653409625515-629bed947ddc?auto=format&fit=crop&w=800&q=80',
+    photoCredit: 'Dominic Trier / Unsplash',
+    photoSource: 'https://unsplash.com/photos/an-aerial-view-of-a-mountain-range-with-a-body-of-water-in-the-distance-wRe_Hmx_uho',
     priceRange: '2,200 - 2,600 บ./วัน',
   },
   {
@@ -61,8 +72,10 @@ const STITCH_ROUTES: StitchRoute[] = [
     name: 'กรุงเทพฯ - เขาใหญ่ - ปากช่อง',
     filterKey: 'เขาใหญ่',
     zoneTag: 'ภาคอีสาน / อากาศบริสุทธิ์',
-    subtitle: 'อุทยานแห่งชาติเขาใหญ่ ไร่องุ่น คาเฟ่ธรรมชาติ สัมมนากลุ่ม',
-    image: 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=800&q=80',
+    subtitle: 'อุทยานแห่งชาติเขาใหญ่ น้ำตกเหวสุวัต ผากล้วยไม้ และผืนป่าเขตร้อน',
+    image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Khao_Yai%2C_Thailand%2C_Tropical_grasslands.jpg/960px-Khao_Yai%2C_Thailand%2C_Tropical_grasslands.jpg',
+    photoCredit: 'Vyacheslav Argenberg / Wikimedia Commons',
+    photoSource: 'https://commons.wikimedia.org/wiki/File:Khao_Yai,_Thailand,_Tropical_grasslands.jpg',
     priceRange: '2,000 - 2,400 บ./วัน',
   },
   {
@@ -70,8 +83,10 @@ const STITCH_ROUTES: StitchRoute[] = [
     name: 'กรุงเทพฯ - ชะอำ - หัวหิน',
     filterKey: 'หัวหิน',
     zoneTag: 'ภาคกลาง / พักผ่อนตากอากาศ',
-    subtitle: 'ชายหาดหัวหิน ตลาดซิเคด้า พระราชนิเวศน์มฤคทายวัน',
-    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+    subtitle: 'หาดหัวหิน พระราชนิเวศน์มฤคทายวัน ตลาดซิเคด้า และชายหาดชะอำ',
+    image: 'https://images.unsplash.com/photo-1677053694723-b13b41063f92?auto=format&fit=crop&w=800&q=80',
+    photoCredit: 'Yannick Apollon / Unsplash',
+    photoSource: 'https://unsplash.com/photos/an-aerial-view-of-a-beach-with-a-boat-in-the-water-48ZjXYF0T_U',
     priceRange: '2,200 - 2,600 บ./วัน',
   },
 ];
@@ -132,6 +147,14 @@ export const PopularRoutesSection: React.FC<PopularRoutesSectionProps> = ({ onSe
                   <span className="absolute top-3 left-3 px-space-xs py-space-2xs rounded bg-surface/90 text-navy-deep font-bold text-label-badge shadow-sm">
                     {t(`route.${route.id}.zone` as DictKey) || route.zoneTag}
                   </span>
+                  <a
+                    href={route.photoSource}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute bottom-2 right-2 rounded bg-navy-deep/70 px-1.5 py-0.5 text-[9px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                  >
+                    ภาพ: {route.photoCredit}
+                  </a>
                 </div>
 
                 {/* Content */}
