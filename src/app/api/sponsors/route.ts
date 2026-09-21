@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchSponsors, saveSponsor, updateSponsor, deleteSponsor } from '@/lib/supabase/service';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const sponsors = await fetchSponsors();
+    const url = new URL(req.url);
+    const referer = req.headers.get('referer') || undefined;
+    const targetUrl = url.search ? req.url : (referer || req.url);
+    const sponsors = await fetchSponsors(targetUrl);
     return NextResponse.json({
       success: true,
       total: sponsors.length,

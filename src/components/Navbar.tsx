@@ -174,14 +174,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* CENTER: Navigation Links */}
-          <div className="hidden lg:flex items-center gap-space-xs xl:gap-space-sm">
+          {/* CENTER: Navigation Links (balanced & centered) */}
+          <div className="hidden lg:flex flex-1 items-center justify-center gap-1 xl:gap-2 px-2">
             <button
               type="button"
               onClick={() => selectTab('van')}
-              className={`transition-colors font-body-medium text-body-medium rounded-lg px-space-sm py-space-xs ${
+              className={`transition-colors text-xs xl:text-sm font-bold rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap ${
                 activeTab === 'van'
-                  ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white font-bold shadow-xs'
+                  ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
                   : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
               }`}
             >
@@ -189,17 +189,39 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => scrollTo('tripboard')}
-              className="font-body-medium text-body-medium text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white transition-colors rounded-lg px-space-sm py-space-xs"
+              onClick={() => selectTab('suv_driver')}
+              className={`transition-colors text-xs xl:text-sm font-bold rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap ${
+                activeTab === 'suv_driver'
+                  ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
+                  : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
+              }`}
             >
-              {t('nav.tripboard')}
+              {t('nav.suvDriverShort')}
+            </button>
+            <button
+              type="button"
+              onClick={() => selectTab('car')}
+              className={`transition-colors text-xs xl:text-sm font-bold rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap ${
+                activeTab === 'car'
+                  ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
+                  : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
+              }`}
+            >
+              {t('nav.car')}
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollTo('tripboard')}
+              className="text-xs xl:text-sm font-bold text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white transition-colors rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap"
+            >
+              {t('nav.tripboardShort')}
             </button>
             <button
               type="button"
               onClick={() => scrollTo('routes')}
-              className="font-body-medium text-body-medium text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white transition-colors rounded-lg px-space-sm py-space-xs"
+              className="text-xs xl:text-sm font-bold text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white transition-colors rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap"
             >
-              {t('nav.routes')}
+              {t('nav.routesShort')}
             </button>
             <button
               type="button"
@@ -207,18 +229,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                 selectTab('corporate');
                 scrollTo('corporate');
               }}
-              className={`transition-colors font-body-medium text-body-medium rounded-lg px-space-sm py-space-xs ${
+              className={`transition-colors text-xs xl:text-sm font-bold rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap ${
                 activeTab === 'corporate'
-                  ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white font-bold shadow-xs'
+                  ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
                   : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
               }`}
             >
-              {t('nav.b2b')}
+              {t('nav.b2bShort')}
             </button>
           </div>
 
           {/* RIGHT: Actions, Language Switcher, Driver Portal, Customer Post CTA */}
-          <div className="flex items-center gap-1 sm:gap-space-sm shrink-0 min-w-0">
+          <div className="flex items-center justify-end shrink-0 gap-1.5 sm:gap-2 min-w-0">
             {/* Dark / Light Toggle */}
             <button
               type="button"
@@ -237,13 +259,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onOpenDriverSelfService}
-                className="hidden md:inline-flex items-center gap-space-2xs bg-paper-surface-muted hover:bg-surface-variant dark:bg-slate-900 dark:hover:bg-slate-800 text-navy-deep dark:text-slate-200 font-body-medium text-body-medium px-space-sm py-space-xs rounded-lg border border-border-subtle dark:border-slate-700 shadow-sm transition-all active:scale-[0.98]"
+                className="hidden xl:inline-flex items-center gap-1.5 bg-paper-surface-muted hover:bg-surface-variant dark:bg-slate-900 dark:hover:bg-slate-800 text-navy-deep dark:text-slate-200 text-xs xl:text-sm font-bold px-3 py-1.5 rounded-lg border border-border-subtle dark:border-slate-700 shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
+                title={t('nav.driverCta')}
               >
-                <span className="material-symbols-outlined text-[18px] text-amber-accent">
+                <span className="material-symbols-outlined text-[17px] text-amber-accent">
                   airport_shuttle
                 </span>
-                <span className="font-bold whitespace-nowrap">{t('nav.driverCta')}</span>
-                <span className="px-space-xs py-0.5 rounded-full bg-verified-emerald-soft text-verified-emerald font-label-badge text-[10px] font-bold">
+                <span>{t('nav.driverCtaShort')}</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-verified-emerald-soft text-verified-emerald text-[10px] font-extrabold">
                   {t('nav.free')}
                 </span>
               </button>
@@ -257,11 +280,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 const trigger = document.getElementById('open-post-modal-btn');
                 if (trigger) trigger.click();
               }}
-              className="inline-flex items-center gap-1 sm:gap-space-2xs bg-blue-action hover:bg-blue-action-hover text-on-primary font-body-medium px-2 sm:px-space-md py-1.5 sm:py-space-xs rounded-lg shadow-sm transition-all active:scale-[0.98] whitespace-nowrap text-xs sm:text-body-medium"
+              className="inline-flex items-center gap-1 sm:gap-1.5 bg-blue-action hover:bg-blue-action-hover text-on-primary font-bold px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg shadow-sm transition-all active:scale-[0.98] whitespace-nowrap text-xs sm:text-sm"
             >
-              <PlusCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('nav.postJob')}</span>
-              <span className="sm:hidden">{t('nav.postJobShort')}</span>
+              <PlusCircle className="w-4 h-4 shrink-0" />
+              <span>{t('nav.postJobShort')}</span>
             </button>
 
             {/* User Login/Portal */}
@@ -269,12 +291,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onOpenPortal}
-                className="inline-flex items-center gap-1 sm:gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold bg-navy-deep text-surface hover:bg-navy-surface transition-all"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold bg-navy-deep text-surface hover:bg-navy-surface transition-all shrink-0"
               >
                 {user.role === 'driver' && <CarFront className="h-3.5 w-3.5" />}
                 {user.role === 'customer' && <Briefcase className="h-3.5 w-3.5" />}
                 {user.role === 'admin' && <Crown className="h-3.5 w-3.5" />}
-                <span className="hidden sm:inline max-w-[90px] truncate">
+                <span className="max-w-[85px] truncate">
                   {user.role === 'driver' && (user.driverNickname || user.name)}
                   {user.role === 'customer' && (user.companyName || user.name)}
                   {user.role === 'admin' && t('nav.admin')}
@@ -284,11 +306,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onOpenLoginModal}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-navy-deep text-surface hover:bg-navy-surface flex items-center justify-center transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold border border-border-subtle dark:border-slate-700 bg-card hover:bg-paper-surface-muted text-navy-deep dark:text-slate-100 transition-colors shadow-sm shrink-0"
                 aria-label={t('nav.login')}
-                title={t('nav.login')}
               >
-                <User className="w-4 h-4" />
+                <User className="w-4 h-4 text-ink-secondary" />
+                <span className="hidden sm:inline">{t('nav.login')}</span>
               </button>
             )}
 
@@ -334,7 +356,31 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <span>🚐</span>
-                <span>{t('nav.van')}</span>
+                <span className="truncate">{t('nav.van')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => selectTab('suv_driver')}
+                className={`px-space-md py-space-sm rounded-xl font-body-medium text-body-medium text-left flex items-center gap-2 ${
+                  activeTab === 'suv_driver'
+                    ? 'bg-blue-subtle text-blue-action font-bold'
+                    : 'bg-paper-surface-muted text-ink-primary'
+                }`}
+              >
+                <span>🚗</span>
+                <span className="truncate">{t('nav.suvDriver')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => selectTab('car')}
+                className={`px-space-md py-space-sm rounded-xl font-body-medium text-body-medium text-left flex items-center gap-2 ${
+                  activeTab === 'car'
+                    ? 'bg-blue-subtle text-blue-action font-bold'
+                    : 'bg-paper-surface-muted text-ink-primary'
+                }`}
+              >
+                <span>🔑</span>
+                <span className="truncate">{t('nav.car')}</span>
               </button>
               <button
                 type="button"
@@ -349,7 +395,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <span>🏢</span>
-                <span>{t('nav.b2b')}</span>
+                <span className="truncate">{t('nav.b2b')}</span>
               </button>
             </div>
 
@@ -378,6 +424,33 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             <div className="border-t border-border-subtle pt-space-sm flex flex-col gap-space-xs">
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenPortal();
+                  }}
+                  className="w-full h-11 bg-navy-deep text-surface rounded-xl font-bold flex items-center justify-center gap-2"
+                >
+                  {user.role === 'driver' && <CarFront className="w-4 h-4" />}
+                  {user.role === 'customer' && <Briefcase className="w-4 h-4" />}
+                  {user.role === 'admin' && <Crown className="w-4 h-4" />}
+                  <span>{t('nav.dashboard', { name: user.driverNickname || user.companyName || user.name })}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenLoginModal();
+                  }}
+                  className="w-full h-11 bg-navy-deep text-surface rounded-xl font-bold flex items-center justify-center gap-2"
+                >
+                  <User className="w-4 h-4" />
+                  <span>{t('nav.loginMobile')}</span>
+                </button>
+              )}
               {onOpenDriverSelfService && (
                 <button
                   type="button"
@@ -385,7 +458,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setMenuOpen(false);
                     onOpenDriverSelfService();
                   }}
-                  className="w-full h-11 bg-navy-deep text-surface rounded-xl font-body-medium flex items-center justify-center gap-2"
+                  className="w-full h-11 border border-border-subtle dark:border-slate-700 bg-paper-surface-muted text-navy-deep dark:text-slate-200 rounded-xl font-body-medium flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined text-[18px] text-amber-accent">
                     airport_shuttle

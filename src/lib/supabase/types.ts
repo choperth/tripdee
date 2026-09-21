@@ -231,6 +231,10 @@ export type Database = {
           category: 'general' | 'corporate' | null;
           pin: string | null;
           is_closed: boolean | null;
+          is_negotiable?: boolean | null;
+          max_quotes?: number | null;
+          quote_count?: number | null;
+          accepted_quote_id?: string | null;
           created_at: string;
         };
         Insert: {
@@ -253,6 +257,10 @@ export type Database = {
           category?: 'general' | 'corporate' | null;
           pin?: string | null;
           is_closed?: boolean | null;
+          is_negotiable?: boolean | null;
+          max_quotes?: number | null;
+          quote_count?: number | null;
+          accepted_quote_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -275,6 +283,49 @@ export type Database = {
           category?: 'general' | 'corporate' | null;
           pin?: string | null;
           is_closed?: boolean | null;
+          is_negotiable?: boolean | null;
+          max_quotes?: number | null;
+          quote_count?: number | null;
+          accepted_quote_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      board_quotes: {
+        Row: {
+          id: string;
+          post_id: string;
+          driver_name: string;
+          driver_phone: string;
+          driver_line: string | null;
+          vehicle_model: string;
+          price: number;
+          price_note: string | null;
+          message: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          driver_name: string;
+          driver_phone: string;
+          driver_line?: string | null;
+          vehicle_model: string;
+          price: number;
+          price_note?: string | null;
+          message?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          post_id?: string;
+          driver_name?: string;
+          driver_phone?: string;
+          driver_line?: string | null;
+          vehicle_model?: string;
+          price?: number;
+          price_note?: string | null;
+          message?: string | null;
           created_at?: string;
         };
         Relationships: [];

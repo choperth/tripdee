@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
-import { VEHICLES, SPONSORS, POPULAR_ROUTES, Vehicle } from '@/data/mockData';
+import { VEHICLES, SPONSORS, Vehicle } from '@/data/mockData';
+import { isMockDataEnabled, isMockEnvEnabled, isMockVehicleId } from '@/lib/mockConfig';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { VehicleCard } from '@/components/VehicleCard';
@@ -50,24 +51,10 @@ import { Footer } from '@/components/Footer';
 import { MobileBottomBar } from '@/components/MobileBottomBar';
 import { ScrollQualityMonitor } from '@/components/ScrollQualityMonitor';
 import { useLanguage } from '@/context/LanguageContext';
-import type { DictKey } from '@/i18n/dictionaries';
+
 import { SearchX, ArrowRight, X, SlidersHorizontal, RotateCcw, UserPlus, MessageCircle } from 'lucide-react';
 
-const SERVICE_ACTIONS: { key: DictKey; tab: 'van' | 'car' | 'hotel' | 'corporate'; zone?: string; seats?: string }[] = [
-  { key: 'home.service1', tab: 'van' },
-  { key: 'home.service2', tab: 'van', seats: '9' },
-  { key: 'home.service3', tab: 'car' },
-  { key: 'home.service4', tab: 'van', seats: '7' },
-  { key: 'home.service5', tab: 'corporate' },
-];
 
-const ROUTE_LINKS: { key: DictKey; value: string }[] = [
-  { key: 'home.routeLink1', value: 'ม่อนแจ่ม' },
-  { key: 'home.routeLink2', value: 'พัทยา' },
-  { key: 'home.routeLink3', value: 'ภูเก็ต' },
-  { key: 'home.routeLink4', value: 'เขาใหญ่' },
-  { key: 'home.routeLink5', value: 'หัวหิน' },
-];
 
 
 function SectionHead({
@@ -104,13 +91,21 @@ export default function HomePage() {
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [selectedSeats, setSelectedSeats] = useState<string>('all');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
-  const [vehicles, setVehicles] = useState<Vehicle[]>(VEHICLES);
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+  const isDemo = isClient && isMockDataEnabled();
+  const [vehicles, setVehicles] = useState<Vehicle[]>(() => (isMockEnvEnabled() ? VEHICLES : []));
+  const [demoBannerDismissed, setDemoBannerDismissed] = useState<boolean>(false);
 
   const loadVehicles = useCallback(() => {
-    fetch('/api/vehicles')
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    fetch('/api/vehicles' + search)
       .then((res) => res.json())
       .then((data) => {
-        if (data.vehicles && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
+        if (data.vehicles && Array.isArray(data.vehicles)) {
           setVehicles(data.vehicles);
         }
       })
@@ -174,11 +169,16 @@ export default function HomePage() {
     });
   }, []);
   const filteredVehicles = useMemo(() => {
-    return vehicles.filter((vehicle) => {
+    // In production mode (e.g. ?demo=0 or NEXT_PUBLIC_ENABLE_MOCK_DATA=false), strictly exclude mock vehicle IDs
+    const baseList = isDemo ? vehicles : vehicles.filter((v) => !isMockVehicleId(v.id));
+
+    return baseList.filter((vehicle) => {
       const matchesTab =
         activeTab === 'van'
           ? (vehicle.type === 'van' && vehicle.rentalType !== 'self_drive')
-          : (vehicle.type !== 'van' || vehicle.rentalType === 'self_drive');
+          : activeTab === 'suv_driver'
+          ? ((vehicle.type === 'suv' || vehicle.type === 'car') && vehicle.rentalType === 'with_driver')
+          : (vehicle.rentalType === 'self_drive');
       
       const matchesRegion =
         (selectedZone === 'bkk' && (vehicle.region === 'central' || vehicle.location.includes('กรุงเทพ') || vehicle.location.includes('กทม'))) ||
@@ -231,7 +231,26 @@ export default function HomePage() {
 
       return matchesTab && matchesZone && matchesSeats && matchesKeyword && matchesPlate;
     });
-  }, [activeTab, selectedZone, selectedSeats, searchKeyword, plateFilter, vehicles]);
+  }, [activeTab, selectedZone, selectedSeats, searchKeyword, plateFilter, vehicles, isDemo]);
+
+  const totalVanCount = useMemo(
+    () => vehicles.filter((v) => (isDemo || !isMockVehicleId(v.id)) && v.type === 'van' && v.rentalType !== 'self_drive').length,
+    [vehicles, isDemo]
+  );
+  const totalSuvDriverCount = useMemo(
+    () =>
+      vehicles.filter(
+        (v) =>
+          (isDemo || !isMockVehicleId(v.id)) &&
+          (v.type === 'suv' || v.type === 'car') &&
+          v.rentalType === 'with_driver'
+      ).length,
+    [vehicles, isDemo]
+  );
+  const totalCarCount = useMemo(
+    () => vehicles.filter((v) => (isDemo || !isMockVehicleId(v.id)) && v.rentalType === 'self_drive').length,
+    [vehicles, isDemo]
+  );
 
   const resetFilters = () => {
     setSelectedZone('all');
@@ -242,7 +261,10 @@ export default function HomePage() {
 
   const hasFilters = selectedZone !== 'all' || selectedSeats !== 'all' || searchKeyword !== '' || plateFilter !== 'all';
 
-  const hotelStays = SPONSORS.filter((s) => s.category === 'hotel');
+  const hotelStays = useMemo(
+    () => (isDemo ? SPONSORS.filter((s) => s.category === 'hotel') : []),
+    [isDemo]
+  );
 
   return (
     <div className="flex min-h-dvh flex-col bg-paper font-body text-ink">
@@ -256,7 +278,77 @@ export default function HomePage() {
       />
       <div aria-hidden="true" className="h-[var(--td-head-h)] shrink-0" />
 
-      {(activeTab === 'van' || activeTab === 'car') && (
+      {isClient && !demoBannerDismissed && (
+        isDemo ? (
+          <aside
+            role="status"
+            aria-label="Demo Mode Notice"
+            suppressHydrationWarning
+            className="relative z-30 bg-amber-500/10 dark:bg-amber-500/20 border-b border-amber-500/25 px-4 py-2 text-xs font-semibold text-amber-900 dark:text-amber-200 transition-all"
+          >
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="inline-block h-2 w-2 rounded-full bg-amber-500 shrink-0 animate-pulse" />
+                <p className="truncate">
+                  <span className="font-extrabold">{t('demo.bannerMockTitle')}</span> {t('demo.bannerMockDesc')}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <a
+                  href="?demo=0"
+                  className="underline hover:text-amber-950 dark:hover:text-white transition-colors text-[11px]"
+                  title="สลับไปดูข้อมูลจริงจากฐานข้อมูล"
+                >
+                  {t('demo.bannerMockCta')}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setDemoBannerDismissed(true)}
+                  className="rounded p-0.5 hover:bg-amber-500/20 text-amber-900 dark:text-amber-200 text-xs px-1.5"
+                  aria-label="ปิดการแจ้งเตือน"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </aside>
+        ) : (
+          <aside
+            role="status"
+            aria-label="Production Mode Notice"
+            suppressHydrationWarning
+            className="relative z-30 bg-emerald-500/10 dark:bg-emerald-500/20 border-b border-emerald-500/25 px-4 py-2 text-xs font-semibold text-emerald-900 dark:text-emerald-200 transition-all"
+          >
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                <p className="truncate">
+                  <span className="font-extrabold">{t('demo.bannerRealTitle')}</span> {t('demo.bannerRealDesc')}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <a
+                  href="?demo=1"
+                  className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-bold text-white hover:bg-emerald-700 transition-colors shadow-xs"
+                  title="สลับไปโหมดตัวอย่าง Mock Data เพื่อนำเสนองาน"
+                >
+                  {t('demo.bannerRealCta')}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setDemoBannerDismissed(true)}
+                  className="rounded p-0.5 hover:bg-emerald-500/20 text-emerald-900 dark:text-emerald-200 text-xs px-1.5"
+                  aria-label="ปิดการแจ้งเตือน"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </aside>
+        )
+      )}
+
+      {(activeTab === 'van' || activeTab === 'suv_driver' || activeTab === 'car') && (
         <Hero
           selectedZone={selectedZone}
           setSelectedZone={setSelectedZone}
@@ -269,8 +361,9 @@ export default function HomePage() {
           setActiveTab={setActiveTab}
           plateFilter={plateFilter}
           setPlateFilter={setPlateFilter}
-          totalVanCount={vehicles.filter((v) => v.type === 'van' && v.rentalType !== 'self_drive').length}
-          totalCarCount={vehicles.filter((v) => v.type !== 'van' || v.rentalType === 'self_drive').length}
+          totalVanCount={totalVanCount}
+          totalSuvDriverCount={totalSuvDriverCount}
+          totalCarCount={totalCarCount}
         />
       )}
 
@@ -300,11 +393,19 @@ export default function HomePage() {
             {/* Primary Vehicle Catalog & Filter Rail */}
             <section id="results" aria-label={t('home.resultsAria')} className="mt-8 scroll-mt-28">
               <SectionHead
-                title={t(activeTab === 'van' ? 'home.vanTitle' : 'home.carTitle')}
+                title={
+                  activeTab === 'van'
+                    ? t('home.vanTitle')
+                    : activeTab === 'suv_driver'
+                    ? t('home.suvDriverTitle')
+                    : t('home.carTitle')
+                }
                 count={t('home.vehicleCount', { count: filteredVehicles.length })}
                 caption={
                   activeTab === 'van'
                     ? t('home.resultsCaption')
+                    : activeTab === 'suv_driver'
+                    ? t('home.suvDriverCaption')
                     : t('home.carCaption')
                 }
                 action={
@@ -322,7 +423,11 @@ export default function HomePage() {
               {/* Quick Filter: Transport Category & Legal Type (Stitch Segment Badges) */}
               <div className="mb-6 flex flex-wrap items-center gap-space-xs text-body-subtext font-body-medium">
                 <span className="text-ink-muted dark:text-slate-400 font-label-badge text-label-badge uppercase mr-1">
-                  {activeTab === 'van' ? t('home.plateGroupVan') : t('home.plateGroupCar')}
+                  {activeTab === 'van'
+                    ? t('home.plateGroupVan')
+                    : activeTab === 'suv_driver'
+                    ? t('home.plateGroupSuvDriver')
+                    : t('home.plateGroupCar')}
                 </span>
                 <button
                   type="button"
@@ -334,14 +439,15 @@ export default function HomePage() {
                   }`}
                 >
                   {t('home.plateAll', {
-                    count: vehicles.filter((v) =>
+                    count:
                       activeTab === 'van'
-                        ? v.type === 'van' && v.rentalType !== 'self_drive'
-                        : v.type !== 'van' || v.rentalType === 'self_drive'
-                    ).length,
+                        ? totalVanCount
+                        : activeTab === 'suv_driver'
+                        ? totalSuvDriverCount
+                        : totalCarCount,
                   })}
                 </button>
-                {activeTab === 'van' ? (
+                {activeTab === 'van' || activeTab === 'suv_driver' ? (
                   <>
                     <button
                       type="button"
@@ -373,7 +479,7 @@ export default function HomePage() {
                     className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
                       plateFilter === 'blue'
                         ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-plate-blue-bg text-plate-blue-text hover:brightness-95 border border-plate-blue-border'
+                        : 'bg-plate-blue-bg text-plate-blue-text hover:brightness-95 border border-plate-blue-border'
                     }`}
                   >
                     <span className="h-2 w-2 rounded-full bg-blue-500 ring-2 ring-blue-200"></span>
@@ -472,7 +578,7 @@ export default function HomePage() {
                   {filteredVehicles.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
                       {filteredVehicles.map((vehicle, index) => {
-                        const showInFeedAd = (index + 1) % 4 === 0 && index < filteredVehicles.length - 1;
+                        const showInFeedAd = isDemo && (index + 1) % 4 === 0 && index < filteredVehicles.length - 1;
                         const sponsorIndex = Math.floor(index / 4) % SPONSORS.length;
                         const currentSponsor = SPONSORS[sponsorIndex];
 
@@ -611,7 +717,7 @@ export default function HomePage() {
         }}
         onSelectTab={(tab) => {
           setActiveTab(tab);
-          if (tab === 'van' || tab === 'car') {
+          if (tab === 'van' || tab === 'suv_driver' || tab === 'car') {
             document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
           } else {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -646,7 +752,14 @@ export default function HomePage() {
           setIsRegisterModalOpen(true);
         }}
       />
-      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onOpenRegisterModal={() => {
+          setIsLoginModalOpen(false);
+          setIsRegisterModalOpen(true);
+        }}
+      />
 
       {user?.role === 'driver' && (
         <DriverPortalModal isOpen={isPortalOpen} onClose={() => setIsPortalOpen(false)} />

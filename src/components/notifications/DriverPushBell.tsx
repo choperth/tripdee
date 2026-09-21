@@ -20,7 +20,7 @@ interface DriverPushBellProps {
 
 export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false }) => {
   const [isSupported, setIsSupported] = useState(false);
-  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [, setPermission] = useState<NotificationPermission>('default');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [testSent, setTestSent] = useState(false);

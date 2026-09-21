@@ -39,7 +39,7 @@ type AdminTab = 'vehicles' | 'verifications' | 'quotations' | 'board' | 'sponsor
 export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onClose }) => {
   const { user, approveDriverVerification, logout } = useAuth();
   const { t } = useLanguage();
-  const { summary, getSponsorClickCount, trackCall, resetAnalytics } = useAnalytics();
+  const { summary, getSponsorClickCount, resetAnalytics } = useAnalytics();
 
   const [activeTab, setActiveTab] = useState<AdminTab>('vehicles');
   const [reportSponsor, setReportSponsor] = useState<Sponsor | null>(null);

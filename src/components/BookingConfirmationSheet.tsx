@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
-import { Vehicle, STANDARD_TERMS, formatTHB } from '@/data/mockData';
+import { Vehicle, STANDARD_TERMS } from '@/data/mockData';
 import {
   Printer,
   Copy,
@@ -13,8 +13,6 @@ import {
   Calendar,
   Clock,
   CarFront,
-  Phone,
-  MessageCircle,
   MapPin,
   CheckCircle2,
   AlertCircle,

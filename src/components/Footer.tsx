@@ -8,13 +8,12 @@ interface FooterProps {
   onOpenDriverSelfService?: () => void;
   onOpenRegisterModal?: () => void;
   onSelectZone?: (zone: string) => void;
-  onSelectTab?: (tab: 'van' | 'car' | 'hotel' | 'corporate') => void;
+  onSelectTab?: (tab: 'van' | 'suv_driver' | 'car' | 'hotel' | 'corporate') => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   onOpenDriverSelfService,
   onOpenRegisterModal,
-  onSelectZone,
   onSelectTab,
 }) => {
   const { t } = useLanguage();
@@ -26,7 +25,7 @@ export const Footer: React.FC<FooterProps> = ({
     }
   };
 
-  const handleSelectTab = (tab: 'van' | 'car' | 'hotel' | 'corporate') => {
+  const handleSelectTab = (tab: 'van' | 'suv_driver' | 'car' | 'hotel' | 'corporate') => {
     if (onSelectTab) onSelectTab(tab);
     scrollTo('results');
   };

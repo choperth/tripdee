@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import Image from 'next/image';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { Vehicle } from '@/data/mockData';
 import {
@@ -10,7 +9,6 @@ import {
   Search,
   CheckCircle,
   AlertCircle,
-  CarFront,
   Save,
   ArrowLeft,
   Loader2,

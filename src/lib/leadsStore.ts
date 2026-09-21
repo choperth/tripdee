@@ -30,6 +30,7 @@ export interface DriverLead {
   canIssueTaxInvoice?: boolean;
   businessType?: 'company' | 'individual';
   routes: string;
+  serviceType?: 'with_driver' | 'self_drive';
   submittedAt: string;
   status: 'pending' | 'verified' | 'rejected';
 }
@@ -70,7 +71,25 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
   return {
     id: `v-${lead.id}`,
     title: `${lead.vehicleModel}${titleSeats} (${lead.nickname})`,
-    type: lead.vehicleModel.toLowerCase().includes('fortuner') || lead.vehicleModel.toLowerCase().includes('suv') ? 'suv' : 'van',
+    type:
+      lead.vehicleModel.toLowerCase().includes('fortuner') ||
+      lead.vehicleModel.toLowerCase().includes('suv') ||
+      lead.vehicleModel.toLowerCase().includes('mu-x') ||
+      lead.vehicleModel.toLowerCase().includes('cr-v') ||
+      lead.vehicleModel.toLowerCase().includes('everest') ||
+      lead.vehicleModel.toLowerCase().includes('pajero') ||
+      lead.vehicleModel.toLowerCase().includes('veloz')
+        ? 'suv'
+        : lead.vehicleModel.toLowerCase().includes('camry') ||
+          lead.vehicleModel.toLowerCase().includes('accord') ||
+          lead.vehicleModel.toLowerCase().includes('sedan') ||
+          lead.vehicleModel.toLowerCase().includes('yaris') ||
+          lead.vehicleModel.toLowerCase().includes('city') ||
+          lead.vehicleModel.toLowerCase().includes('mercedes') ||
+          lead.vehicleModel.toLowerCase().includes('benz')
+        ? 'car'
+        : 'van',
+    rentalType: (lead.serviceType as 'with_driver' | 'self_drive') || 'with_driver',
     seats: seatsNum,
     driverName: lead.driverName,
     driverNickname: lead.nickname,
@@ -98,7 +117,7 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
       'ประกันภัยคุ้มครองผู้โดยสาร',
       'แอร์เย็นฉ่ำ สภาพรถใหม่สะอาด',
     ],
-    description: `บริการรถตู้พร้อมคนขับ โดย ${lead.driverName} (${lead.nickname}) ยานพาหนะ ${lead.vehicleModel} ชำนาญเส้นทาง ${lead.routes} ผ่านการตรวจสอบเอกสารและอนุมัติตรา TripDee Verified พร้อมให้บริการลูกค้าทันที`,
+    description: `บริการรถพร้อมคนขับ โดย ${lead.driverName} (${lead.nickname}) ยานพาหนะ ${lead.vehicleModel} ชำนาญเส้นทาง ${lead.routes} ผ่านการตรวจสอบเอกสารและอนุมัติตรา TripDee Verified พร้อมให้บริการลูกค้าทันที`,
     plateType: lead.plateType || (isYellow ? 'yellow' : 'blue'),
     plateNumber: lead.plateNumber || undefined,
     canIssueTaxInvoice: Boolean(lead.canIssueTaxInvoice),
@@ -127,7 +146,6 @@ interface LeadsDatabase {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __tripdee_leads__: LeadsDatabase | undefined;
 }
 

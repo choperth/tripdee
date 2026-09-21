@@ -16,6 +16,7 @@ interface HeroProps {
   plateFilter?: 'all' | 'yellow' | 'blue' | 'tax';
   setPlateFilter?: (filter: 'all' | 'yellow' | 'blue' | 'tax') => void;
   totalVanCount?: number;
+  totalSuvDriverCount?: number;
   totalCarCount?: number;
 }
 
@@ -49,7 +50,7 @@ export const Hero: React.FC<HeroProps> = ({
     }
   };
 
-  const applyQuickFilter = (type: 'yellow' | 'massage' | 'majesty' | 'tax') => {
+  const applyQuickFilter = (type: 'yellow' | 'massage' | 'majesty' | 'tax' | 'suv7' | 'camry' | 'fortuner' | 'ecocar') => {
     if (type === 'yellow') {
       if (setPlateFilter) setPlateFilter('yellow');
     } else if (type === 'massage') {
@@ -60,6 +61,15 @@ export const Hero: React.FC<HeroProps> = ({
       setSearchKeyword('Majesty');
     } else if (type === 'tax') {
       if (setPlateFilter) setPlateFilter('tax');
+    } else if (type === 'suv7') {
+      setSelectedSeats('7');
+      setSearchKeyword('');
+    } else if (type === 'camry') {
+      setSearchKeyword('Camry');
+    } else if (type === 'fortuner') {
+      setSearchKeyword('Fortuner');
+    } else if (type === 'ecocar') {
+      setSearchKeyword('Eco');
     }
     scrollToResults();
   };
@@ -121,6 +131,18 @@ export const Hero: React.FC<HeroProps> = ({
             </button>
             <button
               type="button"
+              onClick={() => handleTabChange('suv_driver')}
+              className={`px-space-md py-space-xs rounded-lg font-bold shadow-sm whitespace-nowrap flex items-center gap-space-2xs transition-all ${
+                activeTab === 'suv_driver'
+                  ? 'bg-navy-deep text-on-primary'
+                  : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">directions_car</span>
+              <span>{t('nav.suvDriver')}</span>
+            </button>
+            <button
+              type="button"
               onClick={() => handleTabChange('car')}
               className={`px-space-md py-space-xs rounded-lg font-bold whitespace-nowrap flex items-center gap-space-2xs transition-all ${
                 activeTab === 'car'
@@ -128,7 +150,7 @@ export const Hero: React.FC<HeroProps> = ({
                   : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">directions_car</span>
+              <span className="material-symbols-outlined text-[16px]">key</span>
               <span>{t('nav.car')}</span>
             </button>
             <button
@@ -269,34 +291,93 @@ export const Hero: React.FC<HeroProps> = ({
           {/* Quick filter chips underneath */}
           <div className="flex items-center gap-space-xs mt-space-sm pt-space-xs flex-wrap text-body-subtext">
             <span className="text-ink-muted dark:text-slate-400 font-body-subtext">{t('hero.quickTitle')}</span>
-            <button
-              type="button"
-              onClick={() => applyQuickFilter('yellow')}
-              className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
-            >
-              {t('hero.quickYellow')}
-            </button>
-            <button
-              type="button"
-              onClick={() => applyQuickFilter('massage')}
-              className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
-            >
-              {t('hero.quickMassage')}
-            </button>
-            <button
-              type="button"
-              onClick={() => applyQuickFilter('majesty')}
-              className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
-            >
-              Toyota Majesty
-            </button>
-            <button
-              type="button"
-              onClick={() => applyQuickFilter('tax')}
-              className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
-            >
-              {t('hero.quickTax')}
-            </button>
+            {activeTab === 'suv_driver' ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => applyQuickFilter('suv7')}
+                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                >
+                  {t('hero.quickSuv7')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyQuickFilter('fortuner')}
+                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                >
+                  {t('hero.quickFortuner')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyQuickFilter('camry')}
+                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                >
+                  {t('hero.quickCamry')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyQuickFilter('tax')}
+                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                >
+                  {t('hero.quickTax')}
+                </button>
+              </>
+            ) : activeTab === 'car' ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => applyQuickFilter('ecocar')}
+                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                >
+                  Eco Car
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyQuickFilter('suv7')}
+                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                >
+                  {t('hero.quickSuv7')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyQuickFilter('tax')}
+                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                >
+                  {t('hero.quickTax')}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => applyQuickFilter('yellow')}
+                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                >
+                  {t('hero.quickYellow')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyQuickFilter('massage')}
+                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                >
+                  {t('hero.quickMassage')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyQuickFilter('majesty')}
+                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                >
+                  Toyota Majesty
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyQuickFilter('tax')}
+                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                >
+                  {t('hero.quickTax')}
+                </button>
+              </>
+            )}
           </div>
         </div>
 

@@ -36,7 +36,10 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const posts = await fetchBoardPosts();
+    const url = new URL(req.url);
+    const referer = req.headers.get('referer') || undefined;
+    const targetUrl = url.search ? req.url : (referer || req.url);
+    const posts = await fetchBoardPosts(targetUrl);
     return NextResponse.json({
       success: true,
       total: posts.length,

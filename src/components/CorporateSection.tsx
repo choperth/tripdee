@@ -6,7 +6,6 @@ import { useAuth } from '@/context/AuthContext';
 import {
   CheckCircle2,
   Loader2,
-  Phone,
 } from 'lucide-react';
 
 export const CorporateSection: React.FC = () => {
@@ -426,16 +425,6 @@ export const CorporateSection: React.FC = () => {
                       </>
                     )}
                   </button>
-
-                  <div className="text-center pt-1">
-                    <a
-                      href="tel:081-234-5678"
-                      className="inline-flex items-center gap-1 text-body-subtext font-body-subtext text-ink-muted dark:text-slate-400 hover:text-navy-deep dark:hover:text-white transition-colors"
-                    >
-                      <Phone className="w-3.5 h-3.5 text-taxi-yellow-30" />
-                      <span>{t('corp.hotline')}</span>
-                    </a>
-                  </div>
                 </form>
               </>
             )}

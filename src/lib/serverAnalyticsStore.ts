@@ -1,7 +1,6 @@
 import { AnalyticsEvent, AnalyticsSummary, computeUpdatedSummary, createEmptySummary } from './analytics';
 
 declare global {
-  // eslint-disable-next-line no-var
   var __tripdee_server_analytics__: AnalyticsSummary | undefined;
 }
 

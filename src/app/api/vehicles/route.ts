@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchVehicles, saveVehicle, updateVehicle, deleteVehicle } from '@/lib/supabase/service';
 import { Vehicle } from '@/data/mockData';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const vehicles = await fetchVehicles();
+    const url = new URL(req.url);
+    const referer = req.headers.get('referer') || undefined;
+    const targetUrl = url.search ? req.url : (referer || req.url);
+    const vehicles = await fetchVehicles(targetUrl);
     return NextResponse.json({
       success: true,
       total: vehicles.length,

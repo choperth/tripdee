@@ -5,8 +5,6 @@ import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useLanguage } from '@/context/LanguageContext';
 import {
   X,
-  Check,
-  CheckCircle2,
   ShieldCheck,
   CreditCard,
   SlidersHorizontal,

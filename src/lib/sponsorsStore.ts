@@ -1,22 +1,22 @@
 import { SPONSORS, Sponsor } from '@/data/mockData';
+import { isMockDataEnabled } from '@/lib/mockConfig';
 
 interface SponsorsDatabase {
   sponsors: Sponsor[];
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __tripdee_sponsors__: SponsorsDatabase | undefined;
 }
 
 function getDb(): SponsorsDatabase {
   if (!globalThis.__tripdee_sponsors__) {
     globalThis.__tripdee_sponsors__ = {
-      sponsors: [...SPONSORS],
+      sponsors: isMockDataEnabled() ? [...SPONSORS] : [],
     };
   }
   if (!Array.isArray(globalThis.__tripdee_sponsors__.sponsors)) {
-    globalThis.__tripdee_sponsors__.sponsors = [...SPONSORS];
+    globalThis.__tripdee_sponsors__.sponsors = isMockDataEnabled() ? [...SPONSORS] : [];
   }
   return globalThis.__tripdee_sponsors__;
 }

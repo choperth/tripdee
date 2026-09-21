@@ -12,6 +12,8 @@ import {
   ZoneId,
   BoardQuote,
 } from '@/data/mockData';
+import { isMockEnvEnabled, isMockDataEnabled } from '@/lib/mockConfig';
+import { isMockPostId } from '@/lib/supabase/service';
 import { maskPhoneNumber } from '@/lib/privacy';
 import {
   Plus,
@@ -66,7 +68,13 @@ export const TripBoard: React.FC = () => {
 
   const { trackCall, trackSponsor } = useAnalytics();
   const { t } = useLanguage();
-  const [posts, setPosts] = useState<BoardPost[]>(BOARD_POSTS);
+  const isClient = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+  const isDemo = isClient ? isMockDataEnabled() : isMockEnvEnabled();
+  const [posts, setPosts] = useState<BoardPost[]>(() => (isMockEnvEnabled() ? BOARD_POSTS : []));
   const [filter, setFilter] = useState<BoardFilter>('all');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [formOpen, setFormOpen] = useState<boolean>(false);
@@ -109,7 +117,8 @@ export const TripBoard: React.FC = () => {
   const [acceptSuccessMessage, setAcceptSuccessMessage] = useState('');
 
   const loadBoardPosts = React.useCallback(() => {
-    fetch('/api/board')
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    fetch('/api/board' + search)
       .then((res) => res.json())
       .then((data) => {
         if (data.posts && Array.isArray(data.posts)) {
@@ -126,16 +135,21 @@ export const TripBoard: React.FC = () => {
     return () => window.removeEventListener('tripdee-board-updated', handleUpdate);
   }, [loadBoardPosts]);
 
+  // Clean active posts respecting demo mode
+  const activePosts = useMemo(() => {
+    return isDemo ? posts : posts.filter((p) => !isMockPostId(p.id));
+  }, [posts, isDemo]);
+
   // Counts for tabs (memoized)
   const { requestCount, offerCount, corporateCount } = useMemo(() => ({
-    requestCount: posts.filter((p) => p.type === 'request').length,
-    offerCount: posts.filter((p) => p.type === 'offer').length,
-    corporateCount: posts.filter((p) => p.category === 'corporate').length,
-  }), [posts]);
+    requestCount: activePosts.filter((p) => p.type === 'request').length,
+    offerCount: activePosts.filter((p) => p.type === 'offer').length,
+    corporateCount: activePosts.filter((p) => p.category === 'corporate').length,
+  }), [activePosts]);
 
   const visiblePosts = useMemo(() => {
     const query = searchKeyword.trim().toLowerCase();
-    return posts.filter((p) => {
+    return activePosts.filter((p) => {
       if (filter === 'request' && p.type !== 'request') return false;
       if (filter === 'offer' && p.type !== 'offer') return false;
       if (filter === 'corporate' && p.category !== 'corporate') return false;
@@ -152,7 +166,7 @@ export const TripBoard: React.FC = () => {
       }
       return true;
     });
-  }, [posts, filter, searchKeyword]);
+  }, [activePosts, filter, searchKeyword]);
 
   const set = (patch: Partial<PostFormState>) => setForm((prev) => ({ ...prev, ...patch }));
 

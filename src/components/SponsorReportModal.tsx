@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { Sponsor } from '@/data/mockData';

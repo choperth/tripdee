@@ -4,9 +4,8 @@ import React, { useState, useRef } from 'react';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { X, Briefcase, Download, Printer, Plus, LogOut, Check, FileText } from 'lucide-react';
+import { X, Briefcase, Download, Printer, Plus, LogOut, Check } from 'lucide-react';
 import { BookingConfirmationSheet, BookingSheetData } from '@/components/BookingConfirmationSheet';
-import { QuotationLead } from '@/lib/leadsStore';
 
 interface CustomerPortalModalProps {
   isOpen: boolean;

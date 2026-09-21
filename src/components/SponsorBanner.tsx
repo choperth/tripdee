@@ -13,7 +13,7 @@ interface SponsorBannerProps {
 
 export const SponsorBanner: React.FC<SponsorBannerProps> = ({ sponsor, variant = 'split' }) => {
   const { t } = useLanguage();
-  const { trackSponsor, trackCall, getSponsorClickCount } = useAnalytics();
+  const { trackSponsor, trackCall } = useAnalytics();
 
   const handleSponsorClick = () => {
     trackSponsor({

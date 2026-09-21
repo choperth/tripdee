@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { SPONSORS } from '@/data/mockData';
+import { isMockDataEnabled } from '@/lib/mockConfig';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -10,6 +11,7 @@ export const SponsorSidebar: React.FC = () => {
   const { trackSponsor, trackCall, getSponsorClickCount } = useAnalytics();
   const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
+  const isDemo = mounted && isMockDataEnabled();
 
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
@@ -114,7 +116,7 @@ export const SponsorSidebar: React.FC = () => {
       </div>
 
       {/* 2. Multi-Sponsor Partner Showcase (Interactive & Auto-Rotating) */}
-      {activeSponsor && (
+      {isDemo && activeSponsor && (
         <div
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}

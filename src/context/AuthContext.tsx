@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { isMockDataEnabled } from '@/lib/mockConfig';
 
 export type UserRole = 'driver' | 'customer' | 'admin';
 
@@ -47,7 +48,12 @@ export interface QuotationRecord {
 interface AuthContextType {
   user: UserProfile | null;
   loginAsDemo: (role: UserRole) => void;
-  loginWithCredentials: (role: UserRole, name: string, contact: string) => void;
+  loginWithCredentials: (
+    role: UserRole,
+    name: string,
+    contact: string,
+    extra?: Partial<UserProfile>
+  ) => void;
   logout: () => void;
   toggleDriverAvailability: () => void;
   updateDriverProfile: (data: Partial<UserProfile>) => void;
@@ -134,10 +140,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const saved = localStorage.getItem('td-auth-user');
       if (saved) {
-        const parsed = JSON.parse(saved);
-        queueMicrotask(() => {
-          if (isMounted) setUser(parsed);
-        });
+        const parsed: UserProfile = JSON.parse(saved);
+        const isDemo = isMockDataEnabled();
+        // If in real mode and saved user is one of demo accounts (drv-01, corp-01, adm-01), clear it
+        if (!isDemo && (parsed.id === 'drv-01' || parsed.id === 'corp-01' || parsed.id === 'adm-01')) {
+          localStorage.removeItem('td-auth-user');
+          queueMicrotask(() => {
+            if (isMounted) setUser(null);
+          });
+        } else {
+          queueMicrotask(() => {
+            if (isMounted) setUser(parsed);
+          });
+        }
       }
     } catch {
       /* ignore storage access error */
@@ -164,14 +179,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveUser(DEMO_ACCOUNTS[role]);
   };
 
-  const loginWithCredentials = (role: UserRole, name: string, contact: string) => {
+  const loginWithCredentials = (
+    role: UserRole,
+    name: string,
+    contact: string,
+    extra?: Partial<UserProfile>
+  ) => {
     const newUser: UserProfile = {
-      id: `usr-${Date.now()}`,
+      id: extra?.id || `usr-${Date.now()}`,
       role,
-      name: name || (role === 'driver' ? 'คนขับพาร์ตเนอร์ใหม่' : 'ลูกค้าผู้ใช้งาน'),
+      name: name || (role === 'driver' ? 'คนขับพาร์ตเนอร์ใหม่' : role === 'admin' ? 'ผู้ดูแลระบบ TripDee' : 'ลูกค้าผู้ใช้งาน'),
       emailOrPhone: contact || '08x-xxx-xxxx',
-      isAvailable: role === 'driver' ? true : undefined,
-      verificationStatus: role === 'driver' ? 'pending' : undefined,
+      isAvailable: role === 'driver' ? (extra?.isAvailable ?? true) : undefined,
+      verificationStatus: role === 'driver' ? (extra?.verificationStatus ?? 'pending') : undefined,
+      ...extra,
     };
     saveUser(newUser);
   };

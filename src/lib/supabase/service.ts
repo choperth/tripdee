@@ -13,7 +13,8 @@
  */
 
 import { getSupabase } from './client';
-import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, ZoneId, BoardQuote } from '@/data/mockData';
+import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, SPONSORS, ZoneId, BoardQuote } from '@/data/mockData';
+import { isMockDataEnabled } from '@/lib/mockConfig';
 import {
   QuotationLead,
   DriverLead,
@@ -48,6 +49,30 @@ import { recordServerAnalyticsEvent } from '@/lib/serverAnalyticsStore';
 type DynamicTableQuery = {
   update: (values: Record<string, unknown>) => { eq: (col: string, val: string) => Promise<unknown> };
 };
+
+// Mock Data ID Detectors to prevent mock leakage into production mode (?demo=0)
+const mockVehicleIdSet = new Set(VEHICLES.map((v) => v.id));
+const mockPostIdSet = new Set(BOARD_POSTS.map((p) => p.id));
+const mockSponsorIdSet = new Set(SPONSORS.map((s) => s.id));
+
+export function isMockVehicleId(id: string): boolean {
+  if (mockVehicleIdSet.has(id)) return true;
+  if (/^v-([1-9]|1[0-9]|2[0-9])b?$/.test(id)) return true;
+  if (id.startsWith('v-sd-')) return true;
+  return false;
+}
+
+export function isMockPostId(id: string): boolean {
+  if (mockPostIdSet.has(id)) return true;
+  if (/^b-([1-9]|1[0-9])$/.test(id)) return true;
+  return false;
+}
+
+export function isMockSponsorId(id: string): boolean {
+  if (mockSponsorIdSet.has(id)) return true;
+  if (/^sp-([1-9]|1[0-9])$/.test(id)) return true;
+  return false;
+}
 
 // In-memory deleted board posts tracking to ensure instant UI sync across all modes
 const deletedBoardPostIds: string[] = [];
@@ -449,16 +474,19 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
 // 3. VEHICLES CATALOG SERVICE
 // ==============================================================================
 
-export async function fetchVehicles(): Promise<Vehicle[]> {
-  const localApproved = getApprovedVehicles() || [];
+export async function fetchVehicles(reqUrl?: string): Promise<Vehicle[]> {
+  const allowMock = isMockDataEnabled(reqUrl);
+  const localApproved = (getApprovedVehicles() || []).filter((v) => (allowMock ? true : !isMockVehicleId(v.id)));
   const deletedIds = getDeletedVehicleIds();
   const supabase = getSupabase();
 
   if (!supabase) {
     const combined = localApproved.filter((v) => !deletedIds.includes(v.id));
-    for (const v of VEHICLES) {
-      if (!deletedIds.includes(v.id) && !combined.some((c) => c.id === v.id)) {
-        combined.push(v);
+    if (allowMock) {
+      for (const v of VEHICLES) {
+        if (!deletedIds.includes(v.id) && !combined.some((c) => c.id === v.id)) {
+          combined.push(v);
+        }
       }
     }
     return combined;
@@ -470,10 +498,11 @@ export async function fetchVehicles(): Promise<Vehicle[]> {
       .select('*')
       .order('rating', { ascending: false });
 
-    let baseVehicles: Vehicle[] = VEHICLES;
+    let baseVehicles: Vehicle[] = allowMock ? VEHICLES : [];
 
     if (!error && data && data.length > 0) {
-      baseVehicles = data.map((row) => ({
+      const validRows = allowMock ? data : data.filter((row) => !isMockVehicleId(row.id));
+      baseVehicles = validRows.map((row) => ({
         id: row.id,
         title: row.title,
         type: row.type,
@@ -515,11 +544,13 @@ export async function fetchVehicles(): Promise<Vehicle[]> {
     }
     return combined;
   } catch (err) {
-    console.warn('[TripDee Supabase] Error fetching vehicles, using mock data:', err);
+    console.warn('[TripDee Supabase] Error fetching vehicles:', err);
     const combined = localApproved.filter((v) => !deletedIds.includes(v.id));
-    for (const v of VEHICLES) {
-      if (!deletedIds.includes(v.id) && !combined.some((c) => c.id === v.id)) {
-        combined.push(v);
+    if (allowMock) {
+      for (const v of VEHICLES) {
+        if (!deletedIds.includes(v.id) && !combined.some((c) => c.id === v.id)) {
+          combined.push(v);
+        }
       }
     }
     return combined;
@@ -638,7 +669,7 @@ export async function deleteVehicle(id: string): Promise<boolean> {
 // 4. BOARD POSTS SERVICE
 // ==============================================================================
 
-export async function fetchBoardPosts(): Promise<BoardPost[]> {
+export async function fetchBoardPosts(reqUrl?: string): Promise<BoardPost[]> {
   const supabase = getSupabase();
   const now = new Date();
 
@@ -656,7 +687,10 @@ export async function fetchBoardPosts(): Promise<BoardPost[]> {
     return false;
   };
 
+  const allowMock = isMockDataEnabled(reqUrl);
+
   if (!supabase) {
+    if (!allowMock) return [];
     return BOARD_POSTS
       .filter((p) => !deletedBoardPostIds.includes(p.id))
       .filter((p) => !p.isClosed)
@@ -674,6 +708,7 @@ export async function fetchBoardPosts(): Promise<BoardPost[]> {
       .order('created_at', { ascending: false });
 
     if (error || !data || data.length === 0) {
+      if (!allowMock) return [];
       return BOARD_POSTS
         .filter((p) => !deletedBoardPostIds.includes(p.id))
         .filter((p) => !p.isClosed)
@@ -684,7 +719,9 @@ export async function fetchBoardPosts(): Promise<BoardPost[]> {
         }));
     }
 
-    return data
+    const validRows = allowMock ? data : data.filter((row) => !isMockPostId(row.id));
+
+    return validRows
       .filter((row) => !deletedBoardPostIds.includes(row.id))
       .filter((row) => !row.is_closed)
       .filter((row) => !isPostExpired(row))
@@ -709,13 +746,14 @@ export async function fetchBoardPosts(): Promise<BoardPost[]> {
         pin: row.pin || undefined,
         isClosed: Boolean(row.is_closed),
         createdAt: row.created_at,
-        isNegotiable: Boolean((row as any).is_negotiable),
-        maxQuotes: Number((row as any).max_quotes) || 3,
-        quoteCount: localBoardQuotes.filter((q) => q.postId === row.id).length || Number((row as any).quote_count) || 0,
-        acceptedQuoteId: (row as any).accepted_quote_id || undefined,
+        isNegotiable: Boolean(row.is_negotiable),
+        maxQuotes: Number(row.max_quotes) || 3,
+        quoteCount: localBoardQuotes.filter((q) => q.postId === row.id).length || Number(row.quote_count) || 0,
+        acceptedQuoteId: row.accepted_quote_id || undefined,
       }));
   } catch (err) {
-    console.warn('[TripDee Supabase] Error fetching board posts, using mock data:', err);
+    console.warn('[TripDee Supabase] Error fetching board posts:', err);
+    if (!allowMock) return [];
     return BOARD_POSTS
       .filter((p) => !deletedBoardPostIds.includes(p.id))
       .filter((p) => !p.isClosed)
@@ -769,7 +807,7 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
         is_closed: false,
         is_negotiable: Boolean(post.isNegotiable),
         max_quotes: post.maxQuotes || 3,
-      } as any)
+      })
       .select()
       .single();
 
@@ -800,8 +838,8 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
         pin: data.pin || undefined,
         isClosed: Boolean(data.is_closed),
         createdAt: data.created_at,
-        isNegotiable: Boolean((data as any).is_negotiable),
-        maxQuotes: Number((data as any).max_quotes) || 3,
+        isNegotiable: Boolean(data.is_negotiable),
+        maxQuotes: Number(data.max_quotes) || 3,
         quoteCount: 0,
       };
     }
@@ -929,7 +967,7 @@ export async function fetchBoardQuotes(
   const supabase = getSupabase();
   if (supabase) {
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('board_quotes')
         .select('*')
         .eq('post_id', postId)
@@ -938,7 +976,7 @@ export async function fetchBoardQuotes(
       if (!error && data && Array.isArray(data) && data.length > 0) {
         return {
           success: true,
-          quotes: data.map((r: any) => ({
+          quotes: data.map((r) => ({
             id: String(r.id),
             postId: String(r.post_id),
             driverName: String(r.driver_name),
@@ -1007,7 +1045,7 @@ export async function saveBoardQuote(quote: Omit<BoardQuote, 'id' | 'createdAt'>
   const supabase = getSupabase();
   if (supabase) {
     try {
-      await (supabase as any).from('board_quotes').insert({
+      await supabase.from('board_quotes').insert({
         id: newQuote.id,
         post_id: newQuote.postId,
         driver_name: newQuote.driverName,
@@ -1078,10 +1116,11 @@ export async function acceptBoardQuote(
 // 5. SPONSORS SERVICE
 // ==============================================================================
 
-export async function fetchSponsors(): Promise<Sponsor[]> {
+export async function fetchSponsors(reqUrl?: string): Promise<Sponsor[]> {
+  const allowMock = isMockDataEnabled(reqUrl);
   const local = getLocalSponsors();
   const supabase = getSupabase();
-  if (!supabase) return local;
+  if (!supabase) return allowMock ? local : [];
 
   try {
     const { data, error } = await supabase
@@ -1090,10 +1129,12 @@ export async function fetchSponsors(): Promise<Sponsor[]> {
       .order('created_at', { ascending: true });
 
     if (error || !data || data.length === 0) {
-      return local;
+      return allowMock ? local : [];
     }
 
-    return data.map((row) => ({
+    const validRows = allowMock ? data : data.filter((row) => !isMockSponsorId(row.id));
+
+    return validRows.map((row) => ({
       id: row.id,
       title: row.title,
       category: row.category as Sponsor['category'],
@@ -1107,7 +1148,7 @@ export async function fetchSponsors(): Promise<Sponsor[]> {
     }));
   } catch (err) {
     console.warn('[TripDee Supabase] Error fetching sponsors, using local store:', err);
-    return local;
+    return allowMock ? local : [];
   }
 }
 
