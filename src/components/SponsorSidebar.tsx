@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { SPONSORS } from '@/data/mockData';
-import { isMockDataEnabled } from '@/lib/mockConfig';
+import { SPONSORS, BoardPost } from '@/data/mockData';
+import { isMockDataEnabled, isMockPostId } from '@/lib/mockConfig';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -37,6 +37,31 @@ export const SponsorSidebar: React.FC = () => {
 
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+
+  const [liveVacancyPost, setLiveVacancyPost] = useState<BoardPost | null>(null);
+
+  useEffect(() => {
+    const fetchLatestOffer = () => {
+      const search = typeof window !== 'undefined' ? window.location.search : '';
+      fetch('/api/board' + search)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.posts && Array.isArray(data.posts)) {
+            const offers = data.posts.filter((p: BoardPost) => {
+              if (p.type !== 'offer') return false;
+              if (!isDemo && isMockPostId(p.id)) return false;
+              return true;
+            });
+            setLiveVacancyPost(offers.length > 0 ? offers[0] : null);
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchLatestOffer();
+    window.addEventListener('tripdee-board-updated', fetchLatestOffer);
+    return () => window.removeEventListener('tripdee-board-updated', fetchLatestOffer);
+  }, [isDemo]);
 
   useEffect(() => {
     if (isPaused) return;
@@ -226,32 +251,38 @@ export const SponsorSidebar: React.FC = () => {
       )}
 
       {/* 3. Driver Vacancy Highlight Card */}
-      <div className="bg-paper-canvas dark:bg-slate-900/60 rounded-2xl p-space-md border border-border-subtle dark:border-slate-800 space-y-space-xs">
-        <div className="flex items-center justify-between">
-          <span className="px-space-xs py-space-2xs rounded bg-verified-emerald-soft text-verified-emerald font-bold text-label-badge">
-            {t('spn.vacBadge')}
-          </span>
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-verified-emerald opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-verified-emerald" />
-          </span>
+      {(liveVacancyPost || isDemo) && (
+        <div className="bg-paper-canvas dark:bg-slate-900/60 rounded-2xl p-space-md border border-border-subtle dark:border-slate-800 space-y-space-xs">
+          <div className="flex items-center justify-between">
+            <span className="px-space-xs py-space-2xs rounded bg-verified-emerald-soft text-verified-emerald font-bold text-label-badge">
+              {t('spn.vacBadge')}
+            </span>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-verified-emerald opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-verified-emerald" />
+            </span>
+          </div>
+          <h5 className="font-title-card text-title-card text-navy-deep dark:text-white">
+            {liveVacancyPost ? liveVacancyPost.title : t('spn.vacTitle')}
+          </h5>
+          <p className="font-body-subtext text-body-subtext text-ink-secondary dark:text-slate-300">
+            {liveVacancyPost
+              ? `${liveVacancyPost.authorName} ${liveVacancyPost.vehicleLabel || ''} ${
+                  liveVacancyPost.date ? `ว่างเดินทาง ${liveVacancyPost.date}` : ''
+                } ${liveVacancyPost.priceNote ? `• ${liveVacancyPost.priceNote}` : ''}`
+              : t('spn.vacDesc')}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              document.getElementById('tripboard')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="w-full mt-1 text-center text-body-subtext font-bold text-blue-action hover:underline cursor-pointer"
+          >
+            {t('spn.vacCta')}
+          </button>
         </div>
-        <h5 className="font-title-card text-title-card text-navy-deep dark:text-white">
-          {t('spn.vacTitle')}
-        </h5>
-        <p className="font-body-subtext text-body-subtext text-ink-secondary dark:text-slate-300">
-          {t('spn.vacDesc')}
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            document.getElementById('tripboard')?.scrollIntoView({ behavior: 'smooth' });
-          }}
-          className="w-full mt-1 text-center text-body-subtext font-bold text-blue-action hover:underline cursor-pointer"
-        >
-          {t('spn.vacCta')}
-        </button>
-      </div>
+      )}
 
       {/* 4. Package Stats & Advertising (Stitch Redesign Card) */}
       <div className="bg-gradient-to-br from-primary-container to-navy-surface text-surface rounded-2xl p-space-md space-y-space-sm shadow-md">

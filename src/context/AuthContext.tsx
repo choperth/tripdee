@@ -17,8 +17,10 @@ export interface UserProfile {
   driverNickname?: string;
   vehicleTitle?: string;
   vehiclePlate?: string;
+  images?: string[];
   seats?: number;
   isAvailable?: boolean;
+  busyDates?: string[];
   verificationStatus?: 'verified' | 'pending' | 'unverified';
   uploadedDocs?: {
     driverLicense?: string;
@@ -62,6 +64,7 @@ interface AuthContextType {
   approveDriverVerification: (driverId: string) => void;
   quotations: QuotationRecord[];
   addQuotation: (q: Omit<QuotationRecord, 'id' | 'date' | 'status'>) => void;
+  deleteAccount: () => Promise<void>;
 }
 
 const DEMO_ACCOUNTS: Record<UserRole, UserProfile> = {
@@ -75,6 +78,10 @@ const DEMO_ACCOUNTS: Record<UserRole, UserProfile> = {
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
     vehicleTitle: 'Toyota Commuter VIP 9 ที่นั่ง เบาะนวดไฟฟ้า',
     vehiclePlate: 'นข-8899 เชียงใหม่ (ป้ายเหลือง)',
+    images: [
+      'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80',
+    ],
     seats: 9,
     isAvailable: true,
     verificationStatus: 'verified',
@@ -243,6 +250,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setQuotations([newRecord, ...quotations]);
   };
 
+  const deleteAccount = async () => {
+    if (!user) return;
+    try {
+      if (user.role === 'driver') {
+        const phone = user.emailOrPhone;
+        if (phone) {
+          const cleanPhone = phone.replace(/[^0-9]/g, '');
+          if (cleanPhone.length >= 9) {
+            const res = await fetch('/api/vehicles');
+            if (res.ok) {
+              const data = await res.json();
+              const vehicles = data.vehicles || [];
+              const matches = vehicles.filter((v: { driverPhone?: string }) => {
+                const vp = (v.driverPhone || '').replace(/[^0-9]/g, '');
+                return vp.includes(cleanPhone) || cleanPhone.includes(vp);
+              });
+              for (const v of matches) {
+                await fetch(`/api/vehicles?id=${v.id}`, { method: 'DELETE' });
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[TripDee] Error during account deletion cleanup:', err);
+    }
+
+    saveUser(null);
+    try {
+      localStorage.removeItem('td-auth-user');
+      window.dispatchEvent(new CustomEvent('tripdee-auth-updated'));
+      window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
+    } catch {
+      /* ignore */
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -257,6 +301,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         approveDriverVerification,
         quotations,
         addQuotation,
+        deleteAccount,
       }}
     >
       {children}

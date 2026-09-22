@@ -69,10 +69,44 @@ export function isMockEnvEnabled(): boolean {
   return true;
 }
 
+/** Check if vehicle is an unwanted test/sample lead created during manual dev tests */
+export function isExcludedTestVehicle(id: string): boolean {
+  if (
+    id === 'v-test-admin' ||
+    id === 'v-drv-lead-01' ||
+    id === 'v-mock-test-admin' ||
+    id === 'v-mock-drv-lead-01' ||
+    id.startsWith('v-test-') ||
+    id.startsWith('v-drv-lead-') ||
+    id.startsWith('v-mock-test-') ||
+    id.startsWith('v-mock-drv-lead-')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/** Check if driver lead is an unwanted test/sample lead created during manual dev tests */
+export function isExcludedTestDriver(id: string): boolean {
+  if (
+    id === 'drv-lead-01' ||
+    id === 'drv-73446' ||
+    id === 'drv-mock-lead-01' ||
+    id === 'drv-mock-73446' ||
+    id.startsWith('drv-mock-') ||
+    id.startsWith('drv-test-')
+  ) {
+    return true;
+  }
+  return false;
+}
+
 /** Check if vehicle ID is one of the built-in mock vehicles (v-1 to v-29, v-sd-*) */
 export function isMockVehicleId(id: string): boolean {
+  if (isExcludedTestVehicle(id)) return true;
   if (/^v-([1-9]|1[0-9]|2[0-9])b?$/.test(id)) return true;
   if (id.startsWith('v-sd-')) return true;
+  if (id.startsWith('v-mock-')) return true;
   return false;
 }
 

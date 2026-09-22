@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Vehicle, ZoneId } from '@/data/mockData';
 import { ALL_VEHICLE_MODELS } from '@/data/vehicleModels';
-import { CarFront, Plus, Pencil, Trash2, ShieldCheck, Search } from 'lucide-react';
+import { CarFront, Plus, Pencil, Trash2, ShieldCheck, Search, Star } from 'lucide-react';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminVehicleTabProps {
@@ -163,9 +163,9 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                     </span>
                     <h4 className="font-extrabold text-sm text-ink truncate">{v.title}</h4>
                     {v.isVerified && (
-                      <span className="flex items-center gap-0.5 rounded-pill bg-leaf-soft px-2 py-0.5 text-[10px] font-extrabold text-leaf shrink-0">
-                        <ShieldCheck className="h-3 w-3" />
-                        Verified
+                      <span className="flex items-center gap-0.5 rounded-pill bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 px-2 py-0.5 text-[10px] font-extrabold border border-amber-300 shrink-0">
+                        <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                        Featured
                       </span>
                     )}
                   </div>
@@ -177,12 +177,12 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={() => handleToggleVerified(v)}
-                    title={v.isVerified ? 'คลิกเพื่อปิดตรา Verified' : 'คลิกเพื่อเปิดตรา Verified'}
+                    title={v.isVerified ? 'คลิกเพื่อปิดสถานะรถแนะนำ' : 'คลิกเพื่อตั้งเป็นรถแนะนำ'}
                     className={`rounded-pill px-2.5 py-1 text-[11px] font-extrabold transition-colors ${
-                      v.isVerified ? 'bg-leaf/10 text-leaf hover:bg-leaf/20' : 'bg-rule text-ink-2 hover:bg-rule-2'
+                      v.isVerified ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/50 hover:bg-amber-500/30' : 'bg-rule text-ink-2 hover:bg-rule-2'
                     }`}
                   >
-                    {v.isVerified ? '✓ ตราเขียว' : '+ ติดตรา'}
+                    {v.isVerified ? '⭐ รถแนะนำ' : '+ ดันแนะนำ'}
                   </button>
                   <button
                     onClick={() => setEditingVehicle(v)}
@@ -444,14 +444,14 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">ตรา TripDee Verified</label>
+                  <label className="font-bold text-ink block mb-1">สถานะรถแนะนำ (Featured Listing)</label>
                   <select
                     name="isVerified"
                     defaultValue={editingVehicle?.isVerified ? 'true' : 'false'}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
-                    <option value="true">เปิดใช้งาน (แสดงตราเขียว Verified)</option>
-                    <option value="false">ปิดใช้งาน (ยังไม่ยืนยัน)</option>
+                    <option value="true">⭐ เปิดสถานะรถแนะนำ (Featured)</option>
+                    <option value="false">รถทั่วไป (Standard Listing)</option>
                   </select>
                 </div>
               </div>

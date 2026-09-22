@@ -5,7 +5,10 @@ import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
-import { X, ShieldCheck, CarFront, Clock, Upload, AlertTriangle, LogOut, Check } from 'lucide-react';
+import { X, ShieldCheck, CarFront, Clock, Upload, AlertTriangle, LogOut, Check, Star } from 'lucide-react';
+import { VehiclePhotoManager } from '@/components/portals/VehiclePhotoManager';
+import { DangerZone } from '@/components/portals/DangerZone';
+import { DriverAvailabilityCalendar } from '@/components/portals/DriverAvailabilityCalendar';
 
 interface DriverPortalModalProps {
   isOpen: boolean;
@@ -13,7 +16,7 @@ interface DriverPortalModalProps {
 }
 
 export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, onClose }) => {
-  const { user, toggleDriverAvailability, updateDriverProfile, submitVerificationDocs, logout } = useAuth();
+  const { user, toggleDriverAvailability, updateDriverProfile, submitVerificationDocs, logout, deleteAccount } = useAuth();
   const { t } = useLanguage();
   const { trackCall } = useAnalytics();
   const [activeTab, setActiveTab] = useState<'profile' | 'verification' | 'jobs'>('profile');
@@ -26,11 +29,16 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
   const [vehicleTitle, setVehicleTitle] = useState(user?.vehicleTitle || '');
   const [vehiclePlate, setVehiclePlate] = useState(user?.vehiclePlate || '');
   const [seats, setSeats] = useState(user?.seats || 9);
+  const [images, setImages] = useState<string[]>(
+    Array.isArray(user?.images) && user.images.length > 0
+      ? user.images
+      : ['https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80']
+  );
+  const [busyDates, setBusyDates] = useState<string[]>(
+    Array.isArray(user?.busyDates) ? user.busyDates : []
+  );
 
-  // Verification document mock inputs
-  const [licenseDoc, setLicenseDoc] = useState(user?.uploadedDocs?.driverLicense || '');
-  const [regDoc, setRegDoc] = useState(user?.uploadedDocs?.vehicleRegistration || '');
-  const [docSubmitted, setDocSubmitted] = useState(false);
+  const [featuredRequested, setFeaturedRequested] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
@@ -45,19 +53,19 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
       vehicleTitle,
       vehiclePlate,
       seats: Number(seats),
+      images,
+      busyDates,
     });
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2500);
   };
 
-  const handleSubmitDocs = (e: React.FormEvent) => {
+  const handleRequestFeatured = (e: React.FormEvent) => {
     e.preventDefault();
-    submitVerificationDocs({
-      driverLicense: licenseDoc || t('pdrv.docDefaultLicense'),
-      vehicleRegistration: regDoc || t('pdrv.docDefaultReg'),
-      idCard: t('pdrv.docDefaultId'),
-    });
-    setDocSubmitted(true);
+    setFeaturedRequested(true);
+    setTimeout(() => {
+      setSaveSuccess(true);
+    }, 400);
   };
 
   const isVerified = user.verificationStatus === 'verified';
@@ -118,44 +126,34 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
         <div
           className={`mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4 ${
             isVerified
-              ? 'bg-leaf-soft text-leaf'
-              : isPending
-              ? 'bg-sun-soft text-ink'
-              : 'bg-berry-soft text-ink'
+              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border border-amber-300/60'
+              : 'bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 border border-blue-200'
           }`}
         >
           <div className="flex items-center gap-3">
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-card text-ink">
               {isVerified ? (
-                <ShieldCheck className="h-5 w-5 text-leaf" strokeWidth={2.5} />
-              ) : isPending ? (
-                <Clock className="h-5 w-5 text-accent-deep" strokeWidth={2.5} />
+                <Star className="h-5 w-5 fill-amber-500 text-amber-500" />
               ) : (
-                <AlertTriangle className="h-5 w-5 text-berry" strokeWidth={2.5} />
+                <CarFront className="h-5 w-5 text-blue-600" strokeWidth={2.5} />
               )}
             </span>
             <div>
               <p className="text-sm font-extrabold">
-                {isVerified && t('pdrv.verTitleOk')}
-                {isPending && t('pdrv.verTitlePending')}
-                {!isVerified && !isPending && t('pdrv.verTitleNone')}
+                {isVerified ? t('pdrv.verTitleOk') : t('pdrv.verTitleNone')}
               </p>
               <p className="text-xs font-medium text-ink-2">
-                {isVerified && t('pdrv.verDescOk')}
-                {isPending && t('pdrv.verDescPending')}
-                {!isVerified && !isPending && t('pdrv.verDescNone')}
+                {isVerified ? t('pdrv.verDescOk') : t('pdrv.verDescNone')}
               </p>
             </div>
           </div>
 
-          {!isVerified && (
-            <button
-              onClick={() => setActiveTab('verification')}
-              className="td-btn rounded-pill bg-card px-3.5 py-1.5 text-xs font-extrabold text-ink hover:bg-paper-2"
-            >
-              {isPending ? t('pdrv.viewDocs') : t('pdrv.uploadDocs')}
-            </button>
-          )}
+          <button
+            onClick={() => setActiveTab('verification')}
+            className="td-btn rounded-pill bg-card px-3.5 py-1.5 text-xs font-extrabold text-ink hover:bg-paper-2 shadow-xs"
+          >
+            {isVerified ? t('pdrv.viewDocs') : t('pdrv.uploadDocs')}
+          </button>
         </div>
 
         {/* Sub-tabs */}
@@ -189,6 +187,13 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
         {/* Tab 1: Profile & Vehicle Details */}
         {activeTab === 'profile' && (
           <form onSubmit={handleSaveProfile} className="space-y-4">
+            {/* 1.1 Driver Photo Manager */}
+            <VehiclePhotoManager
+              images={images}
+              onChange={setImages}
+              maxPhotos={8}
+            />
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="drv-nick" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
@@ -278,6 +283,14 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
               </div>
             </div>
 
+            {/* 1.3 Driver Availability & Schedule Calendar */}
+            <div className="pt-2">
+              <DriverAvailabilityCalendar
+                busyDates={busyDates}
+                onChange={setBusyDates}
+              />
+            </div>
+
             {saveSuccess && (
               <div className="flex items-center gap-2 rounded-xl bg-leaf-soft p-3 text-xs font-extrabold text-leaf">
                 <Check className="h-4 w-4" strokeWidth={3} />
@@ -308,55 +321,53 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
           </form>
         )}
 
-        {/* Tab 2: Document Verification */}
+        {/* Tab 2: Featured Perks & Promotion */}
         {activeTab === 'verification' && (
-          <form onSubmit={handleSubmitDocs} className="space-y-4">
-            <p className="text-xs text-ink-2 font-medium">
-              {t('pdrv.verIntroA')}{' '}<strong>{t('pdrv.verIntroB')}</strong>{' '}{t('pdrv.verIntroC')}
-            </p>
+          <form onSubmit={handleRequestFeatured} className="space-y-4">
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-transparent border border-amber-400/40 space-y-2">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-extrabold text-sm">
+                <Star className="w-5 h-5 fill-amber-500 text-amber-500" />
+                <span>{t('pdrv.verIntroB')}</span>
+              </div>
+              <p className="text-xs text-ink-2 font-medium leading-relaxed">
+                {t('pdrv.verIntroA')} {t('pdrv.verIntroB')} {t('pdrv.verIntroC')}
+              </p>
+            </div>
 
             <div className="space-y-3">
-              <div className="rounded-2xl border-2 border-dashed border-rule bg-paper p-4">
-                <label htmlFor="drv-doc-license" className="block text-xs font-extrabold uppercase text-ink mb-1 flex items-center justify-between">
-                  <span>{t('pdrv.doc1')}</span>
-                  {licenseDoc && <span className="text-leaf text-[11px]">{t('pdrv.hasData')}</span>}
-                </label>
-                <input
-                  id="drv-doc-license"
-                  type="text"
-                  placeholder={t('pdrv.doc1Ph')}
-                  value={licenseDoc}
-                  onChange={(e) => setLicenseDoc(e.target.value)}
-                  className="w-full rounded-input bg-card px-3 py-2 text-xs font-bold text-ink"
-                />
+              <div className="rounded-2xl border border-rule bg-paper p-4 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold text-navy-deep dark:text-white flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px] text-amber-500">arrow_upward</span>
+                    <span>{t('pdrv.doc1')}</span>
+                  </span>
+                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{t('pdrv.hasData')}</span>
+                </div>
+                <p className="text-xs text-ink-2">{t('pdrv.doc1Ph')}</p>
               </div>
 
-              <div className="rounded-2xl border-2 border-dashed border-rule bg-paper p-4">
-                <label htmlFor="drv-doc-reg" className="block text-xs font-extrabold uppercase text-ink mb-1 flex items-center justify-between">
-                  <span>{t('pdrv.doc2')}</span>
-                  {regDoc && <span className="text-leaf text-[11px]">{t('pdrv.hasData')}</span>}
-                </label>
-                <input
-                  id="drv-doc-reg"
-                  type="text"
-                  placeholder={t('pdrv.doc2Ph')}
-                  value={regDoc}
-                  onChange={(e) => setRegDoc(e.target.value)}
-                  className="w-full rounded-input bg-card px-3 py-2 text-xs font-bold text-ink"
-                />
+              <div className="rounded-2xl border border-rule bg-paper p-4 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold text-navy-deep dark:text-white flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px] text-amber-500">hotel_class</span>
+                    <span>{t('pdrv.doc2')}</span>
+                  </span>
+                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{t('pdrv.hasData')}</span>
+                </div>
+                <p className="text-xs text-ink-2">{t('pdrv.doc2Ph')}</p>
               </div>
             </div>
 
-            {docSubmitted ? (
-              <div className="rounded-xl bg-leaf-soft p-4 text-center font-extrabold text-leaf text-xs">
+            {featuredRequested ? (
+              <div className="rounded-xl bg-amber-100 dark:bg-amber-950/60 p-4 text-center font-extrabold text-amber-900 dark:text-amber-200 text-xs border border-amber-300">
                 {t('pdrv.docsSent')}
               </div>
             ) : (
               <button
                 type="submit"
-                className="td-btn td-pop flex w-full items-center justify-center gap-2 rounded-pill bg-accent py-3 px-4 text-sm font-extrabold text-accent-ink"
+                className="td-btn td-pop flex w-full items-center justify-center gap-2 rounded-pill bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 py-3 px-4 text-sm font-extrabold text-white shadow-md transition-all cursor-pointer"
               >
-                <Upload className="h-4 w-4" />
+                <Star className="h-4 w-4 fill-white text-white" />
                 <span>{t('pdrv.docsSubmit')}</span>
               </button>
             )}
@@ -435,6 +446,20 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
             </div>
           </div>
         )}
+
+        {/* 1.2 Danger Zone: Self-Service Account & Vehicle Deletion (PDPA) */}
+        <div className="mt-6 pt-5 border-t border-rule/60">
+          <DangerZone
+            targetName={user.vehicleTitle ? `${user.vehicleTitle} (${user.name})` : user.name}
+            title={t('danger.title')}
+            description={t('danger.driverDesc')}
+            buttonLabel={t('danger.deleteBtn')}
+            onDelete={async () => {
+              await deleteAccount();
+              onClose();
+            }}
+          />
+        </div>
       </div>
     </div>
   );

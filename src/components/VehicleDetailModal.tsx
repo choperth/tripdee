@@ -12,11 +12,17 @@ import {
   CheckCircle2,
   Car,
   ChevronRight,
+  QrCode,
+  Star,
 } from 'lucide-react';
 
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { BookingConfirmationSheet } from '@/components/BookingConfirmationSheet';
+import { CustomerAvailabilitySchedule } from '@/components/CustomerAvailabilitySchedule';
+import { getUpcomingBusyRanges } from '@/lib/availabilityUtils';
+import { VehicleReviewsSection } from '@/components/reviews/VehicleReviewsSection';
+import { DriverSmartECardModal } from '@/components/cards/DriverSmartECardModal';
 
 interface VehicleDetailModalProps {
   vehicle: Vehicle | null;
@@ -35,11 +41,17 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
   useDialogFocus(dialogRef, { onClose, enabled: !!vehicle });
 
   const { trackCall, trackSponsor } = useAnalytics();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [isPhoneRevealed, setIsPhoneRevealed] = useState<boolean>(false);
   const [showBookingSheet, setShowBookingSheet] = useState<boolean>(false);
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  const [showECardModal, setShowECardModal] = useState<boolean>(false);
   const [sharedToast, setSharedToast] = useState<boolean>(false);
+
+  const upcomingRanges = React.useMemo(
+    () => getUpcomingBusyRanges(vehicle?.busyDates || [], locale),
+    [vehicle?.busyDates, locale]
+  );
 
   const isSelfDrive = vehicle
     ? vehicle.rentalType === 'self_drive' || (vehicle.type !== 'van' && vehicle.rentalType !== 'with_driver')
@@ -148,10 +160,16 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                   </span>
                 )}
 
-                <span className="inline-flex items-center gap-space-2xs bg-verified-emerald-soft text-verified-emerald dark:bg-emerald-950/70 dark:text-emerald-300 px-space-xs py-[2px] rounded font-label-badge text-label-badge font-bold">
-                  <span className="material-symbols-outlined text-[13px]">verified</span>
-                  <span>{t('detail.directPlatform')}</span>
-                </span>
+                {vehicle.isVerified ? (
+                  <span className="inline-flex items-center gap-space-2xs bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 px-space-xs py-[2px] rounded font-label-badge text-label-badge font-black shadow-xs border border-amber-300">
+                    <span className="material-symbols-outlined text-[13px] text-slate-950 font-bold">star</span>
+                    <span>{t('detail.featuredBadge')}</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-space-2xs bg-blue-subtle text-blue-action dark:bg-blue-950/70 dark:text-blue-300 px-space-xs py-[2px] rounded font-label-badge text-label-badge font-bold">
+                    <span>{t('detail.standardListing')}</span>
+                  </span>
+                )}
 
                 <span className="inline-flex items-center gap-space-2xs bg-blue-subtle text-blue-action dark:bg-blue-950/60 dark:text-blue-300 px-space-xs py-[2px] rounded font-label-badge text-label-badge font-bold">
                   <span className="material-symbols-outlined text-[13px]">handshake</span>
@@ -164,15 +182,22 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
               </h1>
 
               <div className="flex items-center flex-wrap gap-space-md text-body-subtext font-body-subtext text-ink-secondary dark:text-slate-300 mt-space-2xs">
-                <span className="flex items-center gap-space-2xs">
+                <a
+                  href="#vehicle-reviews"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('vehicle-reviews')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="flex items-center gap-space-2xs hover:opacity-80 transition-opacity cursor-pointer group"
+                >
                   <span className="material-symbols-outlined text-[16px] text-amber-accent">
                     star
                   </span>
-                  <strong className="text-navy-deep dark:text-white font-body-medium">
+                  <strong className="text-navy-deep dark:text-white font-body-medium group-hover:underline">
                     {vehicle.rating}
                   </strong>
-                  <span>({t('detail.reviews', { n: vehicle.reviewCount })})</span>
-                </span>
+                  <span className="group-hover:underline">({t('detail.reviews', { n: vehicle.reviewCount })})</span>
+                </a>
                 <span>•</span>
                 <span className="flex items-center gap-space-2xs">
                   <span className="material-symbols-outlined text-[16px] text-ink-muted">
@@ -189,6 +214,15 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
             </div>
 
             <div className="flex items-center gap-space-xs self-start md:self-center shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowECardModal(true)}
+                className="inline-flex items-center gap-space-2xs px-space-md py-space-xs bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant rounded-xl font-body-medium text-body-medium transition-all cursor-pointer"
+                title="นามบัตรดิจิทัล & QR Code"
+              >
+                <QrCode className="w-4 h-4 text-amber-500" />
+                <span>{t('ecard.btn')}</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setIsBookmarked(!isBookmarked)}
@@ -363,8 +397,8 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                       <div className="w-16 h-16 rounded-full bg-blue-subtle text-blue-action font-bold flex items-center justify-center text-2xl border-2 border-blue-action/30">
                         {publicName.charAt(0)}
                       </div>
-                      <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-verified-emerald flex items-center justify-center text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
-                        <CheckCircle2 className="w-4 h-4" />
+                      <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
+                        <Star className="w-3.5 h-3.5 fill-white text-white" />
                       </span>
                     </div>
 
@@ -373,9 +407,24 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                         <h3 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
                           {publicName}
                         </h3>
-                        <span className="px-space-xs py-[2px] rounded-full bg-verified-emerald-soft text-verified-emerald font-label-badge font-bold">
-                          Verified Driver
-                        </span>
+                        {vehicle.isVerified ? (
+                          <span className="px-space-xs py-[2px] rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 font-label-badge font-bold border border-amber-400/40 flex items-center gap-1">
+                            <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                            <span>{t('detail.featuredBadge')}</span>
+                          </span>
+                        ) : (
+                          <span className="px-space-xs py-[2px] rounded-full bg-blue-subtle text-blue-action dark:bg-blue-950/60 dark:text-blue-300 font-label-badge font-bold">
+                            {t('detail.standardListing')}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowECardModal(true)}
+                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300/60 font-label-badge font-bold hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer"
+                        >
+                          <QrCode className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                          <span>{t('ecard.btn')}</span>
+                        </button>
                       </div>
                       <p className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400 mt-0.5">
                         {t('detail.driverExp', { loc: shortLocation })}
@@ -392,13 +441,30 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     <span className="text-body-subtext text-ink-muted dark:text-slate-400 block">
                       {t('detail.licenseLabel')}
                     </span>
-                    <span className="font-body-medium text-verified-emerald font-bold flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[16px]">badge</span>
-                      <span>{t('detail.licenseOk')}</span>
+                    <span className="font-body-medium text-navy-deep dark:text-white font-bold flex items-center gap-1 sm:justify-end">
+                      <span className="material-symbols-outlined text-[16px] text-amber-500">
+                        {vehicle.plateType === 'yellow' ? 'local_taxi' : 'directions_car'}
+                      </span>
+                      <span>
+                        {vehicle.plateType === 'yellow'
+                          ? t('detail.yellowPlateLong')
+                          : t('detail.licenseOk')}
+                      </span>
                     </span>
                   </div>
                 </div>
               </section>
+
+              {/* 1.3 Driver Availability & Booked Dates Calendar */}
+              <CustomerAvailabilitySchedule
+                busyDates={vehicle.busyDates}
+                isAvailable={vehicle.isAvailable !== false}
+                driverPhone={vehicle.driverPhone}
+                driverNickname={vehicle.driverNickname}
+              />
+
+              {/* Customer Reviews & Ratings */}
+              <VehicleReviewsSection vehicle={vehicle} />
 
               {/* Amenity Spec Checklist */}
               <section className="bg-paper-canvas dark:bg-slate-800/60 p-space-lg rounded-2xl border border-border-subtle dark:border-slate-700/70 space-y-space-md">
@@ -583,11 +649,35 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     </span>
                     <span className="text-body-base text-ink-muted dark:text-slate-400">{t('vehicle.perDay')}</span>
                   </div>
-                  <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-bold text-body-subtext mt-1">
-                    <span className="material-symbols-outlined text-[16px]">verified</span>
-                    <span>{t('vehicle.noCommission')}</span>
-                  </span>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-bold text-body-subtext">
+                      <span className="material-symbols-outlined text-[16px]">verified</span>
+                      <span>{t('vehicle.noCommission')}</span>
+                    </span>
+                    <a
+                      href="#vehicle-reviews"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document.getElementById('vehicle-reviews')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="text-xs text-ink-muted hover:text-blue-action dark:text-slate-400 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer font-medium transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[14px] text-amber-accent">star</span>
+                      <span>{vehicle.rating} ({vehicle.reviewCount})</span>
+                    </a>
+                  </div>
                 </div>
+
+                {/* Upcoming Busy Dates Alert Pill */}
+                {upcomingRanges.length > 0 && (
+                  <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-xs font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5 shadow-2xs">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
+                    <span className="truncate">
+                      {t('cal.cardUpcomingBusy', { range: upcomingRanges[0].label })}
+                      {upcomingRanges.length > 1 && ` (+${upcomingRanges.length - 1})`}
+                    </span>
+                  </div>
+                )}
 
                 {/* Instant Action Dual Triggers */}
                 <div className="space-y-space-xs">
@@ -689,6 +779,13 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
           onClose={() => setShowBookingSheet(false)}
         />
       )}
+
+      {/* Driver Smart E-Card Modal */}
+      <DriverSmartECardModal
+        vehicle={vehicle}
+        isOpen={showECardModal}
+        onClose={() => setShowECardModal(false)}
+      />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface HeroProps {
@@ -381,46 +382,29 @@ export const Hero: React.FC<HeroProps> = ({
           </div>
         </div>
 
-        {/* Hero Visual Panorama Display Banner (Stitch Showcase) */}
-        <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-navy-deep">
-          <div
-            className="w-full h-72 sm:h-96 lg:h-[400px] bg-cover bg-center relative"
-            style={{
-              backgroundImage:
-                'url("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1600&q=85")',
-            }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-navy-deep via-navy-deep/45 to-transparent pointer-events-none" />
-
-            <div className="absolute bottom-0 left-0 right-0 p-space-lg lg:p-space-xl flex flex-col sm:flex-row items-start sm:items-end justify-between gap-space-md text-surface">
-              <div className="space-y-space-2xs max-w-2xl">
-                <div className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-verified-emerald text-on-primary font-label-badge text-label-badge shadow-sm">
-                  <span className="material-symbols-outlined text-[14px]">verified</span>
-                  <span>{t('hero.verifiedSticker')}</span>
-                </div>
-                <h2 className="font-headline-xl text-headline-xl text-surface">
-                  {t('hero.photoCaption')}
-                </h2>
-                <p className="font-body-base text-body-base text-surface-container-high opacity-90">
-                  {t('hero.fleetDesc')}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-space-sm bg-navy-deep/85 backdrop-blur-md p-space-sm rounded-2xl border border-white/10 shadow-lg shrink-0">
-                <div className="text-right">
-                  <div className="font-label-badge text-label-badge text-taxi-yellow-30 uppercase">
-                    {t('hero.ready')}
-                  </div>
-                  <div className="font-headline-md text-headline-md text-surface">
-                    {t('hero.coverage')}
-                  </div>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-blue-action flex items-center justify-center text-on-primary shadow-sm shrink-0">
-                  <span className="material-symbols-outlined text-[20px]">explore</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Hero Visual Panorama Display Banner */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={scrollToResults}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              scrollToResults();
+            }
+          }}
+          className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-border-subtle dark:border-slate-800 group cursor-pointer bg-navy-deep transition-transform duration-200 active:scale-[0.99]"
+          title="TripDee - เดินทางทั่วไทย กับคนขับมืออาชีพ จองตรงกับคนขับ"
+        >
+          <Image
+            src="/hero-banner.png"
+            alt="TripDee - เดินทางทั่วไทย กับคนขับมืออาชีพ จองตรงกับคนขับ"
+            width={1024}
+            height={381}
+            priority
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
+            className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.01]"
+          />
         </div>
       </div>
     </section>

@@ -15,6 +15,10 @@ import {
 } from 'lucide-react';
 import { DriverPushBell } from '@/components/notifications/DriverPushBell';
 import { useLanguage } from '@/context/LanguageContext';
+import { VehiclePhotoManager } from '@/components/portals/VehiclePhotoManager';
+import { DangerZone } from '@/components/portals/DangerZone';
+import { DriverAvailabilityCalendar } from '@/components/portals/DriverAvailabilityCalendar';
+import { DriverSmartECardModal } from '@/components/cards/DriverSmartECardModal';
 
 interface DriverSelfServiceModalProps {
   isOpen: boolean;
@@ -35,6 +39,7 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showECardModal, setShowECardModal] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
   const { t } = useLanguage();
@@ -48,6 +53,8 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
   const [driverLine, setDriverLine] = useState('');
   const [cityRate, setCityRate] = useState(1900);
   const [highHillRate, setHighHillRate] = useState(2300);
+  const [images, setImages] = useState<string[]>([]);
+  const [busyDates, setBusyDates] = useState<string[]>([]);
 
   const selectVehicle = (v: Vehicle | null) => {
     setSelectedVehicle(v);
@@ -60,6 +67,26 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
       setDriverLine(v.driverLine || '');
       setCityRate(v.zoneRates?.city || 1900);
       setHighHillRate(v.zoneRates?.highHill || 2300);
+      setImages(Array.isArray(v.images) ? v.images : []);
+      setBusyDates(Array.isArray(v.busyDates) ? v.busyDates : []);
+    }
+  };
+
+  const handleBusyDatesChange = async (newBusyDates: string[]) => {
+    setBusyDates(newBusyDates);
+    if (selectedVehicle) {
+      const vehicleId = selectedVehicle.id;
+      setSelectedVehicle((prev) => (prev ? { ...prev, busyDates: newBusyDates } : null));
+      try {
+        await fetch('/api/vehicles', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: vehicleId, busyDates: newBusyDates }),
+        });
+        window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
+      } catch {
+        /* will also persist on form submit */
+      }
     }
   };
 
@@ -118,6 +145,8 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
         canIssueTaxInvoice,
         driverPhone: driverPhone.trim(),
         driverLine: driverLine.trim() || undefined,
+        images: images.length > 0 ? images : undefined,
+        busyDates,
         zoneRates: {
           ...(selectedVehicle.zoneRates || { city: 1900, midHill: 2100, highHill: 2300, crossProvince: 2700 }),
           city: Number(cityRate) || 1900,
@@ -339,8 +368,19 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Real-time Status Switcher (Stitch Header Control) */}
-                  <div className="flex items-center bg-paper-elevated dark:bg-slate-800 text-ink-primary dark:text-white p-space-sm rounded-2xl shadow-lg w-full lg:w-auto justify-between gap-space-md border border-border-subtle dark:border-slate-700">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
+                    {/* 2. Driver Smart E-Card Button */}
+                    <button
+                      type="button"
+                      onClick={() => setShowECardModal(true)}
+                      className="px-space-md py-space-sm rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 hover:brightness-105 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">qr_code_2</span>
+                      <span>{t('ecard.myBtn')}</span>
+                    </button>
+
+                    {/* Real-time Status Switcher (Stitch Header Control) */}
+                    <div className="flex items-center bg-paper-elevated dark:bg-slate-800 text-ink-primary dark:text-white p-space-sm rounded-2xl shadow-lg justify-between gap-space-md border border-border-subtle dark:border-slate-700">
                     <div className="flex items-center gap-space-sm">
                       <span
                         className={`w-3.5 h-3.5 rounded-full ${
@@ -385,6 +425,7 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                         <span>{t('pself.availOff')}</span>
                       </button>
                     </div>
+                  </div>
                   </div>
                 </div>
               </div>
@@ -468,11 +509,26 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                 </div>
               </div>
 
+              {/* 1.3 Driver Availability Calendar: Booked & Busy Dates Management */}
+              <div className="bg-paper-canvas dark:bg-slate-800/60 p-space-lg rounded-2xl border border-border-subtle dark:border-slate-700">
+                <DriverAvailabilityCalendar
+                  busyDates={busyDates}
+                  onChange={handleBusyDatesChange}
+                />
+              </div>
+
               {/* Vehicle Fleet Settings & Pricing Form */}
               <form onSubmit={handleSave} className="bg-paper-canvas dark:bg-slate-800/60 p-space-lg rounded-2xl border border-border-subtle dark:border-slate-700 space-y-space-md">
                 <h4 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
                   {t('pself.formTitle')}
                 </h4>
+
+                {/* 1.1 Driver Photo Uploader & Manager */}
+                <VehiclePhotoManager
+                  images={images}
+                  onChange={setImages}
+                  maxPhotos={8}
+                />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
                   <div>
@@ -623,6 +679,31 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                   )}
                 </button>
               </form>
+
+              {/* 1.2 Danger Zone: Self-Service Account Deletion & Data Purge (PDPA) */}
+              <DangerZone
+                targetName={`${selectedVehicle.title} (${selectedVehicle.plateNumber || selectedVehicle.driverNickname})`}
+                title={t('danger.title')}
+                description={t('danger.driverDesc')}
+                buttonLabel={t('danger.deleteBtn')}
+                onDelete={async () => {
+                  const res = await fetch(`/api/vehicles?id=${selectedVehicle.id}`, { method: 'DELETE' });
+                  if (!res.ok) {
+                    throw new Error('ไม่สามารถลบข้อมูลรถได้ กรุณาลองใหม่อีกครั้ง');
+                  }
+                  window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
+                  setSelectedVehicle(null);
+                  setPhoneNumber('');
+                  setMatchedVehicles([]);
+                  setHasSearched(false);
+                }}
+              />
+              {/* Driver Smart E-Card Modal */}
+              <DriverSmartECardModal
+                vehicle={selectedVehicle}
+                isOpen={showECardModal}
+                onClose={() => setShowECardModal(false)}
+              />
             </div>
           )}
         </div>

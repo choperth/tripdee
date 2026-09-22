@@ -36,6 +36,7 @@ export interface DriverLead {
 }
 
 import { Vehicle } from '@/data/mockData';
+import { isExcludedTestVehicle, isExcludedTestDriver } from '@/lib/mockConfig';
 
 export function convertLeadToVehicle(lead: DriverLead): Vehicle {
   const seatsNum = Number(lead.seats.replace(/[^0-9]/g, '')) || 9;
@@ -178,21 +179,7 @@ const INITIAL_QUOTATIONS: QuotationLead[] = [
   },
 ];
 
-const INITIAL_DRIVERS: DriverLead[] = [
-  {
-    id: 'drv-lead-01',
-    driverName: 'นายกิตติศักดิ์ ศรีล้านนา',
-    nickname: 'พี่เอก เชียงใหม่แวน',
-    phone: '089-876-5432',
-    lineId: 'ake_van_cm',
-    vehicleModel: 'Toyota All New Commuter 10 ที่นั่ง',
-    seats: '10',
-    plateNumber: 'นข-4521 ชม.',
-    routes: 'ม่อนแจ่ม, ดอยอินทนนท์, แม่กำปอง, เชียงราย',
-    submittedAt: '2026-09-14T02:00:00.000Z',
-    status: 'pending',
-  },
-];
+const INITIAL_DRIVERS: DriverLead[] = [];
 
 function getDb(): LeadsDatabase {
   if (!globalThis.__tripdee_leads__) {
@@ -200,8 +187,18 @@ function getDb(): LeadsDatabase {
       quotations: [...INITIAL_QUOTATIONS],
       drivers: [...INITIAL_DRIVERS],
       approvedVehicles: [],
-      deletedVehicleIds: [],
-      deletedDriverLeadIds: [],
+      deletedVehicleIds: [
+        'v-test-admin',
+        'v-drv-lead-01',
+        'v-mock-test-admin',
+        'v-mock-drv-lead-01',
+      ],
+      deletedDriverLeadIds: [
+        'drv-lead-01',
+        'drv-73446',
+        'drv-mock-lead-01',
+        'drv-mock-73446',
+      ],
       deletedQuotationIds: [],
     };
   }
@@ -272,7 +269,11 @@ export function getDeletedQuotationIds(): string[] {
 
 // Driver Lead Operations
 export function getAllDriverLeads(): DriverLead[] {
-  return getDb().drivers;
+  const db = getDb();
+  const deletedIds = db.deletedDriverLeadIds || [];
+  return db.drivers.filter(
+    (d) => !deletedIds.includes(d.id) && !isExcludedTestDriver(d.id)
+  );
 }
 
 export function addDriverLead(lead: {
@@ -346,7 +347,10 @@ export function getApprovedVehicles(): Vehicle[] {
   if (!Array.isArray(db.approvedVehicles)) {
     db.approvedVehicles = [];
   }
-  return db.approvedVehicles;
+  const deletedIds = db.deletedVehicleIds || [];
+  return db.approvedVehicles.filter(
+    (v) => !deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id)
+  );
 }
 
 export function addApprovedVehicle(vehicle: Vehicle): Vehicle {

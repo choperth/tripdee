@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { BoardPost, ZoneId } from '@/data/mockData';
-import { Pencil, Trash2, ShieldCheck, Search } from 'lucide-react';
+import { Pencil, Trash2, ShieldCheck, Search, Star } from 'lucide-react';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminBoardTabProps {
@@ -138,9 +138,9 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                     </span>
                     <h4 className="font-extrabold text-sm text-ink">{post.title}</h4>
                     {post.isVerified && (
-                      <span className="flex items-center gap-0.5 rounded-pill bg-leaf-soft px-2 py-0.5 text-[10px] font-extrabold text-leaf">
-                        <ShieldCheck className="h-3 w-3" />
-                        Verified
+                      <span className="flex items-center gap-0.5 rounded-pill bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 px-2 py-0.5 text-[10px] font-extrabold border border-amber-300">
+                        <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                        Featured
                       </span>
                     )}
                   </div>
@@ -153,10 +153,10 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                   <button
                     onClick={() => handleToggleVerified(post)}
                     className={`rounded-pill px-2.5 py-1 text-[11px] font-extrabold transition-colors ${
-                      post.isVerified ? 'bg-leaf/10 text-leaf hover:bg-leaf/20' : 'bg-rule text-ink-2 hover:bg-rule-2'
+                      post.isVerified ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/50 hover:bg-amber-500/30' : 'bg-rule text-ink-2 hover:bg-rule-2'
                     }`}
                   >
-                    {post.isVerified ? '✓ ตรวจแล้ว' : '+ ยืนยันโพสต์'}
+                    {post.isVerified ? '⭐ แนะนำ' : '+ ดันแนะนำ'}
                   </button>
                   <button
                     onClick={() => setEditingPost(post)}
@@ -298,14 +298,14 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ตรา Verified</label>
+                  <label className="font-bold text-ink block mb-1">สถานะปักหมุดแนะนำ (Featured)</label>
                   <select
                     name="isVerified"
                     defaultValue={editingPost.isVerified ? 'true' : 'false'}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
-                    <option value="true">ยืนยันแล้ว (มีตรา Verified)</option>
-                    <option value="false">ยังไม่ยืนยัน</option>
+                    <option value="true">⭐ แนะนำ (มีตรา Featured)</option>
+                    <option value="false">โพสต์ทั่วไป</option>
                   </select>
                 </div>
                 <div>

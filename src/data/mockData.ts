@@ -52,6 +52,8 @@ export interface Vehicle {
   rentalType?: 'with_driver' | 'self_drive';
   /** ระบบเกียร์: auto = เกียร์อัตโนมัติ, manual = เกียร์ธรรมดา */
   transmission?: 'auto' | 'manual';
+  /** รายการวันที่ติดงาน/คิวเต็ม (ISO date strings: "YYYY-MM-DD") */
+  busyDates?: string[];
 }
 
 export interface Sponsor {
@@ -350,6 +352,7 @@ export const VEHICLES: Vehicle[] = [
     canIssueTaxInvoice: true,
     businessType: 'company',
     isAvailable: true,
+    busyDates: ['2026-10-25', '2026-10-26', '2026-10-27', '2026-10-28'],
   },
   {
     id: 'v-1b',

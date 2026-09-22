@@ -6,6 +6,7 @@ import { Vehicle } from '@/data/mockData';
 import { maskPhoneNumber, maskPlateNumber, getPublicDriverName } from '@/lib/privacy';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
+import { getUpcomingBusyRanges, toISODateString } from '@/lib/availabilityUtils';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -19,6 +20,13 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
   const { trackCall } = useAnalytics();
   const [copiedWechat, setCopiedWechat] = React.useState(false);
   const [isPhoneRevealed, setIsPhoneRevealed] = React.useState(false);
+
+  const todayIso = React.useMemo(() => toISODateString(new Date()), []);
+  const isBusyToday = Boolean(vehicle.busyDates && vehicle.busyDates.includes(todayIso));
+  const upcomingRanges = React.useMemo(
+    () => getUpcomingBusyRanges(vehicle.busyDates || [], locale),
+    [vehicle.busyDates, locale]
+  );
 
   const cleanPhone = vehicle.driverPhone ? vehicle.driverPhone.replace(/\D/g, '') : '';
   const companionVehicles = React.useMemo(() => {
@@ -100,11 +108,23 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
               )}
             </div>
 
-            {/* Top-right pill: Verified */}
-            <div className="absolute top-3 right-3 pointer-events-none">
+            {/* Top-right pill: Verified & Availability */}
+            <div className="absolute top-3 right-3 flex items-center gap-1.5 pointer-events-none">
+              {isBusyToday ? (
+                <span className="px-space-xs py-space-2xs rounded-full bg-rose-600 text-white font-bold text-label-badge flex items-center gap-1 shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  <span>{t('cal.cardBusyToday')}</span>
+                </span>
+              ) : upcomingRanges.length > 0 ? (
+                <span className="px-space-xs py-space-2xs rounded-full bg-amber-500 text-navy-deep font-extrabold text-[10px] flex items-center gap-1 shadow-sm">
+                  <span className="material-symbols-outlined text-[12px]">event_busy</span>
+                  <span>{t('cal.cardUpcomingBusy', { range: upcomingRanges[0].label })}</span>
+                </span>
+              ) : null}
+
               {vehicle.isVerified && (
-                <span className="px-space-xs py-space-2xs rounded-full bg-verified-emerald text-on-primary font-bold text-label-badge flex items-center gap-1 shadow-sm">
-                  <span className="material-symbols-outlined text-[13px]">verified</span>
+                <span className="px-space-xs py-space-2xs rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 font-black text-label-badge flex items-center gap-1 shadow-md border border-amber-300/80 tracking-wide">
+                  <span className="material-symbols-outlined text-[13px] text-slate-950 font-bold">star</span>
                   <span>{t('hero.verifiedSticker')}</span>
                 </span>
               )}
@@ -202,6 +222,19 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
 
           {/* Document Badges */}
           <div className="flex flex-wrap items-center gap-space-2xs text-label-badge">
+            {/* Availability Status Badge */}
+            {isBusyToday ? (
+              <span className="px-space-xs py-space-2xs rounded bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 font-bold border border-rose-300/40 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                <span>{t('cal.cardBusyToday')}</span>
+              </span>
+            ) : upcomingRanges.length > 0 ? (
+              <span className="px-space-xs py-space-2xs rounded bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 font-bold border border-amber-300/40 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <span>{t('cal.cardUpcomingBusy', { range: upcomingRanges[0].label })}</span>
+              </span>
+            ) : null}
+
             {isSelfDrive ? (
               <span className="px-space-xs py-space-2xs rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold">
                 🚗 {t('vehicle.selfDrive')}

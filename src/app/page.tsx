@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import { VEHICLES, SPONSORS, Vehicle } from '@/data/mockData';
-import { isMockDataEnabled, isMockEnvEnabled, isMockVehicleId } from '@/lib/mockConfig';
+import { isMockDataEnabled, isMockEnvEnabled, isMockVehicleId, isExcludedTestVehicle } from '@/lib/mockConfig';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { VehicleCard } from '@/components/VehicleCard';
@@ -48,7 +48,6 @@ const AdminPortalModal = dynamic(
 );
 import { useAuth } from '@/context/AuthContext';
 import { Footer } from '@/components/Footer';
-import { MobileBottomBar } from '@/components/MobileBottomBar';
 import { ScrollQualityMonitor } from '@/components/ScrollQualityMonitor';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -137,7 +136,6 @@ export default function HomePage() {
   }, []);
 
   const [selectedVehicleDetail, setSelectedVehicleDetail] = useState<Vehicle | null>(null);
-  const [focusedVehicle, setFocusedVehicle] = useState<Vehicle | null>(null);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isPortalOpen, setIsPortalOpen] = useState<boolean>(false);
@@ -154,9 +152,7 @@ export default function HomePage() {
     driverName: '',
     fleetVehicles: [],
   });
-
   const handleSelectDetail = useCallback((v: Vehicle) => {
-    setFocusedVehicle(v);
     setSelectedVehicleDetail(v);
   }, []);
 
@@ -170,7 +166,10 @@ export default function HomePage() {
   }, []);
   const filteredVehicles = useMemo(() => {
     // In production mode (e.g. ?demo=0 or NEXT_PUBLIC_ENABLE_MOCK_DATA=false), strictly exclude mock vehicle IDs
-    const baseList = isDemo ? vehicles : vehicles.filter((v) => !isMockVehicleId(v.id));
+    // Test sample leads (e.g. v-test-admin, v-drv-lead-01) are strictly excluded in ALL modes
+    const baseList = (isDemo ? vehicles : vehicles.filter((v) => !isMockVehicleId(v.id))).filter(
+      (v) => !isExcludedTestVehicle(v.id)
+    );
 
     return baseList.filter((vehicle) => {
       const matchesTab =
@@ -234,13 +233,21 @@ export default function HomePage() {
   }, [activeTab, selectedZone, selectedSeats, searchKeyword, plateFilter, vehicles, isDemo]);
 
   const totalVanCount = useMemo(
-    () => vehicles.filter((v) => (isDemo || !isMockVehicleId(v.id)) && v.type === 'van' && v.rentalType !== 'self_drive').length,
+    () =>
+      vehicles.filter(
+        (v) =>
+          !isExcludedTestVehicle(v.id) &&
+          (isDemo || !isMockVehicleId(v.id)) &&
+          v.type === 'van' &&
+          v.rentalType !== 'self_drive'
+      ).length,
     [vehicles, isDemo]
   );
   const totalSuvDriverCount = useMemo(
     () =>
       vehicles.filter(
         (v) =>
+          !isExcludedTestVehicle(v.id) &&
           (isDemo || !isMockVehicleId(v.id)) &&
           (v.type === 'suv' || v.type === 'car') &&
           v.rentalType === 'with_driver'
@@ -248,7 +255,13 @@ export default function HomePage() {
     [vehicles, isDemo]
   );
   const totalCarCount = useMemo(
-    () => vehicles.filter((v) => (isDemo || !isMockVehicleId(v.id)) && v.rentalType === 'self_drive').length,
+    () =>
+      vehicles.filter(
+        (v) =>
+          !isExcludedTestVehicle(v.id) &&
+          (isDemo || !isMockVehicleId(v.id)) &&
+          v.rentalType === 'self_drive'
+      ).length,
     [vehicles, isDemo]
   );
 
@@ -366,10 +379,9 @@ export default function HomePage() {
           totalCarCount={totalCarCount}
         />
       )}
-
-      <main id="main-content" className="mx-auto w-full max-w-7xl flex-1 px-margin lg:px-gutter pb-36 md:pb-8">
+      <main id="main-content" className="mx-auto w-full max-w-7xl flex-1 px-margin lg:px-gutter pb-8">
         {activeTab === 'hotel' ? (
-          <div key="hotel" className="td-panel-enter pt-24 sm:pt-28 pb-36 md:pb-16">
+          <div key="hotel" className="td-panel-enter pt-24 sm:pt-28 pb-16">
             <div>
               <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
                 {t('home.hotelTitle')}
@@ -385,7 +397,7 @@ export default function HomePage() {
             </div>
           </div>
         ) : activeTab === 'corporate' ? (
-          <div key="corporate" className="td-panel-enter pt-24 sm:pt-28 pb-36 md:pb-16">
+          <div key="corporate" className="td-panel-enter pt-24 sm:pt-28 pb-16">
             <CorporateSection />
           </div>
         ) : (
@@ -779,12 +791,6 @@ export default function HomePage() {
       {typeof window !== 'undefined' && window.location?.search?.includes('debug=perf') && (
         <ScrollQualityMonitor />
       )}
-
-      {/* Floating Mobile Quick Call/LINE bar */}
-      <MobileBottomBar
-        activeVehicle={selectedVehicleDetail || focusedVehicle}
-        onOpenDetail={(v) => setSelectedVehicleDetail(v)}
-      />
     </div>
   );
 }

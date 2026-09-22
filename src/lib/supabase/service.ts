@@ -14,7 +14,7 @@
 
 import { getSupabase } from './client';
 import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, SPONSORS, ZoneId, BoardQuote } from '@/data/mockData';
-import { isMockDataEnabled } from '@/lib/mockConfig';
+import { isMockDataEnabled, isExcludedTestVehicle, isExcludedTestDriver } from '@/lib/mockConfig';
 import {
   QuotationLead,
   DriverLead,
@@ -56,9 +56,11 @@ const mockPostIdSet = new Set(BOARD_POSTS.map((p) => p.id));
 const mockSponsorIdSet = new Set(SPONSORS.map((s) => s.id));
 
 export function isMockVehicleId(id: string): boolean {
+  if (isExcludedTestVehicle(id)) return true;
   if (mockVehicleIdSet.has(id)) return true;
   if (/^v-([1-9]|1[0-9]|2[0-9])b?$/.test(id)) return true;
   if (id.startsWith('v-sd-')) return true;
+  if (id.startsWith('v-mock-')) return true;
   return false;
 }
 
@@ -243,7 +245,7 @@ export async function fetchDriverLeads(): Promise<DriverLead[]> {
   const deletedIds = getDeletedDriverLeadIds();
   const supabase = getSupabase();
   if (!supabase) {
-    return getLocalDrivers().filter((d) => !deletedIds.includes(d.id));
+    return getLocalDrivers().filter((d) => !deletedIds.includes(d.id) && !isExcludedTestDriver(d.id));
   }
 
   try {
@@ -253,11 +255,11 @@ export async function fetchDriverLeads(): Promise<DriverLead[]> {
       .order('created_at', { ascending: false });
 
     if (error || !data || data.length === 0) {
-      return getLocalDrivers().filter((d) => !deletedIds.includes(d.id));
+      return getLocalDrivers().filter((d) => !deletedIds.includes(d.id) && !isExcludedTestDriver(d.id));
     }
 
     return data
-      .filter((row) => !deletedIds.includes(row.id))
+      .filter((row) => !deletedIds.includes(row.id) && !isExcludedTestDriver(row.id))
       .map((row) => ({
         id: row.id,
         driverName: row.driver_name,
@@ -276,7 +278,7 @@ export async function fetchDriverLeads(): Promise<DriverLead[]> {
       }));
   } catch (err) {
     console.warn('[TripDee Supabase] Error fetching driver leads, using fallback:', err);
-    return getLocalDrivers().filter((d) => !deletedIds.includes(d.id));
+    return getLocalDrivers().filter((d) => !deletedIds.includes(d.id) && !isExcludedTestDriver(d.id));
   }
 }
 
@@ -476,15 +478,15 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
 
 export async function fetchVehicles(reqUrl?: string): Promise<Vehicle[]> {
   const allowMock = isMockDataEnabled(reqUrl);
-  const localApproved = (getApprovedVehicles() || []).filter((v) => (allowMock ? true : !isMockVehicleId(v.id)));
+  const localApproved = (getApprovedVehicles() || []).filter((v) => !isExcludedTestVehicle(v.id) && (allowMock ? true : !isMockVehicleId(v.id)));
   const deletedIds = getDeletedVehicleIds();
   const supabase = getSupabase();
 
   if (!supabase) {
-    const combined = localApproved.filter((v) => !deletedIds.includes(v.id));
+    const combined = localApproved.filter((v) => !deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id));
     if (allowMock) {
       for (const v of VEHICLES) {
-        if (!deletedIds.includes(v.id) && !combined.some((c) => c.id === v.id)) {
+        if (!deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id) && !combined.some((c) => c.id === v.id)) {
           combined.push(v);
         }
       }
@@ -498,10 +500,12 @@ export async function fetchVehicles(reqUrl?: string): Promise<Vehicle[]> {
       .select('*')
       .order('rating', { ascending: false });
 
-    let baseVehicles: Vehicle[] = allowMock ? VEHICLES : [];
+    let baseVehicles: Vehicle[] = allowMock ? VEHICLES.filter((v) => !isExcludedTestVehicle(v.id)) : [];
 
     if (!error && data && data.length > 0) {
-      const validRows = allowMock ? data : data.filter((row) => !isMockVehicleId(row.id));
+      const validRows = (allowMock ? data : data.filter((row) => !isMockVehicleId(row.id))).filter(
+        (row) => !isExcludedTestVehicle(row.id)
+      );
       baseVehicles = validRows.map((row) => ({
         id: row.id,
         title: row.title,
@@ -533,22 +537,25 @@ export async function fetchVehicles(reqUrl?: string): Promise<Vehicle[]> {
         isAvailable: row.is_available !== null ? Boolean(row.is_available) : true,
         rentalType: (row.rental_type as 'with_driver' | 'self_drive') || (row.type === 'van' ? 'with_driver' : 'self_drive'),
         transmission: (row.transmission as 'auto' | 'manual') || undefined,
+        busyDates: Array.isArray((row as unknown as Record<string, unknown>).busy_dates)
+          ? ((row as unknown as Record<string, unknown>).busy_dates as string[])
+          : undefined,
       }));
     }
 
-    const combined = localApproved.filter((v) => !deletedIds.includes(v.id));
+    const combined = localApproved.filter((v) => !deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id));
     for (const v of baseVehicles) {
-      if (!deletedIds.includes(v.id) && !combined.some((c) => c.id === v.id)) {
+      if (!deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id) && !combined.some((c) => c.id === v.id)) {
         combined.push(v);
       }
     }
     return combined;
   } catch (err) {
     console.warn('[TripDee Supabase] Error fetching vehicles:', err);
-    const combined = localApproved.filter((v) => !deletedIds.includes(v.id));
+    const combined = localApproved.filter((v) => !deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id));
     if (allowMock) {
       for (const v of VEHICLES) {
-        if (!deletedIds.includes(v.id) && !combined.some((c) => c.id === v.id)) {
+        if (!deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id) && !combined.some((c) => c.id === v.id)) {
           combined.push(v);
         }
       }
@@ -563,7 +570,7 @@ export async function saveVehicle(vehicle: Vehicle): Promise<Vehicle> {
   if (!supabase) return vehicle;
 
   try {
-    await supabase.from('vehicles').upsert({
+    await (supabase.from('vehicles') as unknown as { upsert: (data: Record<string, unknown>) => Promise<unknown> }).upsert({
       id: vehicle.id,
       title: vehicle.title,
       type: vehicle.type,
@@ -594,6 +601,7 @@ export async function saveVehicle(vehicle: Vehicle): Promise<Vehicle> {
       is_available: vehicle.isAvailable ?? true,
       rental_type: vehicle.rentalType || (vehicle.type === 'van' ? 'with_driver' : 'self_drive'),
       transmission: vehicle.transmission || null,
+      busy_dates: vehicle.busyDates || null,
     });
   } catch (err) {
     console.warn('[TripDee Supabase] Exception saving vehicle:', err);
@@ -643,6 +651,7 @@ export async function updateVehicle(id: string, updates: Partial<Vehicle>): Prom
     if (updates.isAvailable !== undefined) supabaseUpdates.is_available = updates.isAvailable;
     if (updates.rentalType !== undefined) supabaseUpdates.rental_type = updates.rentalType;
     if (updates.transmission !== undefined) supabaseUpdates.transmission = updates.transmission;
+    if (updates.busyDates !== undefined) supabaseUpdates.busy_dates = updates.busyDates;
 
     await (supabase.from('vehicles') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
   } catch (err) {

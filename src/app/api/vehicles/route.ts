@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
       isAvailable: body.isAvailable !== false,
       rentalType: body.rentalType === 'self_drive' ? 'self_drive' : (body.type === 'van' ? 'with_driver' : (body.rentalType || 'self_drive')),
       transmission: body.transmission === 'manual' ? 'manual' : 'auto',
+      busyDates: Array.isArray(body.busyDates) ? body.busyDates : undefined,
       images: Array.isArray(body.images) && body.images.length > 0
         ? body.images
         : ['https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80'],
@@ -101,6 +102,8 @@ export async function PUT(req: NextRequest) {
     );
   }
 }
+
+export const PATCH = PUT;
 
 export async function DELETE(req: NextRequest) {
   try {

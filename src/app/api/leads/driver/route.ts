@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       // Return simulated success
       return NextResponse.json({
         success: true,
-        message: 'ลงทะเบียนคนขับพาร์ตเนอร์สำเร็จ ข้อมูลเข้าสู่ระบบการตรวจสอบแล้ว',
+        message: 'ลงทะเบียนคนขับพาร์ตเนอร์สำเร็จ ข้อมูลพร้อมเผยแพร่บนระบบเรียบร้อยแล้ว',
         lead: {
           id: `drv-spm-${Date.now().toString().slice(-6)}`,
           nickname: String(body.nickname || ''),
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'ลงทะเบียนคนขับพาร์ตเนอร์สำเร็จ ข้อมูลเข้าสู่ระบบการตรวจสอบแล้ว',
+      message: 'ลงทะเบียนคนขับพาร์ตเนอร์สำเร็จ ข้อมูลพร้อมเผยแพร่บนระบบเรียบร้อยแล้ว',
       lead: newDriver,
     });
   } catch (err) {

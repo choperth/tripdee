@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { X, Briefcase, Download, Printer, Plus, LogOut, Check } from 'lucide-react';
 import { BookingConfirmationSheet, BookingSheetData } from '@/components/BookingConfirmationSheet';
+import { DangerZone } from '@/components/portals/DangerZone';
 
 interface CustomerPortalModalProps {
   isOpen: boolean;
@@ -18,7 +19,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
   onClose,
   onOpenNewQuote,
 }) => {
-  const { user, quotations, updateCorporateProfile, logout } = useAuth();
+  const { user, quotations, updateCorporateProfile, logout, deleteAccount } = useAuth();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'quotes' | 'taxProfile'>('quotes');
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -300,6 +301,20 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
             </div>
           </form>
         )}
+
+        {/* 1.2 Danger Zone: Self-Service Corporate Account & Data Deletion (PDPA) */}
+        <div className="mt-6 pt-5 border-t border-rule/60">
+          <DangerZone
+            targetName={user.companyName || user.name || user.emailOrPhone}
+            title={t('danger.title')}
+            description={t('danger.customerDesc')}
+            buttonLabel={t('danger.deleteBtn')}
+            onDelete={async () => {
+              await deleteAccount();
+              onClose();
+            }}
+          />
+        </div>
       </div>
 
       {/* Booking Confirmation Sheet Modal */}

@@ -193,7 +193,7 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
                       className="inline-flex items-center gap-1.5 rounded-pill bg-leaf px-4 py-1.5 text-xs font-extrabold text-white shadow-sm hover:bg-leaf/90 transition-transform active:scale-95"
                     >
                       <Check className="h-4 w-4" strokeWidth={3} />
-                      <span>อนุมัติตรา Verified</span>
+                      <span>อนุมัติขึ้นเว็บ</span>
                     </button>
                   )}
                 </div>

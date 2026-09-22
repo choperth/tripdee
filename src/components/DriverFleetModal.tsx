@@ -88,8 +88,8 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
                   <span>{t('fleet.count', { n: fleetVehicles.length })}</span>
                 </span>
                 {leadVehicle.isVerified && (
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 text-xs font-semibold flex items-center gap-1 border border-emerald-400/30">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/30 text-amber-200 text-xs font-semibold flex items-center gap-1 border border-amber-400/40">
+                    <span className="material-symbols-outlined text-[14px] text-amber-300">star</span>
                     <span>{t('fleet.verified')}</span>
                   </span>
                 )}

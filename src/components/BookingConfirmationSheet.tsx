@@ -434,9 +434,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 <span>2. ข้อมูลยานพาหนะและคนขับ</span>
               </h3>
               {data.isVerified && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-black border border-emerald-300">
-                  <ShieldCheck className="h-3 w-3 text-emerald-700" />
-                  TripDee Verified
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 px-2 py-0.5 text-[10px] font-black border border-amber-300">
+                  <span className="text-amber-600 font-bold">★</span>
+                  รถแนะนำ (Featured)
                 </span>
               )}
             </div>

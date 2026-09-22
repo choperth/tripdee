@@ -84,11 +84,11 @@ export const metadata: Metadata = {
       "ทริปดีๆ เริ่มต้นที่นี่ ติดต่อคนขับตรง 0% ค่านายหน้า รถตู้ VIP พร้อมคนขับ รถเช่าขับเอง และสิทธิพิเศษการเดินทางทั่วไทย พร้อมใบเสนอราคาและใบกำกับภาษีเต็มรูปแบบ",
     images: [
       {
-        url: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&h=630&q=85",
-        width: 1200,
-        height: 630,
+        url: `${BASE_URL}/hero-banner.png`,
+        width: 1024,
+        height: 381,
         alt: "TripDee รวมรถตู้ VIP รถเช่า และสิทธิพิเศษการเดินทาง ทั่วไทย",
-        type: "image/jpeg",
+        type: "image/png",
       },
     ],
   },
@@ -97,9 +97,7 @@ export const metadata: Metadata = {
     title: "TripDee (ทริปดี) | รวมรถตู้ VIP รถเช่า และสิทธิพิเศษการเดินทาง ทั่วไทย",
     description:
       "ทริปดีๆ เริ่มต้นที่นี่ ติดต่อคนขับตรง 0% ค่านายหน้า รถตู้ VIP พร้อมคนขับ และสิทธิพิเศษการเดินทางทั่วไทย",
-    images: [
-      "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&h=630&q=85",
-    ],
+    images: [`${BASE_URL}/hero-banner.png`],
   },
   other: {
     "geo.region": "TH-50",
