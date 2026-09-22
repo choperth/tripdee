@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { saveSubscription, removeSubscription } from '@/lib/pushService';
 
+const FALLBACK_VAPID_PUBLIC_KEY =
+  'BF78nX6pFnCopBvpmpsHq6iddA33Za6Ipta32Zg4HIw9xKoTFvalivJiOKQFF3zF7_76pJpqctdSV95I7pNyoro';
+
 export async function GET() {
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || FALLBACK_VAPID_PUBLIC_KEY;
   return NextResponse.json({
     success: true,
     publicKey,

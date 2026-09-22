@@ -68,9 +68,12 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
       }
 
       // 2. Fetch VAPID public key
+      const FALLBACK_VAPID_PUBLIC_KEY =
+        'BF78nX6pFnCopBvpmpsHq6iddA33Za6Ipta32Zg4HIw9xKoTFvalivJiOKQFF3zF7_76pJpqctdSV95I7pNyoro';
       const keyRes = await fetch('/api/push/subscribe');
       const keyData = await keyRes.json();
-      const vapidPublicKey = keyData.publicKey || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      const vapidPublicKey =
+        keyData.publicKey || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || FALLBACK_VAPID_PUBLIC_KEY;
 
       if (!vapidPublicKey) {
         throw new Error('ไม่พบ VAPID Public Key ในระบบ');
@@ -190,17 +193,21 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
   // Compact variant (e.g. for DriverSelfServiceModal)
   if (compact) {
     return (
-      <div className="rounded-xl border border-rule bg-card p-3.5 shadow-2xs">
+      <div className="rounded-xl border border-rule dark:border-slate-800 bg-card dark:bg-slate-900 p-3.5 shadow-2xs">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className={`p-2 rounded-xl ${isSubscribed ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-700'}`}>
+            <span className={`p-2 rounded-xl ${
+              isSubscribed
+                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/70 dark:text-emerald-400'
+                : 'bg-amber-50 text-amber-700 dark:bg-amber-950/70 dark:text-amber-400'
+            }`}>
               {isSubscribed ? <BellRing className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
             </span>
             <div>
-              <p className="text-xs font-bold text-ink">
+              <p className="text-xs font-bold text-ink dark:text-white">
                 {isSubscribed ? 'เปิดแจ้งเตือนงานใหม่ทางมือถือแล้ว' : 'แจ้งเตือนงานใหม่ทางมือถือ (ฟรี 100%)'}
               </p>
-              <p className="text-[11px] text-ink-2 mt-0.5">
+              <p className="text-[11px] text-ink-2 dark:text-slate-400 mt-0.5">
                 {isSubscribed ? 'ระบบจะส่งเสียงและเด้งเตือนเมื่อมีลูกค้าลงบอร์ด' : 'เสียงแจ้งเตือนเด้งบนจอมือถือทันทีที่มีลูกค้าหาคนขับ'}
               </p>
             </div>
@@ -213,17 +220,17 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
                   type="button"
                   onClick={() => handleTestPush()}
                   disabled={testSent}
-                  className="td-btn inline-flex items-center gap-1 rounded-pill bg-paper border border-rule px-2.5 py-1.5 text-[11px] font-extrabold text-ink hover:bg-card"
+                  className="td-btn inline-flex items-center gap-1 rounded-pill bg-paper hover:bg-card dark:bg-slate-800 dark:hover:bg-slate-700 border border-rule dark:border-slate-700 px-2.5 py-1.5 text-[11px] font-extrabold text-ink dark:text-slate-200 transition-colors"
                   title="ทดสอบเสียงแจ้งเตือน"
                 >
-                  <Volume2 className="h-3 w-3 text-emerald-600" />
+                  <Volume2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                   <span>{testSent ? 'ส่งเสียงแล้ว...' : 'ทดสอบเสียง'}</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleUnsubscribe}
                   disabled={isLoading}
-                  className="text-[11px] text-ink-2 hover:text-rose-600 underline px-1"
+                  className="text-[11px] text-ink-2 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 underline px-1 transition-colors cursor-pointer"
                 >
                   ปิด
                 </button>
@@ -254,7 +261,11 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
 
   // Full banner variant (e.g. for TripBoard header)
   return (
-    <div className="mb-4 rounded-xl border border-amber-300/80 bg-gradient-to-r from-amber-50/90 via-card to-amber-50/50 p-3 sm:p-4 text-ink shadow-2xs">
+    <div className={`mb-4 rounded-xl border p-3 sm:p-4 text-ink shadow-2xs transition-colors ${
+      isSubscribed
+        ? 'border-emerald-200/90 dark:border-emerald-800/60 bg-gradient-to-r from-emerald-50/90 via-card to-emerald-50/40 dark:from-emerald-950/40 dark:via-slate-900 dark:to-emerald-950/20'
+        : 'border-amber-300/80 dark:border-amber-800/60 bg-gradient-to-r from-amber-50/90 via-card to-amber-50/50 dark:from-amber-950/40 dark:via-slate-900 dark:to-amber-950/20'
+    }`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-start sm:items-center gap-2.5">
           <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl shadow-2xs ${
@@ -264,16 +275,16 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
           </span>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="text-xs sm:text-sm font-extrabold text-ink flex items-center gap-1.5">
+              <h4 className="text-xs sm:text-sm font-extrabold text-ink dark:text-white flex items-center gap-1.5">
                 <span>{isSubscribed ? '✓ คุณเปิดรับการแจ้งเตือนงานใหม่ทางมือถือแล้ว' : '🔔 สำหรับคนขับ: เปิดรับแจ้งเตือนงานใหม่บนจอมือถือ (ฟรี 0 บาท)'}</span>
                 {isSubscribed && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 border border-emerald-300/60">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 text-[10px] font-extrabold px-2 py-0.5 border border-emerald-300/60 dark:border-emerald-700/60">
                     <CheckCircle className="h-2.5 w-2.5" /> Active
                   </span>
                 )}
               </h4>
             </div>
-            <p className="text-xs text-ink-2 mt-0.5 leading-relaxed">
+            <p className="text-xs text-ink-2 dark:text-slate-300 mt-0.5 leading-relaxed">
               {isSubscribed
                 ? 'ระบบจะส่งเสียงและแจ้งเตือนเด้งขึ้นบนหน้าจอมือถือของคุณทันทีเมื่อมีลูกค้าลงประกาศงานใหม่'
                 : 'รับงานไวกว่าใคร! แจ้งเตือนเด้งบนจอมือถือทันทีเมื่อมีลูกค้าลงประกาศหาคนขับหรือรถสัมมนา ไม่ต้องนั่งเฝ้าหน้าจอ'}
@@ -288,17 +299,17 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
                 type="button"
                 onClick={() => handleTestPush()}
                 disabled={testSent}
-                className="td-btn inline-flex items-center gap-1.5 rounded-pill bg-card hover:bg-paper border border-rule px-3 py-1.5 text-xs font-bold text-ink shadow-2xs transition-all"
+                className="td-btn inline-flex items-center gap-1.5 rounded-pill bg-card hover:bg-paper dark:bg-slate-800 dark:hover:bg-slate-700 border border-rule dark:border-slate-700 px-3 py-1.5 text-xs font-bold text-ink dark:text-white shadow-2xs transition-all"
                 title="ทดสอบเสียงแจ้งเตือนบนอุปกรณ์นี้"
               >
-                <Volume2 className="h-3.5 w-3.5 text-emerald-600" />
+                <Volume2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span>{testSent ? 'ส่งเสียงเตือนแล้ว...' : 'ทดสอบเสียงแจ้งเตือน'}</span>
               </button>
               <button
                 type="button"
                 onClick={handleUnsubscribe}
                 disabled={isLoading}
-                className="text-xs text-ink-2 hover:text-rose-600 underline font-medium px-2 py-1"
+                className="text-xs text-ink-2 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 underline font-medium px-2 py-1 transition-colors cursor-pointer"
               >
                 ปิดรับแจ้งเตือน
               </button>
@@ -327,7 +338,7 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
       </div>
 
       {errorMsg && (
-        <div className="mt-2.5 rounded-lg bg-rose-50 border border-rose-200 p-2 text-xs text-rose-700 font-medium flex items-center gap-1.5">
+        <div className="mt-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 p-2 text-xs text-rose-700 dark:text-rose-300 font-medium flex items-center gap-1.5">
           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
           <span>{errorMsg}</span>
         </div>

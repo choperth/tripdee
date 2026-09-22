@@ -204,19 +204,19 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-space-xs">
-            <DriverPushBell />
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-8 h-8 rounded-full bg-paper-surface-muted dark:bg-slate-800 flex items-center justify-center text-ink-secondary hover:text-ink-primary transition-colors"
-            >
-              <X className="w-4 h-4" aria-label={t('auth.close')} />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t('auth.close')}
+            className="w-8 h-8 rounded-full bg-paper-surface-muted dark:bg-slate-800 flex items-center justify-center text-ink-secondary hover:text-ink-primary transition-colors cursor-pointer shrink-0 ml-2"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         <div className="p-space-md lg:p-space-lg space-y-space-md">
+          {/* Web Push Notification Bell Banner for Drivers */}
+          <DriverPushBell compact />
           {/* STEP 1: Phone Search Lookup if no vehicle selected */}
           {!selectedVehicle && (
             <div className="max-w-xl mx-auto py-space-lg space-y-space-md text-center">

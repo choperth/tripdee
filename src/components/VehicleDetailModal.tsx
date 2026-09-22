@@ -117,11 +117,11 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
       >
         {/* Sticky Close Bar */}
         <div className="sticky top-0 z-30 flex items-center justify-between px-space-md py-space-xs bg-paper-elevated/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-border-subtle dark:border-slate-800">
-          <div className="flex items-center gap-2 text-body-subtext font-body-subtext text-ink-muted dark:text-slate-400">
-            <span>{t('detail.breadcrumbHome')}</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <span className="truncate">{shortLocation}</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1.5 sm:gap-2 text-body-subtext font-body-subtext text-ink-muted dark:text-slate-400 min-w-0">
+            <span className="shrink-0">{t('detail.breadcrumbHome')}</span>
+            <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate max-w-[80px] sm:max-w-none">{shortLocation}</span>
+            <ChevronRight className="w-3.5 h-3.5 shrink-0" />
             <span className="text-navy-deep dark:text-white font-bold truncate">
               {publicName}
             </span>
@@ -131,7 +131,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label={t('auth.close')}
-            className="w-8 h-8 rounded-full bg-paper-surface-muted dark:bg-slate-800 flex items-center justify-center text-ink-secondary hover:text-ink-primary hover:bg-surface-variant transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-paper-surface-muted dark:bg-slate-800 flex items-center justify-center text-ink-secondary hover:text-ink-primary hover:bg-surface-variant transition-colors cursor-pointer shrink-0 ml-2"
           >
             <X className="w-4 h-4" />
           </button>
@@ -196,7 +196,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                   <strong className="text-navy-deep dark:text-white font-body-medium group-hover:underline">
                     {vehicle.rating}
                   </strong>
-                  <span className="group-hover:underline">({t('detail.reviews', { n: vehicle.reviewCount })})</span>
+                  <span className="group-hover:underline">{t('detail.reviews', { n: vehicle.reviewCount })}</span>
                 </a>
                 <span>•</span>
                 <span className="flex items-center gap-space-2xs">
@@ -247,9 +247,9 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
           </div>
 
           {/* Photo Gallery Bento Layout (Stitch Signature 5-photo bento) */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-space-sm rounded-2xl overflow-hidden shadow-sm">
-            {/* Large 2x2 Feature Photo */}
-            <div className="md:col-span-2 md:row-span-2 relative h-64 md:h-[380px] bg-navy-deep group overflow-hidden">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-space-sm rounded-2xl overflow-hidden shadow-sm">
+            {/* Large Feature Photo */}
+            <div className="col-span-2 md:col-span-2 md:row-span-2 relative h-56 sm:h-64 md:h-[380px] bg-navy-deep group overflow-hidden">
               <Image
                 src={galleryImages[0]}
                 alt={vehicle.title}

@@ -7,9 +7,15 @@ import {
 } from './leadsStore';
 import { getSupabase } from './supabase/client';
 
-const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
-const privateVapidKey = process.env.VAPID_PRIVATE_KEY || '';
-const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@tripdee.com';
+const FALLBACK_VAPID_PUBLIC_KEY =
+  'BF78nX6pFnCopBvpmpsHq6iddA33Za6Ipta32Zg4HIw9xKoTFvalivJiOKQFF3zF7_76pJpqctdSV95I7pNyoro';
+const FALLBACK_VAPID_PRIVATE_KEY =
+  'uF-5VRPaVhFTWZVPSZUmEj2xLeVk73p_1DKXQvKY-FE';
+const FALLBACK_VAPID_SUBJECT = 'mailto:admin@tripdee.com';
+
+const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || FALLBACK_VAPID_PUBLIC_KEY;
+const privateVapidKey = process.env.VAPID_PRIVATE_KEY || FALLBACK_VAPID_PRIVATE_KEY;
+const vapidSubject = process.env.VAPID_SUBJECT || FALLBACK_VAPID_SUBJECT;
 
 let isConfigured = false;
 if (publicVapidKey && privateVapidKey) {

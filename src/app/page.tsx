@@ -301,9 +301,10 @@ export default function HomePage() {
           >
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="inline-block h-2 w-2 rounded-full bg-amber-500 shrink-0 animate-pulse" />
-                <p className="truncate">
-                  <span className="font-extrabold">{t('demo.bannerMockTitle')}</span> {t('demo.bannerMockDesc')}
+                <p className="truncate text-[11px] sm:text-xs">
+                  <span className="font-extrabold sm:hidden">โหมดตัวอย่าง:</span>
+                  <span className="font-extrabold hidden sm:inline">{t('demo.bannerMockTitle')}</span>{' '}
+                  <span className="hidden xs:inline">{t('demo.bannerMockDesc')}</span>
                 </p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
@@ -334,9 +335,10 @@ export default function HomePage() {
           >
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-                <p className="truncate">
-                  <span className="font-extrabold">{t('demo.bannerRealTitle')}</span> {t('demo.bannerRealDesc')}
+                <p className="truncate text-[11px] sm:text-xs">
+                  <span className="font-extrabold sm:hidden">โหมดข้อมูลจริง:</span>
+                  <span className="font-extrabold hidden sm:inline">{t('demo.bannerRealTitle')}</span>{' '}
+                  <span className="hidden xs:inline">{t('demo.bannerRealDesc')}</span>
                 </p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
@@ -650,16 +652,16 @@ export default function HomePage() {
                       </div>
 
                       {/* Driver Acquisition / Lead Generation Card */}
-                      <div className="mt-8 mx-auto max-w-xl rounded-card border border-emerald-200/80 bg-gradient-to-br from-emerald-50/70 via-card to-paper p-5 text-left shadow-xs">
+                      <div className="mt-8 mx-auto max-w-xl rounded-card border border-emerald-200/80 dark:border-emerald-800/60 bg-gradient-to-br from-emerald-50/70 via-card to-paper dark:from-emerald-950/40 dark:via-slate-900 dark:to-slate-900 p-5 text-left shadow-xs transition-colors">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div>
-                            <div className="inline-flex items-center gap-1.5 rounded-pill bg-emerald-600/10 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-700 mb-1.5">
+                            <div className="inline-flex items-center gap-1.5 rounded-pill bg-emerald-600/10 dark:bg-emerald-950/70 border border-emerald-600/20 dark:border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300 mb-1.5">
                               <span>{t('home.emptyDriverBadge')}</span>
                             </div>
-                            <h4 className="text-sm font-extrabold text-ink">
+                            <h4 className="text-sm font-extrabold text-ink dark:text-white">
                               {t('home.emptyDriverTitle')}
                             </h4>
-                            <p className="mt-0.5 text-xs font-medium text-ink-2">
+                            <p className="mt-0.5 text-xs font-medium text-ink-2 dark:text-slate-300">
                               {t('home.emptyDriverDesc')}
                             </p>
                           </div>
