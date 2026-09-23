@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Vehicle, ZoneId } from '@/data/mockData';
 import { ALL_VEHICLE_MODELS } from '@/data/vehicleModels';
-import { CarFront, Plus, Pencil, Trash2, ShieldCheck, Search, Star } from 'lucide-react';
+import { CarFront, Plus, Pencil, Trash2, Search, Star } from 'lucide-react';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminVehicleTabProps {
@@ -78,6 +78,8 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
       driverPhone: formData.get('driverPhone') as string,
       driverLine: formData.get('driverLine') as string,
       driverWhatsapp: (formData.get('driverWhatsapp') as string) || undefined,
+      driverWechat: (formData.get('driverWechat') as string) || undefined,
+      driverKakao: (formData.get('driverKakao') as string) || undefined,
       region: formData.get('region') as 'north' | 'central' | 'south' | 'east' | 'isan',
       location: formData.get('location') as string,
       plateType: (formData.get('plateType') as 'yellow' | 'blue') || 'yellow',
@@ -342,6 +344,24 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                     name="driverWhatsapp"
                     defaultValue={editingVehicle?.driverWhatsapp || ''}
                     placeholder="https://wa.me/..."
+                    className="w-full p-2 rounded-xl bg-paper border border-rule text-ink font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-ink block mb-1">WeChat ID</label>
+                  <input
+                    name="driverWechat"
+                    defaultValue={editingVehicle?.driverWechat || ''}
+                    placeholder="เช่น chaicnx_van"
+                    className="w-full p-2 rounded-xl bg-paper border border-rule text-ink font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-ink block mb-1">KakaoTalk ID</label>
+                  <input
+                    name="driverKakao"
+                    defaultValue={editingVehicle?.driverKakao || ''}
+                    placeholder="เช่น chaivan_cnx"
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink font-mono"
                   />
                 </div>

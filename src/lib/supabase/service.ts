@@ -44,6 +44,7 @@ import {
 import { Sponsor } from '@/data/mockData';
 import { AnalyticsEvent } from '@/lib/analytics';
 import { recordServerAnalyticsEvent } from '@/lib/serverAnalyticsStore';
+import { isBoardPostExpired } from '@/lib/availabilityUtils';
 
 // Type-safe helper for dynamic table updates
 type DynamicTableQuery = {
@@ -266,6 +267,9 @@ export async function fetchDriverLeads(): Promise<DriverLead[]> {
         nickname: row.nickname,
         phone: row.phone,
         lineId: row.line_id || '',
+        whatsapp: row.whatsapp || undefined,
+        wechat: row.wechat || undefined,
+        kakao: row.kakao || undefined,
         vehicleModel: row.vehicle_model || '',
         seats: row.seats || '',
         plateNumber: row.plate_number || undefined,
@@ -312,6 +316,9 @@ export async function saveDriverLead(lead: {
         nickname: lead.nickname,
         phone: lead.phone,
         line_id: lead.lineId,
+        whatsapp: lead.whatsapp || null,
+        wechat: lead.wechat || null,
+        kakao: lead.kakao || null,
         vehicle_model: lead.vehicleModel,
         seats: lead.seats,
         plate_number: lead.plateNumber || null,
@@ -359,6 +366,9 @@ export async function saveDriverLead(lead: {
         nickname: data.nickname,
         phone: data.phone,
         lineId: data.line_id,
+        whatsapp: data.whatsapp || undefined,
+        wechat: data.wechat || undefined,
+        kakao: data.kakao || undefined,
         vehicleModel: data.vehicle_model,
         seats: data.seats,
         plateNumber: data.plate_number || undefined,
@@ -797,36 +807,28 @@ export async function deleteVehicle(id: string): Promise<boolean> {
 // 4. BOARD POSTS SERVICE
 // ==============================================================================
 
-export async function fetchBoardPosts(reqUrl?: string): Promise<BoardPost[]> {
+export async function fetchBoardPosts(
+  reqUrl?: string,
+  options?: { includeClosed?: boolean }
+): Promise<BoardPost[]> {
   const supabase = getSupabase();
-  const now = new Date();
-
-  // Helper to check if a post is auto-expired
-  const isPostExpired = (post: { date?: string; created_at?: string; createdAt?: string }): boolean => {
-    // If created_at is older than 30 days, expire it
-    const dateStr = post.created_at || post.createdAt;
-    if (dateStr) {
-      const created = new Date(dateStr);
-      if (!isNaN(created.getTime())) {
-        const daysDiff = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
-        if (daysDiff > 30) return true;
-      }
-    }
-    return false;
-  };
-
   const allowMock = isMockDataEnabled(reqUrl);
+  const includeClosed = Boolean(options?.includeClosed);
+
+  const processMockPosts = (posts: BoardPost[]): BoardPost[] => {
+    return posts
+      .filter((p) => !deletedBoardPostIds.includes(p.id))
+      .filter((p) => includeClosed || !isBoardPostExpired(p))
+      .map((p) => ({
+        ...p,
+        isClosed: Boolean(p.isClosed || isBoardPostExpired(p)),
+        quoteCount: localBoardQuotes.filter((q) => q.postId === p.id).length || p.quoteCount || 0,
+      }));
+  };
 
   if (!supabase) {
     if (!allowMock) return [];
-    return BOARD_POSTS
-      .filter((p) => !deletedBoardPostIds.includes(p.id))
-      .filter((p) => !p.isClosed)
-      .filter((p) => !isPostExpired(p))
-      .map((p) => ({
-        ...p,
-        quoteCount: localBoardQuotes.filter((q) => q.postId === p.id).length || p.quoteCount || 0,
-      }));
+    return processMockPosts(BOARD_POSTS);
   }
 
   try {
@@ -837,59 +839,61 @@ export async function fetchBoardPosts(reqUrl?: string): Promise<BoardPost[]> {
 
     if (error || !data || data.length === 0) {
       if (!allowMock) return [];
-      return BOARD_POSTS
-        .filter((p) => !deletedBoardPostIds.includes(p.id))
-        .filter((p) => !p.isClosed)
-        .filter((p) => !isPostExpired(p))
-        .map((p) => ({
-          ...p,
-          quoteCount: localBoardQuotes.filter((q) => q.postId === p.id).length || p.quoteCount || 0,
-        }));
+      return processMockPosts(BOARD_POSTS);
     }
 
     const validRows = allowMock ? data : data.filter((row) => !isMockPostId(row.id));
 
     return validRows
       .filter((row) => !deletedBoardPostIds.includes(row.id))
-      .filter((row) => !row.is_closed)
-      .filter((row) => !isPostExpired(row))
-      .map((row) => ({
-        id: row.id,
-        type: row.type,
-        title: row.title,
-        zoneId: row.zone_id as ZoneId,
-        date: row.date,
-        days: row.days || 1,
-        seats: row.seats || 1,
-        price: Number(row.price) || 0,
-        priceNote: row.price_note || undefined,
-        authorName: row.author_name,
-        authorPhone: row.author_phone,
-        authorLine: row.author_line,
-        vehicleLabel: row.vehicle_label || undefined,
-        detail: row.detail,
-        postedAt: row.posted_at || 'เมื่อสักครู่',
-        isVerified: Boolean(row.is_verified),
-        category: (row.category as 'general' | 'corporate') || 'general',
-        pin: row.pin || undefined,
-        isClosed: Boolean(row.is_closed),
-        createdAt: row.created_at,
-        isNegotiable: Boolean(row.is_negotiable),
-        maxQuotes: Number(row.max_quotes) || 3,
-        quoteCount: localBoardQuotes.filter((q) => q.postId === row.id).length || Number(row.quote_count) || 0,
-        acceptedQuoteId: row.accepted_quote_id || undefined,
-      }));
+      .filter((row) => {
+        if (includeClosed) return true;
+        const isExp = isBoardPostExpired({
+          date: row.date,
+          days: row.days,
+          created_at: row.created_at,
+          isClosed: Boolean(row.is_closed),
+        });
+        return !isExp;
+      })
+      .map((row) => {
+        const isExp = isBoardPostExpired({
+          date: row.date,
+          days: row.days,
+          created_at: row.created_at,
+          isClosed: Boolean(row.is_closed),
+        });
+        return {
+          id: row.id,
+          type: row.type as BoardPost['type'],
+          title: row.title,
+          zoneId: row.zone_id as ZoneId,
+          date: row.date,
+          days: row.days || 1,
+          seats: row.seats || 1,
+          price: Number(row.price) || 0,
+          priceNote: row.price_note || undefined,
+          authorName: row.author_name,
+          authorPhone: row.author_phone,
+          authorLine: row.author_line,
+          vehicleLabel: row.vehicle_label || undefined,
+          detail: row.detail || '',
+          postedAt: row.posted_at || 'เมื่อสักครู่',
+          isVerified: Boolean(row.is_verified),
+          category: (row.category as 'general' | 'corporate') || 'general',
+          pin: row.pin || undefined,
+          isClosed: Boolean(row.is_closed || isExp),
+          createdAt: row.created_at,
+          isNegotiable: Boolean(row.is_negotiable),
+          maxQuotes: Number(row.max_quotes) || 3,
+          quoteCount: localBoardQuotes.filter((q) => q.postId === row.id).length || Number(row.quote_count) || 0,
+          acceptedQuoteId: row.accepted_quote_id || undefined,
+        };
+      });
   } catch (err) {
     console.warn('[TripDee Supabase] Error fetching board posts:', err);
     if (!allowMock) return [];
-    return BOARD_POSTS
-      .filter((p) => !deletedBoardPostIds.includes(p.id))
-      .filter((p) => !p.isClosed)
-      .filter((p) => !isPostExpired(p))
-      .map((p) => ({
-        ...p,
-        quoteCount: localBoardQuotes.filter((q) => q.postId === p.id).length || p.quoteCount || 0,
-      }));
+    return processMockPosts(BOARD_POSTS);
   }
 }
 
@@ -927,7 +931,7 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
         author_phone: post.authorPhone,
         author_line: post.authorLine,
         vehicle_label: post.vehicleLabel || null,
-        detail: post.detail,
+        detail: post.detail || '',
         posted_at: 'เมื่อสักครู่',
         is_verified: Boolean(post.isVerified),
         category: post.category || 'general',
@@ -947,7 +951,7 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
     if (data) {
       return {
         id: data.id,
-        type: data.type,
+        type: data.type as BoardPost['type'],
         title: data.title,
         zoneId: data.zone_id as ZoneId,
         date: data.date,
@@ -959,7 +963,7 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
         authorPhone: data.author_phone,
         authorLine: data.author_line,
         vehicleLabel: data.vehicle_label || undefined,
-        detail: data.detail,
+        detail: data.detail || '',
         postedAt: data.posted_at || 'เมื่อสักครู่',
         isVerified: Boolean(data.is_verified),
         category: (data.category as 'general' | 'corporate') || 'general',
@@ -1073,7 +1077,7 @@ export async function fetchBoardQuotes(
   postId: string,
   inputPin?: string
 ): Promise<{ success: boolean; quotes?: BoardQuote[]; message?: string; authorContact?: { phone: string; line: string } }> {
-  const posts = await fetchBoardPosts();
+  const posts = await fetchBoardPosts(undefined, { includeClosed: true });
   const post = posts.find((p) => p.id === postId);
   if (!post) {
     return { success: false, message: 'ไม่พบประกาศที่ระบุ' };
@@ -1146,8 +1150,8 @@ export async function saveBoardQuote(quote: Omit<BoardQuote, 'id' | 'createdAt'>
   if (!post) {
     return { success: false, message: 'ไม่พบประกาศนี้ในระบบ หรือประกาศอาจถูกปิดแล้ว' };
   }
-  if (post.isClosed) {
-    return { success: false, message: 'ประกาศนี้ได้รถและปิดรับข้อเสนอแล้ว ขอบคุณที่สนใจครับ' };
+  if (post.isClosed || isBoardPostExpired(post)) {
+    return { success: false, message: 'ประกาศนี้สิ้นสุดกำหนดวันเดินทางหรือปิดรับงานแล้ว ขอบคุณที่สนใจครับ' };
   }
 
   const maxQuotes = post.maxQuotes || 3;

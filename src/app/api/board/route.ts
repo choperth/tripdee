@@ -36,10 +36,10 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const url = new URL(req.url);
     const referer = req.headers.get('referer') || undefined;
-    const targetUrl = url.search ? req.url : (referer || req.url);
-    const posts = await fetchBoardPosts(targetUrl);
+    const targetUrl = searchParams.toString() ? req.url : (referer || req.url);
+    const includeClosed = searchParams.get('includeClosed') === 'true';
+    const posts = await fetchBoardPosts(targetUrl, { includeClosed });
     return NextResponse.json({
       success: true,
       total: posts.length,
@@ -141,7 +141,8 @@ export async function POST(req: NextRequest) {
     const isNegotiable = Boolean(body.isNegotiable);
 
     const newPost = await saveBoardPost({
-      type: body.type === 'offer' ? 'offer' : 'request',
+      // Demand-only board: offer posts are legacy and no longer accepted from the public API
+      type: body.type === 'share' ? 'share' : 'request',
       title: String(body.title).trim(),
       zoneId: (body.zoneId || 'city') as ZoneId,
       date: String(body.date || '').trim(),

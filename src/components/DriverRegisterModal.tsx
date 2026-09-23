@@ -534,14 +534,14 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-extrabold uppercase tracking-wide text-ink">
-                            🌐 ช่องทางติดต่อลูกค้าต่างชาติ (ไม่บังคับ / Optional)
+                            {t('reg.intlTitle')}
                           </span>
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                            แนะนำสำหรับรับนักท่องเที่ยว
+                            {t('reg.intlRecommended')}
                           </span>
                         </div>
                         <p className="text-[11px] text-ink-2 mt-0.5">
-                          เพิ่มโอกาสรับงานชาวต่างชาติ: ยุโรป, อเมริกา, สิงคโปร์, จีน, ไต้หวัน, เกาหลีใต้
+                          {t('reg.intlDesc')}
                         </p>
                       </div>
 
@@ -551,11 +551,11 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                           <label className="text-xs font-bold text-ink flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-[#25D366]" />
                             <span>WhatsApp</span>
-                            <span className="text-[10px] text-ink-3 font-normal">(เบอร์โทร)</span>
+                            <span className="text-[10px] text-ink-3 font-normal">({t('reg.intlWhatsappHint')})</span>
                           </label>
                           <input
                             type="tel"
-                            placeholder="เช่น 0812345678"
+                            placeholder={t('reg.intlWhatsappPh')}
                             value={formData.whatsapp}
                             onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                             className="w-full px-3 py-2 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-2xs"
@@ -566,12 +566,12 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                         <div className="space-y-1">
                           <label className="text-xs font-bold text-ink flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-[#07C160]" />
-                            <span>WeChat ID</span>
-                            <span className="text-[10px] text-ink-3 font-normal">(ลูกค้าจีน)</span>
+                            <span>{t('reg.intlWechat')}</span>
+                            <span className="text-[10px] text-ink-3 font-normal">({t('reg.intlWechatHint')})</span>
                           </label>
                           <input
                             type="text"
-                            placeholder="เช่น chaicnx_van"
+                            placeholder={t('reg.intlIdPh')}
                             value={formData.wechat}
                             onChange={(e) => setFormData({ ...formData, wechat: e.target.value })}
                             className="w-full px-3 py-2 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-2xs"
@@ -583,11 +583,11 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                           <label className="text-xs font-bold text-ink flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-[#FEE500]" />
                             <span>KakaoTalk ID</span>
-                            <span className="text-[10px] text-ink-3 font-normal">(ลูกค้าเกาหลี)</span>
+                            <span className="text-[10px] text-ink-3 font-normal">({t('reg.intlKakaoHint')})</span>
                           </label>
                           <input
                             type="text"
-                            placeholder="เช่น chaivan_cnx"
+                            placeholder={t('reg.intlIdPh')}
                             value={formData.kakao}
                             onChange={(e) => setFormData({ ...formData, kakao: e.target.value })}
                             className="w-full px-3 py-2 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"

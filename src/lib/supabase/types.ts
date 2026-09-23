@@ -64,6 +64,9 @@ export type Database = {
           nickname: string;
           phone: string;
           line_id: string;
+          whatsapp?: string | null;
+          wechat?: string | null;
+          kakao?: string | null;
           vehicle_model: string;
           seats: string;
           plate_number: string | null;
@@ -80,6 +83,9 @@ export type Database = {
           nickname: string;
           phone: string;
           line_id?: string;
+          whatsapp?: string | null;
+          wechat?: string | null;
+          kakao?: string | null;
           vehicle_model?: string;
           seats?: string;
           plate_number?: string | null;
@@ -96,6 +102,9 @@ export type Database = {
           nickname?: string;
           phone?: string;
           line_id?: string;
+          whatsapp?: string | null;
+          wechat?: string | null;
+          kakao?: string | null;
           vehicle_model?: string;
           seats?: string;
           plate_number?: string | null;
@@ -213,7 +222,7 @@ export type Database = {
       board_posts: {
         Row: {
           id: string;
-          type: 'request' | 'offer';
+          type: 'request' | 'share' | 'offer';
           title: string;
           zone_id: ZoneId;
           date: string;
@@ -239,7 +248,7 @@ export type Database = {
         };
         Insert: {
           id?: string;
-          type: 'request' | 'offer';
+          type: 'request' | 'share' | 'offer';
           title: string;
           zone_id: ZoneId;
           date: string;
@@ -265,7 +274,7 @@ export type Database = {
         };
         Update: {
           id?: string;
-          type?: 'request' | 'offer';
+          type?: 'request' | 'share' | 'offer';
           title?: string;
           zone_id?: ZoneId;
           date?: string;
@@ -370,7 +379,7 @@ export type Database = {
         Row: {
           id: string;
           title: string;
-          category: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel';
+          category: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel' | 'tour';
           category_label: string;
           tagline: string | null;
           badge_text: string | null;
@@ -383,7 +392,7 @@ export type Database = {
         Insert: {
           id: string;
           title: string;
-          category: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel';
+          category: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel' | 'tour';
           category_label: string;
           tagline?: string | null;
           badge_text?: string | null;
@@ -396,7 +405,7 @@ export type Database = {
         Update: {
           id?: string;
           title?: string;
-          category?: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel';
+          category?: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel' | 'tour';
           category_label?: string;
           tagline?: string | null;
           badge_text?: string | null;

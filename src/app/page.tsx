@@ -171,7 +171,7 @@ export default function HomePage() {
       (v) => !isExcludedTestVehicle(v.id)
     );
 
-    return baseList.filter((vehicle) => {
+    const filtered = baseList.filter((vehicle) => {
       const matchesTab =
         activeTab === 'van'
           ? (vehicle.type === 'van' && vehicle.rentalType !== 'self_drive')
@@ -230,6 +230,9 @@ export default function HomePage() {
 
       return matchesTab && matchesZone && matchesSeats && matchesKeyword && matchesPlate;
     });
+
+    // Featured listings (⭐ รถแนะนำ) always rank first for paid promote slots
+    return filtered.sort((a, b) => Number(b.isVerified) - Number(a.isVerified));
   }, [activeTab, selectedZone, selectedSeats, searchKeyword, plateFilter, vehicles, isDemo]);
 
   const totalVanCount = useMemo(

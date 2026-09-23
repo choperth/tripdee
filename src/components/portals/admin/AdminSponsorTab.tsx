@@ -61,7 +61,7 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
     const sponsorData = {
       id: editingSponsor?.id,
       title: formData.get('title') as string,
-      category: formData.get('category') as 'hotel' | 'restaurant' | 'auto_service' | 'tour',
+      category: formData.get('category') as Sponsor['category'],
       categoryLabel: formData.get('categoryLabel') as string,
       tagline: formData.get('tagline') as string,
       badgeText: formData.get('badgeText') as string,
@@ -216,6 +216,9 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
                     <option value="hotel">ที่พัก & โรงแรม (Hotel)</option>
                     <option value="restaurant">ร้านอาหาร & คาเฟ่</option>
                     <option value="auto_service">อู่ & ยาง & บริการรถ</option>
+                    <option value="activity">กิจกรรม & ปางช้าง</option>
+                    <option value="insurance">ประกันภัย</option>
+                    <option value="fuel">น้ำมัน & พลังงาน</option>
                     <option value="tour">ทัวร์ & กิจกรรมท่องเที่ยว</option>
                   </select>
                 </div>

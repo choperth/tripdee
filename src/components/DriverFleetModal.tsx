@@ -7,7 +7,7 @@ import { maskPhoneNumber, getPublicDriverName } from '@/lib/privacy';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { X, Phone, MessageSquare, ExternalLink, ShieldCheck, Star, Users } from 'lucide-react';
+import { X, Phone, MessageSquare, ExternalLink, Star, Users } from 'lucide-react';
 
 interface DriverFleetModalProps {
   isOpen: boolean;

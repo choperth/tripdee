@@ -17,6 +17,20 @@ function getDb(): SponsorsDatabase {
   }
   if (!Array.isArray(globalThis.__tripdee_sponsors__.sponsors)) {
     globalThis.__tripdee_sponsors__.sponsors = isMockDataEnabled() ? [...SPONSORS] : [];
+  } else if (isMockDataEnabled()) {
+    for (const mockSp of SPONSORS) {
+      const existing = globalThis.__tripdee_sponsors__.sponsors.find((s) => s.id === mockSp.id);
+      if (!existing) {
+        globalThis.__tripdee_sponsors__.sponsors.push(mockSp);
+      } else {
+        existing.image = mockSp.image;
+        existing.title = mockSp.title;
+        existing.tagline = mockSp.tagline;
+        existing.discountText = mockSp.discountText;
+        existing.category = mockSp.category;
+        existing.categoryLabel = mockSp.categoryLabel;
+      }
+    }
   }
   return globalThis.__tripdee_sponsors__;
 }

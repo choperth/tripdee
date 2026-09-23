@@ -9,7 +9,6 @@ import {
   Copy,
   Check,
   Edit3,
-  ShieldCheck,
   Calendar,
   Clock,
   CarFront,

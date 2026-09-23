@@ -5,7 +5,7 @@ import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
-import { X, ShieldCheck, CarFront, Clock, Upload, AlertTriangle, LogOut, Check, Star } from 'lucide-react';
+import { X, CarFront, LogOut, Check, Star } from 'lucide-react';
 import { VehiclePhotoManager } from '@/components/portals/VehiclePhotoManager';
 import { DangerZone } from '@/components/portals/DangerZone';
 import { DriverAvailabilityCalendar } from '@/components/portals/DriverAvailabilityCalendar';
@@ -16,7 +16,7 @@ interface DriverPortalModalProps {
 }
 
 export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, onClose }) => {
-  const { user, toggleDriverAvailability, updateDriverProfile, submitVerificationDocs, logout, deleteAccount } = useAuth();
+  const { user, toggleDriverAvailability, updateDriverProfile, logout, deleteAccount } = useAuth();
   const { t } = useLanguage();
   const { trackCall } = useAnalytics();
   const [activeTab, setActiveTab] = useState<'profile' | 'verification' | 'jobs'>('profile');
@@ -26,6 +26,9 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
   const [nickname, setNickname] = useState(user?.driverNickname || '');
   const [phone, setPhone] = useState(user?.emailOrPhone || '');
   const [lineId, setLineId] = useState(user?.lineId || '');
+  const [whatsapp, setWhatsapp] = useState(user?.whatsapp || '');
+  const [wechat, setWechat] = useState(user?.wechat || '');
+  const [kakao, setKakao] = useState(user?.kakao || '');
   const [vehicleTitle, setVehicleTitle] = useState(user?.vehicleTitle || '');
   const [vehiclePlate, setVehiclePlate] = useState(user?.vehiclePlate || '');
   const [seats, setSeats] = useState(user?.seats || 9);
@@ -50,6 +53,9 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
       driverNickname: nickname,
       emailOrPhone: phone,
       lineId,
+      whatsapp: whatsapp.trim() || undefined,
+      wechat: wechat.trim() || undefined,
+      kakao: kakao.trim() || undefined,
       vehicleTitle,
       vehiclePlate,
       seats: Number(seats),
@@ -69,7 +75,6 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
   };
 
   const isVerified = user.verificationStatus === 'verified';
-  const isPending = user.verificationStatus === 'pending';
 
   return (
     <div
@@ -233,6 +238,48 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                   value={lineId}
                   onChange={(e) => setLineId(e.target.value)}
                   placeholder={t('pdrv.fLinePh')}
+                  className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="drv-whatsapp" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                  {t('pdrv.fWhatsapp')}
+                </label>
+                <input
+                  id="drv-whatsapp"
+                  type="tel"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  placeholder={t('pdrv.fWhatsappPh')}
+                  className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="drv-wechat" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                  {t('pdrv.fWechat')}
+                </label>
+                <input
+                  id="drv-wechat"
+                  type="text"
+                  value={wechat}
+                  onChange={(e) => setWechat(e.target.value)}
+                  placeholder={t('pdrv.fWechatPh')}
+                  className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="drv-kakao" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                  {t('pdrv.fKakao')}
+                </label>
+                <input
+                  id="drv-kakao"
+                  type="text"
+                  value={kakao}
+                  onChange={(e) => setKakao(e.target.value)}
+                  placeholder={t('pdrv.fKakaoPh')}
                   className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
                 />
               </div>

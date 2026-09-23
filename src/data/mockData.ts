@@ -59,7 +59,7 @@ export interface Vehicle {
 export interface Sponsor {
   id: string;
   title: string;
-  category: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel';
+  category: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel' | 'tour';
   categoryLabel: string;
   tagline: string;
   badgeText: string;
@@ -309,6 +309,34 @@ export const SPONSORS: Sponsor[] = [
     location: 'สถานีบริการน้ำมัน PT ทั่วประเทศ',
     region: 'all',
     targetAudience: 'all',
+  },
+  {
+    id: 'sp-5',
+    title: 'Ran-Tong (Save & Help Elephant Center) ปางช้างเชิงจริยธรรม เชียงใหม่',
+    category: 'activity',
+    categoryLabel: 'กิจกรรมท่องเที่ยว & ปางช้างเชิงจริยธรรม',
+    tagline: 'สัมผัสความน่ารักของช้างอย่างมีจริยธรรม No Riding ไม่ขี่ ไม่ล่ามโซ่ ป้อนอาหาร ทำสมุนไพรรักษาช้าง และอาบน้ำช้างในลำธารธรรมชาติ อ.แม่แตง',
+    badgeText: 'สิทธิพิเศษผู้เดินทาง TripDee',
+    image: '/images/rantong-sanctuary.jpg',
+    link: 'https://www.rantongelephantsanctuary.com/',
+    discountText: 'รับส่วนลดพิเศษ 10% หรือฟรีชุดควาญช้าง & รูปถ่ายที่ระลึก เมื่อเดินทางด้วยรถพันธมิตร TripDee',
+    location: 'บ้านช้าง อ.แม่แตง จ.เชียงใหม่',
+    region: 'north',
+    targetAudience: 'traveler',
+  },
+  {
+    id: 'sp-6',
+    title: 'Vespa Adventures Chiang Mai — ทัวร์เวสป้าชมเชียงใหม่',
+    category: 'tour',
+    categoryLabel: 'ทัวร์ & กิจกรรมท่องเที่ยว',
+    tagline: 'นั่งเวสป้าคลาสสิกเที่ยวเชียงใหม่ 5 เส้นทาง — Insider’s City Highlights, After Dark, Foodie (MICHELIN), Countryside และ Sunrise Monk Blessing',
+    badgeText: 'สิทธิพิเศษผู้เดินทาง TripDee',
+    image: 'https://vespaadv.sgp1.cdn.digitaloceanspaces.com/featured/11547/47869297.jpg',
+    link: 'https://vespaadventures.com/destination/thailand',
+    discountText: '5 ทัวร์ในเชียงใหม่ เริ่มต้น USD$68 (พระอาทิตย์ขึ้น 2.5 ชม.) ถึง USD$109 — เชื่อมต่อโรงแรมในตัวเมือง',
+    location: 'เชียงใหม่ / ภาคเหนือ',
+    region: 'north',
+    targetAudience: 'traveler',
   },
 ];
 
@@ -1242,7 +1270,8 @@ export const VEHICLES: Vehicle[] = [
   }
 ];
 
-export type BoardPostType = 'request' | 'offer';
+/** request = ลูกค้าตั้งงบหารถ, share = หาเพื่อนร่วมทริป/หารกัน, offer = legacy (คนขับประกาศว่าง — ซ่อนจาก UI สาธารณะแล้ว) */
+export type BoardPostType = 'request' | 'share' | 'offer';
 
 export interface BoardQuote {
   id: string;
@@ -1259,14 +1288,14 @@ export interface BoardQuote {
 
 export interface BoardPost {
   id: string;
-  /** request = ลูกค้าตั้งงบหารถ, offer = คนขับตั้งราคาประกาศว่าง */
+  /** request = ลูกค้าตั้งงบหารถ, share = หาเพื่อนร่วมทริป/หารค่ารถ, offer = legacy คนขับประกาศว่าง (ซ่อนจาก UI แล้ว) */
   type: BoardPostType;
   title: string;
   zoneId: ZoneId;
   date: string;
   days: number;
   seats: number;
-  /** ราคาเดียวจบต่อประกาศ (request = งบที่ตั้ง, offer = ราคาเหมา) ไม่มีการประมูล */
+  /** ราคาเดียวจบต่อประกาศ (request = งบที่ตั้ง, share = เงินที่หารกันต่อคน, offer = legacy) ไม่มีการประมูล */
   price: number;
   priceNote?: string;
   authorName: string;
@@ -1313,19 +1342,18 @@ export const BOARD_POSTS: BoardPost[] = [
   },
   {
     id: 'b-2',
-    type: 'offer',
-    title: 'ว่าง! รถตู้ VIP 10 ที่นั่ง รับทริปดอยอินทนนท์วันเดย์',
+    type: 'share',
+    title: 'หาเพื่อนร่วมทริปดอยอินทนนท์ 22 ก.ย. เหลือ 2 ที่นั่ง',
     zoneId: 'highHill',
     date: '22 ก.ย. 69',
     days: 1,
-    seats: 10,
-    price: 2300,
-    priceNote: 'ไม่รวมน้ำมัน',
-    authorName: 'พี่เอก เชียงใหม่ทราเวล',
+    seats: 2,
+    price: 700,
+    priceNote: 'หารกันต่อคน รวมน้ำมันแล้ว',
+    authorName: 'คุณเมย์ (เหมารถแล้ว เหลือ 2 ที่)',
     authorPhone: '089-876-5432',
     authorLine: 'https://line.me',
-    vehicleLabel: 'All New Commuter 10 ที่นั่ง',
-    detail: 'ว่างวันจันทน์ที่ 22 รับได้ 1 ทริป เส้นทางกิ่วแม่ปาน พระมหาธาตุฯ น้ำตกวชิรธาร ชำนาญทางดอย ออกเช้า 07:30 กลับถึงเมือง 18:00',
+    detail: 'จัดรถตู้ VIP กับคนขับแล้ว เหลือที่ว่าง 2 ที่ ออกเช้าจากแม่ริม ขึ้นกิ่วแม่ปาน พระมหาธาตุฯ น้ำตกวชิรธาร ใครสะดวกไปด้วยกันทักมาได้ หารค่ารถคนละประมาณ 700 บาท',
     postedAt: '1 ชม. ที่แล้ว',
     isVerified: true,
   },
@@ -1347,19 +1375,18 @@ export const BOARD_POSTS: BoardPost[] = [
   },
   {
     id: 'b-4',
-    type: 'offer',
-    title: 'ว่าง! Fortuner 4WD พร้อมคนขับ ทริปเชียงรายวันเดย์',
+    type: 'share',
+    title: 'หาเพื่อนร่วมทางเชียงราย 27 ก.ย. เหลือ 2 ที่นั่ง',
     zoneId: 'crossProvince',
     date: '27 ก.ย. 69',
     days: 1,
-    seats: 4,
-    price: 2800,
-    priceNote: 'รวมน้ำมันแล้ว',
-    authorName: 'พี่ชัย รถตู้เชียงใหม่',
+    seats: 2,
+    price: 900,
+    priceNote: 'หารกันต่อคน รวมน้ำมันแล้ว',
+    authorName: 'คุณบอล (เหมารถ Fortuner แล้ว)',
     authorPhone: '081-234-5678',
     authorLine: 'https://line.me',
-    vehicleLabel: 'Toyota Fortuner 4WD 7 ที่นั่ง',
-    detail: 'วัดร่องขุ่น วัดร่องเสือเต้น ไร่ชาฉุยฟง ออก 07:00 กลับถึงเชียงใหม่ไม่เกิน 20:00 นั่งสบายไม่เกิน 4 ท่าน',
+    detail: 'เหมารถ Fortuner 4WD วันเดย์เชียงรายแล้ว เหลือว่าง 2 ที่ วัดร่องขุ่น วัดร่องเสือเต้น ไร่ชาฉุยฟง ออก 07:00 กลับไม่เกิน 20:00 ใครสะดวกไปด้วยกันทักมาได้ หารกันคนละประมาณ 900 บาท',
     postedAt: 'เมื่อวาน',
     isVerified: true,
   },
@@ -1381,19 +1408,18 @@ export const BOARD_POSTS: BoardPost[] = [
   },
   {
     id: 'b-6',
-    type: 'offer',
-    title: 'ว่าง! Majesty ผู้บริหาร รับ-ส่งสนามบิน + ประชุมในเมือง',
+    type: 'share',
+    title: 'หาเพื่อนร่วมทริปสนามบิน+ประชุมในเมือง 21 ก.ย. เหลือ 2 ที่',
     zoneId: 'city',
     date: '21 ก.ย. 69',
     days: 1,
-    seats: 4,
-    price: 3200,
-    priceNote: 'รวมน้ำมันในเมือง ออกใบกำกับภาษีได้',
-    authorName: 'พี่พจน์ VIP Limo',
+    seats: 2,
+    price: 800,
+    priceNote: 'หารกันต่อคน',
+    authorName: 'คุณเป้ (จอง Majesty แล้ว)',
     authorPhone: '086-555-1234',
     authorLine: 'https://line.me',
-    vehicleLabel: 'Toyota Majesty 7 ที่นั่ง',
-    detail: 'รับผู้บริหารจากสนามบิน ตระเวนประชุมในเมืองทั้งวัน คนขับสวมสูท ตรงเวลา มีเอกสารใบกำกับภาษีเต็มรูป',
+    detail: 'จอง Majesty รับ-ส่งสนามบินตระเวนประชุมทั้งวันแล้ว เหลือว่าง 2 ที่ นั่งสบาย ออกใบเสร็จได้ ใครจะร่วมทริปทักมาได้ หารกันคนละประมาณ 800 บาท',
     postedAt: '2 วันที่แล้ว',
     isVerified: true,
   },

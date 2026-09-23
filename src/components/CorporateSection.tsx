@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Loader2,
 } from 'lucide-react';
+import { TravelDatePicker } from '@/components/TravelDatePicker';
 
 export const CorporateSection: React.FC = () => {
   const { t } = useLanguage();
@@ -345,18 +346,18 @@ export const CorporateSection: React.FC = () => {
                   </div>
 
                   {/* Dates & Days */}
-                  <div className="grid grid-cols-2 gap-space-xs">
+                  <div className="space-y-space-xs">
                     <div>
                       <label htmlFor="corp-travel-date" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
                         {t('corp.fDate')}
                       </label>
-                      <input
+                      <TravelDatePicker
                         id="corp-travel-date"
-                        type="text"
                         value={formData.travelDate}
-                        onChange={(e) => setFormData({ ...formData, travelDate: e.target.value })}
+                        onChange={(dateStr) => setFormData({ ...formData, travelDate: dateStr })}
+                        days={formData.totalDays}
+                        onDaysChange={(newDays) => setFormData({ ...formData, totalDays: newDays })}
                         placeholder={t('corp.fDatePh')}
-                        className="w-full h-10 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action"
                       />
                     </div>
                     <div>

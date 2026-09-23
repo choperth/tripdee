@@ -7,17 +7,14 @@ import {
   Copy,
   Check,
   Download,
-  Printer,
   Phone,
   MessageCircle,
   ExternalLink,
-  ShieldCheck,
   Star,
   QrCode,
   Sparkles,
 } from 'lucide-react';
 import { Vehicle } from '@/data/mockData';
-import { useLanguage } from '@/context/LanguageContext';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { getPublicDriverName, maskPlateNumber } from '@/lib/privacy';
 import { generateQrMatrix, renderQrSvgPath } from '@/lib/qrCode';
@@ -36,7 +33,6 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { t } = useLanguage();
   const dialogRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
@@ -116,10 +112,6 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
       profileUrl
     )}&text=${encodeURIComponent(introText)}`;
     window.open(lineShareUrl, '_blank', 'noopener,noreferrer');
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   // Export card as high-res PNG image via HTML5 Canvas

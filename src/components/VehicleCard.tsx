@@ -164,10 +164,12 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                 </p>
                 {/* Cute Direct Channel Badges */}
                 <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#06C755]/10 text-[#06C755] dark:bg-[#06C755]/20 dark:text-[#06C755] font-bold text-[10px] leading-none border border-[#06C755]/20 shadow-2xs">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#06C755]" />
-                    LINE
-                  </span>
+                  {vehicle.driverLine && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#06C755]/10 text-[#06C755] dark:bg-[#06C755]/20 dark:text-[#06C755] font-bold text-[10px] leading-none border border-[#06C755]/20 shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#06C755]" />
+                      LINE
+                    </span>
+                  )}
                   {(vehicle.driverWhatsapp || vehicle.driverPhone) && (
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#25D366]/10 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] leading-none border border-[#25D366]/20 shadow-2xs">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#25D366]" />

@@ -103,12 +103,12 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
       if (typeof window !== 'undefined') {
         navigator.clipboard.writeText(vehicle.driverWechat);
         setCopiedWechat(true);
-        setChannelNotice(`คัดลอก WeChat ID: "${vehicle.driverWechat}" เรียบร้อยแล้ว`);
+        setChannelNotice(t('detail.wechatCopied', { id: vehicle.driverWechat }));
         setTimeout(() => setCopiedWechat(false), 2500);
         setTimeout(() => setChannelNotice(null), 3000);
       }
     } else {
-      setChannelNotice('คนขับยังไม่ได้ระบุ WeChat ID — สอบถามผ่านเบอร์โทรหรือ LINE ได้เลยครับ');
+      setChannelNotice(t('detail.wechatMissing'));
       setTimeout(() => setChannelNotice(null), 3500);
     }
   };
@@ -119,12 +119,12 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
       if (typeof window !== 'undefined') {
         navigator.clipboard.writeText(vehicle.driverKakao);
         setCopiedKakao(true);
-        setChannelNotice(`คัดลอก KakaoTalk ID: "${vehicle.driverKakao}" เรียบร้อยแล้ว`);
+        setChannelNotice(t('detail.kakaoCopied', { id: vehicle.driverKakao }));
         setTimeout(() => setCopiedKakao(false), 2500);
         setTimeout(() => setChannelNotice(null), 3000);
       }
     } else {
-      setChannelNotice('คนขับยังไม่ได้ระบุ KakaoTalk ID — สอบถามผ่านเบอร์โทรหรือ LINE ได้เลยครับ');
+      setChannelNotice(t('detail.kakaoMissing'));
       setTimeout(() => setChannelNotice(null), 3500);
     }
   };
@@ -732,10 +732,10 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 font-bold text-xs text-navy-deep dark:text-white">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>ช่องทางติดต่อด่วน (Direct Channels)</span>
+                      <span>{t('detail.directChannels')}</span>
                     </div>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                      ดีลตรงคนขับ 100%
+                      {t('detail.directDeal')}
                     </span>
                   </div>
 
@@ -776,7 +776,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="h-11 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer"
-                        title="WhatsApp (คลิกเพื่อเปิดแอปแชทตรงกับคนขับ)"
+                        title={t('detail.whatsappHint')}
                         aria-label="WhatsApp"
                       >
                         <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -790,7 +790,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                       type="button"
                       onClick={handleCopyWechat}
                       className="h-11 rounded-xl bg-[#07C160] hover:bg-[#06ab55] text-white flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer relative"
-                      title={vehicle.driverWechat ? `WeChat ID: ${vehicle.driverWechat} (คลิกเพื่อคัดลอกไอดี)` : 'WeChat (คลิกเพื่อดูข้อมูล)'}
+                      title={vehicle.driverWechat ? t('detail.wechatCopyHint', { id: vehicle.driverWechat }) : t('detail.wechatEmptyHint')}
                       aria-label="WeChat"
                     >
                       {copiedWechat ? (
@@ -807,7 +807,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                       type="button"
                       onClick={handleCopyKakao}
                       className="h-11 rounded-xl bg-[#FEE500] hover:bg-[#ebd300] text-[#191919] flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer relative"
-                      title={vehicle.driverKakao ? `KakaoTalk ID: ${vehicle.driverKakao} (คลิกเพื่อคัดลอกไอดี)` : 'KakaoTalk (คลิกเพื่อดูข้อมูล)'}
+                      title={vehicle.driverKakao ? t('detail.kakaoCopyHint', { id: vehicle.driverKakao }) : t('detail.kakaoEmptyHint')}
                       aria-label="KakaoTalk"
                     >
                       {copiedKakao ? (
@@ -828,7 +828,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                           type="button"
                           onClick={handleCopyWechat}
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 border border-teal-200/60 dark:border-teal-900/50 hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors cursor-pointer"
-                          title="กดเพื่อคัดลอก WeChat ID"
+                          title={t('detail.copyWechatTitle')}
                         >
                           <span className="font-bold">WeChat:</span>
                           <span className="font-mono">{vehicle.driverWechat}</span>
@@ -842,7 +842,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                           type="button"
                           onClick={handleCopyKakao}
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/60 dark:border-amber-900/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer"
-                          title="กดเพื่อคัดลอก KakaoTalk ID"
+                          title={t('detail.copyKakaoTitle')}
                         >
                           <span className="font-bold">Kakao:</span>
                           <span className="font-mono">{vehicle.driverKakao}</span>

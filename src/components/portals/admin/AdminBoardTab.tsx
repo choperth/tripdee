@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BoardPost, ZoneId } from '@/data/mockData';
-import { Pencil, Trash2, ShieldCheck, Search, Star } from 'lucide-react';
+import { BoardPost, BoardPostType, ZoneId } from '@/data/mockData';
+import { Pencil, Trash2, Search, Star } from 'lucide-react';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminBoardTabProps {
@@ -23,7 +23,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
       p.title.toLowerCase().includes(q) ||
       p.authorName.toLowerCase().includes(q) ||
       p.authorPhone.includes(q) ||
-      p.detail.toLowerCase().includes(q)
+      (p.detail || '').toLowerCase().includes(q)
     );
   });
 
@@ -70,7 +70,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
     const updates = {
       id: editingPost.id,
       title: formData.get('title') as string,
-      type: formData.get('type') as 'request' | 'offer',
+      type: formData.get('type') as BoardPostType,
       zoneId: formData.get('zoneId') as ZoneId,
       date: formData.get('date') as string,
       days: Number(formData.get('days')) || 1,
@@ -132,9 +132,17 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                 <div>
                   <div className="flex items-center gap-2">
                     <span className={`rounded-pill px-2 py-0.5 text-[10px] font-extrabold ${
-                      post.type === 'offer' ? 'bg-leaf-soft text-leaf' : 'bg-sun-soft text-sun-ink'
+                      post.type === 'share'
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : post.type === 'offer'
+                        ? 'bg-leaf-soft text-leaf'
+                        : 'bg-sun-soft text-sun-ink'
                     }`}>
-                      {post.type === 'offer' ? 'คนขับหารถ/รับงาน' : 'หาคนหาร/หารถตู้'}
+                      {post.type === 'share'
+                        ? 'หาเพื่อนร่วมทริป (Share)'
+                        : post.type === 'offer'
+                        ? 'คนขับเสนอรถ (Offer เดิม)'
+                        : 'หาคนหาร/หารถตู้'}
                     </span>
                     <h4 className="font-extrabold text-sm text-ink">{post.title}</h4>
                     {post.isVerified && (
@@ -176,7 +184,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
               </div>
 
               <p className="my-2 text-xs text-ink-2 line-clamp-2 bg-card p-2.5 rounded-xl border border-rule">
-                {post.detail}
+                {post.detail || '— ไม่ได้ระบุรายละเอียด —'}
               </p>
 
               <div className="flex items-center justify-between text-xs pt-1">
@@ -220,7 +228,8 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
                     <option value="request">หาคนหาร / หารถ (Request)</option>
-                    <option value="offer">คนขับเสนอรถ / ว่างงาน (Offer)</option>
+                    <option value="share">หาเพื่อนร่วมทริป (Share)</option>
+                    <option value="offer">คนขับเสนอรถ (Offer เดิม)</option>
                   </select>
                 </div>
                 <div>

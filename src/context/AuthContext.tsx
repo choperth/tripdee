@@ -22,6 +22,10 @@ export interface UserProfile {
   isAvailable?: boolean;
   busyDates?: string[];
   verificationStatus?: 'verified' | 'pending' | 'unverified';
+  /** International direct channels (WhatsApp / WeChat / KakaoTalk) */
+  whatsapp?: string;
+  wechat?: string;
+  kakao?: string;
   uploadedDocs?: {
     driverLicense?: string;
     vehicleRegistration?: string;

@@ -41,26 +41,26 @@ export const SponsorSidebar: React.FC = () => {
   const [liveVacancyPost, setLiveVacancyPost] = useState<BoardPost | null>(null);
 
   useEffect(() => {
-    const fetchLatestOffer = () => {
+    const fetchLatestDemand = () => {
       const search = typeof window !== 'undefined' ? window.location.search : '';
       fetch('/api/board' + search)
         .then((res) => res.json())
         .then((data) => {
           if (data.posts && Array.isArray(data.posts)) {
-            const offers = data.posts.filter((p: BoardPost) => {
-              if (p.type !== 'offer') return false;
+            const demands = data.posts.filter((p: BoardPost) => {
+              if (p.type !== 'request' && p.type !== 'share') return false;
               if (!isDemo && isMockPostId(p.id)) return false;
               return true;
             });
-            setLiveVacancyPost(offers.length > 0 ? offers[0] : null);
+            setLiveVacancyPost(demands.length > 0 ? demands[0] : null);
           }
         })
         .catch(() => {});
     };
 
-    fetchLatestOffer();
-    window.addEventListener('tripdee-board-updated', fetchLatestOffer);
-    return () => window.removeEventListener('tripdee-board-updated', fetchLatestOffer);
+    fetchLatestDemand();
+    window.addEventListener('tripdee-board-updated', fetchLatestDemand);
+    return () => window.removeEventListener('tripdee-board-updated', fetchLatestDemand);
   }, [isDemo]);
 
   useEffect(() => {
@@ -148,7 +148,7 @@ export const SponsorSidebar: React.FC = () => {
           className="bg-paper-elevated dark:bg-slate-900 rounded-2xl overflow-hidden border border-border-subtle dark:border-slate-800 shadow-md hover:shadow-xl transition-all"
         >
           {/* Sponsor Category Switcher Tabs */}
-          <div className="grid grid-cols-4 gap-1 p-2 bg-paper-surface-muted dark:bg-slate-800 border-b border-border-subtle dark:border-slate-700/60">
+          <div className="grid grid-cols-6 gap-1 p-1.5 sm:p-2 bg-paper-surface-muted dark:bg-slate-800 border-b border-border-subtle dark:border-slate-700/60">
             {SPONSORS.map((s, idx) => {
               const isActive = idx === selectedIdx;
               const icon =
@@ -158,6 +158,12 @@ export const SponsorSidebar: React.FC = () => {
                   ? 'shield'
                   : s.category === 'fuel'
                   ? 'local_gas_station'
+                  : s.category === 'activity'
+                  ? 'pets'
+                  : s.category === 'restaurant'
+                  ? 'restaurant'
+                  : s.category === 'tour'
+                  ? 'map'
                   : 'build';
               const label =
                 s.category === 'hotel'
@@ -166,6 +172,12 @@ export const SponsorSidebar: React.FC = () => {
                   ? 'ประกัน'
                   : s.category === 'fuel'
                   ? 'น้ำมัน'
+                  : s.category === 'activity'
+                  ? 'ปางช้าง'
+                  : s.category === 'restaurant'
+                  ? 'ร้านอาหาร'
+                  : s.category === 'tour'
+                  ? 'ทัวร์'
                   : 'อู่รถ';
 
               return (
@@ -267,9 +279,11 @@ export const SponsorSidebar: React.FC = () => {
           </h5>
           <p className="font-body-subtext text-body-subtext text-ink-secondary dark:text-slate-300">
             {liveVacancyPost
-              ? `${liveVacancyPost.authorName} ${liveVacancyPost.vehicleLabel || ''} ${
-                  liveVacancyPost.date ? `ว่างเดินทาง ${liveVacancyPost.date}` : ''
-                } ${liveVacancyPost.priceNote ? `• ${liveVacancyPost.priceNote}` : ''}`
+              ? `${liveVacancyPost.type === 'share' ? '🤝 ' : ''}${liveVacancyPost.authorName} ${
+                  liveVacancyPost.date ? `• ${liveVacancyPost.date}` : ''
+                } ${liveVacancyPost.priceNote ? `• ${liveVacancyPost.priceNote}` : ''} ${
+                  liveVacancyPost.price > 0 ? `• ฿${liveVacancyPost.price.toLocaleString()}` : ''
+                }`
               : t('spn.vacDesc')}
           </p>
           <button

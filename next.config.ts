@@ -37,6 +37,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'vespaadv.sgp1.cdn.digitaloceanspaces.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'thumb.wikimedia.org',
         pathname: '/wikipedia/commons/thumb/**',
       },

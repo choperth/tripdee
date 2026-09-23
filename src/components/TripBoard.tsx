@@ -15,6 +15,7 @@ import {
 import { isMockEnvEnabled, isMockDataEnabled } from '@/lib/mockConfig';
 import { isMockPostId } from '@/lib/supabase/service';
 import { maskPhoneNumber } from '@/lib/privacy';
+import { isBoardPostExpired } from '@/lib/availabilityUtils';
 import {
   Plus,
   X,
@@ -23,6 +24,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { DriverPushBell } from '@/components/notifications/DriverPushBell';
+import { TravelDatePicker } from '@/components/TravelDatePicker';
 
 type BoardFilter = 'all' | BoardPostType | 'corporate';
 
@@ -116,9 +118,13 @@ export const TripBoard: React.FC = () => {
   const [acceptingQuoteId, setAcceptingQuoteId] = useState<string | null>(null);
   const [acceptSuccessMessage, setAcceptSuccessMessage] = useState('');
 
+  // Toggle to show/hide past expired/closed posts
+  const [showClosedPosts, setShowClosedPosts] = useState<boolean>(false);
+
   const loadBoardPosts = React.useCallback(() => {
     const search = typeof window !== 'undefined' ? window.location.search : '';
-    fetch('/api/board' + search)
+    const connector = search ? (search.includes('?') ? '&' : '?') : '?';
+    fetch(`/api/board${search}${connector}includeClosed=true`)
       .then((res) => res.json())
       .then((data) => {
         if (data.posts && Array.isArray(data.posts)) {
@@ -140,18 +146,32 @@ export const TripBoard: React.FC = () => {
     return isDemo ? posts : posts.filter((p) => !isMockPostId(p.id));
   }, [posts, isDemo]);
 
-  // Counts for tabs (memoized)
-  const { requestCount, offerCount, corporateCount } = useMemo(() => ({
-    requestCount: activePosts.filter((p) => p.type === 'request').length,
-    offerCount: activePosts.filter((p) => p.type === 'offer').length,
-    corporateCount: activePosts.filter((p) => p.category === 'corporate').length,
-  }), [activePosts]);
+  // Open vs Closed/Expired posts
+  const openPosts = useMemo(() => {
+    return activePosts.filter((p) => !p.isClosed && !isBoardPostExpired(p));
+  }, [activePosts]);
+
+  const closedCount = useMemo(() => {
+    return activePosts.filter((p) => Boolean(p.isClosed || isBoardPostExpired(p))).length;
+  }, [activePosts]);
+
+  const basePosts = showClosedPosts ? activePosts : openPosts;
+
+  // Counts for tabs (memoized based on basePosts)
+  const { totalCount, requestCount, shareCount, corporateCount } = useMemo(() => ({
+    totalCount: basePosts.length,
+    requestCount: basePosts.filter((p) => p.type === 'request').length,
+    shareCount: basePosts.filter((p) => p.type === 'share').length,
+    corporateCount: basePosts.filter((p) => p.category === 'corporate').length,
+  }), [basePosts]);
 
   const visiblePosts = useMemo(() => {
     const query = searchKeyword.trim().toLowerCase();
-    return activePosts.filter((p) => {
+    return basePosts.filter((p) => {
+      // Demand-only board: hide legacy driver "offer" posts from the public feed
+      if (p.type === 'offer') return false;
       if (filter === 'request' && p.type !== 'request') return false;
-      if (filter === 'offer' && p.type !== 'offer') return false;
+      if (filter === 'share' && p.type !== 'share') return false;
       if (filter === 'corporate' && p.category !== 'corporate') return false;
 
       if (query !== '') {
@@ -166,7 +186,7 @@ export const TripBoard: React.FC = () => {
       }
       return true;
     });
-  }, [activePosts, filter, searchKeyword]);
+  }, [basePosts, filter, searchKeyword]);
 
   const set = (patch: Partial<PostFormState>) => setForm((prev) => ({ ...prev, ...patch }));
 
@@ -184,13 +204,14 @@ export const TripBoard: React.FC = () => {
     e.preventDefault();
     const days = Math.max(1, Number(form.days) || 1);
     const seats = Math.max(1, Number(form.seats) || 1);
+    // Negotiable pricing is demand-only (request); share posts always carry a fixed split amount
     const isNegotiable = form.type === 'request' && form.isNegotiable;
     const price = isNegotiable ? 0 : Math.max(0, Math.round(Number(form.price) || 0));
     if (!isNegotiable && price <= 0) return;
 
     const post: BoardPost = {
       id: `b-${Date.now().toString().slice(-6)}`,
-      type: form.type,
+      type: form.type === 'share' ? 'share' : 'request',
       category: form.category,
       title: form.title.trim(),
       zoneId: form.zoneId,
@@ -443,13 +464,13 @@ export const TripBoard: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => openNewPost('offer')}
+              onClick={() => openNewPost('share')}
               className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-space-xs bg-navy-deep hover:bg-navy-surface text-surface font-body-medium text-body-medium px-space-lg py-space-md rounded-xl shadow-md transition-all active:scale-[0.98]"
             >
               <span className="material-symbols-outlined text-[20px] text-amber-accent">
-                airport_shuttle
+                group_add
               </span>
-              <span>{t('board.postOffer')}</span>
+              <span>{t('board.postShare')}</span>
             </button>
           </div>
         </div>
@@ -491,16 +512,16 @@ export const TripBoard: React.FC = () => {
           <div className="bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 rounded-xl p-space-md flex items-center justify-between shadow-xs">
             <div>
               <div className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400">
-                {t('board.statOffers')}
+                {t('board.statShares')}
               </div>
               <div className="font-price-headline text-price-headline text-line-green">
-                {offerCount}{' '}
+                {shareCount}{' '}
                 <span className="text-body-subtext font-body-base text-ink-secondary dark:text-slate-400 font-normal">
                   {t('board.unitVans')}
                 </span>
               </div>
             </div>
-            <span className="material-symbols-outlined text-line-green text-[26px]">local_taxi</span>
+            <span className="material-symbols-outlined text-line-green text-[26px]">group_add</span>
           </div>
 
           <div className="bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 rounded-xl p-space-md flex items-center justify-between shadow-xs">
@@ -580,7 +601,7 @@ export const TripBoard: React.FC = () => {
                   : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
               }`}
             >
-              {t('board.filterAll')} ({posts.length})
+              {t('board.filterAll')} ({totalCount})
             </button>
             <button
               type="button"
@@ -595,14 +616,14 @@ export const TripBoard: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => setFilter('offer')}
+              onClick={() => setFilter('share')}
               className={`whitespace-nowrap px-space-md py-space-xs rounded-lg font-body-medium text-body-medium transition-all ${
-                filter === 'offer'
+                filter === 'share'
                   ? 'bg-navy-deep text-surface shadow-sm font-bold'
                   : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
               }`}
             >
-              🚐 {t('board.filterOffer')} ({offerCount})
+              🤝 {t('board.filterShare')} ({shareCount})
             </button>
             <button
               type="button"
@@ -617,18 +638,41 @@ export const TripBoard: React.FC = () => {
             </button>
           </div>
 
-          {/* Search Input Box */}
-          <div className="relative md:w-72">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-[18px]">
-              search
-            </span>
-            <input
-              type="text"
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              placeholder={t('board.searchPh')}
-              className="w-full h-10 pl-9 pr-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-lg text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action border border-transparent focus:border-blue-action transition-all"
-            />
+          {/* Controls: Search + Toggle Closed/Expired Posts */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {closedCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowClosedPosts(!showClosedPosts)}
+                className={`whitespace-nowrap px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 border shadow-xs ${
+                  showClosedPosts
+                    ? 'bg-slate-800 text-white border-slate-700 shadow-sm'
+                    : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-muted dark:text-slate-400 border-border-subtle/50 dark:border-slate-700 hover:text-navy-deep dark:hover:text-white'
+                }`}
+                title={showClosedPosts ? t('board.hideExpiredToggle') : t('board.showExpiredToggle', { n: closedCount })}
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>
+                  {showClosedPosts
+                    ? t('board.hideExpiredToggle')
+                    : t('board.showExpiredToggle', { n: closedCount })}
+                </span>
+              </button>
+            )}
+
+            {/* Search Input Box */}
+            <div className="relative md:w-72">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-[18px]">
+                search
+              </span>
+              <input
+                type="text"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                placeholder={t('board.searchPh')}
+                className="w-full h-10 pl-9 pr-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-lg text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action border border-transparent focus:border-blue-action transition-all"
+              />
+            </div>
           </div>
         </div>
 
@@ -655,17 +699,35 @@ export const TripBoard: React.FC = () => {
           ) : (
             visiblePosts.map((post) => {
               const isRequest = post.type === 'request';
+              const isShare = post.type === 'share';
               const zoneObj = ZONE_RATE_CARDS.find((z) => z.id === post.zoneId);
+              const isExpired = isBoardPostExpired(post);
+              const isPostClosed = Boolean(post.isClosed || isExpired);
 
               return (
                 <div
                   key={post.id}
-                  className="bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-md sm:p-space-lg shadow-sm hover:shadow-md border border-border-subtle dark:border-slate-800 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-space-md"
+                  className={`bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-md sm:p-space-lg shadow-sm hover:shadow-md border ${
+                    isPostClosed
+                      ? 'border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/60'
+                      : 'border-border-subtle dark:border-slate-800'
+                  } transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-space-md`}
                 >
                   {/* Left Content Area */}
                   <div className="space-y-space-xs max-w-3xl">
                     <div className="flex flex-wrap items-center gap-space-xs text-label-badge font-label-badge">
-                      {isRequest ? (
+                      {isPostClosed && (
+                        <span className="px-space-xs py-space-2xs rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold flex items-center gap-1 border border-slate-300 dark:border-slate-700">
+                          <Lock className="w-3 h-3 text-slate-500" />
+                          <span>{t('board.expiredBadge')}</span>
+                        </span>
+                      )}
+
+                      {isShare ? (
+                        <span className="px-space-xs py-space-2xs rounded bg-verified-emerald-soft text-verified-emerald font-bold">
+                          {t('board.badgeShare')}
+                        </span>
+                      ) : isRequest ? (
                         <span className="px-space-xs py-space-2xs rounded bg-blue-subtle text-blue-action font-bold">
                           {t('board.badgeRequest')}
                         </span>
@@ -696,7 +758,11 @@ export const TripBoard: React.FC = () => {
                       </span>
 
                       <span className="px-space-xs py-space-2xs rounded bg-surface-container dark:bg-slate-800 text-navy-deep dark:text-blue-300 font-bold">
-                        {isRequest ? t('board.metaSeatsReq', { n: post.seats }) : t('board.metaSeatsOffer', { n: post.seats })}
+                        {isShare
+                          ? t('board.metaSeatsShare', { n: post.seats })
+                          : isRequest
+                          ? t('board.metaSeatsReq', { n: post.seats })
+                          : t('board.metaSeatsOffer', { n: post.seats })}
                       </span>
                     </div>
 
@@ -705,7 +771,7 @@ export const TripBoard: React.FC = () => {
                     </h3>
 
                     <p className="font-body-base text-body-base text-ink-secondary dark:text-slate-300 leading-relaxed">
-                      {post.detail}
+                      {post.detail || <span className="text-ink-muted dark:text-slate-500 italic">{t('board.noDetail')}</span>}
                     </p>
 
                     <div className="flex flex-wrap items-center gap-space-md text-body-subtext font-body-subtext text-ink-muted dark:text-slate-400 pt-0.5">
@@ -736,6 +802,7 @@ export const TripBoard: React.FC = () => {
 
                   {/* Right Pricing & Direct Contact Area */}
                   {(() => {
+                    // Share posts always carry a fixed split amount; only requests can be negotiable
                     const isPostNegotiable = Boolean(post.isNegotiable || (isRequest && post.price <= 0));
                     const maxQuotes = post.maxQuotes || 3;
                     const quoteCount = post.quoteCount || 0;
@@ -758,7 +825,12 @@ export const TripBoard: React.FC = () => {
                           </div>
 
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-space-xs w-full sm:w-auto">
-                            {isQuotaFull ? (
+                            {isPostClosed ? (
+                              <div className="px-space-md py-space-xs bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl font-body-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 select-none">
+                                <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <span>{t('board.autoClosedNotice')}</span>
+                              </div>
+                            ) : isQuotaFull ? (
                               <button
                                 type="button"
                                 disabled
@@ -801,42 +873,62 @@ export const TripBoard: React.FC = () => {
                       <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-space-sm min-w-[220px] pt-space-xs lg:pt-0 border-t sm:border-t-0 border-border-subtle/70 dark:border-slate-800">
                         <div className="lg:text-right">
                           <span className="text-body-subtext text-ink-muted dark:text-slate-400 block">
-                            {isRequest ? t('board.priceReq') : t('board.priceOffer')}
+                            {isShare
+                              ? t('board.priceShare')
+                              : isRequest
+                              ? t('board.priceReq')
+                              : t('board.priceOffer')}
                           </span>
                           <div className="font-price-headline text-price-headline text-navy-deep dark:text-white">
                             ฿{post.price.toLocaleString()}
                           </div>
                           <span className="text-body-subtext text-emerald-700 dark:text-emerald-400 block font-bold">
-                            {post.priceNote || (isRequest ? t('board.fuelIncl') : t('board.fuelExcl'))}
+                            {post.priceNote || (isShare || isRequest ? t('board.fuelIncl') : t('board.fuelExcl'))}
                           </span>
                         </div>
 
                         <div className="flex items-center gap-space-xs w-full sm:w-auto">
-                          <a
-                            href={`tel:${post.authorPhone}`}
-                            onClick={() =>
-                              trackCall({
-                                targetType: 'trip_board',
-                                targetId: post.id,
-                                targetTitle: post.title,
-                                phoneNumber: post.authorPhone,
-                                driverName: post.authorName,
-                              })
-                            }
-                            className="flex-1 sm:flex-initial px-space-md py-space-xs bg-navy-deep hover:bg-navy-surface text-on-primary rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">call</span>
-                            <span>{isRequest ? t('board.acceptJob') : t('board.bookNow')} ({maskPhoneNumber(post.authorPhone)})</span>
-                          </a>
-                          <a
-                            href={post.authorLine || 'https://line.me'}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-space-md py-space-xs bg-line-green hover:bg-line-green-hover text-on-primary rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98]"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">chat</span>
-                            <span>{t('board.lineChat')}</span>
-                          </a>
+                          {isPostClosed ? (
+                            <div className="px-space-md py-space-xs bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl font-body-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 select-none">
+                              <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span>{t('board.autoClosedNotice')}</span>
+                            </div>
+                          ) : (
+                            <>
+                              <a
+                                href={`tel:${post.authorPhone}`}
+                                onClick={() =>
+                                  trackCall({
+                                    targetType: 'trip_board',
+                                    targetId: post.id,
+                                    targetTitle: post.title,
+                                    phoneNumber: post.authorPhone,
+                                    driverName: post.authorName,
+                                  })
+                                }
+                                className="flex-1 sm:flex-initial px-space-md py-space-xs bg-navy-deep hover:bg-navy-surface text-on-primary rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">call</span>
+                                <span>
+                                  {isShare
+                                    ? t('board.joinShare')
+                                    : isRequest
+                                    ? t('board.acceptJob')
+                                    : t('board.bookNow')}{' '}
+                                  ({maskPhoneNumber(post.authorPhone)})
+                                </span>
+                              </a>
+                              <a
+                                href={post.authorLine || 'https://line.me'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-space-md py-space-xs bg-line-green hover:bg-line-green-hover text-on-primary rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98]"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">chat</span>
+                                <span>{t('board.lineChat')}</span>
+                              </a>
+                            </>
+                          )}
                         </div>
                       </div>
                     );
@@ -859,7 +951,11 @@ export const TripBoard: React.FC = () => {
                   post_add
                 </span>
                 <h3 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
-                  {form.type === 'request' ? t('board.formTitleReq') : t('board.formTitleOffer')}
+                  {form.type === 'share'
+                    ? t('board.formTitleShare')
+                    : form.type === 'request'
+                    ? t('board.formTitleReq')
+                    : t('board.formTitleOffer')}
                 </h3>
               </div>
               <button
@@ -886,14 +982,14 @@ export const TripBoard: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => set({ type: 'offer' })}
+                onClick={() => set({ type: 'share' })}
                 className={`py-2 rounded-lg font-body-medium text-body-medium transition-all ${
-                  form.type === 'offer'
+                  form.type === 'share'
                     ? 'bg-paper-elevated dark:bg-slate-900 text-navy-deep dark:text-white font-bold shadow-xs'
                     : 'text-ink-secondary dark:text-slate-400'
                 }`}
               >
-                🚐 {t('board.tabOffer')}
+                🤝 {t('board.tabShare')}
               </button>
             </div>
 
@@ -922,12 +1018,33 @@ export const TripBoard: React.FC = () => {
                   value={form.title}
                   onChange={(e) => set({ title: e.target.value })}
                   placeholder={
-                    form.type === 'request' ? t('board.fTitlePhReq') : t('board.fTitlePhOffer')
+                    form.type === 'share'
+                      ? t('board.fTitlePhShare')
+                      : form.type === 'request'
+                      ? t('board.fTitlePhReq')
+                      : t('board.fTitlePhOffer')
                   }
                   className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action"
                 />
               </div>
 
+              {/* 1. Travel Date with Interactive Day/Month/Year Calendar Picker */}
+              <div>
+                <label htmlFor="post-date" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                  {t('board.fDate')}
+                </label>
+                <TravelDatePicker
+                  id="post-date"
+                  value={form.date}
+                  onChange={(dateStr) => set({ date: dateStr })}
+                  days={Number(form.days) || 1}
+                  onDaysChange={(newDays) => set({ days: String(newDays) })}
+                  placeholder={t('board.fDatePh')}
+                  required
+                />
+              </div>
+
+              {/* 2. Destination Zone & Total Days */}
               <div className="grid grid-cols-2 gap-space-sm">
                 <div>
                   <label htmlFor="post-zone" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
@@ -948,23 +1065,6 @@ export const TripBoard: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="post-date" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
-                    {t('board.fDate')}
-                  </label>
-                  <input
-                    id="post-date"
-                    type="text"
-                    required
-                    value={form.date}
-                    onChange={(e) => set({ date: e.target.value })}
-                    placeholder={t('board.fDatePh')}
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-space-sm">
-                <div>
                   <label htmlFor="post-days" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
                     {t('board.fDays')}
                   </label>
@@ -978,10 +1078,17 @@ export const TripBoard: React.FC = () => {
                     className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action"
                   />
                 </div>
+              </div>
 
+              {/* 3. Passengers & Pricing */}
+              <div className="grid grid-cols-2 gap-space-sm">
                 <div>
                   <label htmlFor="post-seats" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
-                    {form.type === 'request' ? t('board.fSeatsReq') : t('board.fSeatsOffer')}
+                    {form.type === 'share'
+                      ? t('board.fSeatsShare')
+                      : form.type === 'request'
+                      ? t('board.fSeatsReq')
+                      : t('board.fSeatsOffer')}
                   </label>
                   <input
                     id="post-seats"
@@ -999,7 +1106,11 @@ export const TripBoard: React.FC = () => {
                 <div>
                   <div className="flex flex-wrap items-center justify-between mb-1 gap-1">
                     <label htmlFor="post-price" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider">
-                      {form.type === 'request' ? t('board.fPriceReq') : t('board.fPriceOffer')}
+                      {form.type === 'share'
+                        ? t('board.fPriceShare')
+                        : form.type === 'request'
+                        ? t('board.fPriceReq')
+                        : t('board.fPriceOffer')}
                     </label>
                     {form.type === 'request' && (
                       <label className="inline-flex items-center gap-1.5 text-xs text-blue-action font-semibold cursor-pointer select-none">
@@ -1072,7 +1183,6 @@ export const TripBoard: React.FC = () => {
                 <textarea
                   id="post-detail"
                   rows={3}
-                  required
                   value={form.detail}
                   onChange={(e) => set({ detail: e.target.value })}
                   placeholder={t('board.fDetailPh')}

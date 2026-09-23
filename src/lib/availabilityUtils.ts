@@ -169,3 +169,204 @@ export function generateDateRange(startIso: string, endIso: string): string[] {
   }
   return result;
 }
+
+const THAI_MONTHS_MAP: Record<string, number> = {
+  'ม.ค.': 0, 'มกรา': 0, 'มกราคม': 0,
+  'ก.พ.': 1, 'กุมภา': 1, 'กุมภาพันธ์': 1,
+  'มี.ค.': 2, 'มีนา': 2, 'มีนาคม': 2,
+  'เม.ย.': 3, 'เมษา': 3, 'เมษายน': 3,
+  'พ.ค.': 4, 'พฤษภา': 4, 'พฤษภาพันธ์': 4, 'พฤษภาคม': 4,
+  'มิ.ย.': 5, 'มิถุนา': 5, 'มิถุนายน': 5,
+  'ก.ค.': 6, 'กรกฎา': 6, 'กรกฎาคม': 6,
+  'ส.ค.': 7, 'สิงหา': 7, 'สิงหาคม': 7,
+  'ก.ย.': 8, 'กันยา': 8, 'กันยายน': 8,
+  'ต.ค.': 9, 'ตุลา': 9, 'ตุลาคม': 9,
+  'พ.ย.': 10, 'พฤศจิกา': 10, 'พฤศจิกายน': 10,
+  'ธ.ค.': 11, 'ธันวา': 11, 'ธันวาคม': 11,
+};
+
+const EN_MONTHS_MAP: Record<string, number> = {
+  jan: 0, january: 0,
+  feb: 1, february: 1,
+  mar: 2, march: 2,
+  apr: 3, april: 3,
+  may: 4,
+  jun: 5, june: 5,
+  jul: 6, july: 6,
+  aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8,
+  oct: 9, october: 9,
+  nov: 10, november: 10,
+  dec: 11, december: 11,
+};
+
+/**
+ * Returns current date string formatted as 'YYYY-MM-DD' in Asia/Bangkok time.
+ */
+export function getBangkokTodayIso(refDate: Date = new Date()): string {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Bangkok',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(refDate);
+  } catch {
+    const y = refDate.getFullYear();
+    const m = String(refDate.getMonth() + 1).padStart(2, '0');
+    const d = String(refDate.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+}
+
+/**
+ * Parses free-form or formatted travel date string into an end Date object.
+ * Supports:
+ * - Thai formats: '20-21 ก.ย. 69', '22 ก.ย. 69', '3-5 ต.ค. 69', '2569'
+ * - ISO formats: '2026-09-22'
+ * - Chinese formats: '2026年9月20-21日'
+ * - English formats: '20-21 Sep 2026', '22 Sep 2026'
+ */
+export function parseTravelEndDate(
+  dateStr?: string,
+  daysCount: number = 1,
+  refDate: Date = new Date()
+): Date | null {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  const trimmed = dateStr.trim();
+  if (!trimmed) return null;
+
+  const validDays = Math.max(1, Number(daysCount) || 1);
+
+  // 1. ISO format 'YYYY-MM-DD'
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    const y = parseInt(isoMatch[1], 10);
+    const m = parseInt(isoMatch[2], 10) - 1;
+    const d = parseInt(isoMatch[3], 10);
+    const end = new Date(y, m, d + Math.max(0, validDays - 1));
+    return end;
+  }
+
+  // 2. Chinese format: '2026年9月20-21日' or '9月22日'
+  const zhMatch = trimmed.match(/(?:(\d{4})年\s*)?(\d{1,2})月\s*(\d{1,2})(?:\s*[-–]\s*(\d{1,2}))?日?/);
+  if (zhMatch) {
+    const y = zhMatch[1] ? parseInt(zhMatch[1], 10) : refDate.getFullYear();
+    const m = parseInt(zhMatch[2], 10) - 1;
+    const startD = parseInt(zhMatch[3], 10);
+    const endD = zhMatch[4] ? parseInt(zhMatch[4], 10) : (startD + Math.max(0, validDays - 1));
+    return new Date(y, m, endD);
+  }
+
+  // 3. Thai / English text parser
+  let month = -1;
+  const sortedThaiMonths = Object.entries(THAI_MONTHS_MAP).sort((a, b) => b[0].length - a[0].length);
+  for (const [name, mIdx] of sortedThaiMonths) {
+    if (trimmed.includes(name)) {
+      month = mIdx;
+      break;
+    }
+  }
+
+  if (month === -1) {
+    const lower = trimmed.toLowerCase();
+    const sortedEnMonths = Object.entries(EN_MONTHS_MAP).sort((a, b) => b[0].length - a[0].length);
+    for (const [name, mIdx] of sortedEnMonths) {
+      const regex = new RegExp(`\\b${name}\\b`);
+      if (regex.test(lower)) {
+        month = mIdx;
+        break;
+      }
+    }
+  }
+
+  if (month === -1) return null;
+
+  // Extract year
+  let year = refDate.getFullYear();
+  // 4-digit BE (25xx)
+  const be4Match = trimmed.match(/\b(25\d{2})\b/);
+  if (be4Match) {
+    year = parseInt(be4Match[1], 10) - 543;
+  } else {
+    // 4-digit AD (20xx)
+    const ad4Match = trimmed.match(/\b(20\d{2})\b/);
+    if (ad4Match) {
+      year = parseInt(ad4Match[1], 10);
+    } else {
+      // 2-digit BE (e.g. 67, 68, 69, 70...)
+      const be2Match = trimmed.match(/\b(6[5-9]|7[0-9]|8[0-9])\b/);
+      if (be2Match) {
+        year = 2500 + parseInt(be2Match[1], 10) - 543;
+      }
+    }
+  }
+
+  // Extract day or day range (e.g. 20-21 or 3-5 or 22)
+  const rangeMatch = trimmed.match(/(\d{1,2})\s*[-–ถึงto]\s*(\d{1,2})/);
+  if (rangeMatch) {
+    const endD = parseInt(rangeMatch[2], 10);
+    return new Date(year, month, endD);
+  }
+
+  const singleDayMatch = trimmed.match(/(\d{1,2})/);
+  if (singleDayMatch) {
+    const startD = parseInt(singleDayMatch[1], 10);
+    const endD = startD + Math.max(0, validDays - 1);
+    return new Date(year, month, endD);
+  }
+
+  return null;
+}
+
+/**
+ * Checks if a travel date range has passed relative to Bangkok local time today.
+ * If the travel end date < today, returns true.
+ */
+export function isTravelDatePassed(
+  dateStr?: string,
+  daysCount: number = 1,
+  refDate: Date = new Date()
+): boolean {
+  if (!dateStr) return false;
+  const endDate = parseTravelEndDate(dateStr, daysCount, refDate);
+  if (!endDate || isNaN(endDate.getTime())) return false;
+
+  const endIso = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+  const todayIso = getBangkokTodayIso(refDate);
+
+  return endIso < todayIso;
+}
+
+/**
+ * Determines whether a board post is expired:
+ * 1. Already marked isClosed / is_closed
+ * 2. Travel date has passed (isTravelDatePassed)
+ * 3. Fallback: created_at > 30 days old
+ */
+export function isBoardPostExpired(
+  post: {
+    date?: string;
+    days?: number;
+    created_at?: string;
+    createdAt?: string;
+    isClosed?: boolean;
+    is_closed?: boolean;
+  },
+  refDate: Date = new Date()
+): boolean {
+  if (post.isClosed || post.is_closed) return true;
+  if (post.date && isTravelDatePassed(post.date, post.days, refDate)) {
+    return true;
+  }
+  const dateStr = post.created_at || post.createdAt;
+  if (dateStr) {
+    const created = new Date(dateStr);
+    if (!isNaN(created.getTime())) {
+      const daysDiff = (refDate.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+      if (daysDiff > 30) return true;
+    }
+  }
+  return false;
+}
