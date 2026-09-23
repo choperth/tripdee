@@ -10,7 +10,6 @@ import {
   X,
   Check,
   RotateCcw,
-  Sparkles,
   Edit3,
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
@@ -408,9 +407,8 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
           </div>
 
           {/* Quick Date Presets Bar */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
             <span className="text-[11px] font-bold text-ink-muted dark:text-slate-400 flex items-center gap-1 mr-1">
-              <Sparkles className="w-3 h-3 text-amber-500" />
               <span>ด่วน:</span>
             </span>
             <button
