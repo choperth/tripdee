@@ -78,7 +78,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     onClose();
   };
 
-  // Real Driver Login (Phone number lookup in /api/vehicles)
+  // Real Driver Login (Phone number lookup in /api/vehicles and /api/leads/driver)
   const handleDriverLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanPhone = normalizePhone(driverPhone);
@@ -91,6 +91,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setIsCheckingDriver(true);
 
     try {
+      // 1. First, search active verified vehicles catalog
       const res = await fetch('/api/vehicles?demo=0');
       const data = await res.json();
       const allVehicles: Vehicle[] = data.vehicles || [];
@@ -116,9 +117,41 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           }
         );
         onClose();
-      } else {
-        setDriverError(t('auth.driverNotFound'));
+        return;
       }
+
+      // 2. Fallback: Search registered partner leads (including pending review)
+      const leadRes = await fetch('/api/leads/driver');
+      if (leadRes.ok) {
+        const leadData = await leadRes.json();
+        const allLeads = leadData.drivers || [];
+        const leadMatch = allLeads.find((d: { phone?: string }) => {
+          const p = normalizePhone(d.phone || '');
+          return p.includes(cleanPhone) || cleanPhone.includes(p);
+        });
+
+        if (leadMatch) {
+          loginWithCredentials(
+            'driver',
+            leadMatch.nickname || leadMatch.driverName || 'คนขับพาร์ตเนอร์',
+            leadMatch.phone || driverPhone,
+            {
+              id: leadMatch.id,
+              driverNickname: leadMatch.nickname || leadMatch.driverName,
+              vehicleTitle: leadMatch.vehicleModel || 'รถพาร์ตเนอร์ TripDee',
+              vehiclePlate: leadMatch.plateNumber || 'รอตรวจสอบข้อมูลป้าย',
+              seats: Number(leadMatch.seats) || 9,
+              isAvailable: true,
+              verificationStatus: leadMatch.status === 'verified' ? 'verified' : 'pending',
+            }
+          );
+          onClose();
+          return;
+        }
+      }
+
+      // 3. Neither found
+      setDriverError(t('auth.driverNotFound'));
     } catch {
       setDriverError('เกิดข้อผิดพลาดในการตรวจสอบข้อมูล กรุณาลองใหม่อีกครั้ง');
     } finally {

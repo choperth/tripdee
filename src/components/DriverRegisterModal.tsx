@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
 import {
   X,
   ShieldCheck,
@@ -44,6 +45,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
   const { t } = useLanguage();
+  const { loginWithCredentials } = useAuth();
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,6 +56,9 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
     nickname: '',
     phone: '',
     lineId: '',
+    whatsapp: '',
+    wechat: '',
+    kakao: '',
     serviceHub: 'CHIANG_MAI',
     vehicleModel: 'Toyota Commuter D4D (หลังคาสูง 9-13 ที่นั่ง)',
     seats: '10',
@@ -121,7 +126,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
     const finalNickname = formData.nickname.trim() || formData.driverName.trim();
 
     try {
-      await fetch('/api/leads/driver', {
+      const res = await fetch('/api/leads/driver', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -129,6 +134,9 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
           nickname: finalNickname,
           phone: formData.phone.trim(),
           lineId: formData.lineId.trim(),
+          whatsapp: formData.whatsapp.trim() || undefined,
+          wechat: formData.wechat.trim() || undefined,
+          kakao: formData.kakao.trim() || undefined,
           vehicleModel: finalModel,
           seats: formData.seats,
           plateType: formData.plateType,
@@ -143,11 +151,38 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
           _hp_timestamp: formMountedAt,
         }),
       });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        alert(errorData.error || 'เกิดข้อผิดพลาดในการลงทะเบียน กรุณาลองใหม่อีกครั้ง');
+        return;
+      }
+
+      const resData = await res.json().catch(() => ({}));
+      const leadId = resData.lead?.id || `drv-${Date.now()}`;
+
+      // Automatically log the driver in so their portal is immediately ready
+      loginWithCredentials(
+        'driver',
+        finalNickname,
+        formData.phone.trim(),
+        {
+          id: leadId,
+          driverNickname: finalNickname,
+          vehicleTitle: finalModel,
+          vehiclePlate: formData.plateNumber.trim() || undefined,
+          seats: Number(formData.seats) || 9,
+          isAvailable: true,
+          verificationStatus: 'pending',
+        }
+      );
+
+      setSubmitted(true);
     } catch (err) {
       console.error('Submit driver error:', err);
+      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setIsSubmitting(false);
-      setSubmitted(true);
     }
   };
 
@@ -491,6 +526,73 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                           <option value="KRABI">{t('reg.hubKbi')}</option>
                           <option value="OTHER">{t('reg.hubOther')}</option>
                         </select>
+                      </div>
+                    </div>
+
+                    {/* International Messaging Channels (Optional) */}
+                    <div className="pt-3 border-t border-rule/60 space-y-2.5">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-extrabold uppercase tracking-wide text-ink">
+                            🌐 ช่องทางติดต่อลูกค้าต่างชาติ (ไม่บังคับ / Optional)
+                          </span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                            แนะนำสำหรับรับนักท่องเที่ยว
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-ink-2 mt-0.5">
+                          เพิ่มโอกาสรับงานชาวต่างชาติ: ยุโรป, อเมริกา, สิงคโปร์, จีน, ไต้หวัน, เกาหลีใต้
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* WhatsApp */}
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-ink flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-[#25D366]" />
+                            <span>WhatsApp</span>
+                            <span className="text-[10px] text-ink-3 font-normal">(เบอร์โทร)</span>
+                          </label>
+                          <input
+                            type="tel"
+                            placeholder="เช่น 0812345678"
+                            value={formData.whatsapp}
+                            onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-2xs"
+                          />
+                        </div>
+
+                        {/* WeChat */}
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-ink flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-[#07C160]" />
+                            <span>WeChat ID</span>
+                            <span className="text-[10px] text-ink-3 font-normal">(ลูกค้าจีน)</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="เช่น chaicnx_van"
+                            value={formData.wechat}
+                            onChange={(e) => setFormData({ ...formData, wechat: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-2xs"
+                          />
+                        </div>
+
+                        {/* KakaoTalk */}
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-ink flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-[#FEE500]" />
+                            <span>KakaoTalk ID</span>
+                            <span className="text-[10px] text-ink-3 font-normal">(ลูกค้าเกาหลี)</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="เช่น chaivan_cnx"
+                            value={formData.kakao}
+                            onChange={(e) => setFormData({ ...formData, kakao: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
+                          />
+                        </div>
                       </div>
                     </div>
 

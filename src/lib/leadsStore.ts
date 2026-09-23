@@ -23,6 +23,9 @@ export interface DriverLead {
   nickname: string;
   phone: string;
   lineId: string;
+  whatsapp?: string;
+  wechat?: string;
+  kakao?: string;
   vehicleModel: string;
   seats: string;
   plateNumber?: string;
@@ -63,7 +66,17 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
       ? lead.lineId
       : `https://line.me/ti/p/~${lead.lineId}`
     : 'https://line.me';
-  const whatsapp = cleanPhone ? `https://wa.me/66${cleanPhone.replace(/^0/, '')}` : undefined;
+  const defaultWhatsapp = cleanPhone ? `https://wa.me/66${cleanPhone.replace(/^0/, '')}` : undefined;
+  const whatsappUrl = lead.whatsapp
+    ? lead.whatsapp.startsWith('http')
+      ? lead.whatsapp
+      : `https://wa.me/${lead.whatsapp.replace(/[^0-9]/g, '')}`
+    : defaultWhatsapp;
+
+  const languages: ('th' | 'en' | 'zh' | 'ko')[] = ['th'];
+  if (lead.whatsapp) languages.push('en');
+  if (lead.wechat) languages.push('zh');
+  if (lead.kakao) languages.push('ko');
 
   const titleSeats = lead.vehicleModel.includes('ที่นั่ง') ? '' : ` ${seatsNum} ที่นั่ง`;
 
@@ -96,10 +109,10 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
     driverNickname: lead.nickname,
     driverPhone: lead.phone,
     driverLine: cleanLine,
-    driverWhatsapp: whatsapp,
-    driverWechat: undefined,
-    driverKakao: undefined,
-    languages: ['th'],
+    driverWhatsapp: whatsappUrl,
+    driverWechat: lead.wechat ? lead.wechat.trim() : undefined,
+    driverKakao: lead.kakao ? lead.kakao.trim() : undefined,
+    languages: Array.from(new Set(languages)),
     region,
     rating: 5.0,
     reviewCount: 1,
@@ -281,6 +294,9 @@ export function addDriverLead(lead: {
   nickname: string;
   phone: string;
   lineId: string;
+  whatsapp?: string;
+  wechat?: string;
+  kakao?: string;
   vehicleModel: string;
   seats: string;
   plateNumber?: string;

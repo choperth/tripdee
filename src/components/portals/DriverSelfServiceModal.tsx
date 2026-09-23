@@ -116,6 +116,64 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
         return p1.includes(cleanQuery) || cleanQuery.includes(p1);
       });
 
+      // Fallback: check driver leads if no approved vehicle match
+      if (matches.length === 0) {
+        try {
+          const leadRes = await fetch('/api/leads/driver');
+          if (leadRes.ok) {
+            const leadData = await leadRes.json();
+            const allLeads = leadData.drivers || [];
+            const leadMatches = allLeads.filter((d: { phone?: string }) => {
+              const p = normalizePhone(d.phone || '');
+              return p.includes(cleanQuery) || cleanQuery.includes(p);
+            });
+
+            if (leadMatches.length > 0) {
+              const converted: Vehicle[] = leadMatches.map((lead: {
+                id: string;
+                driverName: string;
+                nickname?: string;
+                phone: string;
+                lineId?: string;
+                vehicleModel?: string;
+                seats?: string;
+                plateNumber?: string;
+                plateType?: 'yellow' | 'blue';
+                canIssueTaxInvoice?: boolean;
+                routes?: string;
+                status?: string;
+              }) => ({
+                id: lead.id,
+                title: `${lead.vehicleModel || 'Toyota Commuter VIP'} (${lead.nickname || lead.driverName})`,
+                type: 'van' as const,
+                seats: Number(lead.seats) || 9,
+                driverName: lead.driverName,
+                driverNickname: lead.nickname || lead.driverName,
+                driverPhone: lead.phone,
+                driverLine: lead.lineId || '',
+                languages: ['th' as const],
+                rating: 5.0,
+                reviewCount: 0,
+                isVerified: lead.status === 'verified',
+                images: ['https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80'],
+                zoneRates: { city: 1900, midHill: 2100, highHill: 2300, crossProvince: 2700 },
+                location: lead.routes || 'เชียงใหม่และใกล้เคียง',
+                popularRoutes: ['ตัวเมือง', 'สนามบิน'],
+                amenities: ['ตรวจสภาพรถและประวัติคนขับแล้ว 100%'],
+                description: `บริการรถตู้โดย ${lead.driverName} (สถานะ: ${lead.status === 'verified' ? 'ยืนยันตัวตนแล้ว' : 'อยู่ระหว่างรอการตรวจสอบ'})`,
+                plateType: lead.plateType || 'yellow',
+                plateNumber: lead.plateNumber,
+                canIssueTaxInvoice: Boolean(lead.canIssueTaxInvoice),
+                isAvailable: true,
+              }));
+              matches.push(...converted);
+            }
+          }
+        } catch (leadErr) {
+          console.warn('Error checking driver leads in self-service:', leadErr);
+        }
+      }
+
       setMatchedVehicles(matches);
       if (matches.length === 1) {
         selectVehicle(matches[0]);
@@ -154,14 +212,28 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
         },
       };
 
-      const res = await fetch('/api/vehicles', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: selectedVehicle.id, ...updatedData }),
-      });
-
-      if (!res.ok) {
-        throw new Error('บันทึกข้อมูลไม่สำเร็จ');
+      if (selectedVehicle.id.startsWith('drv-')) {
+        // Update driver lead
+        const res = await fetch('/api/leads/driver', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: selectedVehicle.id,
+            plateType,
+            plateNumber: plateNumber.trim() || undefined,
+            canIssueTaxInvoice,
+            phone: driverPhone.trim(),
+            lineId: driverLine.trim() || undefined,
+          }),
+        });
+        if (!res.ok) throw new Error('บันทึกข้อมูลไม่สำเร็จ');
+      } else {
+        const res = await fetch('/api/vehicles', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: selectedVehicle.id, ...updatedData }),
+        });
+        if (!res.ok) throw new Error('บันทึกข้อมูลไม่สำเร็จ');
       }
 
       setSaveSuccess(true);

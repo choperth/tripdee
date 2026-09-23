@@ -162,6 +162,31 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                 <p className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400 truncate">
                   {vehicle.location}
                 </p>
+                {/* Cute Direct Channel Badges */}
+                <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#06C755]/10 text-[#06C755] dark:bg-[#06C755]/20 dark:text-[#06C755] font-bold text-[10px] leading-none border border-[#06C755]/20 shadow-2xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#06C755]" />
+                    LINE
+                  </span>
+                  {(vehicle.driverWhatsapp || vehicle.driverPhone) && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#25D366]/10 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] leading-none border border-[#25D366]/20 shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#25D366]" />
+                      WhatsApp
+                    </span>
+                  )}
+                  {vehicle.driverWechat && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#07C160]/10 text-teal-700 dark:text-teal-300 font-bold text-[10px] leading-none border border-[#07C160]/20 shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#07C160]" />
+                      WeChat
+                    </span>
+                  )}
+                  {vehicle.driverKakao && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#FEE500]/25 text-amber-900 dark:text-amber-200 font-bold text-[10px] leading-none border border-amber-400/40 shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#FEE500]" />
+                      Kakao
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 

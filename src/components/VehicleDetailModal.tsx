@@ -9,7 +9,6 @@ import {
   X,
   Share2,
   Bookmark,
-  CheckCircle2,
   Car,
   ChevronRight,
   QrCode,
@@ -47,6 +46,9 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [showECardModal, setShowECardModal] = useState<boolean>(false);
   const [sharedToast, setSharedToast] = useState<boolean>(false);
+  const [copiedWechat, setCopiedWechat] = useState<boolean>(false);
+  const [copiedKakao, setCopiedKakao] = useState<boolean>(false);
+  const [channelNotice, setChannelNotice] = useState<string | null>(null);
 
   const upcomingRanges = React.useMemo(
     () => getUpcomingBusyRanges(vehicle?.busyDates || [], locale),
@@ -80,6 +82,52 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
   };
 
   const cleanPhone = vehicle?.driverPhone ? vehicle.driverPhone.replace(/\D/g, '') : '';
+
+  const whatsappUrl = React.useMemo(() => {
+    if (!vehicle) return null;
+    if (vehicle.driverWhatsapp && vehicle.driverWhatsapp.trim()) {
+      if (vehicle.driverWhatsapp.startsWith('http')) return vehicle.driverWhatsapp;
+      const clean = vehicle.driverWhatsapp.replace(/\D/g, '');
+      return `https://wa.me/${clean}`;
+    }
+    if (cleanPhone) {
+      const intlPhone = cleanPhone.startsWith('0') ? `66${cleanPhone.slice(1)}` : cleanPhone;
+      return `https://wa.me/${intlPhone}`;
+    }
+    return null;
+  }, [vehicle, cleanPhone]);
+
+  const handleCopyWechat = () => {
+    if (!vehicle) return;
+    if (vehicle.driverWechat) {
+      if (typeof window !== 'undefined') {
+        navigator.clipboard.writeText(vehicle.driverWechat);
+        setCopiedWechat(true);
+        setChannelNotice(`คัดลอก WeChat ID: "${vehicle.driverWechat}" เรียบร้อยแล้ว`);
+        setTimeout(() => setCopiedWechat(false), 2500);
+        setTimeout(() => setChannelNotice(null), 3000);
+      }
+    } else {
+      setChannelNotice('คนขับยังไม่ได้ระบุ WeChat ID — สอบถามผ่านเบอร์โทรหรือ LINE ได้เลยครับ');
+      setTimeout(() => setChannelNotice(null), 3500);
+    }
+  };
+
+  const handleCopyKakao = () => {
+    if (!vehicle) return;
+    if (vehicle.driverKakao) {
+      if (typeof window !== 'undefined') {
+        navigator.clipboard.writeText(vehicle.driverKakao);
+        setCopiedKakao(true);
+        setChannelNotice(`คัดลอก KakaoTalk ID: "${vehicle.driverKakao}" เรียบร้อยแล้ว`);
+        setTimeout(() => setCopiedKakao(false), 2500);
+        setTimeout(() => setChannelNotice(null), 3000);
+      }
+    } else {
+      setChannelNotice('คนขับยังไม่ได้ระบุ KakaoTalk ID — สอบถามผ่านเบอร์โทรหรือ LINE ได้เลยครับ');
+      setTimeout(() => setChannelNotice(null), 3500);
+    }
+  };
   const companionVehicles = React.useMemo(() => {
     if (!vehicle || !allVehicles || allVehicles.length === 0) return [];
     return allVehicles.filter((v) => {
@@ -679,31 +727,142 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                   </div>
                 )}
 
-                {/* Instant Action Dual Triggers */}
-                <div className="space-y-space-xs">
-                  <a
-                    href={`tel:${vehicle.driverPhone}`}
-                    onClick={handleDirectCall}
-                    className="w-full h-12 bg-navy-deep hover:bg-navy-surface text-on-primary rounded-xl font-title-card text-title-card flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">call</span>
-                    <span>
-                      {isPhoneRevealed
-                        ? vehicle.driverPhone
-                        : t('detail.callDriver', { phone: maskPhoneNumber(vehicle.driverPhone) })}
+                {/* ช่องทางติดต่อด่วน (Direct Channels) */}
+                <div className="p-3.5 rounded-2xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 font-bold text-xs text-navy-deep dark:text-white">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>ช่องทางติดต่อด่วน (Direct Channels)</span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                      ดีลตรงคนขับ 100%
                     </span>
-                  </a>
+                  </div>
 
-                  <a
-                    href={vehicle.driverLine}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full h-12 bg-line-green hover:bg-line-green-hover text-on-primary rounded-xl font-title-card text-title-card flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">chat</span>
-                    <span>{t('detail.lineAsk')}</span>
-                  </a>
+                  {/* Primary Direct Triggers: Phone & LINE */}
+                  <div className="space-y-2">
+                    <a
+                      href={`tel:${vehicle.driverPhone}`}
+                      onClick={handleDirectCall}
+                      className="w-full h-11 bg-navy-deep hover:bg-navy-surface text-white rounded-xl font-title-card text-title-card flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[19px]">call</span>
+                      <span>
+                        {isPhoneRevealed
+                          ? vehicle.driverPhone
+                          : t('detail.callDriver', { phone: maskPhoneNumber(vehicle.driverPhone) })}
+                      </span>
+                    </a>
 
+                    <a
+                      href={vehicle.driverLine}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full h-11 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-xl font-title-card text-title-card flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
+                    >
+                      <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 5.92 2 10.75c0 3.08 1.83 5.79 4.6 7.29-.2.74-.74 2.68-.85 3.08-.13.48.18.47.37.35.15-.09 2.06-1.39 2.87-1.95.66.19 1.34.29 2.01.29 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/>
+                      </svg>
+                      <span>{t('detail.lineAsk')}</span>
+                    </a>
+                  </div>
+
+                  {/* Direct International Messaging Bar: WhatsApp, WeChat, KakaoTalk (Icon Only) */}
+                  <div className="grid grid-cols-3 gap-2 pt-0.5">
+                    {/* 🟢 WhatsApp Direct Chat (Icon only) */}
+                    {whatsappUrl ? (
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-11 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer"
+                        title="WhatsApp (คลิกเพื่อเปิดแอปแชทตรงกับคนขับ)"
+                        aria-label="WhatsApp"
+                      >
+                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                        </svg>
+                      </a>
+                    ) : null}
+
+                    {/* 🟢 WeChat (Icon only - Click to Copy ID) */}
+                    <button
+                      type="button"
+                      onClick={handleCopyWechat}
+                      className="h-11 rounded-xl bg-[#07C160] hover:bg-[#06ab55] text-white flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer relative"
+                      title={vehicle.driverWechat ? `WeChat ID: ${vehicle.driverWechat} (คลิกเพื่อคัดลอกไอดี)` : 'WeChat (คลิกเพื่อดูข้อมูล)'}
+                      aria-label="WeChat"
+                    >
+                      {copiedWechat ? (
+                        <span className="material-symbols-outlined text-[20px] text-white animate-scale-in">check</span>
+                      ) : (
+                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                          <path d="M8.5 2C3.8 2 0 5.4 0 9.5c0 2.4 1.3 4.5 3.3 5.9-.2.8-.7 2.6-.8 3 .2 0 1.9-.8 3.1-1.5.9.3 1.9.4 2.9.4 4.7 0 8.5-3.4 8.5-7.5S13.2 2 8.5 2zm-2.2 4.5c.7 0 1.2.6 1.2 1.2s-.6 1.2-1.2 1.2c-.7 0-1.2-.6-1.2-1.2s.5-1.2 1.2-1.2zm4.4 0c.7 0 1.2.6 1.2 1.2s-.6 1.2-1.2 1.2c-.7 0-1.2-.6-1.2-1.2s.5-1.2 1.2-1.2zM17 10c-3.6 0-6.5 2.5-6.5 5.5s2.9 5.5 6.5 5.5c.7 0 1.5-.1 2.2-.4.9.5 2.3 1.1 2.4 1.1-.1-.3-.4-1.6-.6-2.2 1.5-1.1 2.5-2.6 2.5-4 0-3-2.9-5.5-6.5-5.5zm-2.5 3.5c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9zm5 0c.5 0 .9.4.9.9s-.4.9-.9.9-.9-.4-.9-.9.4-.9.9-.9z"/>
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* 🟡 KakaoTalk (Icon only - Click to Copy ID) */}
+                    <button
+                      type="button"
+                      onClick={handleCopyKakao}
+                      className="h-11 rounded-xl bg-[#FEE500] hover:bg-[#ebd300] text-[#191919] flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer relative"
+                      title={vehicle.driverKakao ? `KakaoTalk ID: ${vehicle.driverKakao} (คลิกเพื่อคัดลอกไอดี)` : 'KakaoTalk (คลิกเพื่อดูข้อมูล)'}
+                      aria-label="KakaoTalk"
+                    >
+                      {copiedKakao ? (
+                        <span className="material-symbols-outlined text-[20px] text-[#191919] animate-scale-in">check</span>
+                      ) : (
+                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                          <path d="M12 3c-5.523 0-10 3.582-10 8 0 2.87 1.905 5.39 4.781 6.745-.21.776-.763 2.793-.873 3.226-.138.54.197.533.414.389.171-.114 2.327-1.58 3.262-2.215.776.115 1.579.175 2.416.175 5.523 0 10-3.582 10-8s-4.477-8-10-8z"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* ID display badges for quick manual entry */}
+                  {(vehicle.driverWechat || vehicle.driverKakao) && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                      {vehicle.driverWechat && (
+                        <button
+                          type="button"
+                          onClick={handleCopyWechat}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 border border-teal-200/60 dark:border-teal-900/50 hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors cursor-pointer"
+                          title="กดเพื่อคัดลอก WeChat ID"
+                        >
+                          <span className="font-bold">WeChat:</span>
+                          <span className="font-mono">{vehicle.driverWechat}</span>
+                          <span className="material-symbols-outlined text-[13px] text-teal-600 dark:text-teal-400">
+                            {copiedWechat ? 'check' : 'content_copy'}
+                          </span>
+                        </button>
+                      )}
+                      {vehicle.driverKakao && (
+                        <button
+                          type="button"
+                          onClick={handleCopyKakao}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/60 dark:border-amber-900/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer"
+                          title="กดเพื่อคัดลอก KakaoTalk ID"
+                        >
+                          <span className="font-bold">Kakao:</span>
+                          <span className="font-mono">{vehicle.driverKakao}</span>
+                          <span className="material-symbols-outlined text-[13px] text-amber-700 dark:text-amber-300">
+                            {copiedKakao ? 'check' : 'content_copy'}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Notification notice message */}
+                  {channelNotice && (
+                    <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 text-[11px] font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1.5 animate-fade-in shadow-2xs">
+                      <span className="material-symbols-outlined text-[15px] shrink-0 text-blue-600 dark:text-blue-400">info</span>
+                      <span className="leading-snug">{channelNotice}</span>
+                    </div>
+                  )}
+
+                  {/* Request Booking Confirmation Sheet Trigger */}
                   <button
                     type="button"
                     onClick={() => setShowBookingSheet(true)}

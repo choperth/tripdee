@@ -287,6 +287,9 @@ export async function saveDriverLead(lead: {
   nickname: string;
   phone: string;
   lineId: string;
+  whatsapp?: string;
+  wechat?: string;
+  kakao?: string;
   vehicleModel: string;
   seats: string;
   plateNumber?: string;
@@ -301,7 +304,7 @@ export async function saveDriverLead(lead: {
   if (!supabase) return localLead;
 
   try {
-    const { data, error } = await supabase
+    let insertResult = await supabase
       .from('driver_leads')
       .insert({
         id: localLead.id,
@@ -321,6 +324,29 @@ export async function saveDriverLead(lead: {
       .select()
       .single();
 
+    // If schema cache error PGRST204 (new column does not exist in db), retry with base schema columns
+    if (insertResult.error && (insertResult.error.code === 'PGRST204' || insertResult.error.message?.includes('column'))) {
+      console.warn('[TripDee Supabase] Retrying driver_leads insert with base schema columns due to schema cache mismatch:', insertResult.error.message);
+      insertResult = await supabase
+        .from('driver_leads')
+        .insert({
+          id: localLead.id,
+          driver_name: lead.driverName,
+          nickname: lead.nickname,
+          phone: lead.phone,
+          line_id: lead.lineId,
+          vehicle_model: lead.vehicleModel,
+          seats: lead.seats,
+          plate_number: lead.plateNumber || null,
+          routes: lead.routes,
+          status: 'pending',
+        })
+        .select()
+        .single();
+    }
+
+    const { data, error } = insertResult;
+
     if (error) {
       console.warn('[TripDee Supabase] Error inserting driver lead, saved locally:', error.message);
       return localLead;
@@ -337,7 +363,7 @@ export async function saveDriverLead(lead: {
         seats: data.seats,
         plateNumber: data.plate_number || undefined,
         plateType: (data.plate_type as 'yellow' | 'blue') || undefined,
-        canIssueTaxInvoice: data.can_issue_tax_invoice !== null ? Boolean(data.can_issue_tax_invoice) : undefined,
+        canIssueTaxInvoice: data.can_issue_tax_invoice !== null && data.can_issue_tax_invoice !== undefined ? Boolean(data.can_issue_tax_invoice) : undefined,
         businessType: (data.business_type as 'company' | 'individual') || undefined,
         routes: data.routes,
         submittedAt: data.created_at,
@@ -371,7 +397,21 @@ export async function updateDriverLead(id: string, updates: Partial<DriverLead>)
     if (updates.routes) supabaseUpdates.routes = updates.routes;
     if (updates.status) supabaseUpdates.status = updates.status;
 
-    await (supabase.from('driver_leads') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
+    const res = await (supabase.from('driver_leads') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
+    const updateError = (res as { error?: { code?: string; message?: string } })?.error;
+    if (updateError && (updateError.code === 'PGRST204' || updateError.message?.includes('column'))) {
+      const baseLeadKeys = new Set([
+        'driver_name', 'nickname', 'phone', 'line_id', 'vehicle_model', 'seats',
+        'plate_number', 'routes', 'status'
+      ]);
+      const stripped: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(supabaseUpdates)) {
+        if (baseLeadKeys.has(k)) stripped[k] = v;
+      }
+      if (Object.keys(stripped).length > 0) {
+        await (supabase.from('driver_leads') as unknown as DynamicTableQuery).update(stripped).eq('id', id);
+      }
+    }
   } catch (err) {
     console.warn('[TripDee Supabase] Exception updating driver lead:', err);
   }
@@ -433,7 +473,7 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
 
     if (newVehicle) {
       // Upsert the newly approved vehicle into Supabase public.vehicles table
-      await supabase.from('vehicles').upsert({
+      const fullVehicleData = {
         id: newVehicle.id,
         title: newVehicle.title,
         type: newVehicle.type,
@@ -462,7 +502,38 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
         can_issue_tax_invoice: newVehicle.canIssueTaxInvoice ?? null,
         business_type: newVehicle.businessType || null,
         is_available: newVehicle.isAvailable ?? true,
-      });
+      };
+
+      const upsertRes = await supabase.from('vehicles').upsert(fullVehicleData);
+      if (upsertRes.error && (upsertRes.error.code === 'PGRST204' || upsertRes.error.message?.includes('column'))) {
+        console.warn('[TripDee Supabase] Retrying vehicles upsert with base columns due to schema cache mismatch:', upsertRes.error.message);
+        const baseVehicleData = {
+          id: newVehicle.id,
+          title: newVehicle.title,
+          type: newVehicle.type,
+          seats: newVehicle.seats,
+          driver_name: newVehicle.driverName,
+          driver_nickname: newVehicle.driverNickname,
+          driver_phone: newVehicle.driverPhone,
+          driver_line: newVehicle.driverLine || null,
+          driver_whatsapp: newVehicle.driverWhatsapp || null,
+          driver_wechat: newVehicle.driverWechat || null,
+          driver_kakao: newVehicle.driverKakao || null,
+          languages: newVehicle.languages,
+          rating: newVehicle.rating,
+          review_count: newVehicle.reviewCount,
+          is_verified: true,
+          images: newVehicle.images,
+          zone_rates: newVehicle.zoneRates,
+          rate_note: newVehicle.rateNote || null,
+          location: newVehicle.location,
+          region: newVehicle.region || 'north',
+          popular_routes: newVehicle.popularRoutes,
+          amenities: newVehicle.amenities,
+          description: newVehicle.description,
+        };
+        await supabase.from('vehicles').upsert(baseVehicleData);
+      }
     }
 
     return true;
@@ -570,7 +641,7 @@ export async function saveVehicle(vehicle: Vehicle): Promise<Vehicle> {
   if (!supabase) return vehicle;
 
   try {
-    await (supabase.from('vehicles') as unknown as { upsert: (data: Record<string, unknown>) => Promise<unknown> }).upsert({
+    const fullVehicleData = {
       id: vehicle.id,
       title: vehicle.title,
       type: vehicle.type,
@@ -602,7 +673,39 @@ export async function saveVehicle(vehicle: Vehicle): Promise<Vehicle> {
       rental_type: vehicle.rentalType || (vehicle.type === 'van' ? 'with_driver' : 'self_drive'),
       transmission: vehicle.transmission || null,
       busy_dates: vehicle.busyDates || null,
-    });
+    };
+
+    const res = await (supabase.from('vehicles') as unknown as { upsert: (data: Record<string, unknown>) => Promise<{ error?: { code?: string; message?: string } }> }).upsert(fullVehicleData);
+
+    if (res?.error && (res.error.code === 'PGRST204' || res.error.message?.includes('column'))) {
+      console.warn('[TripDee Supabase] Retrying saveVehicle with base columns due to schema cache mismatch:', res.error.message);
+      const baseVehicleData = {
+        id: vehicle.id,
+        title: vehicle.title,
+        type: vehicle.type,
+        seats: vehicle.seats,
+        driver_name: vehicle.driverName,
+        driver_nickname: vehicle.driverNickname,
+        driver_phone: vehicle.driverPhone,
+        driver_line: vehicle.driverLine || null,
+        driver_whatsapp: vehicle.driverWhatsapp || null,
+        driver_wechat: vehicle.driverWechat || null,
+        driver_kakao: vehicle.driverKakao || null,
+        languages: vehicle.languages,
+        rating: vehicle.rating,
+        review_count: vehicle.reviewCount,
+        is_verified: vehicle.isVerified,
+        images: vehicle.images,
+        zone_rates: vehicle.zoneRates,
+        rate_note: vehicle.rateNote || null,
+        location: vehicle.location,
+        region: vehicle.region || 'north',
+        popular_routes: vehicle.popularRoutes,
+        amenities: vehicle.amenities,
+        description: vehicle.description,
+      };
+      await (supabase.from('vehicles') as unknown as { upsert: (data: Record<string, unknown>) => Promise<unknown> }).upsert(baseVehicleData);
+    }
   } catch (err) {
     console.warn('[TripDee Supabase] Exception saving vehicle:', err);
   }
@@ -653,7 +756,23 @@ export async function updateVehicle(id: string, updates: Partial<Vehicle>): Prom
     if (updates.transmission !== undefined) supabaseUpdates.transmission = updates.transmission;
     if (updates.busyDates !== undefined) supabaseUpdates.busy_dates = updates.busyDates;
 
-    await (supabase.from('vehicles') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
+    const res = await (supabase.from('vehicles') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
+    const updateError = (res as { error?: { code?: string; message?: string } })?.error;
+    if (updateError && (updateError.code === 'PGRST204' || updateError.message?.includes('column'))) {
+      const baseKeys = new Set([
+        'title', 'type', 'seats', 'driver_name', 'driver_nickname', 'driver_phone',
+        'driver_line', 'driver_whatsapp', 'driver_wechat', 'driver_kakao', 'languages',
+        'rating', 'review_count', 'is_verified', 'images', 'zone_rates', 'rate_note',
+        'location', 'region', 'popular_routes', 'amenities', 'description'
+      ]);
+      const stripped: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(supabaseUpdates)) {
+        if (baseKeys.has(k)) stripped[k] = v;
+      }
+      if (Object.keys(stripped).length > 0) {
+        await (supabase.from('vehicles') as unknown as DynamicTableQuery).update(stripped).eq('id', id);
+      }
+    }
   } catch (err) {
     console.warn('[TripDee Supabase] Exception updating vehicle:', err);
   }

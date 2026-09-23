@@ -47,8 +47,8 @@ export function validateHoneypot(
     }
 
     const elapsed = Date.now() - timestamp;
-    // If submitted under minElapsedMs (e.g. 800ms) or timestamp is in the future (> 5000ms drift)
-    if (elapsed < minElapsedMs || elapsed < -5000) {
+    // If submitted under minElapsedMs (e.g. 800ms) or timestamp is far in the future (> 24 hours clock skew)
+    if (elapsed < minElapsedMs || elapsed < -86400000) {
       return {
         isSpam: true,
         reason: 'submitted_too_fast',
