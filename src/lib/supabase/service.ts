@@ -1475,8 +1475,23 @@ export async function logAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
       route_id: null,
       timestamp: new Date(event.timestamp).toISOString(),
       meta: isSponsor
-        ? { sponsorTitle: event.sponsorTitle, targetUrl: event.targetUrl }
-        : { phoneNumber: event.phoneNumber, targetTitle: event.targetTitle, targetType: event.targetType },
+        ? {
+            sponsorTitle: event.sponsorTitle,
+            targetUrl: event.targetUrl,
+            visitorId: event.visitorId,
+            sessionId: event.sessionId,
+            isUnique: event.isUnique ?? true,
+            isSpam: event.isSpam ?? false,
+          }
+        : {
+            phoneNumber: event.phoneNumber,
+            targetTitle: event.targetTitle,
+            targetType: event.targetType,
+            visitorId: event.visitorId,
+            sessionId: event.sessionId,
+            isUnique: event.isUnique ?? true,
+            isSpam: event.isSpam ?? false,
+          },
     });
   } catch (err) {
     // Analytics logging should never disrupt user requests

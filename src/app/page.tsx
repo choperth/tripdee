@@ -11,9 +11,11 @@ import { InFeedSponsorCard } from '@/components/InFeedSponsorCard';
 import { SponsorBanner } from '@/components/SponsorBanner';
 import { PlatformShowcase } from '@/components/PlatformShowcase';
 import { SponsorSidebar } from '@/components/SponsorSidebar';
+import { MobileSponsorSection } from '@/components/MobileSponsorSection';
 import { CorporateSection } from '@/components/CorporateSection';
 import { PopularRoutesSection } from '@/components/PopularRoutesSection';
 import { TripBoard } from '@/components/TripBoard';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 const VehicleDetailModal = dynamic(
   () => import('@/components/VehicleDetailModal').then((m) => m.VehicleDetailModal),
   { ssr: false }
@@ -278,8 +280,8 @@ export default function HomePage() {
   const hasFilters = selectedZone !== 'all' || selectedSeats !== 'all' || searchKeyword !== '' || plateFilter !== 'all';
 
   const hotelStays = useMemo(
-    () => (isDemo ? SPONSORS.filter((s) => s.category === 'hotel') : []),
-    [isDemo]
+    () => SPONSORS.filter((s) => s.category === 'hotel'),
+    []
   );
 
   return (
@@ -384,7 +386,7 @@ export default function HomePage() {
           totalCarCount={totalCarCount}
         />
       )}
-      <main id="main-content" className="mx-auto w-full max-w-7xl flex-1 px-margin lg:px-gutter pb-8">
+      <main id="main-content" className="mx-auto w-full max-w-7xl flex-1 px-margin lg:px-gutter pb-20 md:pb-8">
         {activeTab === 'hotel' ? (
           <div key="hotel" className="td-panel-enter pt-24 sm:pt-28 pb-16">
             <div>
@@ -406,9 +408,9 @@ export default function HomePage() {
             <CorporateSection />
           </div>
         ) : (
-          <div key={activeTab} className="td-panel-enter pb-16">
+          <div key={activeTab} className="td-panel-enter pb-6 sm:pb-16">
             {/* Primary Vehicle Catalog & Filter Rail */}
-            <section id="results" aria-label={t('home.resultsAria')} className="mt-8 scroll-mt-28">
+            <section id="results" aria-label={t('home.resultsAria')} className="mt-3 sm:mt-8 scroll-mt-20 sm:scroll-mt-28">
               <SectionHead
                 title={
                   activeTab === 'van'
@@ -438,7 +440,7 @@ export default function HomePage() {
               />
 
               {/* Quick Filter: Transport Category & Legal Type (Stitch Segment Badges) */}
-              <div className="mb-6 flex flex-wrap items-center gap-space-xs text-body-subtext font-body-medium">
+              <div className="mb-3 sm:mb-6 flex flex-wrap items-center gap-1.5 sm:gap-space-xs text-body-subtext font-body-medium">
                 <span className="text-ink-muted dark:text-slate-400 font-label-badge text-label-badge uppercase mr-1">
                   {activeTab === 'van'
                     ? t('home.plateGroupVan')
@@ -516,7 +518,7 @@ export default function HomePage() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-space-xl">
                 {/* Main Vehicle Listings Column (8 of 12) */}
                 <div className="lg:col-span-8 min-w-0">
                   {hasFilters && (
@@ -593,10 +595,13 @@ export default function HomePage() {
                   )}
 
                   {filteredVehicles.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-space-lg">
                       {filteredVehicles.map((vehicle, index) => {
-                        const showInFeedAd = isDemo && (index + 1) % 4 === 0 && index < filteredVehicles.length - 1;
-                        const sponsorIndex = Math.floor(index / 4) % SPONSORS.length;
+                        const showInFeedAd =
+                          (index === 1 && filteredVehicles.length >= 2) ||
+                          ((index + 1) % 4 === 0 && index < filteredVehicles.length - 1) ||
+                          (index === 0 && filteredVehicles.length === 1);
+                        const sponsorIndex = (index === 1 ? 0 : Math.floor(index / 4) + 1) % SPONSORS.length;
                         const currentSponsor = SPONSORS[sponsorIndex];
 
                         return (
@@ -689,10 +694,13 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+
+              {/* Mobile-Dedicated Sponsor & Partner Perks Showcase (< lg screens) */}
+              <MobileSponsorSection />
             </section>
 
             {/* Secondary Matching / Community Fallback: TripBoard (Stitch Section 3) */}
-            <div className="mt-16">
+            <div className="mt-6 sm:mt-12">
               <TripBoard />
             </div>
 
@@ -705,7 +713,7 @@ export default function HomePage() {
             />
 
             {/* Corporate strip */}
-            <div className="mt-12">
+            <div className="mt-6 sm:mt-10">
               <CorporateSection />
             </div>
           </div>
@@ -741,6 +749,8 @@ export default function HomePage() {
           }
         }}
       />
+
+      <MobileBottomNav onSelectTab={setActiveTab} />
 
       <VehicleDetailModal
         vehicle={selectedVehicleDetail}

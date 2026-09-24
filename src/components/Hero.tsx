@@ -76,37 +76,37 @@ export const Hero: React.FC<HeroProps> = ({
   };
 
   return (
-    <section aria-label={t('hero.searchAria')} className="relative w-full overflow-hidden bg-paper-canvas dark:bg-slate-950 pt-24 sm:pt-28 pb-12 sm:pb-16 transition-colors">
+    <section aria-label={t('hero.searchAria')} className="relative w-full overflow-hidden bg-paper-canvas dark:bg-slate-950 pt-3 sm:pt-8 pb-3 sm:pb-10 transition-colors">
       {/* Subtle Ambient Backdrop Circles (Stitch Signature) */}
       <div className="absolute -top-32 -left-20 w-96 h-96 rounded-full bg-surface-variant/40 dark:bg-blue-900/10 blur-3xl pointer-events-none" />
       <div className="absolute top-40 -right-24 w-96 h-96 rounded-full bg-taxi-yellow-soft/80 dark:bg-amber-900/10 blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-margin lg:px-gutter relative z-10">
         {/* Top Title Group */}
-        <div className="text-center max-w-3xl mx-auto space-y-space-sm mb-space-xl">
+        <div className="text-center max-w-3xl mx-auto space-y-1 sm:space-y-space-sm mb-2.5 sm:mb-space-xl">
           <h1 className="font-display-hero text-display-hero text-navy-deep dark:text-white tracking-tight">
             {t('hero.titleA')} <span className="text-blue-action">{t('hero.titleB')}</span>
           </h1>
-          <p className="font-body-large text-body-large text-ink-secondary dark:text-slate-300">
+          <p className="font-body-large text-xs sm:text-body-large text-ink-secondary dark:text-slate-300">
             {t('hero.subtitle')}
           </p>
 
           {/* Trust Badges Row */}
-          <div className="flex flex-wrap items-center justify-center gap-space-sm sm:gap-space-md pt-space-xs">
-            <div className="flex items-center gap-space-2xs text-ink-primary dark:text-slate-200 font-body-medium text-body-medium bg-paper-elevated dark:bg-slate-900 px-space-sm py-space-2xs rounded-full shadow-sm border border-border-subtle dark:border-slate-800">
-              <span className="material-symbols-outlined text-verified-emerald text-[18px]">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-space-md pt-0.5 sm:pt-space-xs">
+            <div className="flex items-center gap-1 text-ink-primary dark:text-slate-200 font-bold text-[11px] sm:text-body-medium bg-paper-elevated dark:bg-slate-900 px-2.5 py-1 sm:px-space-sm sm:py-space-2xs rounded-full shadow-2xs border border-border-subtle dark:border-slate-800">
+              <span className="material-symbols-outlined text-verified-emerald text-[16px] sm:text-[18px]">
                 check_circle
               </span>
               <span>{t('hero.trust1')}</span>
             </div>
-            <div className="flex items-center gap-space-2xs text-ink-primary dark:text-slate-200 font-body-medium text-body-medium bg-paper-elevated dark:bg-slate-900 px-space-sm py-space-2xs rounded-full shadow-sm border border-border-subtle dark:border-slate-800">
-              <span className="material-symbols-outlined text-blue-action text-[18px]">
+            <div className="flex items-center gap-1 text-ink-primary dark:text-slate-200 font-bold text-[11px] sm:text-body-medium bg-paper-elevated dark:bg-slate-900 px-2.5 py-1 sm:px-space-sm sm:py-space-2xs rounded-full shadow-2xs border border-border-subtle dark:border-slate-800">
+              <span className="material-symbols-outlined text-blue-action text-[16px] sm:text-[18px]">
                 ring_volume
               </span>
               <span>{t('hero.trust2')}</span>
             </div>
-            <div className="flex items-center gap-space-2xs text-ink-primary dark:text-slate-200 font-body-medium text-body-medium bg-paper-elevated dark:bg-slate-900 px-space-sm py-space-2xs rounded-full shadow-sm border border-border-subtle dark:border-slate-800">
-              <span className="material-symbols-outlined text-amber-accent text-[18px]">
+            <div className="flex items-center gap-1 text-ink-primary dark:text-slate-200 font-bold text-[11px] sm:text-body-medium bg-paper-elevated dark:bg-slate-900 px-2.5 py-1 sm:px-space-sm sm:py-space-2xs rounded-full shadow-2xs border border-border-subtle dark:border-slate-800">
+              <span className="material-symbols-outlined text-amber-accent text-[16px] sm:text-[18px]">
                 receipt_long
               </span>
               <span>{t('hero.trust3')}</span>
@@ -115,9 +115,9 @@ export const Hero: React.FC<HeroProps> = ({
         </div>
 
         {/* Advanced Integrated Floating Search Console (Stitch Redesign) */}
-        <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl shadow-xl border border-border-subtle dark:border-slate-800 p-space-md lg:p-space-lg max-w-5xl mx-auto mb-space-2xl">
+        <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl shadow-xl border border-border-subtle dark:border-slate-800 p-3 sm:p-space-md lg:p-space-lg max-w-5xl mx-auto mb-3 sm:mb-8">
           {/* Search Category Sub-Tabs */}
-          <div className="flex items-center gap-space-xs overflow-x-auto pb-space-sm mb-space-sm no-scrollbar text-body-subtext font-body-medium">
+          <div className="flex items-center gap-space-xs overflow-x-auto pb-1.5 mb-2 sm:mb-space-sm no-scrollbar text-body-subtext font-body-medium">
             <button
               type="button"
               onClick={() => handleTabChange('van')}
@@ -393,7 +393,7 @@ export const Hero: React.FC<HeroProps> = ({
               scrollToResults();
             }
           }}
-          className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-border-subtle dark:border-slate-800 group cursor-pointer bg-navy-deep transition-transform duration-200 active:scale-[0.99]"
+          className="hidden sm:block relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-border-subtle dark:border-slate-800 group cursor-pointer bg-navy-deep transition-transform duration-200 active:scale-[0.99]"
           title={t('hero.imageTitle')}
         >
           <Image

@@ -106,11 +106,11 @@ export const PopularRoutesSection: React.FC<PopularRoutesSectionProps> = ({ onSe
     <section
       id="routes"
       aria-label={t('home.routesTitle')}
-      className="w-full py-space-2xl bg-paper-canvas dark:bg-slate-950 transition-colors"
+      className="w-full py-6 sm:py-space-2xl bg-paper-canvas dark:bg-slate-950 transition-colors"
     >
       <div className="max-w-7xl mx-auto px-margin lg:px-gutter">
         {/* Section Header (Stitch Redesign) */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-space-sm mb-space-xl">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-space-sm mb-3 sm:mb-space-xl">
           <div>
             <div className="flex items-center gap-space-2xs">
               <h2 className="font-headline-xl text-headline-xl text-navy-deep dark:text-white tracking-tight">
@@ -124,14 +124,18 @@ export const PopularRoutesSection: React.FC<PopularRoutesSectionProps> = ({ onSe
               {t('home.routesCaption')}
             </p>
           </div>
+          <div className="md:hidden flex items-center gap-1 text-xs font-semibold text-blue-action dark:text-blue-400">
+            <span>ปัดซ้าย-ขวาเพื่อดูเส้นทาง</span>
+            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+          </div>
         </div>
 
-        {/* 6 Routes Grid (Stitch 3-Column Layout) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-lg">
+        {/* 6 Routes Carousel on Mobile (< md), Grid on Desktop (md+) */}
+        <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-space-lg overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-3 -mx-margin px-margin md:mx-0 md:px-0 scrollbar-none items-stretch">
           {STITCH_ROUTES.map((route) => (
             <div
               key={route.id}
-              className="bg-paper-elevated dark:bg-slate-900 rounded-2xl overflow-hidden shadow-md hover:shadow-xl border border-border-subtle dark:border-slate-800 transition-all group flex flex-col justify-between"
+              className="w-[82vw] sm:w-[340px] md:w-auto shrink-0 md:shrink snap-start bg-paper-elevated dark:bg-slate-900 rounded-2xl overflow-hidden shadow-md hover:shadow-xl border border-border-subtle dark:border-slate-800 transition-all group flex flex-col justify-between"
             >
               <div>
                 {/* Photo & Zone Tag */}

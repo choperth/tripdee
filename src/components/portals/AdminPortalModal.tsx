@@ -21,6 +21,7 @@ import {
   PhoneCall,
   Activity,
   FileSpreadsheet,
+  ShieldCheck,
 } from 'lucide-react';
 import { SponsorReportModal } from '@/components/SponsorReportModal';
 import { AdminVehicleTab } from './admin/AdminVehicleTab';
@@ -301,6 +302,23 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
               </button>
             </div>
 
+            {/* Anti-Fraud Active Indicator */}
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-leaf-soft/40 border border-leaf/20 px-4 py-2.5 text-xs">
+              <div className="flex items-center gap-2 text-ink">
+                <ShieldCheck className="h-4 w-4 text-leaf shrink-0" />
+                <div>
+                  <span className="font-extrabold text-leaf">{t('padm.antiFraudActive')}</span>
+                  <span className="text-ink-2 ml-1.5 hidden sm:inline">• กรอง IP, Device Fingerprint & บอท 24 ชม.</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-ink-2">
+                <span>{t('padm.statSpamBlocked')}:</span>
+                <span className="td-fig rounded-pill bg-paper px-2 py-0.5 font-extrabold text-ink border border-rule">
+                  {summary.spamBlockedClicks || 0} ครั้ง
+                </span>
+              </div>
+            </div>
+
             {/* Stat Cards Grid */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="rounded-2xl bg-paper p-4">
@@ -309,7 +327,11 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                   <PhoneCall className="h-4 w-4 text-leaf" />
                 </div>
                 <p className="td-fig mt-2 text-2xl font-extrabold text-ink">
-                  {summary.totalCallClicks}
+                  {summary.uniqueCallClicks || summary.totalCallClicks}
+                  <span className="ml-1 text-xs font-semibold text-leaf">Unique</span>
+                </p>
+                <p className="mt-1 text-[11px] text-ink-2">
+                  {t('padm.statCallClicks')}: {summary.totalCallClicks}
                 </p>
               </div>
 
@@ -319,7 +341,11 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                   <MousePointerClick className="h-4 w-4 text-berry" />
                 </div>
                 <p className="td-fig mt-2 text-2xl font-extrabold text-ink">
-                  {summary.totalSponsorClicks}
+                  {summary.uniqueSponsorClicks || summary.totalSponsorClicks}
+                  <span className="ml-1 text-xs font-semibold text-berry">Unique</span>
+                </p>
+                <p className="mt-1 text-[11px] text-ink-2">
+                  {t('padm.statSponsorClicks')}: {summary.totalSponsorClicks}
                 </p>
               </div>
 
@@ -330,6 +356,9 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                 </div>
                 <p className="td-fig mt-2 text-2xl font-extrabold text-ink">
                   {summary.totalEvents}
+                </p>
+                <p className="mt-1 text-[11px] text-ink-2">
+                  {t('padm.statSpamBlocked')}: {summary.spamBlockedClicks || 0}
                 </p>
               </div>
             </div>
@@ -342,7 +371,9 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
               <div className="space-y-2">
                 {(sponsors.length > 0 ? sponsors : SPONSORS).map((s) => {
                   const count = getSponsorClickCount(s.id);
-                  const lastTime = summary.sponsorStats[s.id]?.lastClickedAt;
+                  const sStat = summary.sponsorStats[s.id];
+                  const uniqueCount = sStat?.uniqueClicks ?? count;
+                  const lastTime = sStat?.lastClickedAt;
                   return (
                     <div
                       key={s.id}
@@ -360,9 +391,12 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                         )}
                       </div>
                       <div className="text-right shrink-0 flex items-center gap-2">
-                        <span className="td-fig inline-block rounded-pill bg-berry-soft px-3 py-1 font-extrabold text-xs text-berry">
-                          {t('padm.sponsorClicks', { n: count })}
-                        </span>
+                        <div className="text-right">
+                          <span className="td-fig inline-block rounded-pill bg-berry-soft px-3 py-1 font-extrabold text-xs text-berry">
+                            {t('padm.uniqueClicks', { n: uniqueCount })}
+                          </span>
+                          <p className="text-[10px] text-ink-2 mt-0.5">รวมกด {count} ครั้ง</p>
+                        </div>
                         <button
                           type="button"
                           onClick={() => setReportSponsor(s)}
@@ -405,8 +439,9 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                       </div>
                       <div className="text-right shrink-0">
                         <span className="td-fig inline-block rounded-pill bg-leaf-soft px-3 py-1 font-extrabold text-xs text-leaf">
-                          {t('padm.sponsorClicks', { n: target.clicks })}
+                          {t('padm.uniqueClicks', { n: target.uniqueClicks ?? target.clicks })}
                         </span>
+                        <p className="text-[10px] text-ink-2 mt-0.5">รวมกด {target.clicks} ครั้ง</p>
                       </div>
                     </div>
                   ))}

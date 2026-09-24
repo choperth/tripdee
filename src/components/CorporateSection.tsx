@@ -28,6 +28,8 @@ export const CorporateSection: React.FC = () => {
     note: '',
   });
 
+  const [isMobileFormOpen, setIsMobileFormOpen] = useState(false);
+
   const sizeLabel =
     formData.caravanSize === '1'
       ? t('corp.sizeS1')
@@ -106,7 +108,7 @@ export const CorporateSection: React.FC = () => {
     <section
       id="corporate"
       aria-label={t('nav.corpService')}
-      className="w-full py-space-3xl bg-navy-deep text-surface rounded-3xl my-12 overflow-hidden relative shadow-2xl transition-colors"
+      className="w-full py-8 sm:py-space-3xl bg-navy-deep text-surface rounded-2xl sm:rounded-3xl my-4 sm:my-12 overflow-hidden relative shadow-2xl transition-colors"
     >
       {/* Subtle glow circles */}
       <div className="absolute -right-32 -top-32 w-96 h-96 bg-blue-action/10 rounded-full blur-3xl pointer-events-none" />
@@ -116,13 +118,6 @@ export const CorporateSection: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-center">
           {/* Left: Value Proposition Details (7 of 12 cols) */}
           <div className="lg:col-span-7 space-y-space-md">
-            <div className="inline-flex items-center gap-space-2xs px-space-sm py-space-2xs rounded-full bg-primary-container text-surface font-label-badge text-label-badge border border-white/10">
-              <span className="material-symbols-outlined text-taxi-yellow-30 text-[16px]">
-                corporate_fare
-              </span>
-              <span>{t('corp.badge')}</span>
-            </div>
-
             <h2 className="font-display-hero text-display-hero text-surface tracking-tight">
               {t('corp.titleA')}
               <span className="text-taxi-yellow-30 block">{t('corp.titleB')}</span>
@@ -227,7 +222,32 @@ export const CorporateSection: React.FC = () => {
           </div>
 
           {/* Right: Instant RFQ Quotation Builder Card (5 of 12 cols) */}
-          <div className="lg:col-span-5 bg-paper-elevated text-navy-deep dark:bg-slate-900 dark:text-white rounded-3xl p-space-md lg:p-space-lg shadow-2xl space-y-space-sm border border-border-subtle dark:border-slate-800">
+          <div className="lg:col-span-5 bg-paper-elevated text-navy-deep dark:bg-slate-900 dark:text-white rounded-3xl p-space-md lg:p-space-lg shadow-2xl border border-border-subtle dark:border-slate-800">
+            {/* Mobile Expand / Collapse Header Trigger */}
+            <div
+              onClick={() => setIsMobileFormOpen(!isMobileFormOpen)}
+              className="lg:hidden flex items-center justify-between cursor-pointer py-1"
+            >
+              <div>
+                <h3 className="font-headline-md text-sm sm:text-base font-extrabold text-navy-deep dark:text-white">
+                  {t('corp.rfqTitle')}
+                </h3>
+                <p className="font-body-subtext text-xs text-ink-muted dark:text-slate-400">
+                  ประเมินงบประมาณ & ขอใบเสนอราคาคาราวาน
+                </p>
+              </div>
+              <button
+                type="button"
+                className="px-3 py-1.5 rounded-full bg-blue-action text-white text-xs font-bold flex items-center gap-1 shadow-xs shrink-0 active:scale-95 transition-all"
+              >
+                <span>{isMobileFormOpen ? 'ย่อฟอร์ม' : 'คำนวณราคา'}</span>
+                <span className="material-symbols-outlined text-[16px]">
+                  {isMobileFormOpen ? 'expand_less' : 'expand_more'}
+                </span>
+              </button>
+            </div>
+
+            <div className={`${isMobileFormOpen ? 'block mt-3 pt-3 border-t border-border-subtle dark:border-slate-800' : 'hidden'} lg:block space-y-space-sm`}>
             {submitted ? (
               <div className="py-space-xl text-center space-y-space-sm">
                 <div className="w-16 h-16 rounded-full bg-verified-emerald-soft text-verified-emerald mx-auto flex items-center justify-center">
@@ -447,6 +467,7 @@ export const CorporateSection: React.FC = () => {
                 </form>
               </>
             )}
+            </div>
           </div>
         </div>
       </div>

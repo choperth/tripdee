@@ -141,7 +141,7 @@ export const SponsorSidebar: React.FC = () => {
       </div>
 
       {/* 2. Multi-Sponsor Partner Showcase (Interactive & Auto-Rotating) */}
-      {isDemo && activeSponsor && (
+      {activeSponsor && (
         <div
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
@@ -253,7 +253,7 @@ export const SponsorSidebar: React.FC = () => {
               onClick={() => handleSponsorClick(activeSponsor)}
               className="mt-space-xs w-full h-10 bg-navy-deep hover:bg-navy-surface text-surface rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98]"
             >
-              <span>{activeSponsor.link.startsWith('tel:') ? 'โทรรับสิทธิ์' : t('sponsor.cta')}</span>
+              <span>{activeSponsor.link.startsWith('tel:') ? 'โทรสอบถาม' : t('sponsor.cta')}</span>
               <span className="material-symbols-outlined text-[16px]">
                 {activeSponsor.link.startsWith('tel:') ? 'call' : 'open_in_new'}
               </span>
@@ -301,9 +301,6 @@ export const SponsorSidebar: React.FC = () => {
       {/* 4. Package Stats & Advertising (Stitch Redesign Card) */}
       <div className="bg-gradient-to-br from-primary-container to-navy-surface text-surface rounded-2xl p-space-md space-y-space-sm shadow-md">
         <div className="space-y-space-2xs">
-          <span className="font-label-badge text-label-badge text-taxi-yellow-30 uppercase tracking-wider">
-            Sponsorship & Ads
-          </span>
           <h4 className="font-title-card text-title-card text-surface">
             {t('spn.adsTitle')}
           </h4>

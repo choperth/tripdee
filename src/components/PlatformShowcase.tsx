@@ -18,10 +18,10 @@ export const PlatformShowcase: React.FC<PlatformShowcaseProps> = ({
   const { t } = useLanguage();
 
   return (
-    <section aria-label={t('show.title')} className="w-full py-space-3xl bg-paper-canvas dark:bg-slate-950 transition-colors">
+    <section aria-label={t('show.title')} className="w-full py-6 md:py-space-3xl bg-paper-canvas dark:bg-slate-950 transition-colors">
       <div className="max-w-7xl mx-auto px-margin lg:px-gutter">
-        {/* Platform Header (Stitch Redesign) */}
-        <div className="text-center max-w-2xl mx-auto space-y-space-xs mb-space-2xl">
+        {/* Platform Header (Desktop only - Mobile already has hero trust badges) */}
+        <div className="hidden md:block text-center max-w-2xl mx-auto space-y-space-xs mb-space-2xl">
           <h2 className="font-headline-xl text-headline-xl text-navy-deep dark:text-white tracking-tight">
             {t('show.title')}
           </h2>
@@ -30,8 +30,8 @@ export const PlatformShowcase: React.FC<PlatformShowcaseProps> = ({
           </p>
         </div>
 
-        {/* 3 Strategic Feature Cards (Stitch 3-Column Layout) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-space-lg mb-space-2xl">
+        {/* 3 Strategic Feature Cards (Desktop 3-Column Layout - Hidden on mobile to prevent bloat) */}
+        <div className="hidden md:grid md:grid-cols-3 gap-space-lg mb-space-2xl">
           {/* Feature 1: 0% Commission */}
           <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-lg shadow-md hover:shadow-xl border border-border-subtle dark:border-slate-800 transition-all flex flex-col justify-between space-y-space-md">
             <div className="space-y-space-sm">

@@ -45,12 +45,14 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
   if (!isOpen || !sponsor) return null;
 
   const clickCount = getSponsorClickCount(sponsor.id);
-  const lastClickedAt = summary.sponsorStats[sponsor.id]?.lastClickedAt;
+  const sponsorStat = summary.sponsorStats[sponsor.id];
+  const uniqueClickCount = sponsorStat?.uniqueClicks ?? clickCount;
+  const lastClickedAt = sponsorStat?.lastClickedAt;
 
   // Realistic estimates derived from platform interactions
   const baselineImpressions = Math.max(120, summary.totalEvents * 14 + clickCount * 28 + 240);
   const ctrPercentage =
-    baselineImpressions > 0 ? ((clickCount / baselineImpressions) * 100).toFixed(1) : '0.0';
+    baselineImpressions > 0 ? ((uniqueClickCount / baselineImpressions) * 100).toFixed(1) : '0.0';
 
   const reportDate = new Date().toLocaleDateString('th-TH', {
     year: 'numeric',
@@ -65,9 +67,10 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
       `📍 โซน: ${sponsor.location}\n` +
       `🏷️ สิทธิพิเศษ: ${sponsor.discountText}\n` +
       `--------------------------------\n` +
-      `🎯 ยอดคลิกรับสิทธิ์/จองตรง: ${clickCount} ครั้ง\n` +
+      `🎯 ยอดคลิกไม่ซ้ำคน (Unique 24 ชม.): ${uniqueClickCount} ครั้ง (ยอดกดรวม ${clickCount} ครั้ง)\n` +
       `👁️ ยอดแสดงผลโดยประมาณ: ${baselineImpressions.toLocaleString('th-TH')} ครั้ง\n` +
-      `📈 อัตราการคลิก (CTR): ${ctrPercentage}%\n` +
+      `📈 อัตราการคลิกจริง (Unique CTR): ${ctrPercentage}%\n` +
+      `🛡️ มาตรฐานความโปร่งใส: ระบบป้องกันการปั๊มยอดด้วย IP & Device Fingerprinting 24 ชม.\n` +
       `📅 รายงาน ณ วันที่: ${reportDate}\n` +
       `--------------------------------\n` +
       `ขอขอบคุณที่ร่วมเป็นพาร์ตเนอร์กับ TripDee เริ่มต้นทริปดีๆ ไปด้วยกันครับ 🙏\n` +
@@ -183,17 +186,20 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
       const boxH = 150;
       const startY = 340;
 
-      // Box 1: Clicks
+      // Box 1: Unique Clicks
       ctx.fillStyle = '#fff0f6';
       roundRect(ctx, 70, startY, boxW, boxH, 16);
       ctx.fill();
       ctx.fillStyle = '#a61e4d';
       ctx.font = 'bold 18px sans-serif';
-      ctx.fillText('ยอดคลิกเข้าชม (Clicks)', 100, startY + 45);
-      ctx.font = 'bold 54px sans-serif';
-      ctx.fillText(`${clickCount}`, 100, startY + 115);
-      ctx.font = 'bold 20px sans-serif';
-      ctx.fillText('ครั้ง', 100 + ctx.measureText(`${clickCount}`).width + 10, startY + 115);
+      ctx.fillText('ยอดคลิกจริง (Unique 24h)', 100, startY + 45);
+      ctx.font = 'bold 50px sans-serif';
+      ctx.fillText(`${uniqueClickCount}`, 100, startY + 105);
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('ครั้ง', 100 + ctx.measureText(`${uniqueClickCount}`).width + 8, startY + 105);
+      ctx.font = '13px sans-serif';
+      ctx.fillStyle = '#862e9c';
+      ctx.fillText(`(กดทั้งหมด ${clickCount} ครั้ง • กรองปั๊มยอด)`, 100, startY + 130);
 
       // Box 2: Impressions
       ctx.fillStyle = '#e7f5ff';
@@ -388,13 +394,11 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
                 <MousePointerClick className="h-4 w-4" />
               </div>
               <p className="td-fig mt-2 text-3xl font-extrabold text-berry">
-                {clickCount}
-                <span className="text-xs font-bold ml-1 text-ink-2">{t('spn.times')}</span>
+                {uniqueClickCount}
+                <span className="text-xs font-bold ml-1 text-ink-2">Unique</span>
               </p>
               <p className="text-[11px] text-ink-2 mt-1">
-                {lastClickedAt
-                  ? t('padm.lastClicked', { time: new Date(lastClickedAt).toLocaleTimeString() })
-                  : t('spn.noClickNote')}
+                ยอดกดรวม {clickCount} ครั้ง • {lastClickedAt ? `ล่าสุด ${new Date(lastClickedAt).toLocaleTimeString('th-TH')}` : 'กรอง 24 ชม.'}
               </p>
             </div>
 

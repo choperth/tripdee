@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import {
@@ -23,7 +23,6 @@ import {
   Lock,
   Loader2,
 } from 'lucide-react';
-import { DriverPushBell } from '@/components/notifications/DriverPushBell';
 import { TravelDatePicker } from '@/components/TravelDatePicker';
 import { formatWhatsAppLink } from '@/lib/contactUtils';
 import {
@@ -155,6 +154,9 @@ export const TripBoard: React.FC = () => {
   // Toggle to show/hide past expired/closed posts
   const [showClosedPosts, setShowClosedPosts] = useState<boolean>(false);
 
+  // Compact / Expand Board Feed (Mobile-First optimization to prevent page bloat)
+  const [showAllPosts, setShowAllPosts] = useState<boolean>(false);
+
   const loadBoardPosts = React.useCallback(() => {
     const search = typeof window !== 'undefined' ? window.location.search : '';
     const connector = search ? (search.includes('?') ? '&' : '?') : '?';
@@ -174,20 +176,6 @@ export const TripBoard: React.FC = () => {
     window.addEventListener('tripdee-board-updated', handleUpdate);
     return () => window.removeEventListener('tripdee-board-updated', handleUpdate);
   }, [loadBoardPosts]);
-
-  // Auto-open quotes modal if URL has ?quotePost=<id>&token=<token>
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const quotePostId = params.get('quotePost');
-    const token = params.get('token') || (quotePostId ? getMyBoardPostToken(quotePostId) : undefined);
-    if (quotePostId && posts.length > 0) {
-      const found = posts.find((p) => p.id === quotePostId);
-      if (found) {
-        handleOpenCustomerQuotes(found, token || undefined);
-      }
-    }
-  }, [posts]);
 
   // Clean active posts respecting demo mode
   const activePosts = useMemo(() => {
@@ -235,6 +223,12 @@ export const TripBoard: React.FC = () => {
       return true;
     });
   }, [basePosts, filter, searchKeyword]);
+
+  // If user searched or filtered specific keywords, or clicked expand, show all; otherwise show top 8
+  const displayedPosts = useMemo(() => {
+    if (showAllPosts || searchKeyword.trim() !== '') return visiblePosts;
+    return visiblePosts.slice(0, 8);
+  }, [visiblePosts, showAllPosts, searchKeyword]);
 
   const set = (patch: Partial<PostFormState>) => setForm((prev) => ({ ...prev, ...patch }));
 
@@ -425,49 +419,73 @@ export const TripBoard: React.FC = () => {
     }
   };
 
-  const handleOpenCustomerQuotes = (post: BoardPost, directToken?: string) => {
-    setViewQuotesPost(post);
-    setCustomerQuotesPin('');
-    setFetchedQuotes(null);
-    setQuotesFetchError('');
-    setAcceptSuccessMessage('');
-
-    const token = directToken || getMyBoardPostToken(post.id) || post.viewToken || '';
-    setCustomerQuotesToken(token);
-    setIsQuotesUnlockedWithToken(Boolean(token));
-
-    if (token) {
-      fetchQuotesForPost(post.id, '', token);
-    } else if (!post.pin) {
-      fetchQuotesForPost(post.id, '');
-    }
-  };
-
-  const fetchQuotesForPost = async (postId: string, pin: string, token?: string) => {
-    setIsLoadingQuotes(true);
-    setQuotesFetchError('');
-    try {
-      const activeToken = token || customerQuotesToken;
-      const tokenParam = activeToken ? `&token=${encodeURIComponent(activeToken)}` : '';
-      const pinParam = pin ? `&pin=${encodeURIComponent(pin)}` : '';
-      const res = await fetch(
-        `/api/board?action=get_quotes&postId=${encodeURIComponent(postId)}${pinParam}${tokenParam}`
-      );
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setQuotesFetchError(data.error || 'รหัส PIN หรือลิงก์การเข้าถึงไม่ถูกต้อง');
-        return;
+  const fetchQuotesForPost = useCallback(
+    async (postId: string, pin: string, token?: string) => {
+      setIsLoadingQuotes(true);
+      setQuotesFetchError('');
+      try {
+        const activeToken = token || customerQuotesToken;
+        const tokenParam = activeToken ? `&token=${encodeURIComponent(activeToken)}` : '';
+        const pinParam = pin ? `&pin=${encodeURIComponent(pin)}` : '';
+        const res = await fetch(
+          `/api/board?action=get_quotes&postId=${encodeURIComponent(postId)}${pinParam}${tokenParam}`
+        );
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          setQuotesFetchError(data.error || 'รหัส PIN หรือลิงก์การเข้าถึงไม่ถูกต้อง');
+          return;
+        }
+        setFetchedQuotes(data.quotes || []);
+        if (activeToken) {
+          setIsQuotesUnlockedWithToken(true);
+        }
+      } catch {
+        setQuotesFetchError(t('board.errQuotes'));
+      } finally {
+        setIsLoadingQuotes(false);
       }
-      setFetchedQuotes(data.quotes || []);
-      if (activeToken) {
-        setIsQuotesUnlockedWithToken(true);
+    },
+    [customerQuotesToken, t]
+  );
+
+  const handleOpenCustomerQuotes = useCallback(
+    (post: BoardPost, directToken?: string) => {
+      setViewQuotesPost(post);
+      setCustomerQuotesPin('');
+      setFetchedQuotes(null);
+      setQuotesFetchError('');
+      setAcceptSuccessMessage('');
+
+      const token = directToken || getMyBoardPostToken(post.id) || post.viewToken || '';
+      setCustomerQuotesToken(token);
+      setIsQuotesUnlockedWithToken(Boolean(token));
+
+      if (token) {
+        fetchQuotesForPost(post.id, '', token);
+      } else if (!post.pin) {
+        fetchQuotesForPost(post.id, '');
       }
-    } catch {
-      setQuotesFetchError(t('board.errQuotes'));
-    } finally {
-      setIsLoadingQuotes(false);
+    },
+    [fetchQuotesForPost]
+  );
+
+  // Auto-open quotes modal if URL has ?quotePost=<id>&token=<token>
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const quotePostId = params.get('quotePost');
+    const token =
+      params.get('token') || (quotePostId ? getMyBoardPostToken(quotePostId) : undefined);
+    if (quotePostId && posts.length > 0) {
+      const found = posts.find((p) => p.id === quotePostId);
+      if (found) {
+        const timer = setTimeout(() => {
+          handleOpenCustomerQuotes(found, token || undefined);
+        }, 0);
+        return () => clearTimeout(timer);
+      }
     }
-  };
+  }, [posts, handleOpenCustomerQuotes]);
 
   const handleAcceptQuote = async (quote: BoardQuote) => {
     if (!viewQuotesPost) return;
@@ -500,9 +518,9 @@ export const TripBoard: React.FC = () => {
   };
 
   return (
-    <section id="tripboard" aria-label={t('board.aria')} className="w-full py-space-2xl bg-paper-surface-muted dark:bg-slate-950 transition-colors scroll-mt-24">
+    <section id="tripboard" aria-label={t('board.aria')} className="w-full py-6 sm:py-space-2xl bg-paper-surface-muted dark:bg-slate-950 transition-colors scroll-mt-20 sm:scroll-mt-24">
       {/* 1. Dynamic Notification Bar / Stats Strip (Stitch Top Bar) */}
-      <div className="w-full bg-blue-subtle/70 dark:bg-blue-950/40 py-space-sm px-margin border-y border-border-subtle/60 dark:border-slate-800 mb-space-lg">
+      <div className="w-full bg-blue-subtle/70 dark:bg-blue-950/40 py-space-sm px-margin border-y border-border-subtle/60 dark:border-slate-800 mb-3 sm:mb-space-lg">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-space-sm font-body-subtext text-body-subtext">
           <div className="flex items-center gap-space-xs text-ink-primary dark:text-slate-200">
             <span className="relative flex h-2 w-2">
@@ -514,8 +532,15 @@ export const TripBoard: React.FC = () => {
               {t('board.liveStats', { done: 48, open: 19 })}
             </span>
           </div>
-          <div className="flex items-center gap-space-md text-ink-muted dark:text-slate-400">
-            <DriverPushBell />
+          <div className="flex items-center gap-2 text-ink-muted dark:text-slate-400">
+            <a
+              href="https://line.me/R/ti/p/@731ruvzj"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#06C755]/15 text-[#06C755] border border-[#06C755]/30 text-xs font-bold hover:bg-[#06C755] hover:text-white transition-all active:scale-95"
+            >
+              <span>🔔 รับแจ้งเตือนงานทาง LINE</span>
+            </a>
           </div>
         </div>
       </div>
@@ -524,10 +549,6 @@ export const TripBoard: React.FC = () => {
         {/* 2. Hero Header & Quick Action Triggers (Stitch Redesign) */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-lg mb-space-xl">
           <div className="space-y-space-2xs max-w-3xl">
-            <div className="inline-flex items-center gap-space-2xs px-space-sm py-1 bg-amber-accent/15 dark:bg-amber-950/50 rounded-full text-amber-accent font-label-badge text-label-badge mb-space-xs">
-              <span className="material-symbols-outlined text-[14px]">campaign</span>
-              <span>DIRECT COMMUNITY MATCHING • 0% COMMISSION</span>
-            </div>
             <h2 className="font-display-hero text-display-hero text-navy-deep dark:text-white tracking-tight">
               {t('board.title')} <span className="text-blue-action">(TripBoard)</span>
             </h2>
@@ -761,10 +782,21 @@ export const TripBoard: React.FC = () => {
           </div>
         </div>
 
-        {/* 5. Request & Offer Cards Feed (Stitch Layout) */}
-        <div className="space-y-space-md">
+        {/* 5. Request & Offer Cards Feed */}
+        <div className="flex items-center justify-between mb-2 md:hidden">
+          <span className="text-xs font-bold text-ink-muted dark:text-slate-400">
+            โพสต์ล่าสุด ({displayedPosts.length}/{totalCount})
+          </span>
+          <span className="text-xs font-semibold text-blue-action dark:text-blue-400 flex items-center gap-1">
+            <span>ปัดซ้าย-ขวาเพื่อดูโพสต์</span>
+            <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
+          </span>
+        </div>
+
+        {/* Swipe Carousel on Mobile (< md), Vertical Stack on Desktop (md+) */}
+        <div className="flex md:flex-col gap-3 md:gap-space-md overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-3 -mx-margin px-margin md:mx-0 md:px-0 scrollbar-none items-stretch">
           {visiblePosts.length === 0 ? (
-            <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-2xl text-center border border-border-subtle dark:border-slate-800 space-y-space-sm">
+            <div className="w-full bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-2xl text-center border border-border-subtle dark:border-slate-800 space-y-space-sm">
               <span className="material-symbols-outlined text-[48px] text-ink-muted">inbox</span>
               <h3 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
                 {t('board.emptyTitle')}
@@ -782,7 +814,7 @@ export const TripBoard: React.FC = () => {
               </button>
             </div>
           ) : (
-            visiblePosts.map((post) => {
+            displayedPosts.map((post) => {
               const isRequest = post.type === 'request';
               const isShare = post.type === 'share';
               const zoneObj = ZONE_RATE_CARDS.find((z) => z.id === post.zoneId);
@@ -792,11 +824,11 @@ export const TripBoard: React.FC = () => {
               return (
                 <div
                   key={post.id}
-                  className={`bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-md sm:p-space-lg shadow-sm hover:shadow-md border ${
+                  className={`w-[85vw] sm:w-[480px] md:w-full shrink-0 md:shrink snap-start bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-md sm:p-space-lg shadow-sm hover:shadow-md border ${
                     isPostClosed
                       ? 'border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/60'
                       : 'border-border-subtle dark:border-slate-800'
-                  } transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-space-md`}
+                  } transition-all flex flex-col justify-between lg:flex-row lg:items-center gap-space-md`}
                 >
                   {/* Left Content Area */}
                   <div className="space-y-space-xs max-w-3xl">
@@ -1067,6 +1099,25 @@ export const TripBoard: React.FC = () => {
             })
           )}
         </div>
+
+        {visiblePosts.length > 8 && searchKeyword.trim() === '' && (
+          <div className="pt-4 text-center">
+            <button
+              type="button"
+              onClick={() => setShowAllPosts((prev) => !prev)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-paper-elevated dark:bg-slate-900 border border-blue-500/30 text-blue-action dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 cursor-pointer"
+            >
+              <span>
+                {showAllPosts
+                  ? 'ย่อบอร์ดแสดงเฉพาะ 8 รายการล่าสุด'
+                  : `ดูโพสต์ทั้งหมดใน TripBoard (${visiblePosts.length} รายการ)`}
+              </span>
+              <span className="material-symbols-outlined text-[18px]">
+                {showAllPosts ? 'expand_less' : 'expand_more'}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 6. POST CREATION MODAL (Stitch Responsive Sheet/Dialog) */}

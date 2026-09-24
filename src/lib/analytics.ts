@@ -25,6 +25,10 @@ export interface SponsorClickEvent {
   category: string;
   variant: SponsorClickVariant;
   targetUrl: string;
+  visitorId?: string;
+  sessionId?: string;
+  isUnique?: boolean;
+  isSpam?: boolean;
 }
 
 export interface CallClickEvent {
@@ -36,6 +40,10 @@ export interface CallClickEvent {
   targetTitle: string;
   phoneNumber: string;
   driverName?: string;
+  visitorId?: string;
+  sessionId?: string;
+  isUnique?: boolean;
+  isSpam?: boolean;
 }
 
 export type AnalyticsEvent = SponsorClickEvent | CallClickEvent;
@@ -45,6 +53,7 @@ export interface SponsorStat {
   sponsorTitle: string;
   category: string;
   clicks: number;
+  uniqueClicks: number;
   lastClickedAt: string;
 }
 
@@ -55,13 +64,17 @@ export interface CallTargetStat {
   phoneNumber: string;
   driverName?: string;
   clicks: number;
+  uniqueClicks: number;
   lastClickedAt: string;
 }
 
 export interface AnalyticsSummary {
   totalEvents: number;
   totalSponsorClicks: number;
+  uniqueSponsorClicks: number;
   totalCallClicks: number;
+  uniqueCallClicks: number;
+  spamBlockedClicks: number;
   sponsorStats: Record<string, SponsorStat>;
   callStats: {
     byTargetType: Record<CallTargetType, number>;
@@ -74,14 +87,20 @@ export interface AnalyticsSummary {
 
 const STORAGE_SUMMARY_KEY = 'td_analytics_summary_v1';
 const STORAGE_EVENTS_KEY = 'td_analytics_events_v1';
+const STORAGE_THROTTLE_KEY = 'td_analytics_throttle_v1';
 const ANALYTICS_EVENT_NAME = 'td_analytics_change';
 const MAX_RECENT_EVENTS = 100;
+const THROTTLE_RAPID_MS = 2500; // 2.5s debounce for rapid spam clicks
+const WINDOW_24H_MS = 24 * 60 * 60 * 1000; // 24 hours unique window
 
 export function createEmptySummary(): AnalyticsSummary {
   return {
     totalEvents: 0,
     totalSponsorClicks: 0,
+    uniqueSponsorClicks: 0,
     totalCallClicks: 0,
+    uniqueCallClicks: 0,
+    spamBlockedClicks: 0,
     sponsorStats: {},
     callStats: {
       byTargetType: {
@@ -103,6 +122,92 @@ export function createEmptySummary(): AnalyticsSummary {
 }
 
 /**
+ * Generates or retrieves an anonymous, persistent visitor ID (browser-only)
+ */
+export function getOrCreateVisitorId(): string {
+  if (typeof window === 'undefined') return 'anon-srv';
+  try {
+    let vid = localStorage.getItem('td_visitor_id_v1');
+    if (!vid) {
+      vid = `vid_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
+      localStorage.setItem('td_visitor_id_v1', vid);
+    }
+    return vid;
+  } catch {
+    return 'anon-local';
+  }
+}
+
+/**
+ * Generates or retrieves an in-session identifier (browser-only)
+ */
+export function getOrCreateSessionId(): string {
+  if (typeof window === 'undefined') return 'sess-srv';
+  try {
+    let sid = sessionStorage.getItem('td_session_id_v1');
+    if (!sid) {
+      sid = `sid_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
+      sessionStorage.setItem('td_session_id_v1', sid);
+    }
+    return sid;
+  } catch {
+    return 'sess-local';
+  }
+}
+
+/**
+ * Client-side throttle & 24h uniqueness evaluator
+ */
+export function evaluateClientClick(targetKey: string): {
+  isRapidSpam: boolean;
+  isUnique: boolean;
+} {
+  if (typeof window === 'undefined') {
+    return { isRapidSpam: false, isUnique: true };
+  }
+
+  try {
+    const now = Date.now();
+    const raw = localStorage.getItem(STORAGE_THROTTLE_KEY);
+    interface ThrottleItem {
+      lastClickedAt: number;
+      firstClickedIn24h: number;
+    }
+    const map: Record<string, ThrottleItem> = raw ? JSON.parse(raw) : {};
+    const existing = map[targetKey];
+
+    // Detect rapid clicking spam (< 2.5 seconds on exact same item)
+    if (existing && now - existing.lastClickedAt < THROTTLE_RAPID_MS) {
+      return { isRapidSpam: true, isUnique: false };
+    }
+
+    let isUnique = true;
+    let firstClicked = now;
+    if (existing && now - existing.firstClickedIn24h < WINDOW_24H_MS) {
+      isUnique = false;
+      firstClicked = existing.firstClickedIn24h;
+    }
+
+    map[targetKey] = {
+      lastClickedAt: now,
+      firstClickedIn24h: firstClicked,
+    };
+
+    // Keep map small: clean up entries older than 48 hours
+    for (const k of Object.keys(map)) {
+      if (now - map[k].lastClickedAt > 48 * 60 * 60 * 1000) {
+        delete map[k];
+      }
+    }
+
+    localStorage.setItem(STORAGE_THROTTLE_KEY, JSON.stringify(map));
+    return { isRapidSpam: false, isUnique };
+  } catch {
+    return { isRapidSpam: false, isUnique: true };
+  }
+}
+
+/**
  * Reads the latest summary from localStorage (browser-only)
  */
 export function getLocalAnalyticsSummary(): AnalyticsSummary {
@@ -114,7 +219,16 @@ export function getLocalAnalyticsSummary(): AnalyticsSummary {
     const raw = localStorage.getItem(STORAGE_SUMMARY_KEY);
     if (!raw) return createEmptySummary();
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : createEmptySummary();
+    if (!parsed || typeof parsed !== 'object') return createEmptySummary();
+
+    // Ensure fallback for new anti-fraud fields in existing summaries
+    return {
+      ...createEmptySummary(),
+      ...parsed,
+      uniqueSponsorClicks: parsed.uniqueSponsorClicks ?? parsed.totalSponsorClicks ?? 0,
+      uniqueCallClicks: parsed.uniqueCallClicks ?? parsed.totalCallClicks ?? 0,
+      spamBlockedClicks: parsed.spamBlockedClicks ?? 0,
+    };
   } catch {
     return createEmptySummary();
   }
@@ -127,9 +241,15 @@ export function computeUpdatedSummary(
   prev: AnalyticsSummary,
   event: AnalyticsEvent
 ): AnalyticsSummary {
+  const isSpam = Boolean(event.isSpam);
+  const isUnique = event.isUnique !== false; // defaults to true if not explicitly false
+
   const next: AnalyticsSummary = {
     ...prev,
     totalEvents: prev.totalEvents + 1,
+    spamBlockedClicks: (prev.spamBlockedClicks || 0) + (isSpam ? 1 : 0),
+    uniqueSponsorClicks: prev.uniqueSponsorClicks || 0,
+    uniqueCallClicks: prev.uniqueCallClicks || 0,
     lastUpdated: event.timestamp,
     sponsorStats: { ...prev.sponsorStats },
     callStats: {
@@ -140,18 +260,32 @@ export function computeUpdatedSummary(
     recentEvents: [event, ...(prev.recentEvents || [])].slice(0, MAX_RECENT_EVENTS),
   };
 
+  // If detected as spam, do not increment legitimate click metrics
+  if (isSpam) {
+    return next;
+  }
+
   if (event.type === 'sponsor_click') {
     next.totalSponsorClicks += 1;
+    if (isUnique) {
+      next.uniqueSponsorClicks += 1;
+    }
+
     const existing = next.sponsorStats[event.sponsorId];
     next.sponsorStats[event.sponsorId] = {
       sponsorId: event.sponsorId,
       sponsorTitle: event.sponsorTitle,
       category: event.category,
       clicks: (existing?.clicks || 0) + 1,
+      uniqueClicks: (existing?.uniqueClicks || 0) + (isUnique ? 1 : 0),
       lastClickedAt: event.timestamp,
     };
   } else if (event.type === 'call_click') {
     next.totalCallClicks += 1;
+    if (isUnique) {
+      next.uniqueCallClicks += 1;
+    }
+
     const targetType = event.targetType;
     next.callStats.byTargetType[targetType] = (next.callStats.byTargetType[targetType] || 0) + 1;
 
@@ -163,6 +297,7 @@ export function computeUpdatedSummary(
       phoneNumber: event.phoneNumber,
       driverName: event.driverName,
       clicks: (existingTarget?.clicks || 0) + 1,
+      uniqueClicks: (existingTarget?.uniqueClicks || 0) + (isUnique ? 1 : 0),
       lastClickedAt: event.timestamp,
     };
 
@@ -267,6 +402,11 @@ export function trackSponsorClick(params: {
   variant?: SponsorClickVariant;
   targetUrl: string;
 }): AnalyticsEvent {
+  const targetKey = `sp_${params.sponsorId}`;
+  const { isRapidSpam, isUnique } = evaluateClientClick(targetKey);
+  const visitorId = getOrCreateVisitorId();
+  const sessionId = getOrCreateSessionId();
+
   const event: SponsorClickEvent = {
     type: 'sponsor_click',
     id: `ev-sp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -276,16 +416,25 @@ export function trackSponsorClick(params: {
     category: params.category,
     variant: params.variant || 'split',
     targetUrl: params.targetUrl,
+    visitorId,
+    sessionId,
+    isUnique,
+    isSpam: isRapidSpam,
   };
 
   recordAnalyticsEvent(event);
-  sendGA4Event('sponsor_click', {
-    sponsor_id: params.sponsorId,
-    sponsor_title: params.sponsorTitle,
-    sponsor_category: params.category,
-    variant: params.variant || 'split',
-    target_url: params.targetUrl,
-  });
+
+  // Send to GA4 only when not rapid clicking spam
+  if (!isRapidSpam) {
+    sendGA4Event('sponsor_click', {
+      sponsor_id: params.sponsorId,
+      sponsor_title: params.sponsorTitle,
+      sponsor_category: params.category,
+      variant: params.variant || 'split',
+      target_url: params.targetUrl,
+      is_unique: isUnique,
+    });
+  }
   return event;
 }
 /**
@@ -298,6 +447,11 @@ export function trackCallClick(params: {
   phoneNumber: string;
   driverName?: string;
 }): AnalyticsEvent {
+  const targetKey = `call_${params.targetId}`;
+  const { isRapidSpam, isUnique } = evaluateClientClick(targetKey);
+  const visitorId = getOrCreateVisitorId();
+  const sessionId = getOrCreateSessionId();
+
   const event: CallClickEvent = {
     type: 'call_click',
     id: `ev-call-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -307,16 +461,25 @@ export function trackCallClick(params: {
     targetTitle: params.targetTitle,
     phoneNumber: params.phoneNumber,
     driverName: params.driverName,
+    visitorId,
+    sessionId,
+    isUnique,
+    isSpam: isRapidSpam,
   };
 
   recordAnalyticsEvent(event);
-  sendGA4Event('call_click', {
-    target_type: params.targetType,
-    target_id: params.targetId,
-    target_title: params.targetTitle,
-    phone_number: params.phoneNumber,
-    driver_name: params.driverName || '',
-  });
+
+  // Send to GA4 only when not rapid clicking spam
+  if (!isRapidSpam) {
+    sendGA4Event('call_click', {
+      target_type: params.targetType,
+      target_id: params.targetId,
+      target_title: params.targetTitle,
+      phone_number: params.phoneNumber,
+      driver_name: params.driverName || '',
+      is_unique: isUnique,
+    });
+  }
   return event;
 }
 /**
