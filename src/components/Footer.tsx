@@ -40,7 +40,7 @@ export const Footer: React.FC<FooterProps> = ({
             <div className="flex items-center gap-space-sm">
               <Image
                 src="/logo-white.png"
-                alt="TripDee ทริปดี"
+                alt={t('brand.logoAlt')}
                 width={140}
                 height={36}
                 className="h-9 w-auto object-contain"

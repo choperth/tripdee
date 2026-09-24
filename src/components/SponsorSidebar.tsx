@@ -167,18 +167,18 @@ export const SponsorSidebar: React.FC = () => {
                   : 'build';
               const label =
                 s.category === 'hotel'
-                  ? 'ที่พัก'
+                  ? t('spn.catHotel')
                   : s.category === 'insurance'
-                  ? 'ประกัน'
+                  ? t('spn.catInsurance')
                   : s.category === 'fuel'
-                  ? 'น้ำมัน'
+                  ? t('spn.catFuel')
                   : s.category === 'activity'
-                  ? 'ปางช้าง'
+                  ? t('spn.catActivity')
                   : s.category === 'restaurant'
-                  ? 'ร้านอาหาร'
+                  ? t('spn.catRestaurant')
                   : s.category === 'tour'
-                  ? 'ทัวร์'
-                  : 'อู่รถ';
+                  ? t('spn.catTour')
+                  : t('spn.catGarage');
 
               return (
                 <button
@@ -193,7 +193,7 @@ export const SponsorSidebar: React.FC = () => {
                       ? 'bg-navy-deep text-white shadow-xs dark:bg-blue-600'
                       : 'text-ink-muted hover:text-navy-deep dark:text-slate-400 dark:hover:text-white'
                   }`}
-                  aria-label={`ดูสิทธิพิเศษ ${s.title}`}
+                  aria-label={t('spn.viewPerk', { title: s.title })}
                 >
                   <span className="material-symbols-outlined text-[16px]">{icon}</span>
                   <span className="text-[10px] truncate leading-tight mt-0.5">{label}</span>

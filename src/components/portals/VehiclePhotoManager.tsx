@@ -94,7 +94,7 @@ export const VehiclePhotoManager: React.FC<VehiclePhotoManagerProps> = ({
 
   const handleRemove = (indexToRemove: number) => {
     if (images.length <= 1) {
-      const ok = confirm('หากลบรูปนี้ รถของคุณจะไม่มีรูปแสดงผล แนะนำให้มีอย่างน้อย 1 รูป คุณต้องการลบจริงหรือไม่?');
+      const ok = confirm(t('pself.photoDeleteConfirm'));
       if (!ok) return;
     }
     const updated = images.filter((_, idx) => idx !== indexToRemove);

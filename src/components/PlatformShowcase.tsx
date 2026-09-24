@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useLanguage } from '@/context/LanguageContext';
+import { OFFICIAL_LINE_URL } from '@/lib/constants';
 
 interface PlatformShowcaseProps {
   onOpenRegister?: () => void;
@@ -125,30 +126,46 @@ export const PlatformShowcase: React.FC<PlatformShowcaseProps> = ({
           </div>
         </div>
 
-        {/* Partner Banner: Hotel & Resort Owners (Stitch Redesign) */}
-        <div className="bg-gradient-to-r from-primary-container via-navy-deep to-navy-surface rounded-3xl p-space-lg lg:p-space-xl text-surface shadow-xl flex flex-col md:flex-row items-center justify-between gap-space-lg">
-          <div className="flex items-center gap-space-md">
-            <div className="w-14 h-14 rounded-2xl bg-surface/10 flex items-center justify-center text-[28px] shrink-0">
+        {/* Partner Banner: Hotel & Resort Owners (Balanced Stitch Card) */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-primary-container via-navy-deep to-navy-surface rounded-3xl p-5 sm:p-7 lg:p-9 text-surface shadow-xl border border-white/10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6">
+          {/* Subtle background atmosphere */}
+          <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -left-20 -bottom-20 w-64 h-64 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
+
+          {/* Left content: Icon + Title + Description */}
+          <div className="relative z-10 flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 backdrop-blur-xs flex items-center justify-center text-2xl sm:text-[28px] shrink-0 border border-white/10 shadow-xs">
               🤝
             </div>
-            <div className="space-y-space-2xs">
-              <h4 className="font-headline-md text-headline-md text-surface">
+            <div className="space-y-1 min-w-0">
+              <h4 className="font-headline-md text-base sm:text-lg lg:text-xl font-bold text-surface tracking-tight leading-snug">
                 {t('show.bannerTitle')}
               </h4>
-              <p className="font-body-base text-body-base text-surface-container-high opacity-90 max-w-2xl">
+              <p className="font-body-base text-xs sm:text-sm text-surface-container-high/90 max-w-2xl leading-relaxed">
                 {t('show.bannerDesc')}
               </p>
             </div>
           </div>
-          <a
-            href="https://line.me/R/ti/p/@731ruvzj"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-space-lg py-space-sm bg-line-green hover:bg-line-green-hover text-on-primary rounded-xl font-title-card text-title-card flex items-center gap-space-2xs shadow-md transition-all active:scale-[0.98] whitespace-nowrap"
-          >
-            <span className="material-symbols-outlined text-[20px]">chat</span>
-            <span>{t('show.bannerCta')}</span>
-          </a>
+
+          {/* Right content: Refined Balanced LINE CTA */}
+          <div className="relative z-10 shrink-0 w-full sm:w-auto flex items-center">
+            <a
+              href={OFFICIAL_LINE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl bg-[#06C755] hover:bg-[#05b34c] text-white shadow-md hover:shadow-lg shadow-emerald-950/25 transition-all duration-200 active:scale-[0.98] border border-emerald-400/30 font-body-medium text-sm sm:text-base cursor-pointer"
+            >
+              <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <span className="material-symbols-outlined text-[17px] text-white">chat</span>
+              </div>
+              <span className="font-bold tracking-tight whitespace-nowrap">
+                {t('show.bannerCtaAction')}
+              </span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-black/15 text-white/95 shrink-0 border border-white/15 whitespace-nowrap">
+                {t('show.bannerCtaBadge')}
+              </span>
+            </a>
+          </div>
         </div>
 
         {/* SEO Footnote Reference Directory (Stitch Redesign) */}

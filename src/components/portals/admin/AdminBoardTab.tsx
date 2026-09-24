@@ -23,6 +23,8 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
       p.title.toLowerCase().includes(q) ||
       p.authorName.toLowerCase().includes(q) ||
       p.authorPhone.includes(q) ||
+      (p.authorWhatsApp || '').includes(q) ||
+      (p.authorWeChat || '').toLowerCase().includes(q) ||
       (p.detail || '').toLowerCase().includes(q)
     );
   });
@@ -80,6 +82,8 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
       authorName: formData.get('authorName') as string,
       authorPhone: formData.get('authorPhone') as string,
       authorLine: formData.get('authorLine') as string,
+      authorWhatsApp: (formData.get('authorWhatsApp') as string) || undefined,
+      authorWeChat: (formData.get('authorWeChat') as string) || undefined,
       vehicleLabel: (formData.get('vehicleLabel') as string) || undefined,
       detail: formData.get('detail') as string,
       isVerified: formData.get('isVerified') === 'true',
@@ -190,6 +194,8 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
               <div className="flex items-center justify-between text-xs pt-1">
                 <span className="font-mono text-ink font-bold">
                   โทร: {post.authorPhone} {post.authorLine ? `(LINE: ${post.authorLine})` : ''}
+                  {post.authorWhatsApp ? ` (WA: ${post.authorWhatsApp})` : ''}
+                  {post.authorWeChat ? ` (WeChat: ${post.authorWeChat})` : ''}
                 </span>
                 <span className="font-mono font-extrabold text-accent">
                   ฿{post.price.toLocaleString()} {post.priceNote ? `(${post.priceNote})` : ''}
@@ -271,6 +277,27 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                   <input
                     name="authorLine"
                     defaultValue={editingPost.authorLine}
+                    className="w-full p-2 rounded-xl bg-paper border border-rule text-ink font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-ink block mb-1">WhatsApp</label>
+                  <input
+                    name="authorWhatsApp"
+                    defaultValue={editingPost.authorWhatsApp || ''}
+                    placeholder="เช่น +66812345678"
+                    className="w-full p-2 rounded-xl bg-paper border border-rule text-ink font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-ink block mb-1">WeChat ID</label>
+                  <input
+                    name="authorWeChat"
+                    defaultValue={editingPost.authorWeChat || ''}
+                    placeholder="เช่น wechat_user"
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink font-mono"
                   />
                 </div>

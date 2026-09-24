@@ -233,6 +233,8 @@ export type Database = {
           author_name: string;
           author_phone: string;
           author_line: string;
+          author_whatsapp?: string | null;
+          author_wechat?: string | null;
           vehicle_label: string | null;
           detail: string;
           posted_at: string;
@@ -244,6 +246,7 @@ export type Database = {
           max_quotes?: number | null;
           quote_count?: number | null;
           accepted_quote_id?: string | null;
+          view_token?: string | null;
           created_at: string;
         };
         Insert: {
@@ -259,6 +262,8 @@ export type Database = {
           author_name: string;
           author_phone: string;
           author_line: string;
+          author_whatsapp?: string | null;
+          author_wechat?: string | null;
           vehicle_label?: string | null;
           detail: string;
           posted_at?: string;
@@ -270,6 +275,7 @@ export type Database = {
           max_quotes?: number | null;
           quote_count?: number | null;
           accepted_quote_id?: string | null;
+          view_token?: string | null;
           created_at?: string;
         };
         Update: {
@@ -285,6 +291,8 @@ export type Database = {
           author_name?: string;
           author_phone?: string;
           author_line?: string;
+          author_whatsapp?: string | null;
+          author_wechat?: string | null;
           vehicle_label?: string | null;
           detail?: string;
           posted_at?: string;
@@ -296,6 +304,7 @@ export type Database = {
           max_quotes?: number | null;
           quote_count?: number | null;
           accepted_quote_id?: string | null;
+          view_token?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -307,6 +316,7 @@ export type Database = {
           driver_name: string;
           driver_phone: string;
           driver_line: string | null;
+          driver_whatsapp?: string | null;
           vehicle_model: string;
           price: number;
           price_note: string | null;
@@ -319,6 +329,7 @@ export type Database = {
           driver_name: string;
           driver_phone: string;
           driver_line?: string | null;
+          driver_whatsapp?: string | null;
           vehicle_model: string;
           price: number;
           price_note?: string | null;
@@ -331,6 +342,7 @@ export type Database = {
           driver_name?: string;
           driver_phone?: string;
           driver_line?: string | null;
+          driver_whatsapp?: string | null;
           vehicle_model?: string;
           price?: number;
           price_note?: string | null;

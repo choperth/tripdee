@@ -151,7 +151,7 @@ export const POPULAR_ROUTES: TravelRoute[] = [
     highlight: 'จุดชมวิวสันเขา หมู่บ้านม้งหนองหอย และแปลงพืชเมืองหนาว',
     image: 'https://images.unsplash.com/photo-1770740098141-4db5fb079dd1?auto=format&fit=crop&w=800&q=80',
     estimatedPrice: '2,500 บ./วัน',
-    recommendedVehicle: 'รถตู้ VIP / SUV',
+    recommendedVehicle: 'รถตู้พร้อมคนขับ / SUV',
     regionCategory: 'north',
     distanceTime: 'หมู่บ้านม้งหนองหอย · เดินทางจากตัวเมืองเชียงใหม่ราว 40 นาที',
     regionBadge: 'ภาคเหนือ · เชียงใหม่',
@@ -169,7 +169,7 @@ export const POPULAR_ROUTES: TravelRoute[] = [
     highlight: 'จุดสูงสุดแดนสยาม พระมหาธาตุฯ น้ำตกวชิรธาร เส้นทางศึกษาธรรมชาติ',
     image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/Doi_inthanon_03.jpg/960px-Doi_inthanon_03.jpg',
     estimatedPrice: '2,800 บ./วัน',
-    recommendedVehicle: 'รถตู้ VIP เครื่องแรงชำนาญทาง',
+    recommendedVehicle: 'รถตู้พร้อมคนขับ เครื่องแรงชำนาญทาง',
     regionCategory: 'north',
     distanceTime: '106 km · 2.2 hrs สู่ยอดดอยสูงสุด',
     regionBadge: 'ภาคเหนือ · ดอยสูงสุด',
@@ -1279,6 +1279,7 @@ export interface BoardQuote {
   driverName: string;
   driverPhone: string;
   driverLine?: string;
+  driverWhatsApp?: string;
   vehicleModel: string;
   price: number;
   priceNote?: string;
@@ -1301,6 +1302,9 @@ export interface BoardPost {
   authorName: string;
   authorPhone: string;
   authorLine: string;
+  /** ช่องทางติดต่อสำหรับนักท่องเที่ยวต่างชาติ */
+  authorWhatsApp?: string;
+  authorWeChat?: string;
   vehicleLabel?: string;
   detail: string;
   postedAt: string;
@@ -1321,9 +1325,30 @@ export interface BoardPost {
   quoteCount?: number;
   /** รหัสใบเสนอราคาที่ลูกค้ายอมรับแล้ว */
   acceptedQuoteId?: string;
+  /** Magic Link Token สำหรับให้ลูกค้าเปิดดูใบเสนอราคาได้โดยไม่ต้องใส่รหัส PIN */
+  viewToken?: string;
 }
 
 export const BOARD_POSTS: BoardPost[] = [
+  {
+    id: 'b-intl',
+    type: 'request',
+    title: 'Van with English driver: Chiang Mai - Chiang Rai 3D2N (White/Blue Temple)',
+    zoneId: 'crossProvince',
+    date: '15-17 ต.ค. 69',
+    days: 3,
+    seats: 6,
+    price: 9500,
+    priceNote: 'งบรวมน้ำมันและทางด่วน',
+    authorName: 'David Lee (Singapore Family)',
+    authorPhone: '+65 9123 4567',
+    authorLine: '',
+    authorWhatsApp: '+6591234567',
+    authorWeChat: 'david_lee_sg',
+    detail: 'Family of 6 (4 adults, 2 kids) with 4 suitcases. Pickup at CNX Airport, tour White Temple & Golden Triangle. Driver with basic English preferred. Please contact via WhatsApp or WeChat.',
+    postedAt: '5 นาทีที่แล้ว',
+    isVerified: true,
+  },
   {
     id: 'b-1',
     type: 'request',

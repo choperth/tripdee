@@ -130,7 +130,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
   className = '',
   mode = 'range',
 }) => {
-  const { locale } = useLanguage();
+  const { locale, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isManualMode, setIsManualMode] = useState(false);
 
@@ -316,7 +316,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
             </span>
           ) : (
             <span className="text-ink-muted dark:text-slate-400 truncate text-xs sm:text-sm">
-              {placeholder || (locale === 'en' ? 'Select travel date (Day/Month/Year)...' : locale === 'zh' ? '选择出行日期...' : 'เลือกวันที่เดินทาง (วัน/เดือน/ปี)...')}
+              {placeholder || t('tdp.placeholder')}
             </span>
           )}
         </div>
@@ -327,7 +327,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
               type="button"
               onClick={handleClear}
               className="p-1 rounded-full text-ink-muted hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-              title="ล้างวันที่"
+              title={t('tdp.clearDate')}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -391,7 +391,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
                 type="button"
                 onClick={handlePrevMonth}
                 className="w-7 h-7 rounded-lg border border-border-subtle dark:border-slate-700 hover:bg-paper-surface-muted dark:hover:bg-slate-800 flex items-center justify-center text-ink-secondary dark:text-slate-300 transition-colors"
-                title="เดือนก่อนหน้า"
+                title={t('tdp.prevMonth')}
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -399,7 +399,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
                 type="button"
                 onClick={handleNextMonth}
                 className="w-7 h-7 rounded-lg border border-border-subtle dark:border-slate-700 hover:bg-paper-surface-muted dark:hover:bg-slate-800 flex items-center justify-center text-ink-secondary dark:text-slate-300 transition-colors"
-                title="เดือนถัดไป"
+                title={t('tdp.nextMonth')}
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -409,28 +409,28 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
           {/* Quick Date Presets Bar */}
           <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
             <span className="text-[11px] font-bold text-ink-muted dark:text-slate-400 flex items-center gap-1 mr-1">
-              <span>ด่วน:</span>
+              <span>{t('tdp.quick')}</span>
             </span>
             <button
               type="button"
               onClick={handleQuickToday}
               className="px-2.5 py-1 rounded-lg bg-paper-surface-muted dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 text-navy-deep dark:text-white font-medium text-[11px] transition-colors"
             >
-              วันนี้
+              {t('tdp.today')}
             </button>
             <button
               type="button"
               onClick={handleQuickTomorrow}
               className="px-2.5 py-1 rounded-lg bg-paper-surface-muted dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 text-navy-deep dark:text-white font-medium text-[11px] transition-colors"
             >
-              พรุ่งนี้
+              {t('tdp.tomorrow')}
             </button>
             <button
               type="button"
               onClick={handleQuickThisWeekend}
               className="px-2.5 py-1 rounded-lg bg-paper-surface-muted dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-slate-700 text-amber-700 dark:text-amber-400 font-medium text-[11px] transition-colors"
             >
-              สุดสัปดาห์นี้ (ส.-อา.)
+              {t('tdp.weekend')}
             </button>
           </div>
 
@@ -499,13 +499,13 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
           {isManualMode ? (
             <div className="pt-2 border-t border-border-subtle dark:border-slate-800 space-y-1.5">
               <label className="text-[11px] font-bold text-ink-muted dark:text-slate-400 block">
-                ✏️ แก้ไขข้อความวันที่ด้วยตนเอง:
+                {t('tdp.manualLabel')}
               </label>
               <input
                 type="text"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                placeholder="เช่น 13-15 เม.ย. 2569 (ช่วงสงกรานต์)"
+                placeholder={t('tdp.manualPh')}
                 className="w-full h-9 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-action focus:outline-none"
               />
             </div>
@@ -519,7 +519,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
               className="text-[11px] text-ink-muted dark:text-slate-400 hover:text-blue-action flex items-center gap-1 font-medium transition-colors"
             >
               <Edit3 className="w-3 h-3" />
-              <span>{isManualMode ? 'ซ่อนช่องพิมพ์เอง' : 'พิมพ์ข้อความเอง'}</span>
+              <span>{isManualMode ? t('tdp.manualHide') : t('tdp.manualShow')}</span>
             </button>
 
             <div className="flex items-center gap-2">
@@ -530,7 +530,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
                   className="px-2.5 py-1 rounded-lg text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-1 transition-colors"
                 >
                   <RotateCcw className="w-3 h-3" />
-                  <span>ล้างค่า</span>
+                  <span>{t('tdp.clearValue')}</span>
                 </button>
               )}
 
@@ -540,7 +540,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
                 className="px-3.5 py-1.5 rounded-xl bg-blue-action hover:bg-blue-action-hover text-white text-xs font-bold flex items-center gap-1 shadow-sm transition-all active:scale-[0.98]"
               >
                 <Check className="w-3.5 h-3.5" />
-                <span>เสร็จสิ้น</span>
+                <span>{t('tdp.done')}</span>
               </button>
             </div>
           </div>

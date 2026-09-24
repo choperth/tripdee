@@ -3,6 +3,7 @@
 import React, { memo } from 'react';
 import Image from 'next/image';
 import { Vehicle } from '@/data/mockData';
+import { vehicleTitle, vehicleLocation, vehicleAmenities } from '@/data/vehicleI18n';
 import { maskPhoneNumber, maskPlateNumber, getPublicDriverName } from '@/lib/privacy';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -53,7 +54,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
     trackCall({
       targetType: 'vehicle_card',
       targetId: vehicle.id,
-      targetTitle: vehicle.title,
+      targetTitle: title,
       phoneNumber: vehicle.driverPhone,
       driverName: vehicle.driverNickname,
     });
@@ -62,16 +63,19 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
   const isSelfDrive = vehicle.rentalType === 'self_drive' || (vehicle.type !== 'van' && vehicle.rentalType !== 'with_driver');
   const basePrice = vehicle.zoneRates?.city || (isSelfDrive ? 1200 : 1900);
   const publicName = getPublicDriverName(vehicle.driverName, vehicle.driverNickname);
-  const shortLocation = vehicle.location.split('/')[0].trim();
+  const title = vehicleTitle(vehicle, locale);
+  const location = vehicleLocation(vehicle, locale);
+  const amenities = vehicleAmenities(vehicle, locale);
+  const shortLocation = location.split('/')[0].trim();
 
   // Helper icons for amenities
   const getAmenityIcon = (text: string, index: number) => {
-    if (text.includes('เบาะ') || text.includes('ที่นั่ง')) return 'airline_seat_recline_extra';
-    if (text.includes('เกะ') || text.includes('TV') || text.includes('จอ')) return 'mic';
-    if (text.includes('WiFi') || text.includes('เน็ต')) return 'wifi';
-    if (text.includes('ชาร์จ') || text.includes('USB')) return 'power';
-    if (text.includes('สไลด์') || text.includes('ประตู')) return 'sensor_door';
-    if (text.includes('ฟอกอากาศ') || text.includes('แอร์')) return 'air';
+    if (text.includes('เบาะ') || text.includes('ที่นั่ง') || text.includes('seat') || text.includes('Seat')) return 'airline_seat_recline_extra';
+    if (text.includes('เกะ') || text.includes('TV') || text.includes('จอ') || text.includes('karaoke') || text.includes('Karaoke')) return 'mic';
+    if (text.includes('WiFi') || text.includes('เน็ต') || text.includes('Wi-Fi')) return 'wifi';
+    if (text.includes('ชาร์จ') || text.includes('USB') || text.includes('charg') || text.includes('Charg')) return 'power';
+    if (text.includes('สไลด์') || text.includes('ประตู') || text.includes('sliding') || text.includes('Sliding') || text.includes('door') || text.includes('Door')) return 'sensor_door';
+    if (text.includes('ฟอกอากาศ') || text.includes('แอร์') || text.includes('air') || text.includes('Air') || text.includes('A/C') || text.includes('climate')) return 'air';
     return index === 0 ? 'airline_seat_recline_extra' : index === 1 ? 'tv' : 'verified_user';
   };
 
@@ -84,11 +88,11 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
             type="button"
             onClick={() => onSelectDetail(vehicle)}
             className="w-full h-full relative block text-left"
-            aria-label={t('vehicle.detailAria', { title: vehicle.title })}
+            aria-label={t('vehicle.detailAria', { title })}
           >
             <Image
               src={vehicle.images[0]}
-              alt={vehicle.title}
+              alt={title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -160,7 +164,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                   {publicName}
                 </h3>
                 <p className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400 truncate">
-                  {vehicle.location}
+                  {location}
                 </p>
                 {/* Cute Direct Channel Badges */}
                 <div className="flex items-center gap-1 mt-1.5 flex-wrap">
@@ -243,7 +247,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
               onClick={() => onSelectDetail(vehicle)}
               className="text-left cursor-pointer hover:underline"
             >
-              {vehicle.title}
+              {title}
             </button>
           </h4>
 
@@ -300,7 +304,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
 
           {/* Amenity Spec Checklist (Stitch 3-bullet block) */}
           <ul className="space-y-1 text-body-subtext text-ink-secondary dark:text-slate-300 bg-paper-surface-muted/60 dark:bg-slate-800/60 p-space-xs rounded-xl">
-            {vehicle.amenities.slice(0, 3).map((item, idx) => {
+            {amenities.slice(0, 3).map((item, idx) => {
               const iconName = getAmenityIcon(item, idx);
               return (
                 <li key={item} className="flex items-center gap-1.5 truncate">

@@ -252,7 +252,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
         <div className="flex items-center justify-between p-2 rounded-xl bg-blue-50/70 dark:bg-slate-800/80 border border-blue-200/60 dark:border-slate-700 text-xs">
           <div className="flex items-center gap-1.5 flex-wrap">
             <Filter className="w-3.5 h-3.5 text-blue-action shrink-0" />
-            <span className="text-ink-secondary dark:text-slate-300">ตัวกรอง:</span>
+            <span className="text-ink-secondary dark:text-slate-300">{t('review.filterLabel')}</span>
             {selectedStarFilter !== null && (
               <span className="bg-blue-action text-white px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
                 <span>{selectedStarFilter} ดาว</span>
@@ -260,7 +260,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
                   type="button"
                   onClick={() => setSelectedStarFilter(null)}
                   className="hover:opacity-80"
-                  aria-label="ล้างตัวกรองดาว"
+                  aria-label={t('review.clearStars')}
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -273,7 +273,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
                   type="button"
                   onClick={() => setSelectedTagFilter(null)}
                   className="hover:opacity-80"
-                  aria-label="ล้างตัวกรองแท็ก"
+                  aria-label={t('review.clearTags')}
                 >
                   <X className="w-3 h-3" />
                 </button>

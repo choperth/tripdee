@@ -298,14 +298,14 @@ export default function HomePage() {
         isDemo ? (
           <aside
             role="status"
-            aria-label="Demo Mode Notice"
+            aria-label={t('demo.mockAria')}
             suppressHydrationWarning
             className="relative z-30 bg-amber-500/10 dark:bg-amber-500/20 border-b border-amber-500/25 px-4 py-2 text-xs font-semibold text-amber-900 dark:text-amber-200 transition-all"
           >
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
                 <p className="truncate text-[11px] sm:text-xs">
-                  <span className="font-extrabold sm:hidden">โหมดตัวอย่าง:</span>
+                  <span className="font-extrabold sm:hidden">{t('demo.mockShort')}</span>
                   <span className="font-extrabold hidden sm:inline">{t('demo.bannerMockTitle')}</span>{' '}
                   <span className="hidden xs:inline">{t('demo.bannerMockDesc')}</span>
                 </p>
@@ -314,7 +314,7 @@ export default function HomePage() {
                 <a
                   href="?demo=0"
                   className="underline hover:text-amber-950 dark:hover:text-white transition-colors text-[11px]"
-                  title="สลับไปดูข้อมูลจริงจากฐานข้อมูล"
+                  title={t('demo.mockLinkTitle')}
                 >
                   {t('demo.bannerMockCta')}
                 </a>
@@ -322,7 +322,7 @@ export default function HomePage() {
                   type="button"
                   onClick={() => setDemoBannerDismissed(true)}
                   className="rounded p-0.5 hover:bg-amber-500/20 text-amber-900 dark:text-amber-200 text-xs px-1.5"
-                  aria-label="ปิดการแจ้งเตือน"
+                  aria-label={t('demo.closeAria')}
                 >
                   ✕
                 </button>
@@ -332,14 +332,14 @@ export default function HomePage() {
         ) : (
           <aside
             role="status"
-            aria-label="Production Mode Notice"
+            aria-label={t('demo.realAria')}
             suppressHydrationWarning
             className="relative z-30 bg-emerald-500/10 dark:bg-emerald-500/20 border-b border-emerald-500/25 px-4 py-2 text-xs font-semibold text-emerald-900 dark:text-emerald-200 transition-all"
           >
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
                 <p className="truncate text-[11px] sm:text-xs">
-                  <span className="font-extrabold sm:hidden">โหมดข้อมูลจริง:</span>
+                  <span className="font-extrabold sm:hidden">{t('demo.realShort')}</span>
                   <span className="font-extrabold hidden sm:inline">{t('demo.bannerRealTitle')}</span>{' '}
                   <span className="hidden xs:inline">{t('demo.bannerRealDesc')}</span>
                 </p>
@@ -348,7 +348,7 @@ export default function HomePage() {
                 <a
                   href="?demo=1"
                   className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-bold text-white hover:bg-emerald-700 transition-colors shadow-xs"
-                  title="สลับไปโหมดตัวอย่าง Mock Data เพื่อนำเสนองาน"
+                  title={t('demo.realLinkTitle')}
                 >
                   {t('demo.bannerRealCta')}
                 </a>
@@ -356,7 +356,7 @@ export default function HomePage() {
                   type="button"
                   onClick={() => setDemoBannerDismissed(true)}
                   className="rounded p-0.5 hover:bg-emerald-500/20 text-emerald-900 dark:text-emerald-200 text-xs px-1.5"
-                  aria-label="ปิดการแจ้งเตือน"
+                  aria-label={t('demo.closeAria')}
                 >
                   ✕
                 </button>

@@ -104,7 +104,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       if (match) {
         loginWithCredentials(
           'driver',
-          match.driverNickname || match.driverName || 'คนขับพาร์ตเนอร์',
+          match.driverNickname || match.driverName || t('auth.partnerName'),
           match.driverPhone || driverPhone,
           {
             id: match.id,
@@ -133,13 +133,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         if (leadMatch) {
           loginWithCredentials(
             'driver',
-            leadMatch.nickname || leadMatch.driverName || 'คนขับพาร์ตเนอร์',
+            leadMatch.nickname || leadMatch.driverName || t('auth.partnerName'),
             leadMatch.phone || driverPhone,
             {
               id: leadMatch.id,
               driverNickname: leadMatch.nickname || leadMatch.driverName,
-              vehicleTitle: leadMatch.vehicleModel || 'รถพาร์ตเนอร์ TripDee',
-              vehiclePlate: leadMatch.plateNumber || 'รอตรวจสอบข้อมูลป้าย',
+              vehicleTitle: leadMatch.vehicleModel || t('auth.partnerVehicle'),
+              vehiclePlate: leadMatch.plateNumber || t('auth.platePending'),
               seats: Number(leadMatch.seats) || 9,
               isAvailable: true,
               verificationStatus: leadMatch.status === 'verified' ? 'verified' : 'pending',
@@ -153,7 +153,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       // 3. Neither found
       setDriverError(t('auth.driverNotFound'));
     } catch {
-      setDriverError('เกิดข้อผิดพลาดในการตรวจสอบข้อมูล กรุณาลองใหม่อีกครั้ง');
+      setDriverError(t('auth.driverVerifyError'));
     } finally {
       setIsCheckingDriver(false);
     }
@@ -175,7 +175,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     const targetPin = process.env.NEXT_PUBLIC_ADMIN_PIN || 'tripdee2026';
     if (adminPassword.trim() === targetPin) {
       setAdminError('');
-      loginWithCredentials('admin', 'ผู้ดูแลระบบ TripDee', 'admin@tripdee.co', {
+      loginWithCredentials('admin', t('auth.demoAdminName'), 'admin@tripdee.co', {
         id: 'adm-real',
       });
       onClose();

@@ -25,6 +25,13 @@ import {
 } from 'lucide-react';
 import { DriverPushBell } from '@/components/notifications/DriverPushBell';
 import { TravelDatePicker } from '@/components/TravelDatePicker';
+import { formatWhatsAppLink } from '@/lib/contactUtils';
+import {
+  saveMyBoardPost,
+  getMyBoardPostToken,
+  isMyBoardPost,
+  buildMagicLink,
+} from '@/lib/boardStorage';
 
 type BoardFilter = 'all' | BoardPostType | 'corporate';
 
@@ -41,6 +48,8 @@ interface PostFormState {
   authorName: string;
   authorPhone: string;
   authorLine: string;
+  authorWhatsApp: string;
+  authorWeChat: string;
   vehicleLabel: string;
   detail: string;
   pin: string;
@@ -60,6 +69,8 @@ const EMPTY_FORM: PostFormState = {
   authorName: '',
   authorPhone: '',
   authorLine: '',
+  authorWhatsApp: '',
+  authorWeChat: '',
   vehicleLabel: '',
   detail: '',
   pin: '',
@@ -100,6 +111,7 @@ export const TripBoard: React.FC = () => {
     driverName: '',
     driverPhone: '',
     driverLine: '',
+    driverWhatsApp: '',
     vehicleModel: '',
     price: '',
     priceNote: 'รวมน้ำมันแล้ว',
@@ -109,6 +121,17 @@ export const TripBoard: React.FC = () => {
   const [quoteSubmitError, setQuoteSubmitError] = useState('');
   const [quoteSubmitSuccess, setQuoteSubmitSuccess] = useState('');
 
+  // WeChat copy feedback state
+  const [copiedWeChatId, setCopiedWeChatId] = useState<string | null>(null);
+  const handleCopyWeChat = (wechatId: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(wechatId).then(() => {
+        setCopiedWeChatId(wechatId);
+        setTimeout(() => setCopiedWeChatId(null), 2500);
+      });
+    }
+  };
+
   // Customer View Quotes Modal State
   const [viewQuotesPost, setViewQuotesPost] = useState<BoardPost | null>(null);
   const [customerQuotesPin, setCustomerQuotesPin] = useState('');
@@ -117,6 +140,17 @@ export const TripBoard: React.FC = () => {
   const [quotesFetchError, setQuotesFetchError] = useState('');
   const [acceptingQuoteId, setAcceptingQuoteId] = useState<string | null>(null);
   const [acceptSuccessMessage, setAcceptSuccessMessage] = useState('');
+
+  // Magic Link / Ownership States
+  const [createdMagicLinkPost, setCreatedMagicLinkPost] = useState<{
+    id: string;
+    title: string;
+    token: string;
+    link: string;
+  } | null>(null);
+  const [copiedMagicLink, setCopiedMagicLink] = useState(false);
+  const [customerQuotesToken, setCustomerQuotesToken] = useState('');
+  const [isQuotesUnlockedWithToken, setIsQuotesUnlockedWithToken] = useState(false);
 
   // Toggle to show/hide past expired/closed posts
   const [showClosedPosts, setShowClosedPosts] = useState<boolean>(false);
@@ -140,6 +174,20 @@ export const TripBoard: React.FC = () => {
     window.addEventListener('tripdee-board-updated', handleUpdate);
     return () => window.removeEventListener('tripdee-board-updated', handleUpdate);
   }, [loadBoardPosts]);
+
+  // Auto-open quotes modal if URL has ?quotePost=<id>&token=<token>
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const quotePostId = params.get('quotePost');
+    const token = params.get('token') || (quotePostId ? getMyBoardPostToken(quotePostId) : undefined);
+    if (quotePostId && posts.length > 0) {
+      const found = posts.find((p) => p.id === quotePostId);
+      if (found) {
+        handleOpenCustomerQuotes(found, token || undefined);
+      }
+    }
+  }, [posts]);
 
   // Clean active posts respecting demo mode
   const activePosts = useMemo(() => {
@@ -209,6 +257,7 @@ export const TripBoard: React.FC = () => {
     const price = isNegotiable ? 0 : Math.max(0, Math.round(Number(form.price) || 0));
     if (!isNegotiable && price <= 0) return;
 
+    const generatedToken = `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
     const post: BoardPost = {
       id: `b-${Date.now().toString().slice(-6)}`,
       type: form.type === 'share' ? 'share' : 'request',
@@ -223,6 +272,8 @@ export const TripBoard: React.FC = () => {
       authorName: form.authorName.trim(),
       authorPhone: form.authorPhone.trim(),
       authorLine: form.authorLine.trim(),
+      authorWhatsApp: form.authorWhatsApp.trim() || undefined,
+      authorWeChat: form.authorWeChat.trim() || undefined,
       vehicleLabel: form.type === 'offer' && form.vehicleLabel.trim() ? form.vehicleLabel.trim() : undefined,
       detail: form.detail.trim(),
       pin: form.pin.trim() || undefined,
@@ -230,6 +281,7 @@ export const TripBoard: React.FC = () => {
       isNegotiable,
       maxQuotes: 3,
       quoteCount: 0,
+      viewToken: generatedToken,
     };
     setPosts((prev) => [post, ...prev]);
     setForm(EMPTY_FORM);
@@ -237,18 +289,36 @@ export const TripBoard: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await fetch('/api/board', {
+      const res = await fetch('/api/board', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...post,
+          viewToken: generatedToken,
           hp_website: hpWebsite,
           _hp_timestamp: formMountedAt,
         }),
       });
+      const data = await res.json();
+      const serverPost = data?.post || post;
+      const finalToken = serverPost.viewToken || generatedToken;
+      saveMyBoardPost(serverPost.id, finalToken, serverPost.pin, serverPost.title);
+      setCreatedMagicLinkPost({
+        id: serverPost.id,
+        title: serverPost.title,
+        token: finalToken,
+        link: buildMagicLink(serverPost.id, finalToken),
+      });
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
     } catch (err) {
       console.debug('Failed to persist post to server/Supabase:', err);
+      saveMyBoardPost(post.id, generatedToken, post.pin, post.title);
+      setCreatedMagicLinkPost({
+        id: post.id,
+        title: post.title,
+        token: generatedToken,
+        link: buildMagicLink(post.id, generatedToken),
+      });
     } finally {
       setIsSubmitting(false);
       setHpWebsite('');
@@ -272,7 +342,7 @@ export const TripBoard: React.FC = () => {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setCloseError(data.error || 'PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+        setCloseError(data.error || t('board.errPin'));
         return;
       }
       setCloseSuccess('ปิดประกาศเรียบร้อยแล้ว');
@@ -284,7 +354,7 @@ export const TripBoard: React.FC = () => {
         setCloseSuccess('');
       }, 1200);
     } catch {
-      setCloseError('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่');
+      setCloseError(t('board.errConnect'));
     } finally {
       setIsClosing(false);
     }
@@ -298,6 +368,7 @@ export const TripBoard: React.FC = () => {
       driverName: '',
       driverPhone: '',
       driverLine: '',
+      driverWhatsApp: '',
       vehicleModel: '',
       price: '',
       priceNote: 'รวมน้ำมันแล้ว',
@@ -322,6 +393,7 @@ export const TripBoard: React.FC = () => {
           driverName: driverQuoteForm.driverName.trim(),
           driverPhone: driverQuoteForm.driverPhone.trim(),
           driverLine: driverQuoteForm.driverLine.trim(),
+          driverWhatsApp: driverQuoteForm.driverWhatsApp.trim() || undefined,
           vehicleModel: driverQuoteForm.vehicleModel.trim(),
           price: Number(driverQuoteForm.price) || 0,
           priceNote: driverQuoteForm.priceNote.trim(),
@@ -347,39 +419,51 @@ export const TripBoard: React.FC = () => {
         setQuoteSubmitSuccess('');
       }, 1500);
     } catch {
-      setQuoteSubmitError('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง');
+      setQuoteSubmitError(t('board.errConnect'));
     } finally {
       setIsSubmittingQuote(false);
     }
   };
 
-  const handleOpenCustomerQuotes = (post: BoardPost) => {
+  const handleOpenCustomerQuotes = (post: BoardPost, directToken?: string) => {
     setViewQuotesPost(post);
     setCustomerQuotesPin('');
     setFetchedQuotes(null);
     setQuotesFetchError('');
     setAcceptSuccessMessage('');
 
-    if (!post.pin) {
+    const token = directToken || getMyBoardPostToken(post.id) || post.viewToken || '';
+    setCustomerQuotesToken(token);
+    setIsQuotesUnlockedWithToken(Boolean(token));
+
+    if (token) {
+      fetchQuotesForPost(post.id, '', token);
+    } else if (!post.pin) {
       fetchQuotesForPost(post.id, '');
     }
   };
 
-  const fetchQuotesForPost = async (postId: string, pin: string) => {
+  const fetchQuotesForPost = async (postId: string, pin: string, token?: string) => {
     setIsLoadingQuotes(true);
     setQuotesFetchError('');
     try {
+      const activeToken = token || customerQuotesToken;
+      const tokenParam = activeToken ? `&token=${encodeURIComponent(activeToken)}` : '';
+      const pinParam = pin ? `&pin=${encodeURIComponent(pin)}` : '';
       const res = await fetch(
-        `/api/board?action=get_quotes&postId=${encodeURIComponent(postId)}&pin=${encodeURIComponent(pin)}`
+        `/api/board?action=get_quotes&postId=${encodeURIComponent(postId)}${pinParam}${tokenParam}`
       );
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setQuotesFetchError(data.error || 'รหัส PIN หรือเลขท้ายเบอร์ไม่ถูกต้อง');
+        setQuotesFetchError(data.error || 'รหัส PIN หรือลิงก์การเข้าถึงไม่ถูกต้อง');
         return;
       }
       setFetchedQuotes(data.quotes || []);
+      if (activeToken) {
+        setIsQuotesUnlockedWithToken(true);
+      }
     } catch {
-      setQuotesFetchError('ไม่สามารถดึงข้อมูลข้อเสนอได้ กรุณาลองใหม่อีกครั้ง');
+      setQuotesFetchError(t('board.errQuotes'));
     } finally {
       setIsLoadingQuotes(false);
     }
@@ -396,19 +480,20 @@ export const TripBoard: React.FC = () => {
           action: 'accept_quote',
           postId: viewQuotesPost.id,
           quoteId: quote.id,
-          pin: customerQuotesPin,
+          pin: customerQuotesPin || undefined,
+          token: customerQuotesToken || undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        alert(data.error || 'เกิดข้อผิดพลาดในการเลือกข้อเสนอ');
+        alert(data.error || t('board.errSelectOffer'));
         return;
       }
       setAcceptSuccessMessage(`คุณได้เลือกข้อเสนอของ ${quote.driverName} เรียบร้อยแล้ว! ปิดรับงานในบอร์ดอัตโนมัติ`);
       setPosts((prev) => prev.filter((p) => p.id !== viewQuotesPost.id));
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
     } catch {
-      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+      alert(t('board.errNetwork'));
     } finally {
       setAcceptingQuoteId(null);
     }
@@ -737,9 +822,22 @@ export const TripBoard: React.FC = () => {
                         </span>
                       )}
 
+                      {isMyBoardPost(post.id) && (
+                        <span className="px-space-xs py-space-2xs rounded bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-bold flex items-center gap-1">
+                          <span>{t('board.myPostBadge')}</span>
+                        </span>
+                      )}
+
                       {post.category === 'corporate' && (
                         <span className="px-space-xs py-space-2xs rounded bg-amber-accent/20 text-amber-accent font-bold">
                           🏢 {t('board.badgeCorp')}
+                        </span>
+                      )}
+
+                      {(post.authorWhatsApp || post.authorWeChat) && (
+                        <span className="px-space-xs py-space-2xs rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                          <span>🌏</span>
+                          <span>{post.authorWhatsApp ? 'WhatsApp' : ''}{post.authorWhatsApp && post.authorWeChat ? ' / ' : ''}{post.authorWeChat ? 'WeChat' : ''}</span>
                         </span>
                       )}
 
@@ -853,7 +951,11 @@ export const TripBoard: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => handleOpenCustomerQuotes(post)}
-                              className="px-space-sm py-space-xs bg-paper-surface hover:bg-paper-surface-muted text-navy-deep dark:text-white border border-border-subtle dark:border-slate-700 rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-xs transition-all text-xs whitespace-nowrap"
+                              className={`px-space-sm py-space-xs ${
+                                isMyBoardPost(post.id)
+                                  ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 font-bold'
+                                  : 'bg-paper-surface hover:bg-paper-surface-muted text-navy-deep dark:text-white border-border-subtle dark:border-slate-700'
+                              } border rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-xs transition-all text-xs whitespace-nowrap`}
                               title={t('board.viewQuotesTip')}
                             >
                               <span className="material-symbols-outlined text-[15px] text-blue-action">visibility</span>
@@ -927,6 +1029,33 @@ export const TripBoard: React.FC = () => {
                                 <span className="material-symbols-outlined text-[16px]">chat</span>
                                 <span>{t('board.lineChat')}</span>
                               </a>
+                              {post.authorWhatsApp && (
+                                <a
+                                  href={formatWhatsAppLink(post.authorWhatsApp, `Hello ${post.authorName}, I saw your trip request "${post.title}" on TripDee.`)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-space-md py-space-xs bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
+                                  title="Chat on WhatsApp"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]">forum</span>
+                                  <span>{t('board.chatWhatsApp')}</span>
+                                </a>
+                              )}
+                              {post.authorWeChat && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyWeChat(post.authorWeChat!)}
+                                  className="px-space-sm py-space-xs bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-body-medium text-xs sm:text-sm flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
+                                  title={post.authorWeChat}
+                                >
+                                  <span className="material-symbols-outlined text-[15px]">chat_bubble</span>
+                                  <span>
+                                    {copiedWeChatId === post.authorWeChat
+                                      ? t('board.copiedWeChat')
+                                      : `WeChat: ${post.authorWeChat}`}
+                                  </span>
+                                </button>
+                              )}
                             </>
                           )}
                         </div>
@@ -1222,6 +1351,60 @@ export const TripBoard: React.FC = () => {
                 </div>
               </div>
 
+              {/* International Contact Section (WhatsApp & WeChat) */}
+              <div className="p-3.5 bg-paper-surface-muted/60 dark:bg-slate-800/60 rounded-2xl border border-border-subtle dark:border-slate-700/60 space-y-3">
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-navy-deep dark:text-blue-300">
+                    <span className="material-symbols-outlined text-[16px] text-emerald-600">public</span>
+                    <span>{t('board.intlContact')}</span>
+                  </div>
+                  <p className="text-[11px] text-ink-muted dark:text-slate-400 mt-0.5">
+                    {t('board.intlContactDesc')}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label htmlFor="post-author-whatsapp" className="font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider">
+                        WhatsApp
+                      </label>
+                      {form.authorPhone && form.authorWhatsApp !== form.authorPhone && (
+                        <button
+                          type="button"
+                          onClick={() => set({ authorWhatsApp: form.authorPhone })}
+                          className="text-[10px] text-blue-action hover:underline font-medium"
+                        >
+                          {t('board.sameAsPhone')}
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      id="post-author-whatsapp"
+                      type="tel"
+                      value={form.authorWhatsApp}
+                      onChange={(e) => set({ authorWhatsApp: e.target.value })}
+                      placeholder={t('board.fWhatsAppPh')}
+                      className="w-full h-11 px-3 bg-paper-surface dark:bg-slate-900 dark:text-white rounded-xl text-body-base font-body-base border border-border-subtle/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="post-author-wechat" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                      WeChat ID
+                    </label>
+                    <input
+                      id="post-author-wechat"
+                      type="text"
+                      value={form.authorWeChat}
+                      onChange={(e) => set({ authorWeChat: e.target.value })}
+                      placeholder={t('board.fWeChatPh')}
+                      className="w-full h-11 px-3 bg-paper-surface dark:bg-slate-900 dark:text-white rounded-xl text-body-base font-body-base border border-border-subtle/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-space-sm">
                 <div>
                   <label htmlFor="post-author-line" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
@@ -1389,21 +1572,21 @@ export const TripBoard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-space-sm">
-                <div>
-                  <label className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
-                    {t('board.qVehicle')}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={driverQuoteForm.vehicleModel}
-                    onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, vehicleModel: e.target.value }))}
-                    placeholder={t('board.qVehiclePh')}
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
+              <div>
+                <label className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                  {t('board.qVehicle')}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={driverQuoteForm.vehicleModel}
+                  onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, vehicleModel: e.target.value }))}
+                  placeholder={t('board.qVehiclePh')}
+                  className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
 
+              <div className="grid grid-cols-2 gap-space-sm">
                 <div>
                   <label className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
                     {t('board.fLine')}
@@ -1413,6 +1596,19 @@ export const TripBoard: React.FC = () => {
                     value={driverQuoteForm.driverLine}
                     onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, driverLine: e.target.value }))}
                     placeholder={t('board.fLinePh')}
+                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                    WhatsApp (ถ้ามี)
+                  </label>
+                  <input
+                    type="tel"
+                    value={driverQuoteForm.driverWhatsApp}
+                    onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, driverWhatsApp: e.target.value }))}
+                    placeholder="เช่น 081-xxx-xxxx"
                     className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
@@ -1604,12 +1800,47 @@ export const TripBoard: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-space-sm">
+                {/* Magic Link / Ownership Banner */}
+                {customerQuotesToken && (
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-blue-900 dark:text-blue-200">
+                      <span className="material-symbols-outlined text-blue-600 text-[18px]">link</span>
+                      <span>{t('board.magicBannerHint')}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const link = buildMagicLink(viewQuotesPost.id, customerQuotesToken);
+                        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                          navigator.clipboard.writeText(link);
+                        }
+                        setCopiedMagicLink(true);
+                        setTimeout(() => setCopiedMagicLink(false), 2000);
+                      }}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center gap-1 shrink-0 transition-all shadow-xs"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">
+                        {copiedMagicLink ? 'check' : 'content_copy'}
+                      </span>
+                      <span>{copiedMagicLink ? t('board.copiedMagicLink') : t('board.copyMagicLink')}</span>
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between text-xs text-ink-muted dark:text-slate-400 px-1">
                   <span>{t('board.quotesGot', { n: fetchedQuotes?.length || 0, m: 3 })}</span>
-                  <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">shield</span>
-                    {t('board.directOnly')}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {isQuotesUnlockedWithToken && (
+                      <span className="text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-0.5">
+                        <span className="material-symbols-outlined text-[13px]">key</span>
+                        {t('board.autoUnlockedTip')}
+                      </span>
+                    )}
+                    <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">shield</span>
+                      {t('board.directOnly')}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -1669,6 +1900,17 @@ export const TripBoard: React.FC = () => {
                               <span>{t('board.lineChat')}</span>
                             </a>
                           )}
+                          {quote.driverWhatsApp && (
+                            <a
+                              href={formatWhatsAppLink(quote.driverWhatsApp, `Hello ${quote.driverName}, I saw your quote for my trip on TripDee.`)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-lg text-xs font-body-medium flex items-center gap-1 transition-all"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">forum</span>
+                              <span>WhatsApp</span>
+                            </a>
+                          )}
                         </div>
 
                         <button
@@ -1690,6 +1932,72 @@ export const TripBoard: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 8. POST CREATED / MAGIC LINK SUCCESS MODAL */}
+      {createdMagicLinkPost && (
+        <div className="fixed inset-0 z-500 flex items-center justify-center p-4 bg-navy-deep/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-paper-elevated dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-border-subtle dark:border-slate-800 space-y-4 text-center">
+            <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center shadow-xs">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="font-headline-md text-headline-md text-navy-deep dark:text-white font-bold">
+                {t('board.magicLinkTitle')}
+              </h3>
+              <p className="text-body-subtext text-ink-secondary dark:text-slate-300 mt-1">
+                {t('board.magicLinkDesc')}
+              </p>
+            </div>
+
+            <div className="p-3 bg-paper-surface-muted dark:bg-slate-800 rounded-xl border border-border-subtle dark:border-slate-700 flex items-center justify-between gap-2">
+              <div className="text-left font-mono text-xs text-ink-primary dark:text-slate-200 truncate flex-1">
+                {createdMagicLinkPost.link}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                    navigator.clipboard.writeText(createdMagicLinkPost.link);
+                  }
+                  setCopiedMagicLink(true);
+                  setTimeout(() => setCopiedMagicLink(false), 2000);
+                }}
+                className="px-3 py-1.5 bg-blue-action hover:bg-blue-action-hover text-white rounded-lg text-xs font-bold flex items-center gap-1 shrink-0 transition-all shadow-xs"
+              >
+                <span className="material-symbols-outlined text-[14px]">
+                  {copiedMagicLink ? 'check' : 'content_copy'}
+                </span>
+                <span>{copiedMagicLink ? t('board.copiedMagicLink') : t('board.copyMagicLink')}</span>
+              </button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const foundPost = posts.find((p) => p.id === createdMagicLinkPost.id);
+                  const token = createdMagicLinkPost.token;
+                  setCreatedMagicLinkPost(null);
+                  if (foundPost) {
+                    handleOpenCustomerQuotes(foundPost, token);
+                  }
+                }}
+                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1 shadow-sm transition-all"
+              >
+                <span className="material-symbols-outlined text-[16px]">visibility</span>
+                <span>{t('board.viewMyQuotesBtn')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCreatedMagicLinkPost(null)}
+                className="px-4 py-2.5 bg-paper-surface hover:bg-paper-surface-muted text-ink-secondary dark:text-slate-300 rounded-xl font-medium text-sm border border-border-subtle dark:border-slate-700 transition-all"
+              >
+                {t('auth.close')}
+              </button>
+            </div>
           </div>
         </div>
       )}

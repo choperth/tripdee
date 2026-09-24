@@ -57,7 +57,7 @@ export const Hero: React.FC<HeroProps> = ({
     } else if (type === 'massage') {
       setSelectedSeats('9');
       // Data keyword: vehicle data is in Thai, so the filter value stays Thai in every locale.
-      setSearchKeyword('เบาะนวด');
+      setSearchKeyword(t('hero.quickMassage'));
     } else if (type === 'majesty') {
       setSearchKeyword('Majesty');
     } else if (type === 'tax') {
@@ -394,11 +394,11 @@ export const Hero: React.FC<HeroProps> = ({
             }
           }}
           className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-border-subtle dark:border-slate-800 group cursor-pointer bg-navy-deep transition-transform duration-200 active:scale-[0.99]"
-          title="TripDee - เดินทางทั่วไทย กับคนขับมืออาชีพ จองตรงกับคนขับ"
+          title={t('hero.imageTitle')}
         >
           <Image
             src="/hero-banner.png"
-            alt="TripDee - เดินทางทั่วไทย กับคนขับมืออาชีพ จองตรงกับคนขับ"
+            alt={t('hero.imageAlt')}
             width={1024}
             height={381}
             priority

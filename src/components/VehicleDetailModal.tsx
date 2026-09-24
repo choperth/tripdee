@@ -4,6 +4,12 @@ import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { Vehicle, STANDARD_TERMS, SPONSORS } from '@/data/mockData';
+import {
+  vehicleTitle,
+  vehicleLocation,
+  vehicleAmenities,
+  vehicleDescription,
+} from '@/data/vehicleI18n';
 import { maskPhoneNumber, maskPlateNumber, getPublicDriverName } from '@/lib/privacy';
 import {
   X,
@@ -75,7 +81,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
     trackCall({
       targetType: 'vehicle_detail',
       targetId: vehicle.id,
-      targetTitle: vehicle.title,
+      targetTitle: vehicleTitle(vehicle, locale),
       phoneNumber: vehicle.driverPhone,
       driverName: vehicle.driverNickname,
     });
@@ -144,7 +150,11 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
 
   const basePrice = vehicle.zoneRates?.city || (isSelfDrive ? 1200 : 1900);
   const publicName = getPublicDriverName(vehicle.driverName, vehicle.driverNickname);
-  const shortLocation = vehicle.location.split('/')[0].trim();
+  const title = vehicleTitle(vehicle, locale);
+  const location = vehicleLocation(vehicle, locale);
+  const amenities = vehicleAmenities(vehicle, locale);
+  const description = vehicleDescription(vehicle, locale);
+  const shortLocation = location.split('/')[0].trim();
   const galleryImages =
     vehicle.images && vehicle.images.length > 0
       ? vehicle.images
@@ -159,7 +169,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label={vehicle.title}
+        aria-label={title}
         onClick={(e) => e.stopPropagation()}
         className="relative flex flex-col w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-3xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 shadow-2xl text-ink-primary dark:text-slate-100"
       >
@@ -226,7 +236,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
               </div>
 
               <h1 className="font-headline-xl text-headline-xl text-navy-deep dark:text-white tracking-tight">
-                {vehicle.title}
+                {title}
               </h1>
 
               <div className="flex items-center flex-wrap gap-space-md text-body-subtext font-body-subtext text-ink-secondary dark:text-slate-300 mt-space-2xs">
@@ -251,7 +261,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                   <span className="material-symbols-outlined text-[16px] text-ink-muted">
                     pin_drop
                   </span>
-                  <span>{t('detail.basedAt')} {vehicle.location}</span>
+                  <span>{t('detail.basedAt')} {location}</span>
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-space-2xs text-verified-emerald">
@@ -266,7 +276,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                 type="button"
                 onClick={() => setShowECardModal(true)}
                 className="inline-flex items-center gap-space-2xs px-space-md py-space-xs bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant rounded-xl font-body-medium text-body-medium transition-all cursor-pointer"
-                title="นามบัตรดิจิทัล & QR Code"
+                title={t('vdm.ecardTitle')}
               >
                 <QrCode className="w-4 h-4 text-amber-500" />
                 <span>{t('ecard.btn')}</span>
@@ -300,7 +310,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
             <div className="col-span-2 md:col-span-2 md:row-span-2 relative h-56 sm:h-64 md:h-[380px] bg-navy-deep group overflow-hidden">
               <Image
                 src={galleryImages[0]}
-                alt={vehicle.title}
+                alt={title}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -419,12 +429,12 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                   <div className="p-space-sm bg-paper-elevated dark:bg-slate-900 rounded-xl flex flex-col gap-1 border border-border-subtle/70 dark:border-slate-800">
                     <span className="material-symbols-outlined text-blue-action text-[22px]">local_gas_station</span>
                     <span className="text-ink-muted dark:text-slate-400 font-body-subtext">{t('detail.fuelLabel')}</span>
-                    <span className="text-navy-deep dark:text-white font-title-card">ดีเซล B7 / B10</span>
+                    <span className="text-navy-deep dark:text-white font-title-card">{t('vdm.diesel')}</span>
                   </div>
                 </div>
 
                 <p className="font-body-base text-body-base text-ink-secondary dark:text-slate-300 leading-relaxed pt-1">
-                  {vehicle.description}
+                  {description}
                 </p>
               </section>
 
@@ -520,7 +530,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                   {t('detail.amenities')}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-xs">
-                  {vehicle.amenities.map((item) => (
+                  {amenities.map((item) => (
                     <div
                       key={item}
                       className="p-space-xs px-space-sm rounded-xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle/70 dark:border-slate-800 flex items-center gap-space-xs text-body-base"
@@ -554,7 +564,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                         <td className="p-space-sm font-bold text-navy-deep dark:text-white">
                           {t('detail.zoneLine', { no: 1, label: t('zone.city.label') })}
                         </td>
-                        <td className="p-space-sm text-ink-secondary dark:text-slate-400">ตัวเมือง, สนามบิน, วัดพระธาตุดอยสุเทพ</td>
+                        <td className="p-space-sm text-ink-secondary dark:text-slate-400">{t('vdm.routeCity')}</td>
                         <td className="p-space-sm text-right font-bold text-blue-action">
                           ฿{(vehicle.zoneRates?.city || 1900).toLocaleString()}
                         </td>
@@ -563,7 +573,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                         <td className="p-space-sm font-bold text-navy-deep dark:text-white">
                           {t('detail.zoneLine', { no: 2, label: t('zone.midHill.label') })}
                         </td>
-                        <td className="p-space-sm text-ink-secondary dark:text-slate-400">ม่อนแจ่ม, แม่ริม, สวนพฤกษศาสตร์, แม่กำปอง</td>
+                        <td className="p-space-sm text-ink-secondary dark:text-slate-400">{t('vdm.routeMid')}</td>
                         <td className="p-space-sm text-right font-bold text-blue-action">
                           ฿{(vehicle.zoneRates?.midHill || 2100).toLocaleString()}
                         </td>
@@ -572,7 +582,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                         <td className="p-space-sm font-bold text-navy-deep dark:text-white">
                           {t('detail.zoneLine', { no: 3, label: t('zone.highHill.label') })}
                         </td>
-                        <td className="p-space-sm text-ink-secondary dark:text-slate-400">ดอยอินทนนท์, กิ่วแม่ปาน, ดอยอ่างขาง, เชียงราย</td>
+                        <td className="p-space-sm text-ink-secondary dark:text-slate-400">{t('vdm.routeHigh')}</td>
                         <td className="p-space-sm text-right font-bold text-blue-action">
                           ฿{(vehicle.zoneRates?.highHill || 2300).toLocaleString()}
                         </td>
@@ -891,9 +901,9 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     <div className="flex items-center justify-between">
                       <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-900 dark:text-amber-300 font-bold text-[11px] flex items-center gap-1">
                         <span className="material-symbols-outlined text-[13px] text-amber-600 dark:text-amber-400">verified</span>
-                        <span>สิทธิพิเศษผู้เดินทาง</span>
+                        <span>{t('spn.travelerPerk')}</span>
                       </span>
-                      <span className="text-[10px] text-ink-muted dark:text-slate-400">พันธมิตร TripDee</span>
+                      <span className="text-[10px] text-ink-muted dark:text-slate-400">{t('vdm.partner')}</span>
                     </div>
 
                     <div className="space-y-0.5">

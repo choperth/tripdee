@@ -5,6 +5,7 @@ import { X, Star, Check, CheckCircle2, User, Calendar, MapPin, MessageSquare, Sp
 import { useLanguage } from '@/context/LanguageContext';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { Vehicle } from '@/data/mockData';
+import { vehicleTitle, vehicleLocation, vehiclePopularRoutes } from '@/data/vehicleI18n';
 import { getPublicDriverName } from '@/lib/privacy';
 import {
   Review,
@@ -26,7 +27,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
   onClose,
   onReviewSubmitted,
 }) => {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
@@ -80,12 +81,12 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
     const cleanComment = comment.trim();
 
     if (!cleanName) {
-      setErrorMessage(t('review.nameLabel') + ' (จำเป็นต้องระบุ)');
+      setErrorMessage(t('review.nameLabel') + t('review.required'));
       return;
     }
 
     if (!cleanComment || cleanComment.length < 10) {
-      setErrorMessage('กรุณาเขียนข้อความรีวิวอย่างน้อย 10 ตัวอักษร');
+      setErrorMessage(t('review.errMinLength'));
       return;
     }
 
@@ -96,8 +97,8 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
         vehicleId: vehicle.id,
         authorName: cleanName,
         rating,
-        travelDate: travelDate.trim() || 'เร็วๆ นี้',
-        tripRoute: tripRoute.trim() || vehicle.popularRoutes?.[0] || 'ท่องเที่ยวทั่วไป',
+        travelDate: travelDate.trim() || t('review.dSoon'),
+        tripRoute: tripRoute.trim() || vehiclePopularRoutes(vehicle, locale)[0] || t('review.dGeneral'),
         comment: cleanComment,
         tags: selectedTags,
       };
@@ -112,7 +113,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
     } catch (err) {
       console.error('Error submitting review:', err);
       setIsSubmitting(false);
-      setErrorMessage('เกิดข้อผิดพลาดในการบันทึกรีวิว กรุณาลองใหม่อีกครั้ง');
+      setErrorMessage(t('review.errSave'));
     }
   };
 
@@ -166,7 +167,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
                 {publicName}
               </span>
               <span className="text-[11px] text-ink-muted dark:text-slate-400 truncate block">
-                {vehicle.title} • {vehicle.location}
+                {vehicleTitle(vehicle, locale)} • {vehicleLocation(vehicle, locale)}
               </span>
             </div>
           </div>
@@ -220,7 +221,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
                       onMouseEnter={() => setHoverRating(star)}
                       onMouseLeave={() => setHoverRating(0)}
                       className="p-1 transition-transform hover:scale-125 focus:outline-none focus:ring-2 focus:ring-amber-400 rounded-lg cursor-pointer"
-                      aria-label={`${star} ดาว`}
+                      aria-label={`${star}★`}
                     >
                       <Star
                         className={`w-8 h-8 transition-colors ${

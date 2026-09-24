@@ -157,7 +157,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Image
                 src="/logo.png"
-                alt="TripDee ทริปดี"
+                alt={t('brand.logoAlt')}
                 width={140}
                 height={36}
                 className="h-7 sm:h-9 w-auto object-contain block dark:hidden"
@@ -165,7 +165,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               />
               <Image
                 src="/logo-white.png"
-                alt="TripDee ทริปดี"
+                alt={t('brand.logoAlt')}
                 width={140}
                 height={36}
                 className="h-7 sm:h-9 w-auto object-contain hidden dark:block"

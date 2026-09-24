@@ -151,7 +151,7 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
       // Subtitle
       ctx.fillStyle = '#6b7280';
       ctx.font = '16px sans-serif';
-      ctx.fillText('แพลตฟอร์มค้นหารถตู้ VIP รถเช่า และที่พักคุณภาพ จังหวัดเชียงใหม่', 70, 135);
+      ctx.fillText('แพลตฟอร์มค้นหารถตู้พร้อมคนขับ รถเช่า และที่พักคุณภาพ จังหวัดเชียงใหม่', 70, 135);
 
       // Divider
       ctx.strokeStyle = '#e5e7eb';

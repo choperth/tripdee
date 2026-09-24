@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Bell, BellRing, Volume2, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -19,6 +20,7 @@ interface DriverPushBellProps {
 }
 
 export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false }) => {
+  const { t } = useLanguage();
   const [isSupported, setIsSupported] = useState(false);
   const [, setPermission] = useState<NotificationPermission>('default');
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -61,7 +63,7 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
 
       if (perm !== 'granted') {
         if (perm === 'denied') {
-          setErrorMsg('คุณได้ปฏิเสธการแจ้งเตือน สามารถเปิดได้ที่ตั้งค่าเบราว์เซอร์ของอุปกรณ์คุณ');
+          setErrorMsg(t('push.denied'));
         }
         setIsLoading(false);
         return;
@@ -76,7 +78,7 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
         keyData.publicKey || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || FALLBACK_VAPID_PUBLIC_KEY;
 
       if (!vapidPublicKey) {
-        throw new Error('ไม่พบ VAPID Public Key ในระบบ');
+        throw new Error(t('push.noVapid'));
       }
 
       // 3. Subscribe pushManager
@@ -94,7 +96,7 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
       const auth = subscription.getKey('auth');
 
       if (!p256dh || !auth) {
-        throw new Error('ไม่สามารถดึง Push Encryption Keys ได้');
+        throw new Error(t('push.keysFail'));
       }
 
       const p256dhBase64 = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(p256dh))));
@@ -114,7 +116,7 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
       });
 
       if (!saveRes.ok) {
-        throw new Error('บันทึกการรับแจ้งเตือนไม่สำเร็จ');
+        throw new Error(t('push.saveFail'));
       }
 
       setIsSubscribed(true);
@@ -123,7 +125,7 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
       await handleTestPush(subscription.endpoint, p256dhBase64, authBase64);
     } catch (err) {
       console.error('[WebPush] Subscribe error:', err);
-      setErrorMsg(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเปิดการแจ้งเตือน');
+      setErrorMsg(err instanceof Error ? err.message : t('push.enableError'));
     } finally {
       setIsLoading(false);
     }
@@ -205,10 +207,10 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
             </span>
             <div>
               <p className="text-xs font-bold text-ink dark:text-white">
-                {isSubscribed ? 'เปิดแจ้งเตือนงานใหม่ทางมือถือแล้ว' : 'แจ้งเตือนงานใหม่ทางมือถือ (ฟรี 100%)'}
+                {isSubscribed ? t('push.onTitle') : t('push.offTitle')}
               </p>
               <p className="text-[11px] text-ink-2 dark:text-slate-400 mt-0.5">
-                {isSubscribed ? 'ระบบจะส่งเสียงและเด้งเตือนเมื่อมีลูกค้าลงบอร์ด' : 'เสียงแจ้งเตือนเด้งบนจอมือถือทันทีที่มีลูกค้าหาคนขับ'}
+                {isSubscribed ? t('push.onDesc') : t('push.offDesc')}
               </p>
             </div>
           </div>
@@ -221,10 +223,10 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
                   onClick={() => handleTestPush()}
                   disabled={testSent}
                   className="td-btn inline-flex items-center gap-1 rounded-pill bg-paper hover:bg-card dark:bg-slate-800 dark:hover:bg-slate-700 border border-rule dark:border-slate-700 px-2.5 py-1.5 text-[11px] font-extrabold text-ink dark:text-slate-200 transition-colors"
-                  title="ทดสอบเสียงแจ้งเตือน"
+                  title={t('push.testSound')}
                 >
                   <Volume2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                  <span>{testSent ? 'ส่งเสียงแล้ว...' : 'ทดสอบเสียง'}</span>
+                  <span>{testSent ? t('push.testing') : t('push.testBtn')}</span>
                 </button>
                 <button
                   type="button"
@@ -232,7 +234,7 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
                   disabled={isLoading}
                   className="text-[11px] text-ink-2 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 underline px-1 transition-colors cursor-pointer"
                 >
-                  ปิด
+                  {t('push.close')}
                 </button>
               </>
             ) : (
@@ -243,7 +245,7 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
                 className="td-btn inline-flex items-center gap-1 rounded-pill bg-accent hover:bg-accent-deep px-3 py-1.5 text-xs font-extrabold text-white shadow-xs"
               >
                 {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bell className="h-3.5 w-3.5" />}
-                <span>เปิดแจ้งเตือน</span>
+                <span>{t('push.enableBtn')}</span>
               </button>
             )}
           </div>
@@ -276,7 +278,7 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
           <div>
             <div className="flex items-center gap-2">
               <h4 className="text-xs sm:text-sm font-extrabold text-ink dark:text-white flex items-center gap-1.5">
-                <span>{isSubscribed ? '✓ คุณเปิดรับการแจ้งเตือนงานใหม่ทางมือถือแล้ว' : '🔔 สำหรับคนขับ: เปิดรับแจ้งเตือนงานใหม่บนจอมือถือ (ฟรี 0 บาท)'}</span>
+                <span>{isSubscribed ? t('push.subscribedBanner') : t('push.subscribeBanner')}</span>
                 {isSubscribed && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 text-[10px] font-extrabold px-2 py-0.5 border border-emerald-300/60 dark:border-emerald-700/60">
                     <CheckCircle className="h-2.5 w-2.5" /> Active
@@ -286,8 +288,8 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
             </div>
             <p className="text-xs text-ink-2 dark:text-slate-300 mt-0.5 leading-relaxed">
               {isSubscribed
-                ? 'ระบบจะส่งเสียงและแจ้งเตือนเด้งขึ้นบนหน้าจอมือถือของคุณทันทีเมื่อมีลูกค้าลงประกาศงานใหม่'
-                : 'รับงานไวกว่าใคร! แจ้งเตือนเด้งบนจอมือถือทันทีเมื่อมีลูกค้าลงประกาศหาคนขับหรือรถสัมมนา ไม่ต้องนั่งเฝ้าหน้าจอ'}
+                ? t('push.subscribedDetail')
+                : t('push.subscribeDetail')}
             </p>
           </div>
         </div>
@@ -300,10 +302,10 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
                 onClick={() => handleTestPush()}
                 disabled={testSent}
                 className="td-btn inline-flex items-center gap-1.5 rounded-pill bg-card hover:bg-paper dark:bg-slate-800 dark:hover:bg-slate-700 border border-rule dark:border-slate-700 px-3 py-1.5 text-xs font-bold text-ink dark:text-white shadow-2xs transition-all"
-                title="ทดสอบเสียงแจ้งเตือนบนอุปกรณ์นี้"
+                title={t('push.testSoundDevice')}
               >
                 <Volume2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>{testSent ? 'ส่งเสียงเตือนแล้ว...' : 'ทดสอบเสียงแจ้งเตือน'}</span>
+                <span>{testSent ? t('push.testingDevice') : t('push.testBtnDevice')}</span>
               </button>
               <button
                 type="button"
@@ -311,7 +313,7 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
                 disabled={isLoading}
                 className="text-xs text-ink-2 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 underline font-medium px-2 py-1 transition-colors cursor-pointer"
               >
-                ปิดรับแจ้งเตือน
+                {t('push.closeFull')}
               </button>
             </>
           ) : (
@@ -324,12 +326,12 @@ export const DriverPushBell: React.FC<DriverPushBellProps> = ({ compact = false 
               {isLoading ? (
                 <>
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>กำลังเชื่อมต่อ...</span>
+                  <span>{t('push.connecting')}</span>
                 </>
               ) : (
                 <>
                   <Bell className="h-3.5 w-3.5" />
-                  <span>เปิดแจ้งเตือนงานใหม่ (ฟรี)</span>
+                  <span>{t('push.enableFree')}</span>
                 </>
               )}
             </button>

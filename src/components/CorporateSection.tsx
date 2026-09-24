@@ -20,20 +20,29 @@ export const CorporateSection: React.FC = () => {
     contactName: '',
     phone: '',
     email: '',
-    route: 'เชียงใหม่ - ม่อนแจ่ม / ดอยอินทนนท์',
-    caravanSize: '2-3 คัน',
+    route: t('corp.dRoute'),
+    caravanSize: '2-3',
     travelDate: '',
     totalDays: 2,
     needsTaxInvoice: true,
     note: '',
   });
 
+  const sizeLabel =
+    formData.caravanSize === '1'
+      ? t('corp.sizeS1')
+      : formData.caravanSize === '2-3'
+      ? t('corp.sizeS2')
+      : formData.caravanSize === '4-6'
+      ? t('corp.sizeS4')
+      : t('corp.sizeS7');
+
   const estimatedPricePerDay =
-    formData.caravanSize === '1 คัน'
+    formData.caravanSize === '1'
       ? 2200
-      : formData.caravanSize === '2-3 คัน'
+      : formData.caravanSize === '2-3'
       ? 5500
-      : formData.caravanSize === '4-6 คัน'
+      : formData.caravanSize === '4-6'
       ? 11000
       : 22000;
 
@@ -48,7 +57,7 @@ export const CorporateSection: React.FC = () => {
         companyName: formData.companyName,
         route: formData.route,
         totalDays: formData.totalDays,
-        passengers: `คาราวาน ${formData.caravanSize}`,
+        passengers: t('corp.paxLabel', { size: sizeLabel }),
         estimatedPrice: totalEstimate,
         needsTaxInvoice: formData.needsTaxInvoice,
       });
@@ -60,17 +69,26 @@ export const CorporateSection: React.FC = () => {
         body: JSON.stringify({
           type: 'request',
           category: 'corporate',
-          title: `[งานองค์กร/ราชการ] คาราวาน ${formData.caravanSize} ${formData.route} (${formData.companyName})`,
+          title: t('corp.boardTitle', {
+            size: sizeLabel,
+            route: formData.route,
+            company: formData.companyName,
+          }),
           zoneId: 'city',
-          date: formData.travelDate || 'ตามระบุในใบเสนอราคา',
+          date: formData.travelDate || t('corp.dDateQuote'),
           days: formData.totalDays,
           seats: 20,
           price: totalEstimate,
-          priceNote: formData.needsTaxInvoice ? 'ต้องการใบกำกับภาษี/หัก 3%' : 'ตามตกลง',
+          priceNote: formData.needsTaxInvoice ? t('corp.dTaxNote') : t('corp.dAgreed'),
           authorName: formData.contactName ? `${formData.companyName} (${formData.contactName})` : formData.companyName,
           authorPhone: formData.phone,
           authorLine: '',
-          detail: `เส้นทาง: ${formData.route} · จำนวน: ${formData.caravanSize} · ระยะเวลา: ${formData.totalDays} วัน · ${formData.note || 'ต้องการรถป้ายเหลือง 30 สะอาด สีสุภาพ พร้อมคนขับสุภาพ'}`,
+          detail: t('corp.dDetail', {
+            route: formData.route,
+            size: sizeLabel,
+            days: String(formData.totalDays),
+            note: formData.note || t('corp.dNoteDefault'),
+          }),
           pin: formData.phone.replace(/\D/g, '').slice(-4) || '1234',
         }),
       });
@@ -337,10 +355,10 @@ export const CorporateSection: React.FC = () => {
                         onChange={(e) => setFormData({ ...formData, caravanSize: e.target.value })}
                         className="w-full h-10 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action cursor-pointer"
                       >
-                        <option value="1 คัน">{t('corp.fleet1')}</option>
-                        <option value="2-3 คัน">{t('corp.fleet2')}</option>
-                        <option value="4-6 คัน">{t('corp.fleet4')}</option>
-                        <option value="7-10+ คัน">{t('corp.fleet7')}</option>
+                        <option value="1">{t('corp.fleet1')}</option>
+                        <option value="2-3">{t('corp.fleet2')}</option>
+                        <option value="4-6">{t('corp.fleet4')}</option>
+                        <option value="7-10">{t('corp.fleet7')}</option>
                       </select>
                     </div>
                   </div>

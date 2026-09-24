@@ -69,12 +69,12 @@ export const DriverAvailabilityCalendar: React.FC<DriverAvailabilityCalendarProp
     setRangeError('');
 
     if (!rangeStart || !rangeEnd) {
-      setRangeError('กรุณาระบุทั้งวันเริ่มต้นและวันสิ้นสุด');
+      setRangeError(t('cal.errBothDates'));
       return;
     }
 
     if (rangeStart < todayIso && rangeEnd < todayIso) {
-      setRangeError('ไม่สามารถระบุช่วงวันที่ในอดีตได้');
+      setRangeError(t('cal.errPastRange'));
       return;
     }
 
@@ -95,7 +95,7 @@ export const DriverAvailabilityCalendar: React.FC<DriverAvailabilityCalendarProp
   // Clear all upcoming busy dates
   const handleClearAll = () => {
     if (busyDates.length === 0) return;
-    if (confirm('คุณต้องการล้างวันที่ติดคิวทั้งหมดใช่หรือไม่?')) {
+    if (confirm(t('cal.confirmClear'))) {
       onChange([]);
     }
   };

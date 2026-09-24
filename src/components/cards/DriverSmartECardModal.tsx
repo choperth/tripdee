@@ -15,9 +15,11 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Vehicle } from '@/data/mockData';
+import { vehicleTitle, vehicleLocation, vehicleAmenities } from '@/data/vehicleI18n';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { getPublicDriverName, maskPlateNumber } from '@/lib/privacy';
 import { generateQrMatrix, renderQrSvgPath } from '@/lib/qrCode';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface DriverSmartECardModalProps {
   vehicle: Vehicle;
@@ -36,6 +38,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
+  const { t, locale } = useLanguage();
 
   const [qrMode, setQrMode] = useState<QrMode>('line');
   const [theme, setTheme] = useState<CardTheme>('navy');
@@ -45,8 +48,11 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
 
   const publicName = getPublicDriverName(vehicle.driverName, vehicle.driverNickname);
   const cleanPhone = vehicle.driverPhone.replace(/\D/g, '');
-  const cleanPlate = vehicle.plateNumber ? maskPlateNumber(vehicle.plateNumber) : 'ป้ายถูกกฎหมาย';
-  const locationShort = vehicle.location.split('/')[0].trim();
+  const cleanPlate = vehicle.plateNumber ? maskPlateNumber(vehicle.plateNumber) : t('ecard.legalPlate');
+  const title = vehicleTitle(vehicle, locale);
+  const location = vehicleLocation(vehicle, locale);
+  const amenities = vehicleAmenities(vehicle, locale);
+  const locationShort = location.split('/')[0].trim();
 
   // Dynamic QR Code target URL / Payload
   const qrTarget = useMemo(() => {
@@ -87,13 +93,13 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
       ? `${window.location.origin}/#vehicle-${vehicle.id}`
       : `https://tripdee.com/#vehicle-${vehicle.id}`;
 
-  const introText = `📇 นามบัตรคนขับรถตู้ VIP - ${publicName}
-🚗 ${vehicle.title} (${vehicle.seats} ที่นั่ง)
-📍 ประจำจุด: ${vehicle.location}
-⭐ รีวิว: ${vehicle.rating} เต็ม 5.0 (${vehicle.reviewCount} รีวิว)
-📞 โทรตรง: ${vehicle.driverPhone}
-💬 LINE: ${vehicle.driverLine}
-🌐 ดูรูปรถ ตารางคิวว่าง และจองตรง 0% คอมมิชชั่นได้ที่: ${profileUrl}`;
+  const introText = `${t('ecard.introTitle', { name: publicName })}
+${t('ecard.introVehicle', { title, seats: String(vehicle.seats) })}
+${t('ecard.introLocation', { location })}
+${t('ecard.introRating', { rating: String(vehicle.rating), reviews: String(vehicle.reviewCount) })}
+${t('ecard.introPhone', { phone: vehicle.driverPhone })}
+${t('ecard.introLine', { line: vehicle.driverLine })}
+${t('ecard.introCta', { url: profileUrl })}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(profileUrl);
@@ -160,12 +166,12 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
       // Brand Header
       ctx.fillStyle = theme === 'light' ? '#0b192c' : '#ffffff';
       ctx.font = 'bold 28px sans-serif';
-      ctx.fillText('TRIPDEE • รถตู้ VIP ท่องเที่ยวทั่วไทย', 50, 65);
+      ctx.fillText(t('ecard.canvasTagline'), 50, 65);
 
       // Featured badge
       ctx.fillStyle = '#f59e0b';
       ctx.font = 'bold 18px sans-serif';
-      ctx.fillText('⭐ TRIPDEE FEATURED VIP (0% คอมมิชชั่น)', 50, 100);
+      ctx.fillText(t('ecard.canvasFeatured'), 50, 100);
 
       // Driver Name
       ctx.fillStyle = theme === 'light' ? '#0f172a' : '#f8fafc';
@@ -175,7 +181,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
       // Rating & Plate
       ctx.fillStyle = '#f59e0b';
       ctx.font = 'bold 22px sans-serif';
-      ctx.fillText(`★ ${vehicle.rating} (${vehicle.reviewCount} รีวิว)`, 50, 220);
+      ctx.fillText(`★ ${vehicle.rating} ${t('ecard.reviewsCount', { n: String(vehicle.reviewCount) })}`, 50, 220);
 
       ctx.fillStyle = theme === 'light' ? '#475569' : '#94a3b8';
       ctx.font = '18px sans-serif';
@@ -184,20 +190,20 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
       // Vehicle Title
       ctx.fillStyle = theme === 'light' ? '#1e293b' : '#e2e8f0';
       ctx.font = 'bold 24px sans-serif';
-      ctx.fillText(vehicle.title.substring(0, 48), 50, 275);
+      ctx.fillText(title.substring(0, 48), 50, 275);
 
       // Amenities line
       ctx.fillStyle = theme === 'light' ? '#64748b' : '#cbd5e1';
       ctx.font = '18px sans-serif';
-      const amenitiesText = vehicle.amenities.slice(0, 4).join(' • ');
-      ctx.fillText(`สิ่งอำนวยความสะดวก: ${amenitiesText}`, 50, 320);
+      const amenitiesText = amenities.slice(0, 4).join(' • ');
+      ctx.fillText(`${t('ecard.amenitiesLabel')} ${amenitiesText}`, 50, 320);
 
       // Contact info boxes
       ctx.fillStyle = theme === 'light' ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)';
       ctx.fillRect(50, 360, 450, 70);
       ctx.fillStyle = theme === 'light' ? '#0b192c' : '#ffffff';
       ctx.font = 'bold 26px sans-serif';
-      ctx.fillText(`📞 โทร: ${vehicle.driverPhone}`, 70, 405);
+      ctx.fillText(`📞 ${t('ecard.directCall', { phone: vehicle.driverPhone })}`, 70, 405);
 
       ctx.fillStyle = theme === 'light' ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)';
       ctx.fillRect(50, 445, 450, 70);
@@ -235,17 +241,17 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
       ctx.fillStyle = '#0b192c';
       ctx.font = 'bold 18px sans-serif';
       ctx.textAlign = 'center';
-      const label = qrMode === 'line' ? 'สแกนเพิ่มเพื่อน LINE' : qrMode === 'tel' ? 'สแกนโทรออกทันที' : 'สแกนดูโปรไฟล์ TripDee';
+      const label = qrMode === 'line' ? t('ecard.scanAddLine') : qrMode === 'tel' ? t('ecard.scanCallNow') : t('ecard.scanProfile');
       ctx.fillText(label, qrBoxX + qrBoxSize / 2, qrBoxY + qrBoxSize + 35);
       ctx.fillStyle = '#64748b';
       ctx.font = '14px sans-serif';
-      ctx.fillText('ติดต่อคนขับตรง • 0% ค่าคอมมิชชั่น', qrBoxX + qrBoxSize / 2, qrBoxY + qrBoxSize + 60);
+      ctx.fillText(t('ecard.canvasContact'), qrBoxX + qrBoxSize / 2, qrBoxY + qrBoxSize + 60);
 
       // Footer
       ctx.textAlign = 'left';
       ctx.fillStyle = theme === 'light' ? '#94a3b8' : '#64748b';
       ctx.font = '16px sans-serif';
-      ctx.fillText('จองรถตู้ VIP ปลอดภัย ไร้นายหน้า • www.tripdee.com', 50, 565);
+      ctx.fillText(t('ecard.canvasBook'), 50, 565);
 
       // Trigger download
       const dataUrl = canvas.toDataURL('image/png');
@@ -270,7 +276,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label="นามบัตรดิจิทัลคนขับ (Smart E-Card)"
+        aria-label={t('ecard.aria')}
         onClick={(e) => e.stopPropagation()}
         className="relative flex flex-col w-full max-w-2xl max-h-[94vh] overflow-y-auto rounded-3xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 shadow-2xl text-ink-primary dark:text-slate-100 p-space-md sm:p-space-lg"
       >
@@ -282,14 +288,14 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
               <span>Smart E-Card & QR</span>
             </div>
             <h2 className="font-headline-lg text-headline-lg text-navy-deep dark:text-white">
-              นามบัตรดิจิทัลของคนขับ
+              {t('ecard.title')}
             </h2>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            aria-label="ปิดหน้าต่าง"
+            aria-label={t('auth.close')}
             className="w-8 h-8 rounded-full bg-paper-surface-muted dark:bg-slate-800 flex items-center justify-center text-ink-secondary hover:text-ink-primary hover:bg-surface-variant transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
@@ -300,7 +306,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2 py-space-xs text-xs">
           {/* Theme Selector */}
           <div className="flex items-center gap-1.5">
-            <span className="text-ink-muted dark:text-slate-400">ธีมนามบัตร:</span>
+            <span className="text-ink-muted dark:text-slate-400">{t('ecard.themeLabel')}</span>
             <div className="flex items-center gap-1 p-0.5 rounded-lg bg-paper-canvas dark:bg-slate-800 border border-border-subtle dark:border-slate-700">
               <button
                 type="button"
@@ -311,7 +317,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
                     : 'text-ink-secondary dark:text-slate-300'
                 }`}
               >
-                หรูหราน้ำเงินเข้ม
+                {t('ecard.themeNavy')}
               </button>
               <button
                 type="button"
@@ -322,7 +328,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
                     : 'text-ink-secondary dark:text-slate-300'
                 }`}
               >
-                แบล็คโกลด์
+                {t('ecard.themeGold')}
               </button>
               <button
                 type="button"
@@ -333,14 +339,14 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
                     : 'text-ink-secondary dark:text-slate-300'
                 }`}
               >
-                โมเดิร์นคลีน
+                {t('ecard.themeLight')}
               </button>
             </div>
           </div>
 
           {/* QR Mode Selector */}
           <div className="flex items-center gap-1.5">
-            <span className="text-ink-muted dark:text-slate-400">QR เจาะจง:</span>
+            <span className="text-ink-muted dark:text-slate-400">{t('ecard.qrLabel')}</span>
             <div className="flex items-center gap-1 p-0.5 rounded-lg bg-paper-canvas dark:bg-slate-800 border border-border-subtle dark:border-slate-700">
               <button
                 type="button"
@@ -418,7 +424,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-500/30 shadow-xs">
                   <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  <span>{vehicle.isVerified ? 'รถแนะนำประจำโซน' : 'ดีลตรง 0% คอมมิชชั่น'}</span>
+                  <span>{vehicle.isVerified ? t('ecard.verifiedZone') : t('ecard.dealDirect')}</span>
                 </span>
               </div>
             </div>
@@ -438,7 +444,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
                     <span className="flex items-center gap-1 text-amber-400 font-bold">
                       <Star className="w-3.5 h-3.5 fill-amber-400" />
                       <span>{vehicle.rating}</span>
-                      <span className="opacity-80 font-normal">({vehicle.reviewCount} รีวิว)</span>
+                      <span className="opacity-80 font-normal">{t('ecard.reviewsCount', { n: String(vehicle.reviewCount) })}</span>
                     </span>
                     <span>•</span>
                     <span className="opacity-80 truncate">{cleanPlate}</span>
@@ -447,17 +453,17 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
 
                 <div className="space-y-1 text-xs">
                   <div className="font-bold text-sm opacity-95">
-                    {vehicle.title}
+                    {title}
                   </div>
                   <div className="opacity-75 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[15px]">location_on</span>
-                    <span>ประจำ: {vehicle.location}</span>
+                    <span>{t('ecard.basedLabel')} {location}</span>
                   </div>
                 </div>
 
                 {/* Amenities Pills */}
                 <div className="flex flex-wrap gap-1 pt-0.5">
-                  {vehicle.amenities.slice(0, 4).map((item) => (
+                  {amenities.slice(0, 4).map((item) => (
                     <span
                       key={item}
                       className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
@@ -482,7 +488,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
                     }`}
                   >
                     <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>โทรตรง: {vehicle.driverPhone}</span>
+                    <span>{t('ecard.directCall', { phone: vehicle.driverPhone })}</span>
                   </a>
 
                   <a
@@ -516,7 +522,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
                       </svg>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
-                        กำลังสร้าง QR...
+                        {t('ecard.qrGenerating')}
                       </div>
                     )}
                   </div>
@@ -524,13 +530,13 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
                   <div className="text-center mt-2 space-y-0.5">
                     <span className="text-navy-deep font-bold text-xs block">
                       {qrMode === 'line'
-                        ? 'สแกนแอด LINE คนขับ'
+                        ? t('ecard.scanLineBtn')
                         : qrMode === 'tel'
-                        ? 'สแกนเพื่อโทรออก'
-                        : 'สแกนดูโปรไฟล์รถ'}
+                        ? t('ecard.scanCallBtn')
+                        : t('ecard.scanVehicleBtn')}
                     </span>
                     <span className="text-[10px] text-slate-500 block">
-                      ติดต่อตรง 0% คอมมิชชั่น
+                      {t('ecard.contact0')}
                     </span>
                   </div>
                 </div>
@@ -539,7 +545,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
 
             {/* Card Bottom Tagline */}
             <div className="relative z-10 mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] opacity-75">
-              <span>จองรถตู้ VIP ปลอดภัย ไร้นายหน้า</span>
+              <span>{t('ecard.tagline')}</span>
               <span className="font-mono">www.tripdee.com</span>
             </div>
           </div>
@@ -554,7 +560,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
             className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-line-green hover:bg-line-green-hover text-white font-medium text-xs shadow-sm transition-all active:scale-[0.98] cursor-pointer"
           >
             <Share2 className="w-3.5 h-3.5" />
-            <span>แชร์เข้า LINE</span>
+            <span>{t('ecard.shareLine')}</span>
           </button>
 
           {/* Copy Intro Text */}
@@ -566,12 +572,12 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
             {copiedIntro ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span>คัดลอกข้อความแล้ว!</span>
+                <span>{t('ecard.copiedIntro')}</span>
               </>
             ) : (
               <>
                 <Copy className="w-3.5 h-3.5 text-ink-muted" />
-                <span>คัดลอกข้อความแนะนำ</span>
+                <span>{t('ecard.copyIntro')}</span>
               </>
             )}
           </button>
@@ -584,7 +590,7 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
             className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-navy-deep hover:bg-navy-surface text-white font-medium text-xs shadow-sm transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>{isExporting ? 'กำลังสร้างรูป...' : 'บันทึกรูปภาพ'}</span>
+            <span>{isExporting ? t('ecard.exporting') : t('ecard.saveImage')}</span>
           </button>
 
           {/* Copy Web Link */}
@@ -596,12 +602,12 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
             {copiedLink ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span>คัดลอกลิงก์แล้ว!</span>
+                <span>{t('ecard.copiedLink')}</span>
               </>
             ) : (
               <>
                 <ExternalLink className="w-3.5 h-3.5 text-ink-muted" />
-                <span>คัดลอกลิงก์เว็บ</span>
+                <span>{t('ecard.copyLink')}</span>
               </>
             )}
           </button>

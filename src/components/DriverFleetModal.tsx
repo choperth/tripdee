@@ -3,6 +3,7 @@
 import React, { useRef } from 'react';
 import Image from 'next/image';
 import { Vehicle } from '@/data/mockData';
+import { vehicleTitle, vehicleLocation, vehicleAmenities } from '@/data/vehicleI18n';
 import { maskPhoneNumber, getPublicDriverName } from '@/lib/privacy';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -31,13 +32,13 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
   const { trackCall } = useAnalytics();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
 
   if (!isOpen || fleetVehicles.length === 0) return null;
 
   const leadVehicle = fleetVehicles[0];
   const publicDriverName = driverName || getPublicDriverName(leadVehicle.driverName, leadVehicle.driverNickname);
-  const locationText = leadVehicle.location;
+  const locationText = vehicleLocation(leadVehicle, locale);
   const rating = leadVehicle.rating || 5.0;
   const reviewCount = fleetVehicles.reduce((acc, v) => acc + (v.reviewCount || 0), 0);
 
@@ -45,7 +46,7 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
     trackCall({
       targetType: 'driver_fleet',
       targetId: v.id,
-      targetTitle: `${publicDriverName} (${v.title})`,
+      targetTitle: `${publicDriverName} (${vehicleTitle(v, locale)})`,
       phoneNumber: v.driverPhone,
       driverName: publicDriverName,
     });
@@ -140,7 +141,7 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
                     <div className="relative h-40 w-full overflow-hidden bg-navy-deep group cursor-pointer" onClick={() => { onSelectVehicleDetail(vehicle); onClose(); }}>
                       <Image
                         src={vehicle.images[0]}
-                        alt={vehicle.title}
+                        alt={vehicleTitle(vehicle, locale)}
                         fill
                         sizes="(max-width: 768px) 100vw, 360px"
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -173,12 +174,12 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
                         onClick={() => { onSelectVehicleDetail(vehicle); onClose(); }}
                         className="font-bold text-sm text-navy-deep dark:text-white line-clamp-2 hover:text-blue-action cursor-pointer"
                       >
-                        {vehicle.title}
+                        {vehicleTitle(vehicle, locale)}
                       </h3>
 
                       {/* Amenities (first 2) */}
                       <div className="flex flex-wrap gap-1">
-                        {vehicle.amenities.slice(0, 2).map((amenity) => (
+                        {vehicleAmenities(vehicle, locale).slice(0, 2).map((amenity) => (
                           <span
                             key={amenity}
                             className="px-2 py-0.5 rounded-md bg-paper-surface-muted dark:bg-slate-700/60 text-ink-secondary dark:text-slate-300 text-[11px] truncate max-w-[180px]"

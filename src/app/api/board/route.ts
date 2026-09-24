@@ -10,6 +10,7 @@ import {
   acceptBoardQuote,
 } from '@/lib/supabase/service';
 import { sendPushToDrivers } from '@/lib/pushService';
+import { sendBoardJobNotification } from '@/lib/notification';
 import { ZoneId } from '@/data/mockData';
 import { validateHoneypot } from '@/lib/honeypot';
 
@@ -18,14 +19,15 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
 
-    // Action: Fetch quotes for a post (requires post PIN or author phone last 4)
+    // Action: Fetch quotes for a post (requires post PIN or Magic Link token)
     if (action === 'get_quotes') {
       const postId = searchParams.get('postId');
       const pin = searchParams.get('pin') || '';
+      const token = searchParams.get('token') || '';
       if (!postId) {
         return NextResponse.json({ error: 'Missing postId parameter' }, { status: 400 });
       }
-      const res = await fetchBoardQuotes(postId, pin);
+      const res = await fetchBoardQuotes(postId, pin, token);
       if (!res.success) {
         return NextResponse.json({ error: res.message }, { status: 403 });
       }
@@ -70,6 +72,7 @@ export async function POST(req: NextRequest) {
         driverName: String(body.driverName).trim(),
         driverPhone: String(body.driverPhone).trim(),
         driverLine: body.driverLine ? String(body.driverLine).trim() : undefined,
+        driverWhatsApp: body.driverWhatsApp ? String(body.driverWhatsApp).trim() : undefined,
         vehicleModel: String(body.vehicleModel).trim(),
         price: Math.max(0, Math.round(Number(body.price) || 0)),
         priceNote: body.priceNote ? String(body.priceNote).trim() : undefined,
@@ -89,13 +92,15 @@ export async function POST(req: NextRequest) {
 
     // Action 2: Customer accepts a quote
     if (body.action === 'accept_quote') {
-      if (!body.postId || !body.quoteId || !body.pin) {
+      const pin = body.pin ? String(body.pin).trim() : '';
+      const token = body.token ? String(body.token).trim() : '';
+      if (!body.postId || !body.quoteId || (!pin && !token)) {
         return NextResponse.json(
-          { error: 'ข้อมูลไม่ครบถ้วน กรุณาระบุ postId, quoteId และ PIN 4 หลัก' },
+          { error: 'ข้อมูลไม่ครบถ้วน กรุณาระบุ postId, quoteId และ PIN 4 หลัก หรือโทเค็นเข้าถึง' },
           { status: 400 }
         );
       }
-      const res = await acceptBoardQuote(String(body.postId), String(body.quoteId), String(body.pin));
+      const res = await acceptBoardQuote(String(body.postId), String(body.quoteId), pin, token);
       if (!res.success) {
         return NextResponse.json({ error: res.message }, { status: 400 });
       }
@@ -123,8 +128,9 @@ export async function POST(req: NextRequest) {
 
     // Action 3: Check if user is closing their post
     if (body.action === 'close' && body.id) {
-      const pin = body.pin || '';
-      const res = await closeBoardPost(String(body.id), String(pin));
+      const pin = body.pin ? String(body.pin).trim() : '';
+      const token = body.token ? String(body.token).trim() : '';
+      const res = await closeBoardPost(String(body.id), pin, token);
       if (!res.success) {
         return NextResponse.json({ error: res.message }, { status: 400 });
       }
@@ -153,11 +159,14 @@ export async function POST(req: NextRequest) {
       authorName: String(body.authorName).trim(),
       authorPhone: String(body.authorPhone).trim(),
       authorLine: String(body.authorLine || '').trim(),
+      authorWhatsApp: body.authorWhatsApp ? String(body.authorWhatsApp).trim() : undefined,
+      authorWeChat: body.authorWeChat ? String(body.authorWeChat).trim() : undefined,
       vehicleLabel: body.vehicleLabel ? String(body.vehicleLabel).trim() : undefined,
       detail: String(body.detail || '').trim(),
       isVerified: Boolean(body.isVerified),
       category: body.category === 'corporate' ? 'corporate' : 'general',
       pin: body.pin ? String(body.pin).trim() : undefined,
+      viewToken: body.viewToken ? String(body.viewToken).trim() : undefined,
       isNegotiable,
       maxQuotes: 3,
     });
@@ -183,6 +192,11 @@ export async function POST(req: NextRequest) {
     } catch (pushErr) {
       console.error('[Board Push Dispatch Error]:', pushErr);
     }
+
+    // Trigger Unified Driver Notifications (LINE Drivers Group Flex Message, Telegram, Discord)
+    sendBoardJobNotification(newPost).catch((notifyErr) => {
+      console.error('[Board Job Dispatch Error]:', notifyErr);
+    });
 
     return NextResponse.json({
       success: true,

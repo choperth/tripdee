@@ -79,7 +79,7 @@ const STITCH_ROUTES: StitchRoute[] = [
     priceRange: '2,000 - 2,400 บ./วัน',
   },
   {
-    id: 'huahin',
+    id: 'bkk-huahin',
     name: 'กรุงเทพฯ - ชะอำ - หัวหิน',
     filterKey: 'หัวหิน',
     zoneTag: 'ภาคกลาง / พักผ่อนตากอากาศ',

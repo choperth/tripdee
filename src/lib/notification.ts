@@ -2,6 +2,8 @@
  * Unified Free Notification Dispatcher
  * Supports Discord Webhook, Telegram Bot, and Google Sheet Webhooks with 0 cost.
  */
+import { BoardJobPayload, sendLineBoardJobNotification } from './lineNotification';
+import { formatWhatsAppLink } from './contactUtils';
 
 export interface QuotationLeadPayload {
   companyName: string;
@@ -200,6 +202,103 @@ export async function sendDriverNotification(driver: DriverLeadPayload) {
     } catch (e) {
       console.error('[Notification] Google Sheet error:', e);
       results.push({ channel: 'google_sheet', ok: false });
+    }
+  }
+
+  return results;
+}
+
+export async function sendBoardJobNotification(post: BoardJobPayload) {
+  const results: { channel: string; ok: boolean }[] = [];
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tripdee.co';
+  const isCorporate = post.category === 'corporate';
+  const isNegotiable = Boolean(post.isNegotiable || post.price <= 0);
+  const priceDisplay = isNegotiable
+    ? 'รอคนขับเสนอราคา (รับ 3 เจ้าแรก)'
+    : `฿${post.price.toLocaleString()} (${post.priceNote || 'รวมน้ำมัน'})`;
+
+  // 1. Dispatch to LINE Drivers Group (Flex Message)
+  try {
+    const lineRes = await sendLineBoardJobNotification(post);
+    if (lineRes.success) {
+      results.push({ channel: 'line', ok: true });
+    }
+  } catch (err) {
+    console.error('[Notification] LINE dispatch error:', err);
+    results.push({ channel: 'line', ok: false });
+  }
+
+  // 2. Dispatch to Telegram Channel / Bot
+  const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+  const tgChatId = process.env.TELEGRAM_DRIVER_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
+  if (tgToken && tgChatId) {
+    try {
+      const text =
+        `${isCorporate ? '🏢 *[งานองค์กร/สัมมนาใหม่ - TripDee]*' : '🚐 *[มีงานใหม่ในกระดาน TripDee]*'}\n\n` +
+        `📌 *หัวข้อ:* ${escapeTg(post.title)}\n` +
+        `📅 *เดินทาง:* ${escapeTg(post.date || 'ไม่ระบุวัน')} (${post.days || 1} วัน)\n` +
+        `🚐 *รถที่ต้องการ:* ${escapeTg(post.vehicleLabel || `${post.seats || 9} ที่นั่ง`)}\n` +
+        `💰 *งบประมาณ:* ${escapeTg(priceDisplay)}\n` +
+        `👤 *ลูกค้า:* ${escapeTg(post.authorName)}\n` +
+        (!isNegotiable && post.authorPhone ? `📞 *โทรตรง:* [${post.authorPhone}](tel:${post.authorPhone})\n` : '') +
+        (post.authorWhatsApp ? `💬 *WhatsApp:* [แชตทันที](${formatWhatsAppLink(post.authorWhatsApp)})\n` : '') +
+        (post.authorWeChat ? `💬 *WeChat:* \`${escapeTg(post.authorWeChat)}\`\n` : '') +
+        (post.detail ? `📝 *รายละเอียด:* ${escapeTg(post.detail)}\n` : '') +
+        `\n👉 [กดดูงานและเสนอราคาบนเว็บ](${baseUrl}/#tripboard)`;
+
+      const res = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: tgChatId,
+          text,
+          parse_mode: 'Markdown',
+          disable_web_page_preview: false,
+        }),
+      });
+      results.push({ channel: 'telegram', ok: res.ok });
+    } catch (e) {
+      console.error('[Notification] Telegram job dispatch error:', e);
+      results.push({ channel: 'telegram', ok: false });
+    }
+  }
+
+  // 3. Dispatch to Discord Channel
+  const discordUrl = process.env.DISCORD_DRIVER_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL;
+  if (discordUrl) {
+    try {
+      const res = await fetch(discordUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: isCorporate
+            ? '🏢 **มีงานองค์กร/สัมมนาใหม่ในระบบ (TripDee)**'
+            : '🚐 **มีลูกค้าโพสต์หารถใหม่ในกระดาน (TripDee)**',
+          embeds: [
+            {
+              title: post.title,
+              url: `${baseUrl}/#tripboard`,
+              color: isCorporate ? 0x0b2545 : isNegotiable ? 0xd97706 : 0x059669,
+              fields: [
+                { name: '📅 วันที่เดินทาง', value: `${post.date || '-'} (${post.days || 1} วัน)`, inline: true },
+                { name: '🚐 สเปกรถ', value: post.vehicleLabel || `${post.seats || 9} ที่นั่ง`, inline: true },
+                { name: '💰 งบประมาณ', value: priceDisplay, inline: true },
+                { name: '👤 ลูกค้า', value: post.authorName || '-', inline: true },
+                ...(!isNegotiable && post.authorPhone ? [{ name: '📞 เบอร์โทรตรง', value: post.authorPhone, inline: true }] : []),
+                ...(post.authorWhatsApp ? [{ name: '💬 WhatsApp', value: `[เปิดแชต](${formatWhatsAppLink(post.authorWhatsApp)}) (${post.authorWhatsApp})`, inline: true }] : []),
+                ...(post.authorWeChat ? [{ name: '💬 WeChat ID', value: post.authorWeChat, inline: true }] : []),
+                ...(post.detail ? [{ name: '📝 รายละเอียด', value: post.detail, inline: false }] : []),
+              ],
+              footer: { text: 'TripDee Driver Dispatch • Real-time Notification' },
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        }),
+      });
+      results.push({ channel: 'discord', ok: res.ok });
+    } catch (e) {
+      console.error('[Notification] Discord job dispatch error:', e);
+      results.push({ channel: 'discord', ok: false });
     }
   }
 

@@ -13,6 +13,7 @@
  */
 
 import { getSupabase } from './client';
+import { Database } from './types';
 import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, SPONSORS, ZoneId, BoardQuote } from '@/data/mockData';
 import { isMockDataEnabled, isExcludedTestVehicle, isExcludedTestDriver } from '@/lib/mockConfig';
 import {
@@ -876,6 +877,8 @@ export async function fetchBoardPosts(
           authorName: row.author_name,
           authorPhone: row.author_phone,
           authorLine: row.author_line,
+          authorWhatsApp: row.author_whatsapp || undefined,
+          authorWeChat: row.author_wechat || undefined,
           vehicleLabel: row.vehicle_label || undefined,
           detail: row.detail || '',
           postedAt: row.posted_at || 'เมื่อสักครู่',
@@ -888,6 +891,7 @@ export async function fetchBoardPosts(
           maxQuotes: Number(row.max_quotes) || 3,
           quoteCount: localBoardQuotes.filter((q) => q.postId === row.id).length || Number(row.quote_count) || 0,
           acceptedQuoteId: row.accepted_quote_id || undefined,
+          viewToken: row.view_token || undefined,
         };
       });
   } catch (err) {
@@ -899,6 +903,7 @@ export async function fetchBoardPosts(
 
 export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): Promise<BoardPost> {
   const newId = `b-${Date.now().toString().slice(-6)}`;
+  const viewToken = post.viewToken || `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   const createdPost: BoardPost = {
     ...post,
     id: newId,
@@ -909,39 +914,55 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
     isNegotiable: Boolean(post.isNegotiable),
     maxQuotes: post.maxQuotes || 3,
     quoteCount: 0,
+    viewToken,
   };
 
   const supabase = getSupabase();
   if (!supabase) return createdPost;
 
   try {
-    const { data, error } = await supabase
+    const insertPayload: Database['public']['Tables']['board_posts']['Insert'] = {
+      id: newId,
+      type: post.type,
+      title: post.title,
+      zone_id: post.zoneId,
+      date: post.date,
+      days: post.days,
+      seats: post.seats,
+      price: post.price,
+      price_note: post.priceNote || null,
+      author_name: post.authorName,
+      author_phone: post.authorPhone,
+      author_line: post.authorLine,
+      author_whatsapp: post.authorWhatsApp || null,
+      author_wechat: post.authorWeChat || null,
+      vehicle_label: post.vehicleLabel || null,
+      detail: post.detail || '',
+      posted_at: 'เมื่อสักครู่',
+      is_verified: Boolean(post.isVerified),
+      category: post.category || 'general',
+      pin: post.pin || null,
+      is_closed: false,
+      is_negotiable: Boolean(post.isNegotiable),
+      max_quotes: post.maxQuotes || 3,
+      view_token: viewToken,
+    };
+
+    let { data, error } = await supabase
       .from('board_posts')
-      .insert({
-        id: newId,
-        type: post.type,
-        title: post.title,
-        zone_id: post.zoneId,
-        date: post.date,
-        days: post.days,
-        seats: post.seats,
-        price: post.price,
-        price_note: post.priceNote || null,
-        author_name: post.authorName,
-        author_phone: post.authorPhone,
-        author_line: post.authorLine,
-        vehicle_label: post.vehicleLabel || null,
-        detail: post.detail || '',
-        posted_at: 'เมื่อสักครู่',
-        is_verified: Boolean(post.isVerified),
-        category: post.category || 'general',
-        pin: post.pin || null,
-        is_closed: false,
-        is_negotiable: Boolean(post.isNegotiable),
-        max_quotes: post.maxQuotes || 3,
-      })
+      .insert(insertPayload)
       .select()
       .single();
+
+    // Fallback if DB table does not yet have author_whatsapp / author_wechat / view_token columns
+    if (error && (error.message?.includes('author_whatsapp') || error.message?.includes('author_wechat') || error.message?.includes('view_token'))) {
+      delete (insertPayload as Record<string, unknown>).author_whatsapp;
+      delete (insertPayload as Record<string, unknown>).author_wechat;
+      delete (insertPayload as Record<string, unknown>).view_token;
+      const retry = await supabase.from('board_posts').insert(insertPayload).select().single();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       console.warn('[TripDee Supabase] Error creating board post:', error.message);
@@ -962,6 +983,8 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
         authorName: data.author_name,
         authorPhone: data.author_phone,
         authorLine: data.author_line,
+        authorWhatsApp: data.author_whatsapp || post.authorWhatsApp || undefined,
+        authorWeChat: data.author_wechat || post.authorWeChat || undefined,
         vehicleLabel: data.vehicle_label || undefined,
         detail: data.detail || '',
         postedAt: data.posted_at || 'เมื่อสักครู่',
@@ -973,6 +996,7 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
         isNegotiable: Boolean(data.is_negotiable),
         maxQuotes: Number(data.max_quotes) || 3,
         quoteCount: 0,
+        viewToken: data.view_token || viewToken,
       };
     }
   } catch (err) {
@@ -1005,6 +1029,8 @@ export async function updateBoardPost(id: string, updates: Partial<BoardPost>): 
     if (updates.authorName !== undefined) supabaseUpdates.author_name = updates.authorName;
     if (updates.authorPhone !== undefined) supabaseUpdates.author_phone = updates.authorPhone;
     if (updates.authorLine !== undefined) supabaseUpdates.author_line = updates.authorLine;
+    if (updates.authorWhatsApp !== undefined) supabaseUpdates.author_whatsapp = updates.authorWhatsApp;
+    if (updates.authorWeChat !== undefined) supabaseUpdates.author_wechat = updates.authorWeChat;
     if (updates.vehicleLabel !== undefined) supabaseUpdates.vehicle_label = updates.vehicleLabel;
     if (updates.detail !== undefined) supabaseUpdates.detail = updates.detail;
     if (updates.isVerified !== undefined) supabaseUpdates.is_verified = updates.isVerified;
@@ -1015,6 +1041,7 @@ export async function updateBoardPost(id: string, updates: Partial<BoardPost>): 
     if (updates.maxQuotes !== undefined) supabaseUpdates.max_quotes = updates.maxQuotes;
     if (updates.quoteCount !== undefined) supabaseUpdates.quote_count = updates.quoteCount;
     if (updates.acceptedQuoteId !== undefined) supabaseUpdates.accepted_quote_id = updates.acceptedQuoteId;
+    if (updates.viewToken !== undefined) supabaseUpdates.view_token = updates.viewToken;
 
     await (supabase.from('board_posts') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
   } catch (err) {
@@ -1041,24 +1068,35 @@ export async function deleteBoardPost(id: string): Promise<boolean> {
 
 /**
  * Customer Board Self-Close: Allows post author to mark post as closed
- * using either their 4-digit PIN or the last 4 digits of their phone number.
+ * using either their view token, 4-digit PIN, or the last 4 digits of their phone number.
  */
-export async function closeBoardPost(id: string, inputPin: string): Promise<{ success: boolean; message: string }> {
+export async function closeBoardPost(
+  id: string,
+  inputPin?: string,
+  token?: string
+): Promise<{ success: boolean; message: string }> {
   const posts = await fetchBoardPosts();
   const post = posts.find((p) => p.id === id);
   if (!post) {
     return { success: false, message: 'ไม่พบประกาศที่ต้องการปิด หรือประกาศหมดอายุแล้ว' };
   }
 
-  const cleanInput = inputPin.trim();
-  const cleanPhone = (post.authorPhone || '').replace(/\D/g, '');
-  const phoneLast4 = cleanPhone.slice(-4);
-  const correctPin = (post.pin || '').trim();
+  const cleanToken = (token || '').trim();
+  const isTokenMatch = Boolean(
+    cleanToken && post.viewToken && cleanToken === post.viewToken
+  );
 
-  const isMatch = (correctPin && cleanInput === correctPin) || (phoneLast4 && cleanInput === phoneLast4);
+  if (!isTokenMatch) {
+    const cleanInput = (inputPin || '').trim();
+    const cleanPhone = (post.authorPhone || '').replace(/\D/g, '');
+    const phoneLast4 = cleanPhone.slice(-4);
+    const correctPin = (post.pin || '').trim();
 
-  if (!isMatch) {
-    return { success: false, message: 'รหัส PIN หรือเลข 4 ตัวท้ายของเบอร์โทรศัพท์ไม่ถูกต้อง' };
+    const isMatch = (correctPin && cleanInput === correctPin) || (phoneLast4 && cleanInput === phoneLast4);
+
+    if (!isMatch) {
+      return { success: false, message: 'รหัส PIN หรือลิงก์การเข้าถึงไม่ถูกต้อง' };
+    }
   }
 
   await updateBoardPost(id, { isClosed: true });
@@ -1075,16 +1113,32 @@ export async function closeBoardPost(id: string, inputPin: string): Promise<{ su
  */
 export async function fetchBoardQuotes(
   postId: string,
-  inputPin?: string
-): Promise<{ success: boolean; quotes?: BoardQuote[]; message?: string; authorContact?: { phone: string; line: string } }> {
+  inputPin?: string,
+  token?: string
+): Promise<{
+  success: boolean;
+  quotes?: BoardQuote[];
+  message?: string;
+  authorContact?: {
+    phone: string;
+    line: string;
+    whatsapp?: string;
+    wechat?: string;
+  };
+}> {
   const posts = await fetchBoardPosts(undefined, { includeClosed: true });
   const post = posts.find((p) => p.id === postId);
   if (!post) {
     return { success: false, message: 'ไม่พบประกาศที่ระบุ' };
   }
 
-  // Check pin authentication if post has PIN
-  if (post.pin) {
+  const cleanToken = (token || '').trim();
+  const isTokenMatch = Boolean(
+    cleanToken && post.viewToken && cleanToken === post.viewToken
+  );
+
+  // Check pin authentication if post has PIN and token is not valid
+  if (post.pin && !isTokenMatch) {
     const cleanInput = (inputPin || '').trim();
     const cleanPhone = (post.authorPhone || '').replace(/\D/g, '');
     const phoneLast4 = cleanPhone.slice(-4);
@@ -1095,6 +1149,13 @@ export async function fetchBoardQuotes(
       return { success: false, message: 'รหัส PIN หรือเลข 4 ตัวท้ายของเบอร์โทรศัพท์ไม่ถูกต้อง ไม่สามารถเปิดดูใบเสนอราคาได้' };
     }
   }
+
+  const authorContact = {
+    phone: post.authorPhone,
+    line: post.authorLine,
+    whatsapp: post.authorWhatsApp,
+    wechat: post.authorWeChat,
+  };
 
   const supabase = getSupabase();
   if (supabase) {
@@ -1114,13 +1175,14 @@ export async function fetchBoardQuotes(
             driverName: String(r.driver_name),
             driverPhone: String(r.driver_phone),
             driverLine: r.driver_line ? String(r.driver_line) : undefined,
+            driverWhatsApp: r.driver_whatsapp ? String(r.driver_whatsapp) : undefined,
             vehicleModel: String(r.vehicle_model),
             price: Number(r.price) || 0,
             priceNote: r.price_note ? String(r.price_note) : undefined,
             message: r.message ? String(r.message) : undefined,
             createdAt: String(r.created_at || new Date().toISOString()),
           })),
-          authorContact: { phone: post.authorPhone, line: post.authorLine },
+          authorContact,
         };
       }
     } catch (err) {
@@ -1132,7 +1194,7 @@ export async function fetchBoardQuotes(
   return {
     success: true,
     quotes,
-    authorContact: { phone: post.authorPhone, line: post.authorLine },
+    authorContact,
   };
 }
 
@@ -1177,17 +1239,23 @@ export async function saveBoardQuote(quote: Omit<BoardQuote, 'id' | 'createdAt'>
   const supabase = getSupabase();
   if (supabase) {
     try {
-      await supabase.from('board_quotes').insert({
+      const quotePayload: Database['public']['Tables']['board_quotes']['Insert'] = {
         id: newQuote.id,
         post_id: newQuote.postId,
         driver_name: newQuote.driverName,
         driver_phone: newQuote.driverPhone,
         driver_line: newQuote.driverLine || null,
+        driver_whatsapp: newQuote.driverWhatsApp || null,
         vehicle_model: newQuote.vehicleModel,
         price: newQuote.price,
         price_note: newQuote.priceNote || null,
         message: newQuote.message || null,
-      });
+      };
+      const { error } = await supabase.from('board_quotes').insert(quotePayload);
+      if (error && error.message?.includes('driver_whatsapp')) {
+        delete (quotePayload as Record<string, unknown>).driver_whatsapp;
+        await supabase.from('board_quotes').insert(quotePayload);
+      }
     } catch (err) {
       console.warn('[TripDee Supabase] Error inserting board quote:', err);
     }
@@ -1208,7 +1276,8 @@ export async function saveBoardQuote(quote: Omit<BoardQuote, 'id' | 'createdAt'>
 export async function acceptBoardQuote(
   postId: string,
   quoteId: string,
-  inputPin: string
+  inputPin?: string,
+  token?: string
 ): Promise<{ success: boolean; message: string; selectedQuote?: BoardQuote }> {
   const posts = await fetchBoardPosts();
   const post = posts.find((p) => p.id === postId);
@@ -1216,18 +1285,55 @@ export async function acceptBoardQuote(
     return { success: false, message: 'ไม่พบประกาศ' };
   }
 
-  // Verify PIN
-  const cleanInput = inputPin.trim();
-  const cleanPhone = (post.authorPhone || '').replace(/\D/g, '');
-  const phoneLast4 = cleanPhone.slice(-4);
-  const correctPin = (post.pin || '').trim();
-  const isMatch = (correctPin && cleanInput === correctPin) || (phoneLast4 && cleanInput === phoneLast4);
+  const cleanToken = (token || '').trim();
+  const isTokenMatch = Boolean(
+    cleanToken && post.viewToken && cleanToken === post.viewToken
+  );
 
-  if (!isMatch) {
-    return { success: false, message: 'รหัส PIN ไม่ถูกต้อง' };
+  // Verify PIN if token does not match
+  if (!isTokenMatch) {
+    const cleanInput = (inputPin || '').trim();
+    const cleanPhone = (post.authorPhone || '').replace(/\D/g, '');
+    const phoneLast4 = cleanPhone.slice(-4);
+    const correctPin = (post.pin || '').trim();
+    const isMatch = (correctPin && cleanInput === correctPin) || (phoneLast4 && cleanInput === phoneLast4);
+
+    if (!isMatch) {
+      return { success: false, message: 'รหัส PIN หรือลิงก์การเข้าถึงไม่ถูกต้อง' };
+    }
   }
 
-  const quote = localBoardQuotes.find((q) => q.id === quoteId && q.postId === postId);
+  let quote = localBoardQuotes.find((q) => q.id === quoteId && q.postId === postId);
+  if (!quote) {
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        const { data } = await supabase
+          .from('board_quotes')
+          .select('*')
+          .eq('id', quoteId)
+          .single();
+        if (data) {
+          quote = {
+            id: String(data.id),
+            postId: String(data.post_id),
+            driverName: String(data.driver_name),
+            driverPhone: String(data.driver_phone),
+            driverLine: data.driver_line ? String(data.driver_line) : undefined,
+            driverWhatsApp: data.driver_whatsapp ? String(data.driver_whatsapp) : undefined,
+            vehicleModel: String(data.vehicle_model),
+            price: Number(data.price) || 0,
+            priceNote: data.price_note ? String(data.price_note) : undefined,
+            message: data.message ? String(data.message) : undefined,
+            createdAt: String(data.created_at || new Date().toISOString()),
+          };
+        }
+      } catch (e) {
+        console.warn('[TripDee Supabase] Error looking up quote for acceptance:', e);
+      }
+    }
+  }
+
   if (!quote) {
     return { success: false, message: 'ไม่พบใบเสนอราคาที่เลือก' };
   }

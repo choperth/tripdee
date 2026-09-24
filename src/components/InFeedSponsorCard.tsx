@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Sponsor } from '@/data/mockData';
 import { useAnalytics } from '@/context/AnalyticsContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { MapPin, Tag, ExternalLink, Phone } from 'lucide-react';
 
 interface InFeedSponsorCardProps {
@@ -12,6 +13,7 @@ interface InFeedSponsorCardProps {
 
 export const InFeedSponsorCard: React.FC<InFeedSponsorCardProps> = ({ sponsor }) => {
   const { trackSponsor, trackCall } = useAnalytics();
+  const { t } = useLanguage();
 
   const handleClick = () => {
     trackSponsor({
@@ -35,18 +37,18 @@ export const InFeedSponsorCard: React.FC<InFeedSponsorCardProps> = ({ sponsor })
 
   return (
     <aside
-      aria-label={`สปอนเซอร์: ${sponsor.title}`}
+      aria-label={t('spn.sponsorAria', { title: sponsor.title })}
       className="group relative rounded-2xl border border-amber-300/60 dark:border-amber-900/50 bg-gradient-to-br from-amber-50/40 via-paper-elevated to-paper-canvas dark:from-amber-950/20 dark:via-slate-900 dark:to-slate-900/90 shadow-sm hover:shadow-md transition-all overflow-hidden"
     >
       {/* Top Banner Tag */}
       <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-transparent border-b border-amber-200/50 dark:border-amber-900/40">
         <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 dark:text-amber-300">
-          <span>{sponsor.badgeText || 'สิทธิพิเศษพันธมิตร TripDee'}</span>
+          <span>{sponsor.badgeText || t('spn.partnerPerk')}</span>
           <span className="text-amber-600/60 dark:text-amber-400/60 font-normal">|</span>
           <span className="font-semibold text-ink-muted dark:text-slate-400">{sponsor.categoryLabel}</span>
         </div>
         <span className="text-[10px] font-bold text-ink-muted dark:text-slate-400 bg-paper-surface-muted dark:bg-slate-800 px-2 py-0.5 rounded-full">
-          โฆษณาพันธมิตร
+          {t('spn.partnerAd')}
         </span>
       </div>
 
@@ -103,11 +105,11 @@ export const InFeedSponsorCard: React.FC<InFeedSponsorCardProps> = ({ sponsor })
             {isPhone ? (
               <>
                 <Phone className="w-4 h-4" />
-                <span>โทรรับสิทธิ์</span>
+                <span>{t('spn.callClaim')}</span>
               </>
             ) : (
               <>
-                <span>รับสิทธิ์ส่วนลด</span>
+                <span>{t('spn.claimDiscount')}</span>
                 <ExternalLink className="w-4 h-4" />
               </>
             )}

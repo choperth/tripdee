@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
+import type { DictKey } from '@/i18n/dictionaries';
 import {
   X,
   ShieldCheck,
@@ -32,14 +33,14 @@ interface DriverRegisterModalProps {
   onClose: () => void;
 }
 
-const AMENITY_OPTIONS = [
-  'มีเบาะ VIP นวดไฟฟ้า',
-  'มี Wi-Fi ความเร็วสูง / จอทีวี',
-  'ประกันภัยชั้น 1 คุ้มครองผู้โดยสาร',
-  'น้ำดื่มบริการฟรี / ตู้เย็นขนาดเล็ก',
-  'คาราโอเกะ & ระบบเสียง VIP',
-  'หัวชาร์จ USB / Type-C ทุกที่นั่ง',
-];
+const AMENITY_KEYS = [
+  'reg.amMassageSeat',
+  'reg.amWifi',
+  'reg.amInsurance',
+  'reg.amWater',
+  'reg.amKaraoke',
+  'reg.amCharge',
+] as const;
 
 export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen, onClose }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -65,7 +66,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
     plateType: 'yellow' as 'yellow' | 'blue',
     plateNumber: '',
     canIssueTaxInvoice: true,
-    amenities: ['มี Wi-Fi ความเร็วสูง / จอทีวี', 'ประกันภัยชั้น 1 คุ้มครองผู้โดยสาร'] as string[],
+    amenities: ['reg.amWifi', 'reg.amInsurance'] as string[],
     pickupLocation: '',
     depositTerms: '',
   });
@@ -104,7 +105,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
   const handleNext = () => {
     if (currentStep === 1) {
       if (!formData.driverName.trim() || !formData.phone.trim() || !formData.lineId.trim()) {
-        alert('กรุณากรอกชื่อผู้ติดต่อ เบอร์โทรศัพท์ และ LINE ID ให้ครบถ้วน');
+        alert(t('reg.errContact'));
         return;
       }
       setCurrentStep(2);
@@ -144,7 +145,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
           canIssueTaxInvoice: formData.canIssueTaxInvoice,
           businessType: formData.canIssueTaxInvoice ? 'company' : 'individual',
           routes: formData.serviceHub,
-          amenities: formData.amenities.join(', '),
+          amenities: formData.amenities.map((key) => t(key as DictKey)).join(', '),
           pickupLocation: formData.pickupLocation,
           depositTerms: formData.depositTerms,
           hp_website: hpWebsite,
@@ -154,7 +155,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        alert(errorData.error || 'เกิดข้อผิดพลาดในการลงทะเบียน กรุณาลองใหม่อีกครั้ง');
+        alert(errorData.error || t('reg.errRegister'));
         return;
       }
 
@@ -180,7 +181,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
       setSubmitted(true);
     } catch (err) {
       console.error('Submit driver error:', err);
-      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
+      alert(t('reg.errNetwork'));
     } finally {
       setIsSubmitting(false);
     }
@@ -336,7 +337,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                     1
                   </span>
                   <span className="hidden sm:inline">{t('reg.step1Title')}</span>
-                  <span className="sm:hidden">ผู้ขับ/ร้าน</span>
+                  <span className="sm:hidden">{t('reg.step1Short')}</span>
                 </button>
 
                 <button
@@ -360,7 +361,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                     2
                   </span>
                   <span className="hidden sm:inline">{t('reg.step2Title')}</span>
-                  <span className="sm:hidden">ข้อมูลรถ</span>
+                  <span className="sm:hidden">{t('reg.step2Short')}</span>
                 </button>
 
                 <button
@@ -384,7 +385,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                     3
                   </span>
                   <span className="hidden sm:inline">{t('reg.step3Title')}</span>
-                  <span className="sm:hidden">สิทธิพิเศษ</span>
+                  <span className="sm:hidden">{t('reg.step3Short')}</span>
                 </button>
               </div>
             </div>
@@ -669,7 +670,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                               <CarFront className="h-4 w-4 text-amber-500" />
                               {t('reg.serviceSelfDrive')}
                             </div>
-                            <p className="text-[11px] font-medium text-ink-2">Sedan, SUV 7 ที่นั่ง หรือ Compact EV</p>
+                            <p className="text-[11px] font-medium text-ink-2">{t('reg.sedanNote')}</p>
                           </div>
                         </label>
                       </div>
@@ -800,7 +801,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                         <div className="relative group rounded-xl overflow-hidden bg-paper-2 aspect-video shadow-2xs border border-rule/60">
                           <Image
                             src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80"
-                            alt="ภาพถ่ายตัวรถภายนอก"
+                            alt={t('reg.photoExterior')}
                             fill
                             sizes="(max-width: 640px) 100vw, 200px"
                             className="object-cover"
@@ -813,7 +814,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                         <div className="relative group rounded-xl overflow-hidden bg-paper-2 aspect-video shadow-2xs border border-rule/60">
                           <Image
                             src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=600&q=80"
-                            alt="ห้องโดยสาร VIP"
+                            alt={t('reg.photoInterior')}
                             fill
                             sizes="(max-width: 640px) 100vw, 200px"
                             className="object-cover"
@@ -830,14 +831,14 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                           className="sr-only"
                           onChange={(e) => {
                             if (e.target.files?.[0]) {
-                              alert('เลือกรูปภาพเรียบร้อยแล้ว: ' + e.target.files[0].name);
+                              alert(t('reg.photoSelected', { name: e.target.files[0].name }));
                             }
                           }}
                         />
                         <button
                           type="button"
                           onClick={() => document.getElementById('driver-vehicle-photo-upload')?.click()}
-                          aria-label="อัปโหลดรูปถ่ายจริงของตัวรถ"
+                          aria-label={t('reg.uploadAria')}
                           className="rounded-xl border-2 border-dashed border-amber-500/40 bg-card p-2 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-amber-500/10 hover:border-amber-500 transition-all shadow-2xs aspect-video group"
                         >
                           <Upload className="h-6 w-6 text-amber-500 group-hover:scale-110 transition-transform" />
@@ -881,7 +882,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                         {t('reg.amenitiesTitle')}
                       </label>
                       <div className="flex flex-wrap gap-2">
-                        {AMENITY_OPTIONS.map((amenity) => {
+                        {AMENITY_KEYS.map((amenity) => {
                           const isSelected = formData.amenities.includes(amenity);
                           return (
                             <button
@@ -895,7 +896,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                               }`}
                             >
                               <Sparkles className="h-3.5 w-3.5" />
-                              {amenity}
+                              {t(amenity)}
                             </button>
                           );
                         })}
