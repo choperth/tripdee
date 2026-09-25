@@ -1,7 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { isMockDataEnabled } from '@/lib/mockConfig';
+import { getSupabase } from '@/lib/supabase/client';
 
 export type UserRole = 'driver' | 'customer' | 'admin';
 
@@ -69,6 +70,10 @@ interface AuthContextType {
   quotations: QuotationRecord[];
   addQuotation: (q: Omit<QuotationRecord, 'id' | 'date' | 'status'>) => void;
   deleteAccount: () => Promise<void>;
+  loginWithOAuth: (
+    provider: 'line' | 'google',
+    role?: UserRole
+  ) => Promise<{ success: boolean; user?: UserProfile; error?: string }>;
 }
 
 const DEMO_ACCOUNTS: Record<UserRole, UserProfile> = {
@@ -146,6 +151,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [quotations, setQuotations] = useState<QuotationRecord[]>(INITIAL_QUOTATIONS);
 
+  const saveUser = useCallback((newUser: UserProfile | null) => {
+    setUser(newUser);
+    try {
+      if (newUser) {
+        localStorage.setItem('td-auth-user', JSON.stringify(newUser));
+      } else {
+        localStorage.removeItem('td-auth-user');
+      }
+    } catch {
+      /* ignore storage access error */
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     try {
@@ -168,23 +186,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       /* ignore storage access error */
     }
+
+    // Subscribe to Supabase auth events
+    const supabase = getSupabase();
+    let authSubscription: { unsubscribe: () => void } | null = null;
+    if (supabase) {
+      const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (!isMounted) return;
+        if (session?.user) {
+          const u = session.user;
+          const meta = (u.user_metadata || {}) as Record<string, unknown>;
+          const pendingRole = (typeof window !== 'undefined' ? localStorage.getItem('td-pending-oauth-role') : null) as UserRole | null;
+          const role: UserRole = pendingRole || 'customer';
+
+          const fullName = (meta.full_name as string) || (meta.name as string) || (meta.display_name as string) || (u.email ? u.email.split('@')[0] : 'ผู้ใช้งาน');
+          const avatarUrl = (meta.avatar_url as string) || (meta.picture as string) || undefined;
+          const lineId = (meta.line_id as string) || undefined;
+
+          const oauthUser: UserProfile = {
+            id: u.id,
+            role,
+            name: fullName,
+            emailOrPhone: u.email || (meta.phone as string) || '',
+            avatar: avatarUrl,
+            lineId,
+            isAvailable: role === 'driver' ? true : undefined,
+            verificationStatus: role === 'driver' ? 'pending' : undefined,
+          };
+          saveUser(oauthUser);
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('td-pending-oauth-role');
+          }
+        }
+      });
+      authSubscription = data.subscription;
+    }
+
     return () => {
       isMounted = false;
-    };
-  }, []);
-
-  const saveUser = (newUser: UserProfile | null) => {
-    setUser(newUser);
-    try {
-      if (newUser) {
-        localStorage.setItem('td-auth-user', JSON.stringify(newUser));
-      } else {
-        localStorage.removeItem('td-auth-user');
+      if (authSubscription) {
+        authSubscription.unsubscribe();
       }
-    } catch {
-      /* ignore storage access error */
-    }
-  };
+    };
+  }, [saveUser]);
 
   const loginAsDemo = (role: UserRole) => {
     saveUser(DEMO_ACCOUNTS[role]);
@@ -208,8 +252,88 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveUser(newUser);
   };
 
-  const logout = () => {
+  const loginWithOAuth = async (
+    provider: 'line' | 'google',
+    role: UserRole = 'customer'
+  ): Promise<{ success: boolean; user?: UserProfile; error?: string }> => {
+    const isDemo = isMockDataEnabled();
+    const supabase = getSupabase();
+
+    // If demo mode or Supabase client unconfigured, provide a smooth instant simulation:
+    if (!supabase || isDemo) {
+      const isLine = provider === 'line';
+      const simulatedUser: UserProfile = {
+        id: `usr-${provider}-${Date.now().toString().slice(-4)}`,
+        role,
+        name: isLine
+          ? role === 'driver'
+            ? 'พี่ชัย รถตู้เชียงใหม่ (LINE)'
+            : 'คุณนิดา (LINE User)'
+          : role === 'driver'
+          ? 'พี่วิทย์ นอร์ธเทิร์น (Google)'
+          : 'คุณสมชาย วงศ์สวัสดิ์ (Google Workspace)',
+        emailOrPhone: isLine ? '081-234-5678' : role === 'driver' ? 'chai.cnx@gmail.com' : 'somchai@siamtech.co.th',
+        avatar: isLine
+          ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
+          : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+        lineId: isLine ? '@chaivan_cnx' : undefined,
+        isAvailable: role === 'driver' ? true : undefined,
+        verificationStatus: role === 'driver' ? 'verified' : undefined,
+        companyName: role === 'customer' ? (isLine ? 'นิดา ทราเวล กรุ๊ป' : 'บริษัท สยาม อินโนเวชั่น จำกัด (มหาชน)') : undefined,
+      };
+      saveUser(simulatedUser);
+      return { success: true, user: simulatedUser };
+    }
+
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('td-pending-oauth-role', role);
+      }
+      const redirectTo = `${window.location.origin}/auth/callback?role=${encodeURIComponent(role)}`;
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider as 'google',
+        options: {
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        if (
+          error.message.toLowerCase().includes('not enabled') ||
+          error.message.toLowerCase().includes('unsupported provider')
+        ) {
+          return {
+            success: false,
+            error: `ยังไม่ได้เปิดใช้งาน Provider "${provider.toUpperCase()}" ใน Supabase Dashboard กรุณาใส่ Client ID ใน Dashboard`,
+          };
+        }
+        return { success: false, error: error.message };
+      }
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  };
+
+  const logout = async () => {
     saveUser(null);
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch {
+        /* ignore */
+      }
+    }
   };
 
   const toggleDriverAvailability = () => {
@@ -306,6 +430,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         quotations,
         addQuotation,
         deleteAccount,
+        loginWithOAuth,
       }}
     >
       {children}

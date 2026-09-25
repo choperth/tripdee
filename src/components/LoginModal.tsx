@@ -35,9 +35,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   defaultRole = 'driver',
   onOpenRegisterModal,
 }) => {
-  const { loginAsDemo, loginWithCredentials } = useAuth();
+  const { loginAsDemo, loginWithCredentials, loginWithOAuth } = useAuth();
   const { t } = useLanguage();
   const [selectedRole, setSelectedRole] = useState<UserRole>(defaultRole);
+
+  // OAuth State
+  const [oauthLoading, setOauthLoading] = useState<'line' | 'google' | null>(null);
+  const [oauthError, setOauthError] = useState('');
 
   // Real Mode Driver Form State
   const [driverPhone, setDriverPhone] = useState('');
@@ -71,6 +75,88 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     loginAsDemo(role);
     onClose();
   };
+
+  const handleOAuthLogin = async (provider: 'line' | 'google') => {
+    try {
+      setOauthLoading(provider);
+      setOauthError('');
+      const res = await loginWithOAuth(provider, selectedRole);
+      if (!res.success && res.error) {
+        setOauthError(res.error);
+      } else if (res.success && isDemo) {
+        onClose();
+      }
+    } catch (err: unknown) {
+      setOauthError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setOauthLoading(null);
+    }
+  };
+
+  const renderOAuthButtons = () => (
+    <div className="space-y-2.5">
+      {oauthError && (
+        <div className="rounded-xl bg-flame-soft p-3 text-xs font-semibold text-flame flex items-center gap-1.5">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{oauthError}</span>
+        </div>
+      )}
+      <button
+        type="button"
+        disabled={!!oauthLoading}
+        onClick={() => handleOAuthLogin('line')}
+        className="flex w-full items-center justify-center gap-2 rounded-input bg-[#06C755] py-2.5 px-4 font-extrabold text-white transition-colors hover:bg-[#05b34c] disabled:opacity-60 shadow-xs cursor-pointer"
+      >
+        {oauthLoading === 'line' ? (
+          <>
+            <Loader2 className="h-4.5 w-4.5 animate-spin" />
+            <span>{t('auth.connecting')}</span>
+          </>
+        ) : (
+          <>
+            <MessageCircle className="h-5 w-5 fill-white" />
+            <span>{t('auth.lineLogin')}</span>
+          </>
+        )}
+      </button>
+
+      <button
+        type="button"
+        disabled={!!oauthLoading}
+        onClick={() => handleOAuthLogin('google')}
+        className="flex w-full items-center justify-center gap-2 rounded-input bg-card py-2.5 px-4 font-extrabold text-ink transition-colors hover:bg-paper-2 border border-rule disabled:opacity-60 shadow-xs cursor-pointer"
+      >
+        {oauthLoading === 'google' ? (
+          <>
+            <Loader2 className="h-4.5 w-4.5 animate-spin" />
+            <span>{t('auth.connecting')}</span>
+          </>
+        ) : (
+          <>
+            <svg className="h-4.5 w-4.5" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+              />
+            </svg>
+            <span>{t('auth.googleLogin')}</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
 
   const handleDemoDirectSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,7 +314,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         <div className="mb-6 grid grid-cols-3 gap-2 rounded-2xl bg-paper p-1.5">
           <button
             type="button"
-            onClick={() => setSelectedRole('driver')}
+            onClick={() => {
+              setSelectedRole('driver');
+              setOauthError('');
+            }}
             className={`flex flex-col items-center gap-1 rounded-xl py-2 px-1 text-xs font-extrabold transition-colors ${
               selectedRole === 'driver'
                 ? 'bg-accent text-accent-ink shadow-xs'
@@ -241,7 +330,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
           <button
             type="button"
-            onClick={() => setSelectedRole('customer')}
+            onClick={() => {
+              setSelectedRole('customer');
+              setOauthError('');
+            }}
             className={`flex flex-col items-center gap-1 rounded-xl py-2 px-1 text-xs font-extrabold transition-colors ${
               selectedRole === 'customer'
                 ? 'bg-grape text-white shadow-xs'
@@ -254,7 +346,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
           <button
             type="button"
-            onClick={() => setSelectedRole('admin')}
+            onClick={() => {
+              setSelectedRole('admin');
+              setOauthError('');
+            }}
             className={`flex flex-col items-center gap-1 rounded-xl py-2 px-1 text-xs font-extrabold transition-colors ${
               selectedRole === 'admin'
                 ? 'bg-sun text-sun-ink shadow-xs'
@@ -311,42 +406,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </div>
 
             {/* Social / Direct Login Options in Demo */}
-            <div className="space-y-2.5">
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('driver')}
-                className="flex w-full items-center justify-center gap-2 rounded-input bg-[#06C755] py-2.5 px-4 font-extrabold text-white transition-colors hover:bg-[#05b34c]"
-              >
-                <MessageCircle className="h-5 w-5 fill-white" />
-                <span>{t('auth.lineLogin')}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('customer')}
-                className="flex w-full items-center justify-center gap-2 rounded-input bg-card py-2.5 px-4 font-extrabold text-ink transition-colors hover:bg-paper-2 border border-rule"
-              >
-                <svg className="h-4.5 w-4.5" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-                  />
-                </svg>
-                <span>{t('auth.googleLogin')}</span>
-              </button>
-            </div>
+            {renderOAuthButtons()}
 
             {/* Direct Phone/Email Toggle */}
             <div className="mt-4 pt-3 border-t-2 border-dashed border-rule text-center">
@@ -416,137 +476,163 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <div className="space-y-4">
             {/* 1. Driver Login Form */}
             {selectedRole === 'driver' && (
-              <form onSubmit={handleDriverLogin} className="space-y-4">
-                <div>
-                  <label htmlFor="driver-phone-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1.5">
-                    {t('auth.driverPhoneLabel')}
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-2" />
-                    <input
-                      id="driver-phone-input"
-                      type="tel"
-                      required
-                      value={driverPhone}
-                      onChange={(e) => setDriverPhone(e.target.value)}
-                      placeholder={t('auth.driverPhonePh')}
-                      className="w-full rounded-input bg-paper pl-9 pr-3 py-2.5 text-sm font-bold text-ink focus:border-accent border border-rule"
-                    />
+              <div className="space-y-4">
+                {renderOAuthButtons()}
+
+                <div className="relative my-3 text-center">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-rule" />
                   </div>
+                  <span className="relative bg-card px-3 text-[11px] font-extrabold uppercase text-ink-2">
+                    {t('auth.orDivider')}
+                  </span>
                 </div>
 
-                {driverError && (
-                  <div className="rounded-xl bg-flame-soft p-3 text-xs font-semibold text-flame flex flex-col gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <AlertCircle className="h-4 w-4 shrink-0" />
-                      <span>{driverError}</span>
+                <form onSubmit={handleDriverLogin} className="space-y-4">
+                  <div>
+                    <label htmlFor="driver-phone-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1.5">
+                      {t('auth.driverPhoneLabel')}
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-2" />
+                      <input
+                        id="driver-phone-input"
+                        type="tel"
+                        required
+                        value={driverPhone}
+                        onChange={(e) => setDriverPhone(e.target.value)}
+                        placeholder={t('auth.driverPhonePh')}
+                        className="w-full rounded-input bg-paper pl-9 pr-3 py-2.5 text-sm font-bold text-ink focus:border-accent border border-rule"
+                      />
                     </div>
-                    {onOpenRegisterModal && (
+                  </div>
+
+                  {driverError && (
+                    <div className="rounded-xl bg-flame-soft p-3 text-xs font-semibold text-flame flex flex-col gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
+                        <span>{driverError}</span>
+                      </div>
+                      {onOpenRegisterModal && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            onOpenRegisterModal();
+                          }}
+                          className="inline-flex items-center gap-1.5 text-xs font-extrabold text-navy-deep underline hover:text-accent-deep pt-1"
+                        >
+                          <UserPlus className="h-3.5 w-3.5" />
+                          <span>{t('auth.driverRegisterLink')}</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isCheckingDriver}
+                    className="td-btn w-full rounded-input bg-accent py-3 px-4 text-sm font-extrabold text-accent-ink flex items-center justify-center gap-2 hover:bg-accent/90 transition-colors disabled:opacity-50"
+                  >
+                    {isCheckingDriver ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>{t('auth.driverSearching')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <CarFront className="h-4 w-4" />
+                        <span>{t('auth.submit')}</span>
+                      </>
+                    )}
+                  </button>
+
+                  {onOpenRegisterModal && (
+                    <div className="text-center pt-2">
                       <button
                         type="button"
                         onClick={() => {
                           onClose();
                           onOpenRegisterModal();
                         }}
-                        className="inline-flex items-center gap-1.5 text-xs font-extrabold text-navy-deep underline hover:text-accent-deep pt-1"
+                        className="text-xs font-bold text-ink-2 hover:text-accent-deep transition-colors"
                       >
-                        <UserPlus className="h-3.5 w-3.5" />
-                        <span>{t('auth.driverRegisterLink')}</span>
+                        {t('auth.driverRegisterLink')}
                       </button>
-                    )}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isCheckingDriver}
-                  className="td-btn w-full rounded-input bg-accent py-3 px-4 text-sm font-extrabold text-accent-ink flex items-center justify-center gap-2 hover:bg-accent/90 transition-colors disabled:opacity-50"
-                >
-                  {isCheckingDriver ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>{t('auth.driverSearching')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <CarFront className="h-4 w-4" />
-                      <span>{t('auth.submit')}</span>
-                    </>
+                    </div>
                   )}
-                </button>
-
-                {onOpenRegisterModal && (
-                  <div className="text-center pt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onClose();
-                        onOpenRegisterModal();
-                      }}
-                      className="text-xs font-bold text-ink-2 hover:text-accent-deep transition-colors"
-                    >
-                      {t('auth.driverRegisterLink')}
-                    </button>
-                  </div>
-                )}
-              </form>
+                </form>
+              </div>
             )}
 
             {/* 2. Customer Login Form */}
             {selectedRole === 'customer' && (
-              <form onSubmit={handleCustomerLogin} className="space-y-3.5">
-                <div>
-                  <label htmlFor="customer-name-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
-                    {t('auth.customerCompanyLabel')}
-                  </label>
-                  <input
-                    id="customer-name-input"
-                    type="text"
-                    required
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder={t('auth.customerCompanyPh')}
-                    className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent border border-rule"
-                  />
+              <div className="space-y-4">
+                {renderOAuthButtons()}
+
+                <div className="relative my-3 text-center">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-rule" />
+                  </div>
+                  <span className="relative bg-card px-3 text-[11px] font-extrabold uppercase text-ink-2">
+                    {t('auth.orDivider')}
+                  </span>
                 </div>
 
-                <div>
-                  <label htmlFor="customer-contact-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
-                    {t('auth.fPhone')}
-                  </label>
-                  <input
-                    id="customer-contact-input"
-                    type="text"
-                    required
-                    value={customerContact}
-                    onChange={(e) => setCustomerContact(e.target.value)}
-                    placeholder={t('auth.fPhonePh')}
-                    className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent border border-rule"
-                  />
-                </div>
+                <form onSubmit={handleCustomerLogin} className="space-y-3.5">
+                  <div>
+                    <label htmlFor="customer-name-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
+                      {t('auth.customerCompanyLabel')}
+                    </label>
+                    <input
+                      id="customer-name-input"
+                      type="text"
+                      required
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder={t('auth.customerCompanyPh')}
+                      className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent border border-rule"
+                    />
+                  </div>
 
-                <div>
-                  <label htmlFor="customer-tax-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
-                    {t('auth.customerTaxLabel')}
-                  </label>
-                  <input
-                    id="customer-tax-input"
-                    type="text"
-                    value={customerTaxId}
-                    onChange={(e) => setCustomerTaxId(e.target.value)}
-                    placeholder={t('auth.customerTaxPh')}
-                    className="w-full rounded-input bg-paper px-3 py-2 text-sm font-bold text-ink focus:border-accent border border-rule"
-                  />
-                </div>
+                  <div>
+                    <label htmlFor="customer-contact-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
+                      {t('auth.fPhone')}
+                    </label>
+                    <input
+                      id="customer-contact-input"
+                      type="text"
+                      required
+                      value={customerContact}
+                      onChange={(e) => setCustomerContact(e.target.value)}
+                      placeholder={t('auth.fPhonePh')}
+                      className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent border border-rule"
+                    />
+                  </div>
 
-                <button
-                  type="submit"
-                  className="td-btn w-full rounded-input bg-grape py-3 px-4 text-sm font-extrabold text-white flex items-center justify-center gap-2 hover:bg-grape/90 transition-colors mt-2"
-                >
-                  <Briefcase className="h-4 w-4" />
-                  <span>{t('auth.submit')}</span>
-                </button>
-              </form>
+                  <div>
+                    <label htmlFor="customer-tax-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
+                      {t('auth.customerTaxLabel')}
+                    </label>
+                    <input
+                      id="customer-tax-input"
+                      type="text"
+                      value={customerTaxId}
+                      onChange={(e) => setCustomerTaxId(e.target.value)}
+                      placeholder={t('auth.customerTaxPh')}
+                      className="w-full rounded-input bg-paper px-3 py-2 text-sm font-bold text-ink focus:border-accent border border-rule"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="td-btn w-full rounded-input bg-grape py-3 px-4 text-sm font-extrabold text-white flex items-center justify-center gap-2 hover:bg-grape/90 transition-colors mt-2"
+                  >
+                    <Briefcase className="h-4 w-4" />
+                    <span>{t('auth.submit')}</span>
+                  </button>
+                </form>
+              </div>
             )}
 
             {/* 3. Admin Login Form (Password Protected) */}

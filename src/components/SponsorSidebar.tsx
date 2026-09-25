@@ -1,17 +1,23 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { SPONSORS, BoardPost } from '@/data/mockData';
 import { isMockDataEnabled, isMockPostId } from '@/lib/mockConfig';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
 
 export const SponsorSidebar: React.FC = () => {
   const { trackSponsor, trackCall, getSponsorClickCount } = useAnalytics();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const isDemo = mounted && isMockDataEnabled();
+
+  const localizedSponsors = useMemo(
+    () => SPONSORS.map((s) => getLocalizedSponsor(s, locale)),
+    [locale]
+  );
 
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
@@ -66,12 +72,12 @@ export const SponsorSidebar: React.FC = () => {
   useEffect(() => {
     if (isPaused) return;
     const interval = setInterval(() => {
-      setSelectedIdx((prev) => (prev + 1) % SPONSORS.length);
+      setSelectedIdx((prev) => (prev + 1) % localizedSponsors.length);
     }, 6000);
     return () => clearInterval(interval);
-  }, [isPaused]);
+  }, [isPaused, localizedSponsors.length]);
 
-  const activeSponsor = SPONSORS[selectedIdx] || SPONSORS[0];
+  const activeSponsor = localizedSponsors[selectedIdx] || localizedSponsors[0];
 
   return (
     <aside aria-label={t('spn.aria')} className="space-y-space-lg">
@@ -149,7 +155,7 @@ export const SponsorSidebar: React.FC = () => {
         >
           {/* Sponsor Category Switcher Tabs */}
           <div className="grid grid-cols-6 gap-1 p-1.5 sm:p-2 bg-paper-surface-muted dark:bg-slate-800 border-b border-border-subtle dark:border-slate-700/60">
-            {SPONSORS.map((s, idx) => {
+            {localizedSponsors.map((s, idx) => {
               const isActive = idx === selectedIdx;
               const icon =
                 s.category === 'hotel'
@@ -253,7 +259,7 @@ export const SponsorSidebar: React.FC = () => {
               onClick={() => handleSponsorClick(activeSponsor)}
               className="mt-space-xs w-full h-10 bg-navy-deep hover:bg-navy-surface text-surface rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98]"
             >
-              <span>{activeSponsor.link.startsWith('tel:') ? 'โทรสอบถาม' : t('sponsor.cta')}</span>
+              <span>{activeSponsor.link.startsWith('tel:') ? t('spn.callClaim') : t('sponsor.cta')}</span>
               <span className="material-symbols-outlined text-[16px]">
                 {activeSponsor.link.startsWith('tel:') ? 'call' : 'open_in_new'}
               </span>

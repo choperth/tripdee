@@ -6,13 +6,15 @@ import { Sponsor } from '@/data/mockData';
 import { MapPin, BadgePercent, ArrowUpRight, Wrench, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
+import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
 interface SponsorBannerProps {
   sponsor: Sponsor;
   variant?: 'split' | 'strip';
 }
 
-export const SponsorBanner: React.FC<SponsorBannerProps> = ({ sponsor, variant = 'split' }) => {
-  const { t } = useLanguage();
+export const SponsorBanner: React.FC<SponsorBannerProps> = ({ sponsor: rawSponsor, variant = 'split' }) => {
+  const { t, locale } = useLanguage();
+  const sponsor = getLocalizedSponsor(rawSponsor, locale);
   const { trackSponsor, trackCall } = useAnalytics();
 
   const handleSponsorClick = () => {

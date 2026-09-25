@@ -5,15 +5,17 @@ import Image from 'next/image';
 import { Sponsor } from '@/data/mockData';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
 import { MapPin, Tag, ExternalLink, Phone } from 'lucide-react';
 
 interface InFeedSponsorCardProps {
   sponsor: Sponsor;
 }
 
-export const InFeedSponsorCard: React.FC<InFeedSponsorCardProps> = ({ sponsor }) => {
+export const InFeedSponsorCard: React.FC<InFeedSponsorCardProps> = ({ sponsor: rawSponsor }) => {
   const { trackSponsor, trackCall } = useAnalytics();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const sponsor = getLocalizedSponsor(rawSponsor, locale);
 
   const handleClick = () => {
     trackSponsor({

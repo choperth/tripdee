@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
+import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import {
   BOARD_POSTS,
@@ -22,7 +23,11 @@ import {
   CheckCircle2,
   Lock,
   Loader2,
+  Sparkles,
+  MessageCircle,
+  UserCheck,
 } from 'lucide-react';
+import { useAuth, UserProfile } from '@/context/AuthContext';
 import { TravelDatePicker } from '@/components/TravelDatePicker';
 import { formatWhatsAppLink } from '@/lib/contactUtils';
 import {
@@ -79,7 +84,9 @@ const EMPTY_FORM: PostFormState = {
 export const TripBoard: React.FC = () => {
 
   const { trackCall, trackSponsor } = useAnalytics();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const { user, loginWithOAuth } = useAuth();
+  const [oauthLoading, setOauthLoading] = useState<'line' | 'google' | null>(null);
   const isClient = React.useSyncExternalStore(
     () => () => {},
     () => true,
@@ -232,11 +239,44 @@ export const TripBoard: React.FC = () => {
 
   const set = (patch: Partial<PostFormState>) => setForm((prev) => ({ ...prev, ...patch }));
 
+  const applyAutofill = useCallback((profile: UserProfile) => {
+    setForm((prev) => ({
+      ...prev,
+      authorName: profile.driverNickname || profile.name || prev.authorName,
+      authorPhone:
+        profile.emailOrPhone && !profile.emailOrPhone.includes('@')
+          ? profile.emailOrPhone
+          : prev.authorPhone,
+      authorLine: profile.lineId || prev.authorLine,
+      authorWhatsApp: profile.whatsapp || prev.authorWhatsApp,
+      authorWeChat: profile.wechat || prev.authorWeChat,
+    }));
+  }, []);
+
+  const handleOAuthAutofill = async (provider: 'line' | 'google') => {
+    try {
+      setOauthLoading(provider);
+      const res = await loginWithOAuth(provider, 'customer');
+      if (res.success && res.user) {
+        applyAutofill(res.user);
+      }
+    } catch (err) {
+      console.warn('[TripBoard] OAuth autofill error:', err);
+    } finally {
+      setOauthLoading(null);
+    }
+  };
+
   const openNewPost = (type: BoardPostType, category: 'general' | 'corporate' = 'general') => {
     setForm({
       ...EMPTY_FORM,
       type,
       category,
+      authorName: user ? (user.driverNickname || user.name) : '',
+      authorPhone: user?.emailOrPhone && !user.emailOrPhone.includes('@') ? user.emailOrPhone : '',
+      authorLine: user?.lineId || '',
+      authorWhatsApp: user?.whatsapp || '',
+      authorWeChat: user?.wechat || '',
     });
     setFormMountedAt(Date.now());
     setFormOpen(true);
@@ -647,52 +687,57 @@ export const TripBoard: React.FC = () => {
         </div>
 
         {/* 3.5 Driver & Traveler Partner Benefit Strip */}
-        {SPONSORS[3] && (
-          <div className="mb-space-lg rounded-2xl bg-gradient-to-r from-emerald-500/10 via-amber-500/10 to-blue-500/10 dark:from-emerald-950/30 dark:via-amber-950/20 dark:to-slate-900 border border-emerald-300/50 dark:border-emerald-800/40 p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
-            <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <span className="material-symbols-outlined text-[22px]">local_gas_station</span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
-                    สิทธิพิเศษคนขับและผู้เดินทาง
-                  </span>
-                  <span className="font-bold text-xs sm:text-sm text-navy-deep dark:text-white truncate">
-                    {SPONSORS[3].title}
-                  </span>
+        {(() => {
+          const rawGasSponsor = SPONSORS.find((s) => s.category === 'fuel' || s.category === 'auto_service');
+          if (!rawGasSponsor) return null;
+          const gasSponsor = getLocalizedSponsor(rawGasSponsor, locale);
+          return (
+            <div className="mb-space-lg rounded-2xl bg-gradient-to-r from-emerald-500/10 via-amber-500/10 to-blue-500/10 dark:from-emerald-950/30 dark:via-amber-950/20 dark:to-slate-900 border border-emerald-300/50 dark:border-emerald-800/40 p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
+                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <span className="material-symbols-outlined text-[22px]">local_gas_station</span>
                 </div>
-                <p className="text-xs text-ink-muted dark:text-slate-400 truncate mt-0.5">
-                  {SPONSORS[3].tagline}
-                </p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+                      {t('spn.partnerPerk')}
+                    </span>
+                    <span className="font-bold text-xs sm:text-sm text-navy-deep dark:text-white truncate">
+                      {gasSponsor.title}
+                    </span>
+                  </div>
+                  <p className="text-xs text-ink-muted dark:text-slate-400 truncate mt-0.5">
+                    {gasSponsor.tagline}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 hidden md:inline">
+                  {gasSponsor.discountText}
+                </span>
+                <a
+                  href={gasSponsor.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    trackSponsor({
+                      sponsorId: gasSponsor.id,
+                      sponsorTitle: gasSponsor.title,
+                      category: gasSponsor.category,
+                      variant: 'strip',
+                      targetUrl: gasSponsor.link,
+                    });
+                  }}
+                  className="w-full sm:w-auto h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 transition-all shadow-xs"
+                >
+                  <span>{t('sponsor.cta')}</span>
+                  <span className="material-symbols-outlined text-[15px]">open_in_new</span>
+                </a>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
-              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 hidden md:inline">
-                {SPONSORS[3].discountText}
-              </span>
-              <a
-                href={SPONSORS[3].link}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  trackSponsor({
-                    sponsorId: SPONSORS[3].id,
-                    sponsorTitle: SPONSORS[3].title,
-                    category: SPONSORS[3].category,
-                    variant: 'strip',
-                    targetUrl: SPONSORS[3].link,
-                  });
-                }}
-                className="w-full sm:w-auto h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 transition-all shadow-xs"
-              >
-                <span>รับสิทธิ์ฟรี</span>
-                <span className="material-symbols-outlined text-[15px]">open_in_new</span>
-              </a>
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* 4. Filter Console (Segment Tabs & Search) */}
         <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-md border border-border-subtle dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-space-md mb-space-lg">
@@ -854,7 +899,7 @@ export const TripBoard: React.FC = () => {
                         </span>
                       )}
 
-                      {isMyBoardPost(post.id) && (
+                      {isClient && isMyBoardPost(post.id) && (
                         <span className="px-space-xs py-space-2xs rounded bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-bold flex items-center gap-1">
                           <span>{t('board.myPostBadge')}</span>
                         </span>
@@ -984,7 +1029,7 @@ export const TripBoard: React.FC = () => {
                               type="button"
                               onClick={() => handleOpenCustomerQuotes(post)}
                               className={`px-space-sm py-space-xs ${
-                                isMyBoardPost(post.id)
+                                isClient && isMyBoardPost(post.id)
                                   ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 font-bold'
                                   : 'bg-paper-surface hover:bg-paper-surface-muted text-navy-deep dark:text-white border-border-subtle dark:border-slate-700'
                               } border rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-xs transition-all text-xs whitespace-nowrap`}
@@ -1172,6 +1217,99 @@ export const TripBoard: React.FC = () => {
                 🤝 {t('board.tabShare')}
               </button>
             </div>
+
+            {/* Approach 1: Hybrid Autofill Banner (Optional 1-Click contact fill) */}
+            {user ? (
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-leaf-soft/60 dark:bg-emerald-950/40 border border-leaf-soft dark:border-emerald-800/50">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-leaf text-white font-bold text-xs">
+                    <UserCheck className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-extrabold text-ink dark:text-white truncate">
+                      {t('board.autofillLoggedIn', { name: user.driverNickname || user.name || user.emailOrPhone })}
+                    </p>
+                    <p className="text-[11px] font-medium text-ink-2 dark:text-slate-300">
+                      {user.role === 'driver' ? t('auth.roleDriver') : t('auth.roleCustomer')} • {user.emailOrPhone}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => applyAutofill(user)}
+                  className="shrink-0 inline-flex items-center gap-1 rounded-pill bg-leaf text-white px-2.5 py-1 text-xs font-extrabold hover:bg-leaf-deep transition-colors cursor-pointer"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  <span>{t('board.autofillButton')}</span>
+                </button>
+              </div>
+            ) : (
+              <div className="p-3.5 rounded-2xl bg-paper-surface-muted/80 dark:bg-slate-800/70 border border-border-subtle dark:border-slate-700/60 space-y-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-extrabold text-ink dark:text-white">
+                  <Sparkles className="h-3.5 w-3.5 text-accent-deep dark:text-amber-400" />
+                  <span>{t('board.autofillBanner')}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    disabled={!!oauthLoading}
+                    onClick={() => handleOAuthAutofill('line')}
+                    className="flex items-center justify-center gap-1.5 rounded-xl bg-[#06C755] py-2 px-2.5 text-xs font-extrabold text-white hover:bg-[#05b34c] transition-colors disabled:opacity-60 cursor-pointer shadow-2xs"
+                  >
+                    {oauthLoading === 'line' ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>{t('auth.connecting')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle className="h-3.5 w-3.5 fill-white" />
+                        <span>{t('board.autofillLine')}</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={!!oauthLoading}
+                    onClick={() => handleOAuthAutofill('google')}
+                    className="flex items-center justify-center gap-1.5 rounded-xl bg-card dark:bg-slate-900 border border-rule dark:border-slate-700 py-2 px-2.5 text-xs font-extrabold text-ink dark:text-white hover:bg-paper-2 dark:hover:bg-slate-800 transition-colors disabled:opacity-60 cursor-pointer shadow-2xs"
+                  >
+                    {oauthLoading === 'google' ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>{t('auth.connecting')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24">
+                          <path
+                            fill="#4285F4"
+                            d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                          />
+                          <path
+                            fill="#34A853"
+                            d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+                          />
+                          <path
+                            fill="#FBBC05"
+                            d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+                          />
+                          <path
+                            fill="#EA4335"
+                            d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                          />
+                        </svg>
+                        <span>{t('board.autofillGoogle')}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="text-[11px] text-ink-muted dark:text-slate-400 text-center">
+                  {t('board.autofillGuestHint')}
+                </p>
+              </div>
+            )}
 
             {/* Form Fields */}
             <form onSubmit={handleSubmit} className="space-y-space-sm">

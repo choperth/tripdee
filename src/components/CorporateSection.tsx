@@ -1,17 +1,45 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
+import { Vehicle, VEHICLES } from '@/data/mockData';
+import { isMockEnvEnabled } from '@/lib/mockConfig';
 import {
   CheckCircle2,
   Loader2,
 } from 'lucide-react';
 import { TravelDatePicker } from '@/components/TravelDatePicker';
 
-export const CorporateSection: React.FC = () => {
+interface CorporateSectionProps {
+  vehicles?: Vehicle[];
+}
+
+export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: propVehicles }) => {
   const { t } = useLanguage();
   const { addQuotation } = useAuth();
+  const [fetchedVehicles, setFetchedVehicles] = useState<Vehicle[]>(() =>
+    isMockEnvEnabled() ? VEHICLES : []
+  );
+
+  const vehicles = propVehicles && propVehicles.length > 0 ? propVehicles : fetchedVehicles;
+
+  useEffect(() => {
+    if (propVehicles && propVehicles.length > 0) return;
+    let isMounted = true;
+    fetch('/api/vehicles')
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data.vehicles && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
+          setFetchedVehicles(data.vehicles);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [propVehicles]);
+
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,6 +77,14 @@ export const CorporateSection: React.FC = () => {
       : 22000;
 
   const totalEstimate = estimatedPricePerDay * formData.totalDays;
+
+  const totalVehicles = vehicles.length;
+  const yellowPlateCount = vehicles.filter((v) => v.plateType === 'yellow').length;
+  const avgRating =
+    totalVehicles > 0
+      ? (vehicles.reduce((sum, v) => sum + (v.rating || 5.0), 0) / totalVehicles).toFixed(1)
+      : '4.9';
+  const totalReviews = vehicles.reduce((sum, v) => sum + (v.reviewCount || 0), 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,11 +226,11 @@ export const CorporateSection: React.FC = () => {
               </div>
             </div>
 
-            {/* Metric Counters Strip */}
+            {/* Metric Counters Strip (Dynamic Real Data from Fleet Database) */}
             <div className="pt-space-sm flex flex-wrap items-center gap-space-xl text-surface">
               <div>
                 <div className="font-headline-xl text-headline-xl text-surface font-black">
-                  580+
+                  {totalVehicles > 0 ? `${totalVehicles} คัน` : 'พร้อมบริการ'}
                 </div>
                 <div className="font-body-subtext text-body-subtext text-surface-container-high opacity-75">
                   {t('corp.statSuccess')}
@@ -203,16 +239,16 @@ export const CorporateSection: React.FC = () => {
               <div className="h-8 w-px bg-white/20 hidden sm:block" />
               <div>
                 <div className="font-headline-xl text-headline-xl text-taxi-yellow-30 font-black">
-                  4.97 ★
+                  {avgRating} ★
                 </div>
                 <div className="font-body-subtext text-body-subtext text-surface-container-high opacity-75">
-                  {t('corp.statRating')}
+                  {t('corp.statRating')} {totalReviews > 0 ? `(${totalReviews.toLocaleString()} รีวิว)` : ''}
                 </div>
               </div>
               <div className="h-8 w-px bg-white/20 hidden sm:block" />
               <div>
                 <div className="font-headline-xl text-headline-xl text-verified-emerald font-black">
-                  100%
+                  {yellowPlateCount > 0 ? `${yellowPlateCount} คัน` : 'พร้อมบริการ'}
                 </div>
                 <div className="font-body-subtext text-body-subtext text-surface-container-high opacity-75">
                   {t('corp.statLegal')}

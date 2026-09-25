@@ -8,6 +8,7 @@ import { maskPhoneNumber, maskPlateNumber, getPublicDriverName } from '@/lib/pri
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { getUpcomingBusyRanges, toISODateString } from '@/lib/availabilityUtils';
+import { formatLineLink, buildVehicleLineMessage } from '@/lib/contactUtils';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -378,7 +379,12 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
             </button>
           ) : (
             <a
-              href={vehicle.driverLine}
+              href={formatLineLink(vehicle.driverLine, buildVehicleLineMessage(vehicle))}
+              onClick={() => {
+                if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                  navigator.clipboard.writeText(buildVehicleLineMessage(vehicle)).catch(() => {});
+                }
+              }}
               target="_blank"
               rel="noopener noreferrer"
               className="h-10 bg-line-green hover:bg-line-green-hover text-on-primary rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98]"

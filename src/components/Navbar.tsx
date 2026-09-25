@@ -36,7 +36,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { user } = useAuth();
   const { t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -105,41 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="fixed top-0 left-0 right-0 w-full z-200">
-      {/* 1. TOP ANNOUNCEMENT RIBBON (Stitch Theme) */}
-      {!dismissed && (
-        <div className="bg-primary-container text-surface px-margin py-space-xs transition-all">
-          <div className="max-w-7xl mx-auto flex items-center justify-between font-body-subtext text-body-subtext">
-            <div className="flex items-center gap-space-sm overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
-              <span className="material-symbols-outlined text-[16px] text-taxi-yellow-30 shrink-0">
-                airport_shuttle
-              </span>
-              <span className="truncate">
-                🚐 {t('nav.promo')}
-              </span>
-            </div>
-            <div className="flex items-center gap-space-md shrink-0">
-              <a
-                href="https://line.me/R/ti/p/@731ruvzj"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden md:inline-flex items-center gap-1 text-blue-subtle hover:text-white font-bold transition-colors"
-              >
-                <span>{t('nav.lineCoord')}</span>
-              </a>
-              <button
-                type="button"
-                onClick={() => setDismissed(true)}
-                aria-label={t('nav.promoClose')}
-                className="text-surface/70 hover:text-white transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 2. MAIN NAVBAR (Stitch Glassmorphism & Navy Accents) */}
+      {/* MAIN NAVBAR (Stitch Glassmorphism & Navy Accents) */}
       <nav
         aria-label={t('nav.main')}
         className={`w-full bg-paper-elevated/95 dark:bg-slate-950/95 backdrop-blur-xl border-b border-border-subtle dark:border-slate-800 transition-all ${

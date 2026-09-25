@@ -64,8 +64,8 @@ export const DriverAvailabilityCalendar: React.FC<DriverAvailabilityCalendarProp
   };
 
   // Add range of dates
-  const handleAddRange = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddRange = (e?: React.SyntheticEvent) => {
+    e?.preventDefault();
     setRangeError('');
 
     if (!rangeStart || !rangeEnd) {
@@ -197,9 +197,13 @@ export const DriverAvailabilityCalendar: React.FC<DriverAvailabilityCalendarProp
         )}
       </div>
 
-      {/* Quick Add Range Form */}
-      <form
-        onSubmit={handleAddRange}
+      {/* Quick Add Range Form (div — cannot nest <form> inside parent forms) */}
+      <div
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') {
+            handleAddRange();
+          }
+        }}
         className="p-3.5 rounded-2xl bg-paper-surface-muted dark:bg-slate-800/80 border border-border-subtle dark:border-slate-700 space-y-2.5"
       >
         <span className="text-xs font-bold text-navy-deep dark:text-white block">
@@ -235,7 +239,8 @@ export const DriverAvailabilityCalendar: React.FC<DriverAvailabilityCalendarProp
 
           <div className="sm:col-span-2 flex items-end">
             <button
-              type="submit"
+              type="button"
+              onClick={() => handleAddRange()}
               className="w-full h-10 rounded-xl bg-amber-500 hover:bg-amber-600 text-navy-deep font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98]"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
@@ -250,7 +255,7 @@ export const DriverAvailabilityCalendar: React.FC<DriverAvailabilityCalendarProp
             <span>{rangeError}</span>
           </p>
         )}
-      </form>
+      </div>
 
       {/* Calendar Grid View */}
       <div className="p-4 rounded-2xl bg-paper-canvas dark:bg-slate-800/60 border border-border-subtle dark:border-slate-700 space-y-3">

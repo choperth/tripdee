@@ -18,6 +18,10 @@ function getDb(): SponsorsDatabase {
   if (!Array.isArray(globalThis.__tripdee_sponsors__.sponsors)) {
     globalThis.__tripdee_sponsors__.sponsors = isMockDataEnabled() ? [...SPONSORS] : [];
   } else if (isMockDataEnabled()) {
+    const mockIds = new Set(SPONSORS.map((s) => s.id));
+    globalThis.__tripdee_sponsors__.sponsors = globalThis.__tripdee_sponsors__.sponsors.filter(
+      (s) => !s.id.startsWith('sp-') || mockIds.has(s.id)
+    );
     for (const mockSp of SPONSORS) {
       const existing = globalThis.__tripdee_sponsors__.sponsors.find((s) => s.id === mockSp.id);
       if (!existing) {

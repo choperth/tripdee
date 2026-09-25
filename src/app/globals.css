@@ -444,8 +444,10 @@ h1, h2 { overflow-wrap: anywhere; }
 }
 
 /* Head-height sync */
-:root { --td-banner-h: 40px; --td-bar-h: 72px; --td-head-h: calc(var(--td-banner-h) + var(--td-bar-h)); }
-html[data-nav="dismissed"] { --td-banner-h: 0px; }
+:root { --td-banner-h: 0px; --td-bar-h: 64px; --td-head-h: var(--td-bar-h); }
+@media (min-width: 640px) {
+  :root { --td-bar-h: 80px; }
+}
 
 /* ==============================================================================
  * Standard A4 Print Stylesheet (For Booking Confirmation Sheet & Invoices)

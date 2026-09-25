@@ -23,11 +23,13 @@ import {
 
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
 import { BookingConfirmationSheet } from '@/components/BookingConfirmationSheet';
 import { CustomerAvailabilitySchedule } from '@/components/CustomerAvailabilitySchedule';
 import { getUpcomingBusyRanges } from '@/lib/availabilityUtils';
 import { VehicleReviewsSection } from '@/components/reviews/VehicleReviewsSection';
 import { DriverSmartECardModal } from '@/components/cards/DriverSmartECardModal';
+import { formatLineLink, buildVehicleLineMessage } from '@/lib/contactUtils';
 
 interface VehicleDetailModalProps {
   vehicle: Vehicle | null;
@@ -765,7 +767,12 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     </a>
 
                     <a
-                      href={vehicle.driverLine}
+                      href={formatLineLink(vehicle.driverLine, buildVehicleLineMessage(vehicle))}
+                      onClick={() => {
+                        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                          navigator.clipboard.writeText(buildVehicleLineMessage(vehicle)).catch(() => {});
+                        }
+                      }}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full h-11 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-xl font-title-card text-title-card flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
@@ -896,45 +903,50 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                 </div>
 
                 {/* Traveler Partner Perk Sponsor Box */}
-                {SPONSORS[2] && (
-                  <div className="p-space-sm rounded-2xl bg-gradient-to-br from-amber-50/70 via-paper-elevated to-paper-canvas dark:from-amber-950/25 dark:via-slate-900 dark:to-slate-900 border border-amber-300/50 dark:border-amber-900/40 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-900 dark:text-amber-300 font-bold text-[11px] flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[13px] text-amber-600 dark:text-amber-400">verified</span>
-                        <span>{t('spn.travelerPerk')}</span>
-                      </span>
-                      <span className="text-[10px] text-ink-muted dark:text-slate-400">{t('vdm.partner')}</span>
-                    </div>
+                {(() => {
+                  const rawSponsor = SPONSORS.find((s) => s.category === 'insurance') || SPONSORS.find((s) => s.targetAudience === 'traveler' || s.targetAudience === 'all') || SPONSORS[0];
+                  if (!rawSponsor) return null;
+                  const perkSponsor = getLocalizedSponsor(rawSponsor, locale);
+                  return (
+                    <div className="p-space-sm rounded-2xl bg-gradient-to-br from-amber-50/70 via-paper-elevated to-paper-canvas dark:from-amber-950/25 dark:via-slate-900 dark:to-slate-900 border border-amber-300/50 dark:border-amber-900/40 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-900 dark:text-amber-300 font-bold text-[11px] flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px] text-amber-600 dark:text-amber-400">verified</span>
+                          <span>{t('spn.travelerPerk')}</span>
+                        </span>
+                        <span className="text-[10px] text-ink-muted dark:text-slate-400">{t('vdm.partner')}</span>
+                      </div>
 
-                    <div className="space-y-0.5">
-                      <h4 className="font-bold text-xs text-navy-deep dark:text-white leading-tight">
-                        {SPONSORS[2].title}
-                      </h4>
-                      <p className="text-[11px] text-ink-secondary dark:text-slate-300 line-clamp-2">
-                        {SPONSORS[2].tagline}
-                      </p>
-                    </div>
+                      <div className="space-y-0.5">
+                        <h4 className="font-bold text-xs text-navy-deep dark:text-white leading-tight">
+                          {perkSponsor.title}
+                        </h4>
+                        <p className="text-[11px] text-ink-secondary dark:text-slate-300 line-clamp-2">
+                          {perkSponsor.tagline}
+                        </p>
+                      </div>
 
-                    <a
-                      href={SPONSORS[2].link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => {
-                        trackSponsor({
-                          sponsorId: SPONSORS[2].id,
-                          sponsorTitle: SPONSORS[2].title,
-                          category: SPONSORS[2].category,
-                          variant: 'card',
-                          targetUrl: SPONSORS[2].link,
-                        });
-                      }}
-                      className="w-full py-1.5 px-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 dark:bg-amber-500 dark:hover:bg-amber-600 text-amber-950 font-bold text-xs flex items-center justify-center gap-1 transition-colors shadow-xs"
-                    >
-                      <span className="truncate">{SPONSORS[2].discountText}</span>
-                      <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-                    </a>
-                  </div>
-                )}
+                      <a
+                        href={perkSponsor.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => {
+                          trackSponsor({
+                            sponsorId: perkSponsor.id,
+                            sponsorTitle: perkSponsor.title,
+                            category: perkSponsor.category,
+                            variant: 'card',
+                            targetUrl: perkSponsor.link,
+                          });
+                        }}
+                        className="w-full py-1.5 px-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 dark:bg-amber-500 dark:hover:bg-amber-600 text-amber-950 font-bold text-xs flex items-center justify-center gap-1 transition-colors shadow-xs"
+                      >
+                        <span className="truncate">{perkSponsor.discountText}</span>
+                        <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                      </a>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>

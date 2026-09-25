@@ -49,3 +49,45 @@ export function formatInternationalDisplay(phone?: string): string {
   }
   return trimmed;
 }
+
+/**
+ * Builds an inquiry message for a vehicle listing on TripDee
+ */
+export function buildVehicleLineMessage(vehicle: { id: string; title: string; driverName?: string }): string {
+  return `สวัสดีครับ สนใจเหมารถตู้จาก TripDee รหัส [${vehicle.id}: ${vehicle.title}] ครับ`;
+}
+
+/**
+ * Formats a direct LINE link supporting pre-filled message via LINE OA or personal ID
+ */
+export function formatLineLink(rawLine?: string, message?: string): string {
+  if (!rawLine || rawLine.trim() === '') {
+    return 'https://line.me';
+  }
+  const trimmed = rawLine.trim();
+
+  // If it's a LINE Official Account (starts with @)
+  if (trimmed.startsWith('@')) {
+    if (message) {
+      return `https://line.me/R/oaMessage/${encodeURIComponent(trimmed)}/?${encodeURIComponent(message)}`;
+    }
+    return `https://line.me/R/ti/p/${encodeURIComponent(trimmed)}`;
+  }
+
+  // If it's a full LINE URL to an OA (e.g. https://line.me/R/ti/p/@731ruvzj)
+  if (trimmed.includes('/ti/p/@') && message) {
+    const oaId = trimmed.split('/ti/p/')[1]?.split('?')[0];
+    if (oaId) {
+      return `https://line.me/R/oaMessage/${oaId}/?${encodeURIComponent(message)}`;
+    }
+  }
+
+  // If already a full URL, return as-is
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+
+  // Otherwise assume personal LINE ID
+  return `https://line.me/ti/p/~${trimmed}`;
+}
+

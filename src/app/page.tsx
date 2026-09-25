@@ -16,6 +16,7 @@ import { CorporateSection } from '@/components/CorporateSection';
 import { PopularRoutesSection } from '@/components/PopularRoutesSection';
 import { TripBoard } from '@/components/TripBoard';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
+import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
 const VehicleDetailModal = dynamic(
   () => import('@/components/VehicleDetailModal').then((m) => m.VehicleDetailModal),
   { ssr: false }
@@ -87,7 +88,7 @@ function SectionHead({
 
 export default function HomePage() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [activeTab, setActiveTab] = useState<string>('van');
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [selectedSeats, setSelectedSeats] = useState<string>('all');
@@ -107,7 +108,9 @@ export default function HomePage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.vehicles && Array.isArray(data.vehicles)) {
-          setVehicles(data.vehicles);
+          // Fair Random Rotation: shuffle vehicles on load
+          const shuffled = [...data.vehicles].sort(() => Math.random() - 0.5);
+          setVehicles(shuffled);
         }
       })
       .catch((err) => console.debug('Failed to fetch vehicles:', err));
@@ -166,6 +169,7 @@ export default function HomePage() {
       fleetVehicles,
     });
   }, []);
+
   const filteredVehicles = useMemo(() => {
     // In production mode (e.g. ?demo=0 or NEXT_PUBLIC_ENABLE_MOCK_DATA=false), strictly exclude mock vehicle IDs
     // Test sample leads (e.g. v-test-admin, v-drv-lead-01) are strictly excluded in ALL modes
@@ -233,8 +237,9 @@ export default function HomePage() {
       return matchesTab && matchesZone && matchesSeats && matchesKeyword && matchesPlate;
     });
 
-    // Featured listings (⭐ รถแนะนำ) always rank first for paid promote slots
-    return filtered.sort((a, b) => Number(b.isVerified) - Number(a.isVerified));
+    // 1. รถที่จ่ายสปอนเซอร์ดันแนะนำ (⭐ รถแนะนำ / isVerified) จะได้ขึ้นอันดับแรกเสมอ
+    // 2. ภายในกลุ่มเดียวกัน (ทั้งกลุ่มสปอนเซอร์และกลุ่มรถทั่วไป) จะสุ่มแสดงผล (Fair Random Rotation) หมุนเวียนกันอย่างเป็นธรรม
+    return filtered.sort((a, b) => Number(Boolean(b.isVerified)) - Number(Boolean(a.isVerified)));
   }, [activeTab, selectedZone, selectedSeats, searchKeyword, plateFilter, vehicles, isDemo]);
 
   const totalVanCount = useMemo(
@@ -280,8 +285,8 @@ export default function HomePage() {
   const hasFilters = selectedZone !== 'all' || selectedSeats !== 'all' || searchKeyword !== '' || plateFilter !== 'all';
 
   const hotelStays = useMemo(
-    () => SPONSORS.filter((s) => s.category === 'hotel'),
-    []
+    () => SPONSORS.filter((s) => s.category === 'hotel').map((s) => getLocalizedSponsor(s, locale)),
+    [locale]
   );
 
   return (
@@ -405,7 +410,7 @@ export default function HomePage() {
           </div>
         ) : activeTab === 'corporate' ? (
           <div key="corporate" className="td-panel-enter pt-24 sm:pt-28 pb-16">
-            <CorporateSection />
+            <CorporateSection vehicles={vehicles} />
           </div>
         ) : (
           <div key={activeTab} className="td-panel-enter pb-6 sm:pb-16">
@@ -602,7 +607,7 @@ export default function HomePage() {
                           ((index + 1) % 4 === 0 && index < filteredVehicles.length - 1) ||
                           (index === 0 && filteredVehicles.length === 1);
                         const sponsorIndex = (index === 1 ? 0 : Math.floor(index / 4) + 1) % SPONSORS.length;
-                        const currentSponsor = SPONSORS[sponsorIndex];
+                        const currentSponsor = getLocalizedSponsor(SPONSORS[sponsorIndex], locale);
 
                         return (
                           <React.Fragment key={vehicle.id}>
@@ -714,7 +719,7 @@ export default function HomePage() {
 
             {/* Corporate strip */}
             <div className="mt-6 sm:mt-10">
-              <CorporateSection />
+              <CorporateSection vehicles={vehicles} />
             </div>
           </div>
         )}

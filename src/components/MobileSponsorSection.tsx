@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { SPONSORS, Sponsor } from '@/data/mockData';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
 import {
   MapPin,
   Phone,
@@ -18,23 +19,28 @@ interface MobileSponsorSectionProps {
 
 export const MobileSponsorSection: React.FC<MobileSponsorSectionProps> = ({ className = '' }) => {
   const { trackSponsor, trackCall } = useAnalytics();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
+  const localizedSponsors = useMemo(
+    () => SPONSORS.map((s) => getLocalizedSponsor(s, locale)),
+    [locale]
+  );
+
   const categories = [
-    { key: 'all', label: `ทั้งหมด (${SPONSORS.length})`, icon: '🌟' },
+    { key: 'all', label: `${t('spn.catAll')} (${localizedSponsors.length})`, icon: '🌟' },
     { key: 'hotel', label: t('spn.catHotel') || 'ที่พัก', icon: '🏨' },
     { key: 'activity', label: t('spn.catActivity') || 'ปางช้าง/กิจกรรม', icon: '🐘' },
     { key: 'tour', label: t('spn.catTour') || 'ทัวร์', icon: '🛵' },
     { key: 'insurance', label: t('spn.catInsurance') || 'ประกันภัย', icon: '🛡️' },
     { key: 'fuel', label: t('spn.catFuel') || 'น้ำมัน & กาแฟ', icon: '⛽' },
     { key: 'auto_service', label: t('spn.catGarage') || 'บริการรถ', icon: '🔧' },
-  ];
+  ].filter((c) => c.key === 'all' || localizedSponsors.some((s) => s.category === c.key));
 
   const filteredSponsors =
     selectedCategory === 'all'
-      ? SPONSORS
-      : SPONSORS.filter((s) => s.category === selectedCategory);
+      ? localizedSponsors
+      : localizedSponsors.filter((s) => s.category === selectedCategory);
 
   const handleSponsorClick = (sponsor: Sponsor) => {
     trackSponsor({
@@ -76,23 +82,23 @@ export const MobileSponsorSection: React.FC<MobileSponsorSectionProps> = ({ clas
   return (
     <section
       id="sponsors-mobile"
-      aria-label="สิทธิพิเศษและพันธมิตร TripDee ทั้งหมด"
+      aria-label={t('spn.partnerPerk')}
       className={`my-5 sm:my-8 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-amber-50/70 via-card to-paper dark:from-amber-950/20 dark:via-slate-900 dark:to-slate-900 border border-amber-200/80 dark:border-amber-900/40 p-3 sm:p-5 shadow-xs ${className}`}
     >
       {/* 1. Header */}
       <div className="mb-2.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
           <h2 className="text-base sm:text-lg font-extrabold text-navy-deep dark:text-white leading-tight">
-            พิกัดแนะนำ & พันธมิตรการเดินทาง ({SPONSORS.length} แห่ง)
+            {t('spn.sectionTitle', { n: localizedSponsors.length })}
           </h2>
           <span className="text-[11px] font-semibold text-ink-muted dark:text-slate-400">
-            ที่พัก จุดแวะพักรถ และกิจกรรมท่องเที่ยวคุณภาพ
+            {t('spn.sectionSubtitle')}
           </span>
         </div>
         <div className="flex items-center justify-between mt-1 text-xs text-ink-muted dark:text-slate-400">
-          <span>บริการคุณภาพแนะนำสำหรับผู้เดินทางและคนขับ</span>
+          <span>{t('spn.sectionDesc')}</span>
           <span className="md:hidden font-semibold text-blue-action dark:text-blue-400 flex items-center gap-0.5">
-            <span>ปัดซ้าย-ขวาดูทั้งหมด</span>
+            <span>{t('spn.swipeHint')}</span>
             <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
           </span>
         </div>
@@ -183,11 +189,11 @@ export const MobileSponsorSection: React.FC<MobileSponsorSectionProps> = ({ clas
                     {isPhone ? (
                       <>
                         <Phone className="w-3 h-3" />
-                        <span>โทรสอบถาม</span>
+                        <span>{t('spn.callClaim')}</span>
                       </>
                     ) : (
                       <>
-                        <span>ดูเว็บไซต์</span>
+                        <span>{t('spn.viewWebsite')}</span>
                         <ExternalLink className="w-3 h-3" />
                       </>
                     )}
@@ -202,11 +208,11 @@ export const MobileSponsorSection: React.FC<MobileSponsorSectionProps> = ({ clas
       {/* 4. Cooperation Banner (Join as Sponsor) */}
       <div className="mt-3 w-full overflow-hidden rounded-2xl p-3.5 sm:p-4 bg-gradient-to-br from-navy-deep via-[#0e3565] to-navy-surface text-white border border-blue-800/70 shadow-xs">
         <h3 className="font-extrabold text-xs sm:text-sm text-white leading-snug">
-          สนใจร่วมเป็นพันธมิตร หรือลงโฆษณากับ TripDee?
+          {t('spn.joinBannerTitle')}
         </h3>
 
         <p className="text-[11px] sm:text-xs text-slate-200 mt-1 leading-relaxed">
-          โปรโมตโรงแรม ที่พัก กิจกรรมท่องเที่ยว หรือบริการรถสู่ผู้เดินทางกว่า 20,000 คนต่อเดือน
+          {t('spn.joinBannerDesc')}
         </p>
 
         <div className="mt-2.5">
@@ -217,7 +223,7 @@ export const MobileSponsorSection: React.FC<MobileSponsorSectionProps> = ({ clas
             className="w-full h-10 px-4 rounded-xl bg-line-green hover:bg-line-green-hover text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all"
           >
             <MessageCircle className="w-4 h-4 shrink-0" />
-            <span>ติดต่อลงโฆษณา (LINE @731ruvzj)</span>
+            <span>{t('spn.contactLine')}</span>
           </a>
         </div>
       </div>
