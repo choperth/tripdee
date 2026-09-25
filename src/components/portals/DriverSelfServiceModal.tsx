@@ -13,7 +13,6 @@ import {
   ArrowLeft,
   Loader2,
 } from 'lucide-react';
-import { DriverPushBell } from '@/components/notifications/DriverPushBell';
 import { useLanguage } from '@/context/LanguageContext';
 import { VehiclePhotoManager } from '@/components/portals/VehiclePhotoManager';
 import { DangerZone } from '@/components/portals/DangerZone';
@@ -287,8 +286,6 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
         </div>
 
         <div className="p-space-md lg:p-space-lg space-y-space-md">
-          {/* Web Push Notification Bell Banner for Drivers */}
-          <DriverPushBell compact />
           {/* STEP 1: Phone Search Lookup if no vehicle selected */}
           {!selectedVehicle && (
             <div className="max-w-xl mx-auto py-space-lg space-y-space-md text-center">

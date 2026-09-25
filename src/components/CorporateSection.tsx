@@ -312,9 +312,6 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                     <h3 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
                       {t('corp.rfqTitle')}
                     </h3>
-                    <p className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400">
-                      {t('corp.rfqSubtitle')}
-                    </p>
                   </div>
                   <span className="px-space-xs py-space-2xs rounded-full bg-verified-emerald-soft text-verified-emerald font-label-badge text-label-badge font-bold">
                     {t('corp.rfqBadge')}

@@ -1245,8 +1245,7 @@ export const TripBoard: React.FC = () => {
               </div>
             ) : (
               <div className="p-3.5 rounded-2xl bg-paper-surface-muted/80 dark:bg-slate-800/70 border border-border-subtle dark:border-slate-700/60 space-y-2.5">
-                <div className="flex items-center gap-1.5 text-xs font-extrabold text-ink dark:text-white">
-                  <Sparkles className="h-3.5 w-3.5 text-accent-deep dark:text-amber-400" />
+                <div className="text-xs font-extrabold text-ink dark:text-white">
                   <span>{t('board.autofillBanner')}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
