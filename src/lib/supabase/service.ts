@@ -101,11 +101,12 @@ const localBoardQuotes: BoardQuote[] = [
 // 1. QUOTATION LEADS SERVICE
 // ==============================================================================
 
-export async function fetchQuotations(): Promise<QuotationLead[]> {
+export async function fetchQuotations(reqUrl?: string): Promise<QuotationLead[]> {
+  const allowMock = isMockDataEnabled(reqUrl);
   const deletedIds = getDeletedQuotationIds();
   const supabase = getSupabase();
   if (!supabase) {
-    return getLocalQuotations().filter((q) => !deletedIds.includes(q.id));
+    return allowMock ? getLocalQuotations().filter((q) => !deletedIds.includes(q.id)) : [];
   }
 
   try {
@@ -116,7 +117,7 @@ export async function fetchQuotations(): Promise<QuotationLead[]> {
 
     if (error || !data || data.length === 0) {
       // Table might not be migrated yet or empty, return local store
-      return getLocalQuotations().filter((q) => !deletedIds.includes(q.id));
+      return allowMock ? getLocalQuotations().filter((q) => !deletedIds.includes(q.id)) : [];
     }
 
     return data
@@ -243,11 +244,12 @@ export async function deleteQuotation(id: string): Promise<boolean> {
 // 2. DRIVER LEADS SERVICE
 // ==============================================================================
 
-export async function fetchDriverLeads(): Promise<DriverLead[]> {
+export async function fetchDriverLeads(reqUrl?: string): Promise<DriverLead[]> {
+  const allowMock = isMockDataEnabled(reqUrl);
   const deletedIds = getDeletedDriverLeadIds();
   const supabase = getSupabase();
   if (!supabase) {
-    return getLocalDrivers().filter((d) => !deletedIds.includes(d.id) && !isExcludedTestDriver(d.id));
+    return allowMock ? getLocalDrivers().filter((d) => !deletedIds.includes(d.id) && !isExcludedTestDriver(d.id)) : [];
   }
 
   try {
@@ -257,7 +259,7 @@ export async function fetchDriverLeads(): Promise<DriverLead[]> {
       .order('created_at', { ascending: false });
 
     if (error || !data || data.length === 0) {
-      return getLocalDrivers().filter((d) => !deletedIds.includes(d.id) && !isExcludedTestDriver(d.id));
+      return allowMock ? getLocalDrivers().filter((d) => !deletedIds.includes(d.id) && !isExcludedTestDriver(d.id)) : [];
     }
 
     return data

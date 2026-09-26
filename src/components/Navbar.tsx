@@ -85,21 +85,59 @@ export const Navbar: React.FC<NavbarProps> = ({
     } catch {}
   };
 
-  const scrollTo = (id: string) => {
+  const scrollTo = (id: string, requiredTab?: string) => {
     setMenuOpen(false);
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+    const isMainPageSection = ['results', 'tripboard', 'routes'].includes(id);
+    const targetTab =
+      requiredTab ||
+      (isMainPageSection
+        ? ['van', 'suv_driver', 'car'].includes(activeTab)
+          ? activeTab
+          : 'van'
+        : id === 'corporate'
+        ? 'corporate'
+        : undefined);
+
+    if (targetTab && activeTab !== targetTab) {
+      setActiveTab(targetTab);
     }
+
+    if (id === 'corporate' && targetTab === 'corporate') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    let attempts = 0;
+    const tryScroll = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (attempts < 15) {
+        attempts++;
+        setTimeout(tryScroll, 40);
+      }
+    };
+    requestAnimationFrame(tryScroll);
   };
 
   const selectTab = (tab: string) => {
     setActiveTab(tab);
     setMenuOpen(false);
-    const el = document.getElementById('results');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+    if (tab === 'corporate') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
     }
+    let attempts = 0;
+    const tryScroll = () => {
+      const el = document.getElementById('results');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (attempts < 15) {
+        attempts++;
+        setTimeout(tryScroll, 40);
+      }
+    };
+    requestAnimationFrame(tryScroll);
   };
 
   return (
@@ -176,24 +214,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => scrollTo('tripboard')}
+              onClick={() => scrollTo('tripboard', 'van')}
               className="text-xs xl:text-sm font-bold text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white transition-colors rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap"
             >
               {t('nav.tripboardShort')}
             </button>
             <button
               type="button"
-              onClick={() => scrollTo('routes')}
+              onClick={() => scrollTo('routes', 'van')}
               className="text-xs xl:text-sm font-bold text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white transition-colors rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap"
             >
               {t('nav.routesShort')}
             </button>
             <button
               type="button"
-              onClick={() => {
-                selectTab('corporate');
-                scrollTo('corporate');
-              }}
+              onClick={() => scrollTo('corporate', 'corporate')}
               className={`transition-colors text-xs xl:text-sm font-bold rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap ${
                 activeTab === 'corporate'
                   ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
@@ -241,9 +276,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => {
-                scrollTo('tripboard');
-                const trigger = document.getElementById('open-post-modal-btn');
-                if (trigger) trigger.click();
+                if (activeTab === 'corporate' || activeTab === 'hotel') {
+                  setActiveTab('van');
+                }
+                let attempts = 0;
+                const tryOpenPostModal = () => {
+                  const trigger = document.getElementById('open-post-modal-btn');
+                  const el = document.getElementById('tripboard');
+                  if (trigger) {
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    trigger.click();
+                  } else if (attempts < 15) {
+                    attempts++;
+                    setTimeout(tryOpenPostModal, 40);
+                  }
+                };
+                requestAnimationFrame(tryOpenPostModal);
               }}
               aria-label={t('nav.postJobShort')}
               className="inline-flex items-center justify-center gap-1 sm:gap-1.5 bg-blue-action hover:bg-blue-action-hover text-on-primary font-bold p-2 xs:px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg shadow-sm transition-all active:scale-[0.98] whitespace-nowrap text-xs sm:text-sm"
@@ -383,7 +431,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 type="button"
                 onClick={() => {
                   setMenuOpen(false);
-                  scrollTo('tripboard');
+                  scrollTo('tripboard', 'van');
                 }}
                 className="py-2.5 px-3 rounded-lg text-left font-body-medium text-ink-primary dark:text-slate-200 hover:bg-paper-surface-muted dark:hover:bg-slate-800 transition-colors"
               >
@@ -393,7 +441,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 type="button"
                 onClick={() => {
                   setMenuOpen(false);
-                  scrollTo('routes');
+                  scrollTo('routes', 'van');
                 }}
                 className="py-2.5 px-3 rounded-lg text-left font-body-medium text-ink-primary dark:text-slate-200 hover:bg-paper-surface-muted dark:hover:bg-slate-800 transition-colors"
               >
@@ -403,7 +451,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 type="button"
                 onClick={() => {
                   setMenuOpen(false);
-                  scrollTo('corporate');
+                  scrollTo('corporate', 'corporate');
                 }}
                 className="py-2.5 px-3 rounded-lg text-left font-body-medium text-ink-primary dark:text-slate-200 hover:bg-paper-surface-muted dark:hover:bg-slate-800 transition-colors"
               >

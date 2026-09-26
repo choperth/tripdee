@@ -59,7 +59,7 @@ export interface Vehicle {
 export interface Sponsor {
   id: string;
   title: string;
-  category: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel' | 'tour';
+  category: 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'insurance' | 'fuel' | 'tour' | 'cooking';
   categoryLabel: string;
   tagline: string;
   badgeText: string;
@@ -349,6 +349,20 @@ export const SPONSORS: Sponsor[] = [
     link: 'https://th.airbnb.com/rooms/17126437',
     discountText: 'บ้านทั้งหลัง 3 ห้องนอน 3 ห้องน้ำ ฟรีอาหารเช้าปรุงสด + รถรับส่งสนามบิน',
     location: 'ต.หายยา อ.เมืองเชียงใหม่ (เดิน 6-10 นาทีถึงตลาดประตูเชียงใหม่ & ถนนคนเดินวัวลาย)',
+    region: 'north',
+    targetAudience: 'traveler',
+  },
+  {
+    id: 'sp-12',
+    title: 'Sukjai Home Cooking School (สุขใจ โฮม คุกกิ้ง สคูล เชียงใหม่)',
+    category: 'cooking',
+    categoryLabel: 'เวิร์กชอปทำอาหารไทย',
+    tagline: 'คอร์สเรียนทำอาหารไทยสไตล์โฮมเมด บรรยากาศอบอุ่นในสวนชนบท พร้อมพาเดินตลาดสดเลือกซื้อวัตถุดิบ เมนูยอดนิยม ข้าวซอย ต้มยำ ผัดไทย และรถรับส่งฟรี',
+    badgeText: 'เวิร์กชอปทำอาหาร เชียงใหม่',
+    image: '/images/sukjai-cooking-school.jpg',
+    link: 'https://www.facebook.com/profile.php?id=61558094176601',
+    discountText: 'คอร์สทำอาหารไทยแท้ บรรยากาศสวนชนบท พร้อมพาชมตลาดและรถรับส่ง',
+    location: 'เชียงใหม่ (มีบริการรถรับส่งจากตัวเมือง)',
     region: 'north',
     targetAudience: 'traveler',
   },

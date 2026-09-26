@@ -257,29 +257,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role: UserRole = 'customer'
   ): Promise<{ success: boolean; user?: UserProfile; error?: string }> => {
     const isDemo = isMockDataEnabled();
-    const supabase = getSupabase();
 
-    // If demo mode or Supabase client unconfigured, provide a smooth instant simulation:
+    // 1. Direct LINE Login Flow (Uses native LINE OAuth without needing Supabase custom OIDC)
+    if (provider === 'line') {
+      if (isDemo) {
+        const simulatedUser: UserProfile = {
+          id: `usr-line-${Date.now().toString().slice(-4)}`,
+          role,
+          name: role === 'driver' ? 'พี่ชัย รถตู้เชียงใหม่ (LINE)' : 'คุณนิดา (LINE User)',
+          emailOrPhone: '081-234-5678',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+          lineId: '@chaivan_cnx',
+          isAvailable: role === 'driver' ? true : undefined,
+          verificationStatus: role === 'driver' ? 'verified' : undefined,
+          companyName: role === 'customer' ? 'นิดา ทราเวล กรุ๊ป' : undefined,
+        };
+        saveUser(simulatedUser);
+        return { success: true, user: simulatedUser };
+      }
+
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname + window.location.search;
+        // Full browser navigation required for OAuth 302 redirect
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+        window.location.href = `/api/auth/line/login?role=${encodeURIComponent(role)}&next=${encodeURIComponent(currentPath)}`;
+      }
+      return { success: true };
+    }
+
+    // 2. Google Login via Supabase OAuth
+    const supabase = getSupabase();
     if (!supabase || isDemo) {
-      const isLine = provider === 'line';
       const simulatedUser: UserProfile = {
-        id: `usr-${provider}-${Date.now().toString().slice(-4)}`,
+        id: `usr-google-${Date.now().toString().slice(-4)}`,
         role,
-        name: isLine
-          ? role === 'driver'
-            ? 'พี่ชัย รถตู้เชียงใหม่ (LINE)'
-            : 'คุณนิดา (LINE User)'
-          : role === 'driver'
-          ? 'พี่วิทย์ นอร์ธเทิร์น (Google)'
-          : 'คุณสมชาย วงศ์สวัสดิ์ (Google Workspace)',
-        emailOrPhone: isLine ? '081-234-5678' : role === 'driver' ? 'chai.cnx@gmail.com' : 'somchai@siamtech.co.th',
-        avatar: isLine
-          ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
-          : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-        lineId: isLine ? '@chaivan_cnx' : undefined,
+        name: role === 'driver' ? 'พี่วิทย์ นอร์ธเทิร์น (Google)' : 'คุณสมชาย วงศ์สวัสดิ์ (Google Workspace)',
+        emailOrPhone: role === 'driver' ? 'chai.cnx@gmail.com' : 'somchai@siamtech.co.th',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
         isAvailable: role === 'driver' ? true : undefined,
         verificationStatus: role === 'driver' ? 'verified' : undefined,
-        companyName: role === 'customer' ? (isLine ? 'นิดา ทราเวล กรุ๊ป' : 'บริษัท สยาม อินโนเวชั่น จำกัด (มหาชน)') : undefined,
+        companyName: role === 'customer' ? 'บริษัท สยาม อินโนเวชั่น จำกัด (มหาชน)' : undefined,
       };
       saveUser(simulatedUser);
       return { success: true, user: simulatedUser };
@@ -292,7 +309,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const redirectTo = `${window.location.origin}/auth/callback?role=${encodeURIComponent(role)}`;
       
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: provider as 'google',
+        provider: 'google',
         options: {
           redirectTo,
           queryParams: {

@@ -144,7 +144,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
     <section
       id="corporate"
       aria-label={t('nav.corpService')}
-      className="w-full py-8 sm:py-space-3xl bg-navy-deep text-surface rounded-2xl sm:rounded-3xl my-4 sm:my-12 overflow-hidden relative shadow-2xl transition-colors"
+      className="w-full scroll-mt-20 sm:scroll-mt-24 py-8 sm:py-space-3xl bg-navy-deep text-surface rounded-2xl sm:rounded-3xl my-4 sm:my-12 overflow-hidden relative shadow-2xl transition-colors"
     >
       {/* Subtle glow circles */}
       <div className="absolute -right-32 -top-32 w-96 h-96 bg-blue-action/10 rounded-full blur-3xl pointer-events-none" />

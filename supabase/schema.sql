@@ -152,7 +152,7 @@ create index if not exists idx_analytics_events_created_at on public.analytics_e
 create table if not exists public.sponsors (
     id text primary key,
     title text not null,
-    category text not null, -- 'hotel' | 'auto_service' | 'restaurant' | 'activity'
+    category text not null, -- 'hotel' | 'auto_service' | 'restaurant' | 'activity' | 'tour' | 'cooking'
     category_label text not null,
     tagline text,
     badge_text text,
@@ -646,6 +646,18 @@ values
     'https://th.airbnb.com/rooms/17126437',
     'บ้านทั้งหลัง 3 ห้องนอน 3 ห้องน้ำ ฟรีอาหารเช้าปรุงสด + รถรับส่งสนามบิน',
     'ต.หายยา อ.เมืองเชียงใหม่ (เดิน 6-10 นาทีถึงตลาดประตูเชียงใหม่ & ถนนคนเดินวัวลาย)'
+),
+(
+    'sp-12',
+    'Sukjai Home Cooking School (สุขใจ โฮม คุกกิ้ง สคูล เชียงใหม่)',
+    'cooking',
+    'เวิร์กชอปทำอาหารไทย',
+    'คอร์สเรียนทำอาหารไทยสไตล์โฮมเมด บรรยากาศอบอุ่นในสวนชนบท พร้อมพาเดินตลาดสดเลือกซื้อวัตถุดิบ เมนูยอดนิยม ข้าวซอย ต้มยำ ผัดไทย และรถรับส่งฟรี',
+    'เวิร์กชอปทำอาหาร เชียงใหม่',
+    '/images/sukjai-cooking-school.jpg',
+    'https://www.facebook.com/profile.php?id=61558094176601',
+    'คอร์สทำอาหารไทยแท้ บรรยากาศสวนชนบท พร้อมพาชมตลาดและรถรับส่ง',
+    'เชียงใหม่ (มีบริการรถรับส่งจากตัวเมือง)'
 )
 on conflict (id) do nothing;
 

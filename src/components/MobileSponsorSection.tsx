@@ -30,7 +30,8 @@ export const MobileSponsorSection: React.FC<MobileSponsorSectionProps> = ({ clas
   const categories = [
     { key: 'all', label: `${t('spn.catAll')} (${localizedSponsors.length})`, icon: '🌟' },
     { key: 'hotel', label: t('spn.catHotel') || 'ที่พัก', icon: '🏨' },
-    { key: 'activity', label: t('spn.catActivity') || 'ปางช้าง/กิจกรรม', icon: '🐘' },
+    { key: 'cooking', label: t('spn.catCooking') || 'ทำอาหาร', icon: '🍳' },
+    { key: 'activity', label: t('spn.catActivity') || 'ปางช้าง', icon: '🐘' },
     { key: 'tour', label: t('spn.catTour') || 'ทัวร์', icon: '🛵' },
     { key: 'insurance', label: t('spn.catInsurance') || 'ประกันภัย', icon: '🛡️' },
     { key: 'fuel', label: t('spn.catFuel') || 'น้ำมัน & กาแฟ', icon: '⛽' },
@@ -64,6 +65,8 @@ export const MobileSponsorSection: React.FC<MobileSponsorSectionProps> = ({ clas
     switch (category) {
       case 'hotel':
         return '🏨';
+      case 'cooking':
+        return '🍳';
       case 'activity':
         return '🐘';
       case 'tour':

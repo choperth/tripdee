@@ -209,6 +209,24 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
       location: '清迈直辖市海雅区（步行6-10分钟至清迈门与瓦莱周六夜市）',
     },
   },
+  'sp-12': {
+    en: {
+      title: 'Sukjai Home Cooking School Chiang Mai',
+      categoryLabel: 'Thai Cooking Workshop',
+      tagline: 'Warm home-style Thai cooking class in a countryside garden. Includes local market tour, popular recipes like Khao Soi, Tom Yum, and free roundtrip transfers.',
+      badgeText: 'Chiang Mai Cooking Workshop',
+      discountText: 'Authentic Thai cooking class in countryside garden + market tour & transfers',
+      location: 'Chiang Mai (Free pickup within city limits)',
+    },
+    zh: {
+      title: 'Sukjai Home Cooking School（清迈素克哉泰式家常料理工坊）',
+      categoryLabel: '泰式烹饪料理课',
+      tagline: '乡村花园风温馨泰式家常料理课，包含当地菜市场食材采购体验，亲手制作清迈咖喱面、冬阴功、泰式炒河粉及免费接送。',
+      badgeText: '清迈泰式料理体验',
+      discountText: '正宗泰式家常料理课 · 乡村花园环境 · 含菜市场导览与专车接送',
+      location: '清迈（含清迈市区免费往返接送）',
+    },
+  },
 };
 
 export function getLocalizedSponsor(sponsor: Sponsor, locale: Locale): Sponsor {

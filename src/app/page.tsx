@@ -289,6 +289,44 @@ export default function HomePage() {
     [locale]
   );
 
+  const navigateToSection = useCallback(
+    (targetId: string, requiredTab?: string) => {
+      const isMainPageSection = ['results', 'tripboard', 'routes'].includes(targetId);
+      const targetTab =
+        requiredTab ||
+        (isMainPageSection
+          ? ['van', 'suv_driver', 'car'].includes(activeTab)
+            ? activeTab
+            : 'van'
+          : targetId === 'corporate'
+          ? 'corporate'
+          : undefined);
+
+      if (targetTab && activeTab !== targetTab) {
+        setActiveTab(targetTab);
+      }
+
+      if (targetId === 'corporate' && targetTab === 'corporate') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      let attempts = 0;
+      const tryScroll = () => {
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (attempts < 15) {
+          attempts++;
+          setTimeout(tryScroll, 40);
+        }
+      };
+
+      requestAnimationFrame(tryScroll);
+    },
+    [activeTab]
+  );
+
   return (
     <div className="flex min-h-dvh flex-col bg-paper font-body text-ink">
       <Navbar
@@ -409,7 +447,7 @@ export default function HomePage() {
             </div>
           </div>
         ) : activeTab === 'corporate' ? (
-          <div key="corporate" className="td-panel-enter pt-24 sm:pt-28 pb-16">
+          <div key="corporate" className="td-panel-enter pt-24 sm:pt-28 pb-24 sm:pb-20">
             <CorporateSection vehicles={vehicles} />
           </div>
         ) : (
@@ -727,13 +765,8 @@ export default function HomePage() {
         {/* Platform Showcase & House Features (100% Authentic, 0% Mock Brands) */}
         <PlatformShowcase
           onOpenRegister={() => setIsRegisterModalOpen(true)}
-          onSelectCorporate={() => {
-            setActiveTab('corporate');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          onScrollToSearch={() => {
-            document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
-          }}
+          onSelectCorporate={() => navigateToSection('corporate', 'corporate')}
+          onScrollToSearch={() => navigateToSection('results', 'van')}
         />
 
       </main>
@@ -743,19 +776,22 @@ export default function HomePage() {
         onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
         onSelectZone={(zone) => {
           setSelectedZone(zone);
-          document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+          navigateToSection('results', 'van');
         }}
         onSelectTab={(tab) => {
-          setActiveTab(tab);
           if (tab === 'van' || tab === 'suv_driver' || tab === 'car') {
-            document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+            navigateToSection('results', tab);
           } else {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            navigateToSection(tab, tab);
           }
         }}
       />
 
-      <MobileBottomNav onSelectTab={setActiveTab} />
+      <MobileBottomNav
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        onNavigate={navigateToSection}
+      />
 
       <VehicleDetailModal
         vehicle={selectedVehicleDetail}
@@ -772,7 +808,7 @@ export default function HomePage() {
         onSelectVehicleDetail={handleSelectDetail}
         onFilterFleetOnHome={(keyword) => {
           setSearchKeyword(keyword);
-          document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+          navigateToSection('results', 'van');
         }}
       />
       <DriverRegisterModal isOpen={isRegisterModalOpen} onClose={() => setIsRegisterModalOpen(false)} />
@@ -800,7 +836,7 @@ export default function HomePage() {
         <CustomerPortalModal
           isOpen={isPortalOpen}
           onClose={() => setIsPortalOpen(false)}
-          onOpenNewQuote={() => setActiveTab('corporate')}
+          onOpenNewQuote={() => navigateToSection('corporate', 'corporate')}
         />
       )}
       {user?.role === 'admin' && (

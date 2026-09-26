@@ -214,6 +214,7 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
                     <option value="hotel">ที่พัก & โรงแรม (Hotel)</option>
+                    <option value="cooking">คลาสทำอาหาร & เวิร์กชอป</option>
                     <option value="restaurant">ร้านอาหาร & คาเฟ่</option>
                     <option value="auto_service">อู่ & ยาง & บริการรถ</option>
                     <option value="activity">กิจกรรม & ปางช้าง</option>

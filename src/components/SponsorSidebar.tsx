@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { SPONSORS, BoardPost } from '@/data/mockData';
+import { SPONSORS, Sponsor, BoardPost } from '@/data/mockData';
 import { isMockDataEnabled, isMockPostId } from '@/lib/mockConfig';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -41,8 +41,92 @@ export const SponsorSidebar: React.FC = () => {
     }
   };
 
-  const [selectedIdx, setSelectedIdx] = useState(0);
+  // 1. Group sponsors by category
+  const categories = useMemo(() => {
+    const order: Sponsor['category'][] = ['hotel', 'cooking', 'activity', 'tour', 'restaurant', 'fuel', 'insurance', 'auto_service'];
+    const presentCats = new Set(localizedSponsors.map((s) => s.category));
+    return order.filter((c) => presentCats.has(c));
+  }, [localizedSponsors]);
+
+  const [activeCategory, setActiveCategory] = useState<Sponsor['category']>('hotel');
+  const [categoryItemIndices, setCategoryItemIndices] = useState<Record<string, number>>({});
   const [isPaused, setIsPaused] = useState(false);
+
+  const currentCategory: Sponsor['category'] = categories.includes(activeCategory) ? activeCategory : (categories[0] || 'hotel');
+  const currentCategorySponsors = useMemo(() => {
+    return localizedSponsors.filter((s) => s.category === currentCategory);
+  }, [localizedSponsors, currentCategory]);
+
+  const currentItemIdx = (categoryItemIndices[currentCategory] || 0) % (currentCategorySponsors.length || 1);
+  const activeSponsor = currentCategorySponsors[currentItemIdx] || localizedSponsors[0];
+
+  const handlePrevItem = () => {
+    setIsPaused(true);
+    setCategoryItemIndices((prev) => {
+      const cur = prev[currentCategory] || 0;
+      const nextIdx = (cur - 1 + currentCategorySponsors.length) % currentCategorySponsors.length;
+      return { ...prev, [currentCategory]: nextIdx };
+    });
+  };
+
+  const handleNextItem = () => {
+    setIsPaused(true);
+    setCategoryItemIndices((prev) => {
+      const cur = prev[currentCategory] || 0;
+      const nextIdx = (cur + 1) % currentCategorySponsors.length;
+      return { ...prev, [currentCategory]: nextIdx };
+    });
+  };
+
+  const getCategoryMeta = (cat: string) => {
+    switch (cat) {
+      case 'hotel':
+        return {
+          icon: 'bed',
+          label: t('spn.catHotel') || 'ที่พัก',
+        };
+      case 'cooking':
+        return {
+          icon: 'soup_kitchen',
+          label: t('spn.catCooking') || 'ทำอาหาร',
+        };
+      case 'activity':
+        return {
+          icon: 'pets',
+          label: t('spn.catActivity') || 'ปางช้าง',
+        };
+      case 'tour':
+        return {
+          icon: 'map',
+          label: t('spn.catTour') || 'ทัวร์',
+        };
+      case 'restaurant':
+        return {
+          icon: 'restaurant',
+          label: t('spn.catRestaurant') || 'ร้านอาหาร',
+        };
+      case 'insurance':
+        return {
+          icon: 'shield',
+          label: t('spn.catInsurance') || 'ประกัน',
+        };
+      case 'fuel':
+        return {
+          icon: 'local_gas_station',
+          label: t('spn.catFuel') || 'น้ำมัน',
+        };
+      case 'auto_service':
+        return {
+          icon: 'build',
+          label: t('spn.catGarage') || 'อู่รถ',
+        };
+      default:
+        return {
+          icon: 'star',
+          label: cat,
+        };
+    }
+  };
 
   const [liveVacancyPost, setLiveVacancyPost] = useState<BoardPost | null>(null);
 
@@ -70,14 +154,23 @@ export const SponsorSidebar: React.FC = () => {
   }, [isDemo]);
 
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || localizedSponsors.length <= 1) return;
     const interval = setInterval(() => {
-      setSelectedIdx((prev) => (prev + 1) % localizedSponsors.length);
+      const globalIdx = localizedSponsors.findIndex((s) => s.id === activeSponsor?.id);
+      const nextGlobalIdx = (globalIdx + 1) % localizedSponsors.length;
+      const nextSponsor = localizedSponsors[nextGlobalIdx];
+      if (nextSponsor) {
+        setActiveCategory(nextSponsor.category);
+        const catList = localizedSponsors.filter((s) => s.category === nextSponsor.category);
+        const catIdx = catList.findIndex((s) => s.id === nextSponsor.id);
+        setCategoryItemIndices((prev) => ({
+          ...prev,
+          [nextSponsor.category]: catIdx >= 0 ? catIdx : 0,
+        }));
+      }
     }, 6000);
     return () => clearInterval(interval);
-  }, [isPaused, localizedSponsors.length]);
-
-  const activeSponsor = localizedSponsors[selectedIdx] || localizedSponsors[0];
+  }, [isPaused, localizedSponsors, activeSponsor?.id]);
 
   return (
     <aside aria-label={t('spn.aria')} className="space-y-space-lg">
@@ -153,80 +246,123 @@ export const SponsorSidebar: React.FC = () => {
           onMouseLeave={() => setIsPaused(false)}
           className="bg-paper-elevated dark:bg-slate-900 rounded-2xl overflow-hidden border border-border-subtle dark:border-slate-800 shadow-md hover:shadow-xl transition-all"
         >
-          {/* Sponsor Category Switcher Tabs */}
-          <div className="grid grid-cols-6 gap-1 p-1.5 sm:p-2 bg-paper-surface-muted dark:bg-slate-800 border-b border-border-subtle dark:border-slate-700/60">
-            {localizedSponsors.map((s, idx) => {
-              const isActive = idx === selectedIdx;
-              const icon =
-                s.category === 'hotel'
-                  ? 'bed'
-                  : s.category === 'insurance'
-                  ? 'shield'
-                  : s.category === 'fuel'
-                  ? 'local_gas_station'
-                  : s.category === 'activity'
-                  ? 'pets'
-                  : s.category === 'restaurant'
-                  ? 'restaurant'
-                  : s.category === 'tour'
-                  ? 'map'
-                  : 'build';
-              const label =
-                s.category === 'hotel'
-                  ? t('spn.catHotel')
-                  : s.category === 'insurance'
-                  ? t('spn.catInsurance')
-                  : s.category === 'fuel'
-                  ? t('spn.catFuel')
-                  : s.category === 'activity'
-                  ? t('spn.catActivity')
-                  : s.category === 'restaurant'
-                  ? t('spn.catRestaurant')
-                  : s.category === 'tour'
-                  ? t('spn.catTour')
-                  : t('spn.catGarage');
+          {/* Sponsor Category Switcher Tabs - Grouped by Category */}
+          <div className="grid grid-cols-4 gap-1 p-1.5 sm:p-2 bg-paper-surface-muted dark:bg-slate-800 border-b border-border-subtle dark:border-slate-700/60">
+            {categories.map((cat) => {
+              const isActive = cat === currentCategory;
+              const meta = getCategoryMeta(cat);
+              const count = localizedSponsors.filter((s) => s.category === cat).length;
 
               return (
                 <button
-                  key={s.id}
+                  key={cat}
                   type="button"
                   onClick={() => {
-                    setSelectedIdx(idx);
+                    setActiveCategory(cat);
                     setIsPaused(true);
                   }}
                   className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     isActive
                       ? 'bg-navy-deep text-white shadow-xs dark:bg-blue-600'
-                      : 'text-ink-muted hover:text-navy-deep dark:text-slate-400 dark:hover:text-white'
+                      : 'text-ink-muted hover:text-navy-deep hover:bg-black/5 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
                   }`}
-                  aria-label={t('spn.viewPerk', { title: s.title })}
+                  aria-label={meta.label}
                 >
-                  <span className="material-symbols-outlined text-[16px]">{icon}</span>
-                  <span className="text-[10px] truncate leading-tight mt-0.5">{label}</span>
+                  <span className="material-symbols-outlined text-[17px]">{meta.icon}</span>
+                  <span className="text-[10.5px] truncate leading-tight mt-0.5 flex items-center justify-center gap-0.5 w-full">
+                    <span>{meta.label}</span>
+                    {count > 1 && (
+                      <span
+                        className={`text-[9px] px-1 py-0.2 rounded-full font-bold leading-none ${
+                          isActive
+                            ? 'bg-white/25 text-white'
+                            : 'bg-navy-deep/10 text-navy-deep dark:bg-white/10 dark:text-slate-300'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </span>
                 </button>
               );
             })}
           </div>
 
-          <div className="relative h-44 w-full overflow-hidden bg-navy-deep">
+          <div className="relative h-44 w-full overflow-hidden bg-navy-deep group">
             <Image
               key={activeSponsor.id}
               src={activeSponsor.image}
               alt={activeSponsor.title}
               fill
               sizes="(max-width: 1024px) 100vw, 320px"
-              className="object-cover transition-transform duration-500 hover:scale-105"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/80 via-transparent to-transparent pointer-events-none" />
-            <span className="absolute top-3 left-3 px-space-xs py-space-2xs rounded bg-surface/90 text-navy-deep font-bold text-label-badge shadow-sm">
+            
+            {/* Category label badge */}
+            <span className="absolute top-3 left-3 px-space-xs py-space-2xs rounded bg-surface/90 text-navy-deep font-bold text-label-badge shadow-sm z-10">
               {activeSponsor.categoryLabel}
             </span>
+
+            {/* Click counter */}
             <span
               suppressHydrationWarning
-              className="absolute bottom-2 right-2 rounded-md bg-navy-deep/80 px-2 py-0.5 text-[10px] font-bold text-surface backdrop-blur-xs"
+              className="absolute top-3 right-3 rounded-md bg-navy-deep/80 px-2 py-0.5 text-[10px] font-bold text-surface backdrop-blur-xs z-10"
             >
               {t('spn.clicks', { n: mounted ? getSponsorClickCount(activeSponsor.id) : 0 })}
             </span>
+
+            {/* Multi-sponsor sub-navigation (e.g. 5 hotels in accommodation) */}
+            {currentCategorySponsors.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrevItem();
+                  }}
+                  aria-label="Previous item"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-navy-deep/75 hover:bg-navy-deep text-white flex items-center justify-center backdrop-blur-xs transition-transform active:scale-90 shadow-md cursor-pointer z-10"
+                >
+                  <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNextItem();
+                  }}
+                  aria-label="Next item"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-navy-deep/75 hover:bg-navy-deep text-white flex items-center justify-center backdrop-blur-xs transition-transform active:scale-90 shadow-md cursor-pointer z-10"
+                >
+                  <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                </button>
+
+                {/* Pagination pill with clickable dots */}
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-navy-deep/85 backdrop-blur-xs text-white text-[10px] font-bold shadow-sm z-10">
+                  <span>{currentItemIdx + 1}/{currentCategorySponsors.length}</span>
+                  <span className="text-white/40">·</span>
+                  <div className="flex items-center gap-1">
+                    {currentCategorySponsors.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCategoryItemIndices((prev) => ({ ...prev, [currentCategory]: i }));
+                          setIsPaused(true);
+                        }}
+                        className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                          i === currentItemIdx ? 'w-3 bg-amber-400' : 'w-1.5 bg-white/50 hover:bg-white/80'
+                        }`}
+                        aria-label={`Slide ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="p-space-md space-y-space-xs">

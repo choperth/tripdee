@@ -106,7 +106,7 @@ export const PopularRoutesSection: React.FC<PopularRoutesSectionProps> = ({ onSe
     <section
       id="routes"
       aria-label={t('home.routesTitle')}
-      className="w-full py-6 sm:py-space-2xl bg-paper-canvas dark:bg-slate-950 transition-colors"
+      className="w-full scroll-mt-20 sm:scroll-mt-24 py-6 sm:py-space-2xl bg-paper-canvas dark:bg-slate-950 transition-colors"
     >
       <div className="max-w-7xl mx-auto px-margin lg:px-gutter">
         {/* Section Header (Stitch Redesign) */}
