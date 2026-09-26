@@ -23,7 +23,6 @@ import {
   CheckCircle2,
   Lock,
   Loader2,
-  Sparkles,
   MessageCircle,
   UserCheck,
 } from 'lucide-react';
@@ -87,6 +86,7 @@ export const TripBoard: React.FC = () => {
   const { t, locale } = useLanguage();
   const { user, loginWithOAuth } = useAuth();
   const [oauthLoading, setOauthLoading] = useState<'line' | 'google' | null>(null);
+  const [autofilled, setAutofilled] = useState<boolean>(false);
   const isClient = React.useSyncExternalStore(
     () => () => {},
     () => true,
@@ -1226,21 +1226,24 @@ export const TripBoard: React.FC = () => {
                     <UserCheck className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-extrabold text-ink dark:text-white truncate">
-                      {t('board.autofillLoggedIn', { name: user.driverNickname || user.name || user.emailOrPhone })}
+                    <p className="text-xs font-extrabold text-ink dark:text-white leading-tight">
+                      {t('board.autofillLoggedIn')}
                     </p>
-                    <p className="text-[11px] font-medium text-ink-2 dark:text-slate-300">
+                    <p className="text-[11px] font-medium text-ink-2 dark:text-slate-300 truncate">
                       {user.role === 'driver' ? t('auth.roleDriver') : t('auth.roleCustomer')} • {user.emailOrPhone}
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => applyAutofill(user)}
-                  className="shrink-0 inline-flex items-center gap-1 rounded-pill bg-leaf text-white px-2.5 py-1 text-xs font-extrabold hover:bg-leaf-deep transition-colors cursor-pointer"
+                  onClick={() => {
+                    applyAutofill(user);
+                    setAutofilled(true);
+                    setTimeout(() => setAutofilled(false), 2500);
+                  }}
+                  className="shrink-0 inline-flex items-center justify-center rounded-pill bg-leaf text-white px-3 py-1.5 text-xs font-extrabold hover:bg-leaf-deep transition-all active:scale-95 cursor-pointer shadow-2xs"
                 >
-                  <Sparkles className="h-3 w-3" />
-                  <span>{t('board.autofillButton')}</span>
+                  <span>{autofilled ? (t('board.autofillButtonDone') || 'เติมข้อมูลแล้ว ✓') : t('board.autofillButton')}</span>
                 </button>
               </div>
             ) : (
