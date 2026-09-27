@@ -432,6 +432,57 @@ h1, h2 { overflow-wrap: anywhere; }
   .td-glass { background: var(--color-paper); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
+/* TripDee refresh: quiet editorial travel marketplace, not a dashboard */
+:root {
+  --color-paper: #f7f7f4;
+  --color-paper-2: #efefe9;
+  --color-card: #ffffff;
+  --color-ink: #18211f;
+  --color-ink-2: #59635f;
+  --color-ink-3: #7d8781;
+  --color-rule: #dfe3dc;
+  --color-rule-2: #c9d0c8;
+  --color-accent: #1f5c52;
+  --color-accent-deep: #17463f;
+  --color-accent-soft: #e4efeb;
+  --color-focus: #1f5c52;
+  --color-navy: #183d38;
+  --color-navy-surface: #2c665d;
+  --color-sun: #d39a3b;
+  --color-sun-soft: #f7edda;
+  --color-sun-ink: #734c18;
+  --shadow-card: 0 1px 2px rgba(24, 33, 31, .04), 0 12px 32px rgba(24, 33, 31, .06);
+  --shadow-lift: 0 16px 36px rgba(24, 33, 31, .12);
+  --radius-card: 18px;
+  --radius-modal: 22px;
+  --radius-input: 12px;
+}
+
+[data-theme="dark"] {
+  --color-paper: #111715;
+  --color-paper-2: #19211e;
+  --color-card: #1b2421;
+  --color-ink: #edf2ee;
+  --color-ink-2: #a8b5ae;
+  --color-ink-3: #7d8b84;
+  --color-rule: #2d3934;
+  --color-rule-2: #405049;
+  --color-accent: #78b9aa;
+  --color-accent-deep: #9fd0c3;
+  --color-accent-soft: #203d36;
+  --color-focus: #9fd0c3;
+  --color-navy: #203f39;
+  --color-navy-surface: #2c665d;
+  --color-sun: #e4b45c;
+  --color-sun-soft: #3a2d19;
+  --color-sun-ink: #f6ddb0;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, .18), 0 14px 36px rgba(0, 0, 0, .22);
+  --shadow-lift: 0 18px 42px rgba(0, 0, 0, .3);
+}
+
+/* Keep existing components cohesive while removing excessive pills and gradients. */
+.td-card-hover, .td-elev-card { border-radius: var(--radius-card); }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 150ms !important;
