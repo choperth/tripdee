@@ -19,6 +19,7 @@ import { vehicleTitle, vehicleLocation, vehicleAmenities } from '@/data/vehicleI
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { getPublicDriverName, maskPlateNumber } from '@/lib/privacy';
 import { generateQrMatrix, renderQrSvgPath } from '@/lib/qrCode';
+import { formatLineLink, buildVehicleLineMessage } from '@/lib/contactUtils';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface DriverSmartECardModalProps {
@@ -62,14 +63,17 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
 
     switch (qrMode) {
       case 'line':
-        return vehicle.driverLine || `https://line.me/ti/p/~${cleanPhone}`;
+        return formatLineLink(
+          vehicle.driverLine || `https://line.me/ti/p/~${cleanPhone}`,
+          buildVehicleLineMessage(vehicle)
+        );
       case 'tel':
         return `tel:${cleanPhone}`;
       case 'web':
       default:
         return vehicleUrl;
     }
-  }, [qrMode, vehicle.id, vehicle.driverLine, cleanPhone]);
+  }, [qrMode, vehicle, cleanPhone]);
 
   // Generate QR Matrix
   const qrMatrix = useMemo(() => {
@@ -492,7 +496,7 @@ ${t('ecard.introCta', { url: profileUrl })}`;
                   </a>
 
                   <a
-                    href={vehicle.driverLine}
+                    href={formatLineLink(vehicle.driverLine, buildVehicleLineMessage(vehicle))}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-xl transition-all ${
@@ -527,7 +531,7 @@ ${t('ecard.introCta', { url: profileUrl })}`;
                     )}
                   </div>
 
-                  <div className="text-center mt-2 space-y-0.5">
+                  <div className="text-center mt-2 space-y-1">
                     <span className="text-navy-deep font-bold text-xs block">
                       {qrMode === 'line'
                         ? t('ecard.scanLineBtn')
@@ -535,9 +539,21 @@ ${t('ecard.introCta', { url: profileUrl })}`;
                         ? t('ecard.scanCallBtn')
                         : t('ecard.scanVehicleBtn')}
                     </span>
-                    <span className="text-[10px] text-slate-500 block">
-                      {t('ecard.contact0')}
-                    </span>
+                    <a
+                      href={qrTarget}
+                      target={qrMode === 'tel' ? '_self' : '_blank'}
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1 text-[11px] font-bold text-[#06C755] hover:underline cursor-pointer"
+                    >
+                      <span>
+                        {qrMode === 'line'
+                          ? '👉 แตะเพื่อเปิด LINE ทันที'
+                          : qrMode === 'tel'
+                          ? '👉 แตะเพื่อโทรทันที'
+                          : '👉 แตะเพื่อเปิดโปรไฟล์'}
+                      </span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
                 </div>
               </div>

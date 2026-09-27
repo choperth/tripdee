@@ -20,25 +20,18 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     return 'results';
   });
 
-  // Synchronize activeSection whenever activeTab changes externally
-  useEffect(() => {
+  const [prevTab, setPrevTab] = useState(activeTab);
+
+  if (prevTab !== activeTab) {
+    setPrevTab(activeTab);
     if (activeTab === 'corporate') {
       setActiveSection('corporate');
     } else if (activeTab === 'hotel') {
       setActiveSection('hotel');
     } else {
-      // Vehicle tab view: check if scrolled to tripboard
-      const tripboardEl = document.getElementById('tripboard');
-      if (tripboardEl) {
-        const rect = tripboardEl.getBoundingClientRect();
-        if (rect.top <= 250 && rect.bottom >= 120) {
-          setActiveSection('tripboard');
-          return;
-        }
-      }
       setActiveSection('results');
     }
-  }, [activeTab]);
+  }
 
   // Scroll spy on mobile to automatically highlight TripBoard vs Vehicles when scrolling
   useEffect(() => {

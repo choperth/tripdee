@@ -17,6 +17,7 @@ import { PopularRoutesSection } from '@/components/PopularRoutesSection';
 import { TripBoard } from '@/components/TripBoard';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
+import { OFFICIAL_LINE_URL } from '@/lib/constants';
 const VehicleDetailModal = dynamic(
   () => import('@/components/VehicleDetailModal').then((m) => m.VehicleDetailModal),
   { ssr: false }
@@ -692,7 +693,7 @@ export default function HomePage() {
                           <ArrowRight className="h-3.5 w-3.5" />
                         </a>
                         <a
-                          href="https://line.me/R/ti/p/@731ruvzj"
+                          href={OFFICIAL_LINE_URL}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="td-btn inline-flex items-center gap-1.5 rounded-pill bg-line-green/10 text-line-green border border-line-green/30 px-4 py-2.5 text-xs font-extrabold hover:bg-line-green hover:text-white transition-all"

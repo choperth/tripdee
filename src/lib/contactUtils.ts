@@ -74,7 +74,7 @@ export function formatLineLink(rawLine?: string, message?: string): string {
     return `https://line.me/R/ti/p/${encodeURIComponent(trimmed)}`;
   }
 
-  // If it's a full LINE URL to an OA (e.g. https://line.me/R/ti/p/@731ruvzj)
+  // If it's a full LINE URL to an OA (e.g. https://line.me/R/ti/p/@lineoa)
   if (trimmed.includes('/ti/p/@') && message) {
     const oaId = trimmed.split('/ti/p/')[1]?.split('?')[0];
     if (oaId) {

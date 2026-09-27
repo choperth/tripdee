@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
+import { OFFICIAL_LINE_URL } from '@/lib/constants';
 import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import {
@@ -574,7 +575,7 @@ export const TripBoard: React.FC = () => {
           </div>
           <div className="flex items-center gap-2 text-ink-muted dark:text-slate-400">
             <a
-              href="https://line.me/R/ti/p/@731ruvzj"
+              href={OFFICIAL_LINE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#06C755]/15 text-[#06C755] border border-[#06C755]/30 text-xs font-bold hover:bg-[#06C755] hover:text-white transition-all active:scale-95"

@@ -6,6 +6,7 @@ import { SPONSORS, Sponsor } from '@/data/mockData';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
+import { OFFICIAL_LINE_URL } from '@/lib/constants';
 import {
   MapPin,
   Phone,
@@ -220,7 +221,7 @@ export const MobileSponsorSection: React.FC<MobileSponsorSectionProps> = ({ clas
 
         <div className="mt-2.5">
           <a
-            href="https://line.me/R/ti/p/@731ruvzj"
+            href={OFFICIAL_LINE_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full h-10 px-4 rounded-xl bg-line-green hover:bg-line-green-hover text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all"

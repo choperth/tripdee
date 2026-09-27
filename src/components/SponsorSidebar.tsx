@@ -7,6 +7,7 @@ import { isMockDataEnabled, isMockPostId } from '@/lib/mockConfig';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
+import { OFFICIAL_LINE_URL } from '@/lib/constants';
 
 export const SponsorSidebar: React.FC = () => {
   const { trackSponsor, trackCall, getSponsorClickCount } = useAnalytics();
@@ -453,7 +454,7 @@ export const SponsorSidebar: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-space-xs pt-space-2xs">
           <a
-            href="https://line.me/R/ti/p/@731ruvzj"
+            href={OFFICIAL_LINE_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="h-9 bg-line-green hover:bg-line-green-hover text-surface rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 transition-all"
@@ -462,7 +463,7 @@ export const SponsorSidebar: React.FC = () => {
             <span>{t('spn.adsAdvertise')}</span>
           </a>
           <a
-            href="https://line.me/R/ti/p/@731ruvzj"
+            href={OFFICIAL_LINE_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="h-9 bg-surface/20 hover:bg-surface/30 text-surface rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 transition-all"
@@ -470,6 +471,7 @@ export const SponsorSidebar: React.FC = () => {
             <span>{t('spn.adsStats')}</span>
           </a>
         </div>
+
       </div>
     </aside>
   );

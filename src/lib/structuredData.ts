@@ -3,6 +3,7 @@
  * Tailored for Google Search, AI Overviews, Perplexity, Claude, and ChatGPT Web Search.
  */
 
+import { OFFICIAL_LINE_URL } from '@/lib/constants';
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tripdee.co';
 
 export function getStructuredData() {
@@ -24,7 +25,7 @@ export function getStructuredData() {
       availableLanguage: ['Thai', 'English', 'Chinese'],
     },
     sameAs: [
-      'https://line.me/R/ti/p/@731ruvzj',
+      OFFICIAL_LINE_URL,
       'https://web.facebook.com/profile.php?id=61594476213767',
     ],
     address: {
