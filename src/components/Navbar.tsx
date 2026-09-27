@@ -145,11 +145,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* MAIN NAVBAR (Stitch Glassmorphism & Navy Accents) */}
       <nav
         aria-label={t('nav.main')}
-        className={`w-full bg-paper-elevated/95 dark:bg-slate-950/95 backdrop-blur-xl border-b border-border-subtle dark:border-slate-800 transition-all ${
+        className={`w-full bg-paper/92 backdrop-blur-xl border-b border-rule transition-all ${
           scrolled ? 'shadow-sm' : ''
         }`}
       >
-        <div className="h-16 sm:h-20 max-w-7xl mx-auto px-3 sm:px-margin lg:px-gutter flex items-center justify-between gap-1.5 sm:gap-space-md">
+        <div className="h-16 sm:h-[72px] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4">
           {/* LEFT: Official Logo */}
           <div className="flex items-center shrink-0">
             <button
@@ -182,7 +182,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => selectTab('van')}
-              className={`transition-colors text-xs xl:text-sm font-bold rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap ${
+              className={`transition-colors text-xs xl:text-sm font-bold rounded-full px-3 xl:px-3.5 py-2 whitespace-nowrap ${
                 activeTab === 'van'
                   ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
                   : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
@@ -193,7 +193,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => selectTab('suv_driver')}
-              className={`transition-colors text-xs xl:text-sm font-bold rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap ${
+              className={`transition-colors text-xs xl:text-sm font-bold rounded-full px-3 xl:px-3.5 py-2 whitespace-nowrap ${
                 activeTab === 'suv_driver'
                   ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
                   : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
@@ -204,7 +204,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => selectTab('car')}
-              className={`transition-colors text-xs xl:text-sm font-bold rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap ${
+              className={`transition-colors text-xs xl:text-sm font-bold rounded-full px-3 xl:px-3.5 py-2 whitespace-nowrap ${
                 activeTab === 'car'
                   ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
                   : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
@@ -229,7 +229,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => scrollTo('corporate', 'corporate')}
-              className={`transition-colors text-xs xl:text-sm font-bold rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap ${
+              className={`transition-colors text-xs xl:text-sm font-bold rounded-full px-3 xl:px-3.5 py-2 whitespace-nowrap ${
                 activeTab === 'corporate'
                   ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
                   : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'

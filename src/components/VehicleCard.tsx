@@ -81,7 +81,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
   };
 
   return (
-    <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl overflow-hidden shadow-md hover:shadow-xl border border-border-subtle dark:border-slate-800 transition-all flex flex-col justify-between group">
+    <article className="bg-card rounded-card overflow-hidden shadow-card hover:shadow-lift border border-rule transition-all flex flex-col justify-between group">
       <div>
         {/* 1. Vehicle Media Cover with Stitch Overlays */}
         <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-navy-deep">
@@ -404,7 +404,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
           {t('vehicle.detailsReviews')} +
         </button>
       </div>
-    </div>
+    </article>
   );
 });
 
