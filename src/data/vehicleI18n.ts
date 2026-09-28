@@ -37,7 +37,7 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
       'Class 1 passenger insurance',
     ],
     description:
-      '4WD SUV for high mountain trips. Ideal for small groups of 4–6 who want agility and comfort. Same experienced driver every time for peace of mind.',
+      '4WD SUV for high mountain trips. Ideal for small groups of 4-6 who want agility and comfort. Same experienced driver every time for peace of mind.',
   },
   'v-2': {
     title: 'Toyota Majesty Executive 7-Seater Premium Captain Seats (Bangkok & Pattaya & Hua Hin)',
@@ -104,11 +104,11 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
       '4WD system for easy nature routes',
       'Apple CarPlay / Android Auto',
       'Class 1 insurance covering passengers',
-      'Driver experienced on Khao Yai–Wang Nam Khiao',
+      'Driver experienced on Khao Yai-Wang Nam Khiao',
       'Door-to-door pickup and drop-off',
     ],
     description:
-      'Excellent-condition SUV for small groups of 4–6. Fresh air trips in Khao Yai, Wang Nam Khiao, or business trips to Khon Kaen. Kind driver who knows photo spots and great restaurants.',
+      'Excellent-condition SUV for small groups of 4-6. Fresh air trips in Khao Yai, Wang Nam Khiao, or business trips to Khon Kaen. Kind driver who knows photo spots and great restaurants.',
   },
   'v-6': {
     title: 'Toyota Coaster VIP Minibus 20-Seater for Seminars & Study Tours (Bangkok-Pattaya-Khao Yai)',
@@ -124,7 +124,7 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
     description:
       'Brand-new Toyota Coaster 20-seater minibus, VIP-decorated, comfortable without feeling cramped. Ideal for company seminars, study tours, or large families. Legal yellow-plate 30 with top insurance.',
     rateNote:
-      'Yellow plate 30, full tax invoice + 3% withholding — convenient for legal entities',
+      'Yellow plate 30, full tax invoice + 3% withholding - convenient for legal entities',
   },
   'v-7': {
     title: 'Toyota Alphard First Class 5-Seater Super VIP Ottoman Reclining Seats (Bangkok & Airport)',
@@ -146,7 +146,7 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
     location: 'Bangkok / vicinity / Pattaya / Hua Hin / Khao Yai',
     popularRoutes: ['Bangkok', 'Pattaya', 'Hua Hin', 'Khao Yai'],
     amenities: [
-      '100% electric power — silent with zero emissions',
+      '100% electric power - silent with zero emissions',
       '8-way electric Captain Seats with massage',
       'Full-width Panoramic Sunroof',
       'DC Fast Charging support, 540 km range',
@@ -164,7 +164,7 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
       'Electric rear seats with digital control panel',
       'Nanoe 3-zone independent climate control',
       'Electric rear sunshades and side curtains',
-      'Driver experienced Chiang Mai–Lamphun, smooth and safe',
+      'Driver experienced Chiang Mai-Lamphun, smooth and safe',
       'Receipt available for company reimbursement',
     ],
     description:
@@ -182,14 +182,14 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
       'Drinking water and smartphone charging points',
     ],
     description:
-      'Popular 7-seat SUV for family and friend trips of 4–6. High performance, road-hugging, comfortable throughout. Calm, safe, courteous driver who knows beautiful photo stops.',
+      'Popular 7-seat SUV for family and friend trips of 4-6. High performance, road-hugging, comfortable throughout. Calm, safe, courteous driver who knows beautiful photo stops.',
   },
   'v-11': {
     title: 'Honda CR-V e:HEV RS 7-Seater Full-Option Hybrid Quiet Luxury (Bangkok & Pattaya & Rayong)',
     location: 'Bangkok & vicinity / Pattaya / Rayong / Hua Hin / Khao Yai',
     popularRoutes: ['Bangkok', 'Pattaya', 'Rayong', 'Khao Yai', 'Suvarnabhumi Airport'],
     amenities: [
-      'Full Hybrid system — smooth, quiet, noise-free',
+      'Full Hybrid system - smooth, quiet, noise-free',
       '7 seats across 3 rows with Panoramic Sunroof',
       'Honda SENSING safety all around',
       'Background-checked driver, smartly dressed',
@@ -218,7 +218,7 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
     location: 'Chiang Mai / Chiang Mai Airport (CNX) / City Center',
     popularRoutes: ['Chiang Mai Airport', 'Nimman', 'Mae Rim', 'Mon Jam', 'Hang Dong'],
     amenities: [
-      'CVT automatic — easy to drive, fuel-efficient',
+      'CVT automatic - easy to drive, fuel-efficient',
       'Apple CarPlay / Android Auto with reverse camera',
       'Icy air-conditioning, brand-new clean condition',
       'Pickup zone at Chiang Mai Airport and city center',
@@ -249,7 +249,7 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
     location: 'Chiang Mai / Airport / Chiang Mai University / Nimman',
     popularRoutes: ['Nimman', 'Chiang Mai Airport', 'Mae Kampong', 'Chiang Rai'],
     amenities: [
-      'Full Hybrid e:HEV — powerful and fuel-efficient',
+      'Full Hybrid e:HEV - powerful and fuel-efficient',
       'Honda SENSING safety system',
       'Sport seats with rear passenger A/C',
       'Chiang Mai Airport and railway station drop-off',
@@ -264,7 +264,7 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
     location: 'Phuket / Phuket Airport (HKT) / Patong / Kata / City Center',
     popularRoutes: ['Phuket Airport', 'Patong Beach', 'Promthep Cape', 'Old Phuket Town', 'Phang Nga'],
     amenities: [
-      'Hybrid Compact SUV — wide visibility, agile driving',
+      'Hybrid Compact SUV - wide visibility, agile driving',
       'Electric leather seats with electric parking brake & Auto Brake Hold',
       '360° surround camera, easy even in tight spots',
       'Pickup zone at Phuket Airport and Patong Beach',
@@ -293,9 +293,9 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
     location: 'Krabi / Ao Nang / Krabi Airport (KBV) / Klong Muang',
     popularRoutes: ['Krabi Airport', 'Ao Nang', 'Emerald Pool', 'Tha Pom Klong Song Nam'],
     amenities: [
-      'CVT automatic — agile, easy to park',
+      'CVT automatic - agile, easy to park',
       'Push Start & Keyless',
-      'Automatic A/C — fast cooling against the sun',
+      'Automatic A/C - fast cooling against the sun',
       'Drop-off zone at Krabi Airport and Ao Nang Beach',
       'Cash and transfer deposit accepted',
     ],
@@ -307,30 +307,30 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
     location: 'Bangkok / Suvarnabhumi Airport (BKK) / Don Mueang (DMK)',
     popularRoutes: ['Suvarnabhumi Airport', 'Don Mueang Airport', 'Pattaya', 'Hua Hin', 'Ayutthaya'],
     amenities: [
-      'Hybrid sedan — smooth, quiet, fuel-efficient',
+      'Hybrid sedan - smooth, quiet, fuel-efficient',
       'Pickup/drop-off at both Suvarnabhumi and Don Mueang',
       'Full receipt / tax invoice available',
       'Credit card hold for security deposit',
       'Open and bookable 24 hours',
     ],
     description:
-      'Thailand’s #1 mid-size hybrid sedan. Great for both business and leisure. Spacious, comfortable, smooth — long interprovincial trips without fatigue.',
-    rateNote: 'Full tax invoice + 3% withholding available — convenient for legal entities',
+      'Thailand’s #1 mid-size hybrid sedan. Great for both business and leisure. Spacious, comfortable, smooth - long interprovincial trips without fatigue.',
+    rateNote: 'Full tax invoice + 3% withholding available - convenient for legal entities',
   },
   'v-sd-bkk02': {
     title: 'Honda Civic EL+ 1.5 Turbo Sport Sedan 5-Seater (BKK Drive Rental)',
     location: 'Bangkok / Bangna / Sukhumvit / Suvarnabhumi',
     popularRoutes: ['Bangkok', 'Khao Yai', 'Pattaya', 'Hua Hin'],
     amenities: [
-      '1.5 Turbo engine — high performance',
+      '1.5 Turbo engine - high performance',
       'Honda SENSING intelligent safety',
       'Electric front leather seats, premium sport design',
       'Drop-off zone in eastern Bangkok and Suvarnabhumi',
       'Ask shop directly for booking and rental documents',
     ],
     description:
-      'Sharp sport sedan with excellent acceleration and confident road grip. For driving enthusiasts. Great for Bangkok–Khao Yai or Pattaya trips.',
-    rateNote: 'VTEC Turbo 178 hp — fun to drive, responsive overtaking',
+      'Sharp sport sedan with excellent acceleration and confident road grip. For driving enthusiasts. Great for Bangkok-Khao Yai or Pattaya trips.',
+    rateNote: 'VTEC Turbo 178 hp - fun to drive, responsive overtaking',
   },
   'v-sd-bkk03': {
     title: 'Toyota Majesty Executive 7-Seater Premium Self-Drive VIP (Prime Luxury Mobility)',
@@ -338,7 +338,7 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
     popularRoutes: ['Bangkok', 'Hua Hin', 'Pattaya', 'Khao Yai'],
     amenities: [
       'Electric Captain Seats with calf rest',
-      'Dual power sliding doors — easy control',
+      'Dual power sliding doors - easy control',
       '360° camera and sensors for easy parking',
       'Full corporate tax invoice available',
       'Pickup at service center or arranged delivery',
@@ -352,7 +352,7 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
     location: 'Pattaya / Bang Lamung / Jomtien Beach / Sattahip / U-Tapao Airport',
     popularRoutes: ['Pattaya', 'Sattahip', 'Jomtien Beach', 'Nong Nooch Garden', 'Rayong'],
     amenities: [
-      '7 seats across 3 rows — many configurations',
+      '7 seats across 3 rows - many configurations',
       'Wireless phone charger',
       'Touchscreen with Apple CarPlay / Android Auto',
       'Pickup zone in North/Central/South Pattaya and Jomtien',
@@ -360,14 +360,14 @@ export const VEHICLE_EN: Record<string, VehicleText> = {
     ],
     description:
       'Versatile 7-seat Mini MPV. Perfect for family or friend trips to Pattaya, Sattahip, Koh Larn. Fits people and luggage completely at a budget price.',
-    rateNote: '7 seats great value — fits lots of people and gear, ideal for Pattaya-Sattahip trips',
+    rateNote: '7 seats great value - fits lots of people and gear, ideal for Pattaya-Sattahip trips',
   },
   'v-sd-sm01': {
     title: 'Toyota Yaris Ativ 5-Seater Island Touring (Samui Island Rent A Car)',
     location: 'Koh Samui / Samui Airport (USM) / Na Thon Pier / Chaweng Beach',
     popularRoutes: ['Chaweng Beach', 'Lamai Beach', 'Bo Phut', 'Na Thon Pier', 'Samui Airport'],
     amenities: [
-      'Automatic — easy driving on island routes',
+      'Automatic - easy driving on island routes',
       'Fast-cooling A/C against Koh Samui sun',
       'Drop-off at Na Thon Pier, Lipa Noi Pier, and Samui Airport',
       'Free map of island attractions and cafes',

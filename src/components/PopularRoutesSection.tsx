@@ -28,7 +28,7 @@ const STITCH_ROUTES: StitchRoute[] = [
     filterKey: 'ม่อนแจ่ม',
     zoneTag: 'ภาคเหนือ / ธรรมชาติ',
     subtitle: 'จุดชมวิวสันเขา หมู่บ้านม้งหนองหอย และแปลงพืชเมืองหนาว',
-    // Mae Rim flower fields, Chiang Mai — Photo by Putra Mahirudin on Unsplash.
+    // Mae Rim flower fields, Chiang Mai - Photo by Putra Mahirudin on Unsplash.
     image: 'https://images.unsplash.com/photo-1770740098141-4db5fb079dd1?auto=format&fit=crop&w=800&q=80',
     photoCredit: 'Putra Mahirudin / Unsplash',
     photoSource: 'https://unsplash.com/photos/a-scenic-mountain-village-with-colorful-flower-fields-e8kXBEOAeck',
@@ -110,21 +110,21 @@ export const PopularRoutesSection: React.FC<PopularRoutesSectionProps> = ({ onSe
     >
       <div className="max-w-7xl mx-auto px-margin lg:px-gutter">
         {/* Section Header (Stitch Redesign) */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-space-sm mb-3 sm:mb-space-xl">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 sm:gap-4 mb-4 sm:mb-6 border-b border-border-subtle/60 dark:border-slate-800 pb-3 sm:pb-4">
           <div>
-            <div className="flex items-center gap-space-2xs">
-              <h2 className="font-headline-xl text-headline-xl text-navy-deep dark:text-white tracking-tight">
+            <div className="flex items-center gap-2">
+              <h2 className="font-display text-lg sm:text-2xl font-extrabold tracking-tight text-navy-deep dark:text-white">
                 {t('home.routesTitle')}
               </h2>
-              <span className="px-space-xs py-space-2xs rounded-full bg-blue-subtle text-blue-action font-bold text-label-badge">
+              <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-bold text-ink-secondary dark:text-slate-300">
                 {t('home.routesCount', { count: STITCH_ROUTES.length })}
               </span>
             </div>
-            <p className="font-body-base text-body-base text-ink-secondary dark:text-slate-300 mt-1">
+            <p className="text-xs sm:text-sm text-ink-secondary dark:text-slate-400 mt-1">
               {t('home.routesCaption')}
             </p>
           </div>
-          <div className="md:hidden flex items-center gap-1 text-xs font-semibold text-blue-action dark:text-blue-400">
+          <div className="md:hidden flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
             <span>ปัดซ้าย-ขวาเพื่อดูเส้นทาง</span>
             <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
           </div>
@@ -135,7 +135,7 @@ export const PopularRoutesSection: React.FC<PopularRoutesSectionProps> = ({ onSe
           {STITCH_ROUTES.map((route) => (
             <div
               key={route.id}
-              className="w-[82vw] sm:w-[340px] md:w-auto shrink-0 md:shrink snap-start bg-paper-elevated dark:bg-slate-900 rounded-2xl overflow-hidden shadow-md hover:shadow-xl border border-border-subtle dark:border-slate-800 transition-all group flex flex-col justify-between"
+              className="w-[82vw] sm:w-[340px] md:w-auto shrink-0 md:shrink snap-start bg-paper-elevated dark:bg-slate-900 rounded-2xl overflow-hidden shadow-xs hover:shadow-md border border-border-subtle dark:border-slate-800 transition-all duration-200 group flex flex-col justify-between"
             >
               <div>
                 {/* Photo & Zone Tag */}
@@ -173,14 +173,14 @@ export const PopularRoutesSection: React.FC<PopularRoutesSectionProps> = ({ onSe
               </div>
 
               {/* Price and CTA */}
-              <div className="p-space-md pt-0 flex items-center justify-between border-t border-border-subtle/60 dark:border-slate-800 mt-space-xs">
-                <span className="font-bold text-headline-md text-navy-deep dark:text-white">
+              <div className="p-4 pt-0 flex items-center justify-between border-t border-border-subtle/60 dark:border-slate-800 mt-2">
+                <span className="font-bold text-sm sm:text-base text-navy-deep dark:text-white tabular-nums">
                   {t(`route.${route.id}.price` as DictKey) || route.priceRange}
                 </span>
                 <button
                   type="button"
                   onClick={() => handleSelect(route.filterKey)}
-                  className="px-space-sm py-space-xs bg-blue-action hover:bg-blue-action-hover text-on-primary rounded-xl font-body-medium text-body-medium transition-colors shadow-sm cursor-pointer"
+                  className="px-3.5 py-1.5 bg-navy-deep hover:bg-navy-surface text-white dark:bg-blue-600 dark:hover:bg-blue-500 rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer"
                 >
                   {t('home.viewCars')}
                 </button>

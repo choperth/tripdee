@@ -3,6 +3,11 @@
  * Manages server-side persistence for corporate quote requests and driver registrations.
  */
 
+import type { LeadFeeStatus, OrgType, VehicleTier } from '@/lib/b2b';
+import { calcLeadFee, clampCarCount } from '@/lib/b2b';
+
+export type { LeadFeeStatus, OrgType, VehicleTier };
+
 export interface QuotationLead {
   id: string;
   companyName: string;
@@ -13,6 +18,20 @@ export interface QuotationLead {
   passengers: string;
   needsTaxInvoice: boolean;
   estimatedPrice: number;
+  /** จำนวนคันรถที่ต้องการ (B2B Fleet Matching) */
+  carCount: number;
+  /** ระดับมาตรฐานรถ: Standard VIP (ป้ายฟ้า) หรือ Strict Compliance 30 (ป้ายเหลือง) */
+  vehicleTier: VehicleTier;
+  /** ประเภทองค์กร */
+  orgType: OrgType;
+  /** ประกันอุบัติเหตุการเดินทางกลุ่ม คุ้มครองผู้โดยสารรายบุคคล */
+  includeInsurance: boolean;
+  /** ชื่อพาร์ตเนอร์กองรถที่ได้รับมอบหมายงาน */
+  assignedPartner?: string | null;
+  /** สถานะการเก็บค่าจัดหา (Flat Lead Fee 500 บาท/คัน) */
+  leadFeeStatus: LeadFeeStatus;
+  /** ค่าจัดหา = carCount * 500 */
+  leadFeeAmount: number;
   submittedAt: string;
   status: 'pending' | 'quoted' | 'confirmed' | 'cancelled';
 }
@@ -174,6 +193,13 @@ const INITIAL_QUOTATIONS: QuotationLead[] = [
     passengers: '15-20 คน (รถตู้ 2 คัน)',
     needsTaxInvoice: true,
     estimatedPrice: 12500,
+    carCount: 2,
+    vehicleTier: 'standard_vip',
+    orgType: 'corporate',
+    includeInsurance: true,
+    assignedPartner: null,
+    leadFeeStatus: 'pending',
+    leadFeeAmount: 1000,
     submittedAt: '2026-09-13T04:30:00.000Z',
     status: 'pending',
   },
@@ -187,12 +213,26 @@ const INITIAL_QUOTATIONS: QuotationLead[] = [
     passengers: '25-30 คน (รถตู้ 3 คัน)',
     needsTaxInvoice: true,
     estimatedPrice: 22000,
+    carCount: 3,
+    vehicleTier: 'strict_compliance_30',
+    orgType: 'government',
+    includeInsurance: true,
+    assignedPartner: 'ล้านนาคาราวาน',
+    leadFeeStatus: 'collected',
+    leadFeeAmount: 1500,
     submittedAt: '2026-09-12T08:15:00.000Z',
     status: 'quoted',
   },
 ];
 
 const INITIAL_DRIVERS: DriverLead[] = [];
+
+/** Mock seed quotations are only served when mock/demo data is enabled */
+const MOCK_QUOTATION_IDS = new Set(INITIAL_QUOTATIONS.map((q) => q.id));
+
+export function isMockQuotationId(id: string): boolean {
+  return MOCK_QUOTATION_IDS.has(id);
+}
 
 function getDb(): LeadsDatabase {
   if (!globalThis.__tripdee_leads__) {
@@ -244,10 +284,24 @@ export function addQuotation(lead: {
   passengers: string;
   needsTaxInvoice: boolean;
   estimatedPrice: number;
+  carCount?: number;
+  vehicleTier?: VehicleTier;
+  orgType?: OrgType;
+  includeInsurance?: boolean;
+  assignedPartner?: string | null;
+  leadFeeStatus?: LeadFeeStatus;
 }): QuotationLead {
   const db = getDb();
+  const carCount = clampCarCount(lead.carCount);
   const newLead: QuotationLead = {
     ...lead,
+    carCount,
+    vehicleTier: lead.vehicleTier ?? 'standard_vip',
+    orgType: lead.orgType ?? 'corporate',
+    includeInsurance: lead.includeInsurance ?? true,
+    assignedPartner: lead.assignedPartner ?? null,
+    leadFeeStatus: lead.leadFeeStatus ?? 'pending',
+    leadFeeAmount: calcLeadFee(carCount),
     id: `qt-${Date.now().toString().slice(-5)}`,
     submittedAt: new Date().toISOString(),
     status: 'pending',
@@ -260,8 +314,13 @@ export function updateQuotation(id: string, updates: Partial<QuotationLead>): Qu
   const db = getDb();
   const idx = db.quotations.findIndex((q) => q.id === id);
   if (idx >= 0) {
-    db.quotations[idx] = { ...db.quotations[idx], ...updates };
-    return db.quotations[idx];
+    const merged: QuotationLead = { ...db.quotations[idx], ...updates };
+    if (updates.carCount !== undefined) {
+      merged.carCount = clampCarCount(updates.carCount);
+      merged.leadFeeAmount = calcLeadFee(merged.carCount);
+    }
+    db.quotations[idx] = merged;
+    return merged;
   }
   return null;
 }

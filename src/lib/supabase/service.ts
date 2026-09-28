@@ -24,6 +24,7 @@ import {
   updateQuotation as updateLocalQuotation,
   deleteQuotation as deleteLocalQuotation,
   getDeletedQuotationIds,
+  isMockQuotationId,
   getAllDriverLeads as getLocalDrivers,
   addDriverLead as addLocalDriver,
   updateDriverLead as updateLocalDriver,
@@ -43,6 +44,14 @@ import {
   deleteSponsor as deleteLocalSponsor,
 } from '@/lib/sponsorsStore';
 import { Sponsor } from '@/data/mockData';
+import type { LeadFeeStatus, OrgType, VehicleTier } from '@/lib/b2b';
+import {
+  calcLeadFee,
+  clampCarCount,
+  normalizeLeadFeeStatus,
+  normalizeOrgType,
+  normalizeVehicleTier,
+} from '@/lib/b2b';
 import { AnalyticsEvent } from '@/lib/analytics';
 import { recordServerAnalyticsEvent } from '@/lib/serverAnalyticsStore';
 import { isBoardPostExpired } from '@/lib/availabilityUtils';
@@ -101,13 +110,44 @@ const localBoardQuotes: BoardQuote[] = [
 // 1. QUOTATION LEADS SERVICE
 // ==============================================================================
 
+type QuotationRow = Database['public']['Tables']['quotations']['Row'];
+
+/** Map a raw `quotations` row into the app-level QuotationLead shape (with B2B defaults). */
+function mapQuotationRow(row: QuotationRow): QuotationLead {
+  return {
+    id: row.id,
+    companyName: row.company_name,
+    contactName: row.contact_name || undefined,
+    phone: row.phone,
+    travelDate: row.travel_date || '',
+    route: row.route || '',
+    passengers: row.passengers || '',
+    needsTaxInvoice: Boolean(row.needs_tax_invoice),
+    estimatedPrice: Number(row.estimated_price) || 0,
+    carCount: clampCarCount(row.car_count),
+    vehicleTier: normalizeVehicleTier(row.vehicle_tier),
+    orgType: normalizeOrgType(row.org_type),
+    includeInsurance: row.include_insurance === false ? false : true,
+    assignedPartner: row.assigned_partner || null,
+    leadFeeStatus: normalizeLeadFeeStatus(row.lead_fee_status),
+    leadFeeAmount: Number(row.lead_fee_amount) || calcLeadFee(row.car_count),
+    submittedAt: row.created_at,
+    status: row.status,
+  };
+}
+
 export async function fetchQuotations(reqUrl?: string): Promise<QuotationLead[]> {
   const allowMock = isMockDataEnabled(reqUrl);
   const deletedIds = getDeletedQuotationIds();
+
+  // Local store = in-memory fallback + anything persisted before/instead of Supabase.
+  // Mock seed records are only served when mock data is enabled.
+  const localLeads = getLocalQuotations().filter(
+    (q) => !deletedIds.includes(q.id) && (allowMock || !isMockQuotationId(q.id))
+  );
+
   const supabase = getSupabase();
-  if (!supabase) {
-    return allowMock ? getLocalQuotations().filter((q) => !deletedIds.includes(q.id)) : [];
-  }
+  if (!supabase) return localLeads;
 
   try {
     const { data, error } = await supabase
@@ -115,29 +155,23 @@ export async function fetchQuotations(reqUrl?: string): Promise<QuotationLead[]>
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error || !data || data.length === 0) {
-      // Table might not be migrated yet or empty, return local store
-      return allowMock ? getLocalQuotations().filter((q) => !deletedIds.includes(q.id)) : [];
+    if (error || !data) {
+      // Table might not be migrated yet, return local store
+      return localLeads;
     }
 
-    return data
+    const rows = data
       .filter((row) => !deletedIds.includes(row.id))
-      .map((row) => ({
-        id: row.id,
-        companyName: row.company_name,
-        contactName: row.contact_name || undefined,
-        phone: row.phone,
-        travelDate: row.travel_date || '',
-        route: row.route || '',
-        passengers: row.passengers || '',
-        needsTaxInvoice: Boolean(row.needs_tax_invoice),
-        estimatedPrice: Number(row.estimated_price) || 0,
-        submittedAt: row.created_at,
-        status: row.status,
-      }));
+      .map((row) => mapQuotationRow(row));
+
+    if (rows.length === 0) return localLeads;
+
+    // Merge local-only leads (e.g. saved while the B2B migration is pending)
+    const remoteIds = new Set(rows.map((row) => row.id));
+    return [...rows, ...localLeads.filter((lead) => !remoteIds.has(lead.id))];
   } catch (err) {
     console.warn('[TripDee Supabase] Error fetching quotations, using fallback:', err);
-    return getLocalQuotations().filter((q) => !deletedIds.includes(q.id));
+    return localLeads;
   }
 }
 
@@ -150,9 +184,34 @@ export async function saveQuotation(lead: {
   passengers: string;
   needsTaxInvoice: boolean;
   estimatedPrice: number;
+  carCount?: number;
+  vehicleTier?: VehicleTier;
+  orgType?: OrgType;
+  includeInsurance?: boolean;
+  assignedPartner?: string | null;
+  leadFeeStatus?: LeadFeeStatus;
 }): Promise<QuotationLead> {
+  const carCount = clampCarCount(lead.carCount);
+  const vehicleTier = lead.vehicleTier ?? 'standard_vip';
+  const orgType = lead.orgType ?? 'corporate';
+  const includeInsurance = lead.includeInsurance ?? true;
+  const assignedPartner = lead.assignedPartner ?? null;
+  const leadFeeStatus = lead.leadFeeStatus ?? 'pending';
+  const leadFeeAmount = calcLeadFee(carCount);
+
+  const payload = {
+    ...lead,
+    carCount,
+    vehicleTier,
+    orgType,
+    includeInsurance,
+    assignedPartner,
+    leadFeeStatus,
+    leadFeeAmount,
+  };
+
   // Always update in-memory fallback
-  const localLead = addLocalQuotation(lead);
+  const localLead = addLocalQuotation(payload);
 
   const supabase = getSupabase();
   if (!supabase) return localLead;
@@ -170,6 +229,13 @@ export async function saveQuotation(lead: {
         passengers: lead.passengers,
         needs_tax_invoice: lead.needsTaxInvoice,
         estimated_price: lead.estimatedPrice,
+        car_count: carCount,
+        vehicle_tier: vehicleTier,
+        org_type: orgType,
+        include_insurance: includeInsurance,
+        assigned_partner: assignedPartner,
+        lead_fee_status: leadFeeStatus,
+        lead_fee_amount: leadFeeAmount,
         status: 'pending',
       })
       .select()
@@ -181,19 +247,7 @@ export async function saveQuotation(lead: {
     }
 
     if (data) {
-      return {
-        id: data.id,
-        companyName: data.company_name,
-        contactName: data.contact_name || undefined,
-        phone: data.phone,
-        travelDate: data.travel_date,
-        route: data.route,
-        passengers: data.passengers,
-        needsTaxInvoice: data.needs_tax_invoice,
-        estimatedPrice: Number(data.estimated_price) || 0,
-        submittedAt: data.created_at,
-        status: data.status,
-      };
+      return mapQuotationRow(data);
     }
   } catch (err) {
     console.warn('[TripDee Supabase] Exception saving quotation:', err);
@@ -218,12 +272,29 @@ export async function updateQuotation(id: string, updates: Partial<QuotationLead
     if (updates.needsTaxInvoice !== undefined) supabaseUpdates.needs_tax_invoice = updates.needsTaxInvoice;
     if (updates.estimatedPrice !== undefined) supabaseUpdates.estimated_price = updates.estimatedPrice;
     if (updates.status) supabaseUpdates.status = updates.status;
+    // B2B Fleet Matching fields
+    if (updates.carCount !== undefined) {
+      const carCount = clampCarCount(updates.carCount);
+      supabaseUpdates.car_count = carCount;
+      supabaseUpdates.lead_fee_amount = calcLeadFee(carCount);
+    }
+    if (updates.vehicleTier !== undefined) supabaseUpdates.vehicle_tier = updates.vehicleTier;
+    if (updates.orgType !== undefined) supabaseUpdates.org_type = updates.orgType;
+    if (updates.includeInsurance !== undefined) supabaseUpdates.include_insurance = updates.includeInsurance;
+    if (updates.assignedPartner !== undefined) supabaseUpdates.assigned_partner = updates.assignedPartner;
+    if (updates.leadFeeStatus !== undefined) supabaseUpdates.lead_fee_status = updates.leadFeeStatus;
+    if (updates.leadFeeAmount !== undefined) supabaseUpdates.lead_fee_amount = updates.leadFeeAmount;
 
     await (supabase.from('quotations') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
   } catch (err) {
     console.warn('[TripDee Supabase] Exception updating quotation:', err);
   }
-  return local;
+
+  if (local) return local;
+
+  // Row exists only in Supabase (e.g. after a server restart) — report the updated state
+  const remote = (await fetchQuotations()).find((q) => q.id === id);
+  return remote ? { ...remote, ...updates } : null;
 }
 
 export async function deleteQuotation(id: string): Promise<boolean> {

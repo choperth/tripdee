@@ -19,12 +19,25 @@ create table if not exists public.quotations (
     passengers text,
     needs_tax_invoice boolean default true,
     estimated_price numeric default 0,
-    status text default 'pending' check (status in ('pending', 'quoted', 'confirmed')),
+    -- B2B Fleet Matching & Lead Generation (see 04_b2b_corporate_upgrade.sql)
+    car_count integer not null default 1 check (car_count >= 1 and car_count <= 50),
+    vehicle_tier text not null default 'standard_vip'
+        check (vehicle_tier in ('standard_vip', 'strict_compliance_30')),
+    org_type text not null default 'corporate'
+        check (org_type in ('corporate', 'government', 'state_enterprise', 'sme')),
+    include_insurance boolean not null default true,
+    assigned_partner text,
+    lead_fee_status text not null default 'pending'
+        check (lead_fee_status in ('pending', 'collected', 'waived')),
+    lead_fee_amount numeric not null default 0,
+    status text default 'pending' check (status in ('pending', 'quoted', 'confirmed', 'cancelled')),
     created_at timestamptz default now()
 );
 
 create index if not exists idx_quotations_status on public.quotations(status);
 create index if not exists idx_quotations_created_at on public.quotations(created_at desc);
+create index if not exists idx_quotations_assigned_partner on public.quotations(assigned_partner);
+create index if not exists idx_quotations_lead_fee_status on public.quotations(lead_fee_status);
 
 -- ------------------------------------------------------------------------------
 -- 3. TABLE: driver_leads (ลงทะเบียนคนขับพาร์ตเนอร์ใหม่)

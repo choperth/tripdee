@@ -270,10 +270,10 @@ export const SPONSORS: Sponsor[] = [
   },
   {
     id: 'sp-6',
-    title: 'Vespa Adventures Chiang Mai — ทัวร์เวสป้าชมเชียงใหม่',
+    title: 'Vespa Adventures Chiang Mai - ทัวร์เวสป้าชมเชียงใหม่',
     category: 'tour',
     categoryLabel: 'ทัวร์ & กิจกรรมท่องเที่ยว',
-    tagline: 'นั่งเวสป้าคลาสสิกเที่ยวเชียงใหม่ 5 เส้นทาง — City Highlights, After Dark, Foodie (MICHELIN), Countryside และ Sunrise Monk Blessing',
+    tagline: 'นั่งเวสป้าคลาสสิกเที่ยวเชียงใหม่ 5 เส้นทาง - City Highlights, After Dark, Foodie (MICHELIN), Countryside และ Sunrise Monk Blessing',
     badgeText: 'ทัวร์เวสป้าสัมผัสเมือง',
     image: 'https://vespaadv.sgp1.cdn.digitaloceanspaces.com/featured/11547/47869297.jpg',
     link: 'https://vespaadventures.com/destination/thailand',
@@ -1298,7 +1298,7 @@ export const VEHICLES: Vehicle[] = [
   }
 ];
 
-/** request = ลูกค้าตั้งงบหารถ, share = หาเพื่อนร่วมทริป/หารกัน, offer = legacy (คนขับประกาศว่าง — ซ่อนจาก UI สาธารณะแล้ว) */
+/** request = ลูกค้าตั้งงบหารถ, share = หาเพื่อนร่วมทริป/หารกัน, offer = legacy (คนขับประกาศว่าง - ซ่อนจาก UI สาธารณะแล้ว) */
 export type BoardPostType = 'request' | 'share' | 'offer';
 
 export interface BoardQuote {

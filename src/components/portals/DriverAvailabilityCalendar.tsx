@@ -197,7 +197,7 @@ export const DriverAvailabilityCalendar: React.FC<DriverAvailabilityCalendarProp
         )}
       </div>
 
-      {/* Quick Add Range Form (div — cannot nest <form> inside parent forms) */}
+      {/* Quick Add Range Form (div - cannot nest <form> inside parent forms) */}
       <div
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') {

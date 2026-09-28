@@ -49,7 +49,7 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
   },
   'sp-3': {
     en: {
-      title: 'Dhipaya Insurance — Travel & Rental Protection',
+      title: 'Dhipaya Insurance - Travel & Rental Protection',
       categoryLabel: 'Travel Insurance',
       tagline: 'Travel with complete peace of mind. 24/7 comprehensive coverage for driver, passengers, and vehicle damage.',
       badgeText: 'Travel Insurance',
@@ -57,7 +57,7 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
       location: 'Nationwide Thailand Coverage',
     },
     zh: {
-      title: '德瓦亚保险（Dhipaya）— 旅游出行与租车保障',
+      title: '德瓦亚保险（Dhipaya）- 旅游出行与租车保障',
       categoryLabel: '旅行安全保险',
       tagline: '出行无忧，全天候24小时为司机、乘客及车辆车损提供全面保障。',
       badgeText: '旅行意外保险',
@@ -103,7 +103,7 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
   },
   'sp-6': {
     en: {
-      title: 'Vespa Adventures Chiang Mai — Classic Vespa Tours',
+      title: 'Vespa Adventures Chiang Mai - Classic Vespa Tours',
       categoryLabel: 'Tours & Activities',
       tagline: 'Ride vintage Vespas on 5 curated routes: City Highlights, After Dark, Foodie (MICHELIN), Countryside, and Sunrise Monk Blessing.',
       badgeText: 'Classic Vespa City Tour',
@@ -111,7 +111,7 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
       location: 'Chiang Mai, Northern Thailand',
     },
     zh: {
-      title: 'Vespa Adventures Chiang Mai — 清迈经典复古踏板车游',
+      title: 'Vespa Adventures Chiang Mai - 清迈经典复古踏板车游',
       categoryLabel: '特色体验与旅行团',
       tagline: '乘坐经典Vespa游览清迈5大特色路线：市区精选、夜幕探索、米其林美食之旅、宁静乡野及清晨布施祈福。',
       badgeText: '复古踏板车深度游',
@@ -139,7 +139,7 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
   },
   'sp-8': {
     en: {
-      title: 'Baan Thip Villa — Scenic Waterfront Pool Villa',
+      title: 'Baan Thip Villa - Scenic Waterfront Pool Villa',
       categoryLabel: 'Riverside Pool Villa',
       tagline: '4-bedroom waterfront retreat featuring a private pool and lush architect-designed gardens. Ideal for families and friend getaways.',
       badgeText: 'Riverside Pool Villa ★4.85',
@@ -147,7 +147,7 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
       location: 'Riverside, Mueang Chiang Mai, Chiang Mai',
     },
     zh: {
-      title: 'Baan Thip Villa — 清迈滨河景观私享泳池别墅',
+      title: 'Baan Thip Villa - 清迈滨河景观私享泳池别墅',
       categoryLabel: '滨河独栋泳池别墅',
       tagline: '建筑师精心设计的4卧滨河度假别墅，配备私人露天泳池与开阔绿意花园，非常适合家庭与好友包栋聚会。',
       badgeText: '清迈滨河泳池别墅 ★4.85',
@@ -157,7 +157,7 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
   },
   'sp-9': {
     en: {
-      title: 'Baan Sri Dha — Charming Wooden House in the City',
+      title: 'Baan Sri Dha - Charming Wooden House in the City',
       categoryLabel: 'Charming Wooden House',
       tagline: 'Entire 5-bedroom wooden home accommodating 9 guests near Chiang Mai Gate and Wualai Walking Street, including homemade breakfast and free airport transfer.',
       badgeText: 'Top 1% Rated Stay ★4.94',
@@ -165,7 +165,7 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
       location: 'Hai Ya, Mueang Chiang Mai (Near Chiang Mai Gate & Walking Street)',
     },
     zh: {
-      title: 'Baan Sri Dha — 市区兰纳风情魅力独栋木屋',
+      title: 'Baan Sri Dha - 市区兰纳风情魅力独栋木屋',
       categoryLabel: '兰纳传统风情木屋',
       tagline: '独栋5卧泰式木屋可容纳9人，紧邻清迈门及瓦莱周六夜市，包含手工暖心早餐与免费接送机服务。',
       badgeText: '爱彼迎前1%精选好评 ★4.94',
@@ -175,7 +175,7 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
   },
   'sp-10': {
     en: {
-      title: 'Lanna Apartment — Spacious 5-Bedroom City Center Stay',
+      title: 'Lanna Apartment - Spacious 5-Bedroom City Center Stay',
       categoryLabel: 'Spacious 5-Bedroom Stay',
       tagline: 'Entire private ground floor with 5 en-suite air-conditioned bedrooms, 3 surrounding living rooms, and outdoor patio for up to 10 guests.',
       badgeText: 'Top 10% Rated Stay ★4.96',
@@ -183,7 +183,7 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
       location: 'Hai Ya, Mueang Chiang Mai (6-min walk to Chiang Mai Gate Market)',
     },
     zh: {
-      title: 'Lanna Apartment — 清迈市中心宽敞舒适5卧套间',
+      title: 'Lanna Apartment - 清迈市中心宽敞舒适5卧套间',
       categoryLabel: '市中心5卧独立套间',
       tagline: '独享建筑首层全层空间，5间全独立卫浴空调卧室、3间环绕式起居客厅及户外露台，最多可舒适容纳10位客人。',
       badgeText: '爱彼迎前10%高分房源 ★4.96',
@@ -193,7 +193,7 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
   },
   'sp-11': {
     en: {
-      title: 'Baan Sri Dha — Lanna Teak House & Yoga Sanctuary',
+      title: 'Baan Sri Dha - Lanna Teak House & Yoga Sanctuary',
       categoryLabel: 'Lanna Heritage & Yoga Home',
       tagline: 'Standalone 3-bedroom, 3-bathroom teakwood home for 5 guests with lush green space and private yoga patio near Chiang Mai Gate. Includes homemade breakfast & airport shuttle.',
       badgeText: 'Guest Favorite ★4.96 (477 reviews)',
@@ -201,7 +201,7 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
       location: 'Hai Ya, Mueang Chiang Mai (6-10 min walk to Chiang Mai Gate & Walking Street)',
     },
     zh: {
-      title: 'Baan Sri Dha — 兰纳柚木风情居所与瑜伽花园',
+      title: 'Baan Sri Dha - 兰纳柚木风情居所与瑜伽花园',
       categoryLabel: '兰纳柚木风情与瑜伽别墅',
       tagline: '独栋柚木兰纳风格3卧3卫住宅（可住5人），坐拥私密绿荫花园与瑜伽露台，临近清迈门，包含自制元气早餐及免费接送机服务。',
       badgeText: '房客最爱 ★4.96（477条好评）',

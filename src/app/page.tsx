@@ -5,15 +5,16 @@ import dynamic from 'next/dynamic';
 import { VEHICLES, SPONSORS, Vehicle } from '@/data/mockData';
 import { isMockDataEnabled, isMockEnvEnabled, isMockVehicleId, isExcludedTestVehicle } from '@/lib/mockConfig';
 import { Navbar } from '@/components/Navbar';
+import { LiveTickerRibbon } from '@/components/LiveTickerRibbon';
 import { Hero } from '@/components/Hero';
+import { MemberPerksSection } from '@/components/MemberPerksSection';
 import { VehicleCard } from '@/components/VehicleCard';
 import { InFeedSponsorCard } from '@/components/InFeedSponsorCard';
 import { SponsorBanner } from '@/components/SponsorBanner';
 import { PlatformShowcase } from '@/components/PlatformShowcase';
-import { SponsorSidebar } from '@/components/SponsorSidebar';
-import { MobileSponsorSection } from '@/components/MobileSponsorSection';
 import { CorporateSection } from '@/components/CorporateSection';
-import { PopularRoutesSection } from '@/components/PopularRoutesSection';
+import { TrustedPartnersSection } from '@/components/TrustedPartnersSection';
+import { DriverEnrollmentBanner } from '@/components/DriverEnrollmentBanner';
 import { TripBoard } from '@/components/TripBoard';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
@@ -72,17 +73,27 @@ function SectionHead({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-slate-300 dark:border-slate-800 mb-6">
       <div>
-          <h2 className="font-display text-xl font-extrabold tracking-tight text-ink sm:text-2xl">
-            {title}
-            <span className="td-fig ml-2 rounded-pill bg-paper-2 px-2.5 py-0.5 align-middle text-sm font-extrabold text-ink-2">
-              {count}
-            </span>
-          </h2>
-          <p className="mt-1 text-[13px] font-medium text-ink-2">{caption}</p>
+        <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+          <span className="material-symbols-outlined text-[15px]">verified</span>
+          <span>Standardized Verified Fleet</span>
+        </div>
+        <h2 className="text-2xl md:text-3xl font-black text-slate-950 dark:text-white tracking-tight flex items-center gap-2">
+          <span>{title}</span>
+          <span className="text-sm font-bold text-slate-500 font-mono">({count})</span>
+        </h2>
+        <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-normal mt-0.5">
+          {caption}
+        </p>
       </div>
-      {action}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 px-3 py-1.5 flex items-center gap-1.5 rounded-none">
+          <span className="material-symbols-outlined text-[16px] text-emerald-600">shield_check</span>
+          <span>คุ้มครอง พ.ร.บ. ชั้น 1 ตลอดการเดินทาง</span>
+        </span>
+        {action}
+      </div>
     </div>
   );
 }
@@ -338,8 +349,8 @@ export default function HomePage() {
         onOpenPortal={() => setIsPortalOpen(true)}
         onOpenDriverSelfService={() => setIsDriverSelfServiceOpen(true)}
       />
-      <div aria-hidden="true" className="h-[var(--td-head-h)] shrink-0" />
-
+      <div aria-hidden="true" className="h-16 shrink-0" />
+      <LiveTickerRibbon totalVans={totalVanCount} />
       {isClient && !demoBannerDismissed && (
         isDemo ? (
           <aside
@@ -413,22 +424,33 @@ export default function HomePage() {
       )}
 
       {(activeTab === 'van' || activeTab === 'suv_driver' || activeTab === 'car') && (
-        <Hero
-          selectedZone={selectedZone}
-          setSelectedZone={setSelectedZone}
-          selectedSeats={selectedSeats}
-          setSelectedSeats={setSelectedSeats}
-          searchKeyword={searchKeyword}
-          setSearchKeyword={setSearchKeyword}
-          resultCount={filteredVehicles.length}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          plateFilter={plateFilter}
-          setPlateFilter={setPlateFilter}
-          totalVanCount={totalVanCount}
-          totalSuvDriverCount={totalSuvDriverCount}
-          totalCarCount={totalCarCount}
-        />
+        <>
+          <Hero
+            selectedZone={selectedZone}
+            setSelectedZone={setSelectedZone}
+            selectedSeats={selectedSeats}
+            setSelectedSeats={setSelectedSeats}
+            searchKeyword={searchKeyword}
+            setSearchKeyword={setSearchKeyword}
+            resultCount={filteredVehicles.length}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            plateFilter={plateFilter}
+            setPlateFilter={setPlateFilter}
+            totalVanCount={totalVanCount}
+            totalSuvDriverCount={totalSuvDriverCount}
+            totalCarCount={totalCarCount}
+          />
+          <MemberPerksSection
+            onSelectCorporate={() => navigateToSection('corporate', 'corporate')}
+            onOpenTripBoardPost={() => {
+              const trigger = document.getElementById('open-post-modal-btn');
+              const el = document.getElementById('tripboard');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+              if (trigger) trigger.click();
+            }}
+          />
+        </>
       )}
       <main id="main-content" className="mx-auto w-full max-w-7xl flex-1 px-margin lg:px-gutter pb-20 md:pb-8">
         {activeTab === 'hotel' ? (
@@ -483,9 +505,9 @@ export default function HomePage() {
                 }
               />
 
-              {/* Quick Filter: Transport Category & Legal Type (Stitch Segment Badges) */}
-              <div className="mb-3 sm:mb-6 flex flex-wrap items-center gap-1.5 sm:gap-space-xs text-body-subtext font-body-medium">
-                <span className="text-ink-muted dark:text-slate-400 font-label-badge text-label-badge uppercase mr-1">
+              {/* Quick Filter: Transport Category & Legal Type (Unified Minimalist Bar) */}
+              <div className="mb-4 sm:mb-6 flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs font-medium">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">
                   {activeTab === 'van'
                     ? t('home.plateGroupVan')
                     : activeTab === 'suv_driver'
@@ -495,10 +517,10 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => setPlateFilter('all')}
-                  className={`px-space-sm py-space-xs rounded-full font-bold shadow-sm transition-all ${
+                  className={`px-3 py-1.5 rounded-none text-xs font-bold transition-all cursor-pointer ${
                     plateFilter === 'all'
-                      ? 'bg-navy-deep text-on-primary'
-                      : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border border-slate-900 dark:border-white shadow-xs'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-300 dark:border-slate-700'
                   }`}
                 >
                   {t('home.plateAll', {
@@ -515,23 +537,24 @@ export default function HomePage() {
                     <button
                       type="button"
                       onClick={() => setPlateFilter('yellow')}
-                      className={`inline-flex items-center gap-1 px-space-sm py-space-xs rounded-full font-bold transition-all ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold transition-all cursor-pointer ${
                         plateFilter === 'yellow'
-                          ? 'bg-amber-400 text-amber-950 ring-2 ring-amber-500 shadow-sm'
-                          : 'bg-taxi-yellow-soft text-on-tertiary-container hover:bg-yellow-100 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300/40'
+                          ? 'bg-amber-400 text-slate-950 border border-amber-500 shadow-xs'
+                          : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-300 dark:border-slate-700'
                       }`}
                     >
-                      <span>{t('home.plateYellow')}</span>
+                      <span>🟡 {t('home.plateYellow')}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setPlateFilter('blue')}
-                      className={`inline-flex items-center gap-1 px-space-sm py-space-xs rounded-full font-bold transition-all ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold transition-all cursor-pointer ${
                         plateFilter === 'blue'
-                          ? 'bg-blue-action text-white shadow-sm'
-                          : 'bg-blue-subtle text-blue-action hover:bg-blue-100 dark:bg-blue-950/70 dark:text-blue-300'
+                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border border-slate-900 dark:border-white shadow-xs'
+                          : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-300 dark:border-slate-700'
                       }`}
                     >
+                      <span className="w-2 h-2 bg-blue-500 rounded-none ring-1 ring-blue-500" />
                       <span>{t('home.plateBlue')}</span>
                     </button>
                   </>
@@ -539,227 +562,210 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => setPlateFilter('blue')}
-                    className={`inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold transition-all cursor-pointer ${
                       plateFilter === 'blue'
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-plate-blue-bg text-plate-blue-text hover:brightness-95 border border-plate-blue-border'
+                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border border-slate-900 dark:border-white shadow-xs'
+                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-300 dark:border-slate-700'
                     }`}
                   >
-                    <span className="h-2 w-2 rounded-full bg-blue-500 ring-2 ring-blue-200"></span>
+                    <span className="w-2 h-2 bg-blue-500 rounded-none ring-1 ring-blue-500" />
                     <span>{t('home.plateCarBlue')}</span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => setPlateFilter('tax')}
-                  className={`inline-flex items-center gap-1 px-space-sm py-space-xs rounded-full font-bold transition-all ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold transition-all cursor-pointer ${
                     plateFilter === 'tax'
-                      ? 'bg-verified-emerald text-white shadow-sm'
-                      : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-slate-300 hover:bg-surface-variant'
+                      ? 'bg-emerald-700 text-white border border-emerald-800 shadow-xs'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-300 dark:border-slate-700'
                   }`}
                 >
+                  <span className="material-symbols-outlined text-[15px] text-emerald-400">receipt_long</span>
                   <span>{t('home.plateTax')}</span>
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-space-xl">
-                {/* Main Vehicle Listings Column (8 of 12) */}
-                <div className="lg:col-span-8 min-w-0">
-                  {hasFilters && (
-                    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-card bg-card p-3 border border-rule shadow-xs">
-                      <span className="text-xs font-bold text-ink-2 flex items-center gap-1.5 mr-1">
-                        <SlidersHorizontal className="h-3.5 w-3.5 text-accent" />
-                        {t('home.activeFilters')}
+              {/* Active Filter Chips */}
+              {hasFilters && (
+                <div className="mb-6 flex flex-wrap items-center gap-2 rounded-none bg-white dark:bg-slate-900 p-2.5 sm:p-3 border border-slate-300 dark:border-slate-700 shadow-2xs">
+                  <span className="text-xs font-semibold text-slate-500 flex items-center gap-1.5 mr-1">
+                    <SlidersHorizontal className="h-3.5 w-3.5 text-slate-900 dark:text-slate-200" />
+                    {t('home.activeFilters')}
+                  </span>
+                  {plateFilter !== 'all' && (
+                    <span className="inline-flex items-center gap-1.5 rounded-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-2.5 py-0.5 text-xs font-semibold border border-slate-300 dark:border-slate-700">
+                      <span>
+                        {plateFilter === 'yellow' && t('home.chipYellow')}
+                        {plateFilter === 'blue' && t('home.chipBlue')}
+                        {plateFilter === 'tax' && t('home.chipTax')}
                       </span>
-                      {plateFilter !== 'all' && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-paper text-ink px-3 py-1 text-xs font-extrabold border border-rule">
-                          <span>
-                            {plateFilter === 'yellow' && t('home.chipYellow')}
-                            {plateFilter === 'blue' && t('home.chipBlue')}
-                            {plateFilter === 'tax' && t('home.chipTax')}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setPlateFilter('all')}
-                            aria-label={t('home.rmPlateAria')}
-                            className="rounded-full p-0.5 hover:bg-rule transition-colors"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </span>
-                      )}
-                      {selectedZone !== 'all' && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft text-accent px-3 py-1 text-xs font-extrabold border border-accent/20">
-                          <span>{t('home.chipZone', { zone: selectedZone })}</span>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedZone('all')}
-                            aria-label={t('home.rmZoneAria')}
-                            className="rounded-full p-0.5 hover:bg-accent hover:text-white transition-colors"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </span>
-                      )}
-                      {selectedSeats !== 'all' && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-sun-soft text-sun-ink px-3 py-1 text-xs font-extrabold border border-sun/20">
-                          <span>{t('home.chipSeats', { n: selectedSeats })}</span>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedSeats('all')}
-                            aria-label={t('home.rmSeatsAria')}
-                            className="rounded-full p-0.5 hover:bg-sun hover:text-white transition-colors"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </span>
-                      )}
-                      {searchKeyword.trim() !== '' && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-paper text-ink px-3 py-1 text-xs font-extrabold border border-rule">
-                          <span>🔍 &ldquo;{searchKeyword}&rdquo;</span>
-                          <button
-                            type="button"
-                            onClick={() => setSearchKeyword('')}
-                            aria-label={t('home.rmSearchAria')}
-                            className="rounded-full p-0.5 hover:bg-rule transition-colors"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </span>
-                      )}
                       <button
                         type="button"
-                        onClick={resetFilters}
-                        className="td-btn ml-auto inline-flex items-center gap-1 rounded-pill bg-paper px-3 py-1 text-xs font-extrabold text-berry hover:bg-berry-soft transition-colors border border-rule"
+                        onClick={() => setPlateFilter('all')}
+                        aria-label={t('home.rmPlateAria')}
+                        className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                       >
-                        <RotateCcw className="h-3 w-3" />
-                        {t('home.clearFilters')}
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                  {selectedZone !== 'all' && (
+                    <span className="inline-flex items-center gap-1.5 rounded-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-2.5 py-0.5 text-xs font-semibold border border-slate-300 dark:border-slate-700">
+                      <span>{t('home.chipZone', { zone: selectedZone })}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedZone('all')}
+                        aria-label={t('home.rmZoneAria')}
+                        className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                  {selectedSeats !== 'all' && (
+                    <span className="inline-flex items-center gap-1.5 rounded-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-2.5 py-0.5 text-xs font-semibold border border-slate-300 dark:border-slate-700">
+                      <span>{t('home.chipSeats', { n: selectedSeats })}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSeats('all')}
+                        aria-label={t('home.rmSeatsAria')}
+                        className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                  {searchKeyword.trim() !== '' && (
+                    <span className="inline-flex items-center gap-1.5 rounded-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-2.5 py-0.5 text-xs font-semibold border border-slate-300 dark:border-slate-700">
+                      <span>&ldquo;{searchKeyword}&rdquo;</span>
+                      <button
+                        type="button"
+                        onClick={() => setSearchKeyword('')}
+                        aria-label={t('home.rmSearchAria')}
+                        className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="ml-auto inline-flex items-center gap-1 rounded-none bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer border border-slate-300 dark:border-slate-700"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    {t('home.clearFilters')}
+                  </button>
+                </div>
+              )}
+
+              {/* 3-Column Standardized Verified Fleet Grid (Bauhaus Style) */}
+              {filteredVehicles.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredVehicles.map((vehicle, index) => {
+                    const showInFeedAd =
+                      (index === 2 && filteredVehicles.length >= 3) ||
+                      ((index + 1) % 6 === 0 && index < filteredVehicles.length - 1);
+                    const sponsorIndex = (index === 2 ? 0 : Math.floor(index / 6) + 1) % SPONSORS.length;
+                    const currentSponsor = getLocalizedSponsor(SPONSORS[sponsorIndex], locale);
+
+                    return (
+                      <React.Fragment key={vehicle.id}>
+                        <VehicleCard
+                          vehicle={vehicle}
+                          allVehicles={vehicles}
+                          onSelectDetail={handleSelectDetail}
+                          onViewFleet={handleViewFleet}
+                        />
+                        {showInFeedAd && currentSponsor && (
+                          <div className="col-span-1 md:col-span-2 lg:col-span-3 my-1">
+                            <InFeedSponsorCard sponsor={currentSponsor} />
+                          </div>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-none border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-12 text-center">
+                  <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-none bg-amber-50 dark:bg-amber-950/40">
+                    <SearchX className="h-7 w-7 text-slate-700 dark:text-slate-300" aria-hidden="true" />
+                  </span>
+                  <h3 className="font-display text-xl font-extrabold text-slate-900 dark:text-white">
+                    {t('home.emptyTitle')}
+                  </h3>
+                  <p className="mx-auto mt-1 max-w-[48ch] text-sm font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+                    {t('home.emptyDesc')}
+                  </p>
+
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                    <button
+                      onClick={resetFilters}
+                      className="inline-flex items-center rounded-none bg-amber-500 hover:bg-amber-400 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-xs cursor-pointer border border-amber-600"
+                    >
+                      {t('home.emptyCta')}
+                    </button>
+                    <a
+                      href="#tripboard"
+                      className="inline-flex items-center gap-1.5 rounded-none border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-4 py-2.5 text-xs font-bold text-slate-900 dark:text-white hover:bg-white transition-all cursor-pointer"
+                    >
+                      <span>{t('home.emptyBoard')}</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </a>
+                    <a
+                      href={OFFICIAL_LINE_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-none bg-[#06C755] text-white border border-emerald-600 px-4 py-2.5 text-xs font-bold hover:bg-[#05b04b] transition-all cursor-pointer"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      <span>{t('home.emptyLine')}</span>
+                    </a>
+                  </div>
+
+                  <div className="mt-8 mx-auto max-w-xl rounded-none border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/30 p-5 text-left shadow-xs transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="inline-flex items-center gap-1.5 rounded-none bg-emerald-700 text-white px-2 py-0.5 text-[10px] font-extrabold uppercase mb-1.5">
+                          <span>{t('home.emptyDriverBadge')}</span>
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-950 dark:text-white">
+                          {t('home.emptyDriverTitle')}
+                        </h4>
+                        <p className="mt-0.5 text-xs font-normal text-slate-600 dark:text-slate-300">
+                          {t('home.emptyDriverDesc')}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsRegisterModalOpen(true)}
+                        className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-none bg-emerald-700 hover:bg-emerald-800 px-4 py-2 text-xs font-bold text-white shadow-xs transition-all cursor-pointer border border-emerald-800"
+                      >
+                        <UserPlus className="h-3.5 w-3.5" />
+                        <span>{t('home.emptyDriverCta')}</span>
                       </button>
                     </div>
-                  )}
-
-                  {filteredVehicles.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-space-lg">
-                      {filteredVehicles.map((vehicle, index) => {
-                        const showInFeedAd =
-                          (index === 1 && filteredVehicles.length >= 2) ||
-                          ((index + 1) % 4 === 0 && index < filteredVehicles.length - 1) ||
-                          (index === 0 && filteredVehicles.length === 1);
-                        const sponsorIndex = (index === 1 ? 0 : Math.floor(index / 4) + 1) % SPONSORS.length;
-                        const currentSponsor = getLocalizedSponsor(SPONSORS[sponsorIndex], locale);
-
-                        return (
-                          <React.Fragment key={vehicle.id}>
-                            <VehicleCard
-                              vehicle={vehicle}
-                              allVehicles={vehicles}
-                              onSelectDetail={handleSelectDetail}
-                              onViewFleet={handleViewFleet}
-                            />
-                            {showInFeedAd && currentSponsor && (
-                              <div className="col-span-1 md:col-span-2 my-1">
-                                <InFeedSponsorCard sponsor={currentSponsor} />
-                              </div>
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="rounded-card border-2 border-dashed border-rule bg-card px-6 py-12 text-center">
-                      <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-sun-soft">
-                        <SearchX className="h-7 w-7 text-ink-2" aria-hidden="true" />
-                      </span>
-                      <h3 className="font-display text-xl font-extrabold text-ink">
-                        {t('home.emptyTitle')}
-                      </h3>
-                      <p className="mx-auto mt-1 max-w-[48ch] text-sm font-medium leading-relaxed text-ink-2">
-                        {t('home.emptyDesc')}
-                      </p>
-
-                      {/* Action buttons for traveler */}
-                      <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-                        <button
-                          onClick={resetFilters}
-                          className="td-btn td-pop inline-flex items-center rounded-pill bg-sun px-5 py-2.5 text-sm font-extrabold text-sun-ink shadow-xs"
-                        >
-                          {t('home.emptyCta')}
-                        </button>
-                        <a
-                          href="#tripboard"
-                          className="td-btn inline-flex items-center gap-1.5 rounded-pill border border-rule bg-paper-2 px-4 py-2.5 text-xs font-extrabold text-ink hover:bg-card transition-all"
-                        >
-                          <span>{t('home.emptyBoard')}</span>
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </a>
-                        <a
-                          href={OFFICIAL_LINE_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="td-btn inline-flex items-center gap-1.5 rounded-pill bg-line-green/10 text-line-green border border-line-green/30 px-4 py-2.5 text-xs font-extrabold hover:bg-line-green hover:text-white transition-all"
-                        >
-                          <MessageCircle className="h-3.5 w-3.5" />
-                          <span>{t('home.emptyLine')}</span>
-                        </a>
-                      </div>
-
-                      {/* Driver Acquisition / Lead Generation Card */}
-                      <div className="mt-8 mx-auto max-w-xl rounded-card border border-emerald-200/80 dark:border-emerald-800/60 bg-gradient-to-br from-emerald-50/70 via-card to-paper dark:from-emerald-950/40 dark:via-slate-900 dark:to-slate-900 p-5 text-left shadow-xs transition-colors">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div>
-                            <div className="inline-flex items-center gap-1.5 rounded-pill bg-emerald-600/10 dark:bg-emerald-950/70 border border-emerald-600/20 dark:border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300 mb-1.5">
-                              <span>{t('home.emptyDriverBadge')}</span>
-                            </div>
-                            <h4 className="text-sm font-extrabold text-ink dark:text-white">
-                              {t('home.emptyDriverTitle')}
-                            </h4>
-                            <p className="mt-0.5 text-xs font-medium text-ink-2 dark:text-slate-300">
-                              {t('home.emptyDriverDesc')}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setIsRegisterModalOpen(true)}
-                            className="td-btn inline-flex shrink-0 items-center justify-center gap-1.5 rounded-pill bg-emerald-600 px-4 py-2 text-xs font-extrabold text-white shadow-xs hover:bg-emerald-700 transition-all"
-                          >
-                            <UserPlus className="h-3.5 w-3.5" />
-                            <span>{t('home.emptyDriverCta')}</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Right Sticky Sidebar Ad Placement (4 of 12) */}
-                <div className="hidden lg:block lg:col-span-4">
-                  <div className="sticky top-28">
-                    <SponsorSidebar />
                   </div>
                 </div>
-              </div>
-
-              {/* Mobile-Dedicated Sponsor & Partner Perks Showcase (< lg screens) */}
-              <MobileSponsorSection />
+              )}
             </section>
 
-            {/* Secondary Matching / Community Fallback: TripBoard (Stitch Section 3) */}
-            <div className="mt-6 sm:mt-12">
+            {/* TripBoard section (Bauhaus Dark Architectural Grid) */}
+            <div className="mt-10 sm:mt-14">
               <TripBoard />
             </div>
 
-            {/* Routes strip: Popular Routes Carousel (Google Stitch Redesign) */}
-            <PopularRoutesSection
-              onSelectRoute={(filterKey) => {
-                setSelectedZone(filterKey);
-                document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            />
+            {/* Trusted Community Partners (4 Grid Hairline Cards) */}
+            <TrustedPartnersSection />
 
-            {/* Corporate strip */}
-            <div className="mt-6 sm:mt-10">
+            {/* B2B Corporate Caravan Quotation Engine */}
+            <div className="mt-10 sm:mt-14">
               <CorporateSection vehicles={vehicles} />
             </div>
+
+            {/* Driver Partner Enrollment Banner */}
+            <DriverEnrollmentBanner onOpenRegister={() => setIsRegisterModalOpen(true)} />
           </div>
         )}
 

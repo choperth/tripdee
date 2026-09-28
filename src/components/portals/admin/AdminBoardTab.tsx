@@ -188,7 +188,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
               </div>
 
               <p className="my-2 text-xs text-ink-2 line-clamp-2 bg-card p-2.5 rounded-xl border border-rule">
-                {post.detail || '— ไม่ได้ระบุรายละเอียด —'}
+                {post.detail || '- ไม่ได้ระบุรายละเอียด -'}
               </p>
 
               <div className="flex items-center justify-between text-xs pt-1">

@@ -1,15 +1,23 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Nunito, Noto_Sans_Thai, Noto_Sans_SC } from "next/font/google";
+import { Plus_Jakarta_Sans, Prompt, Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { AnalyticsProvider } from "@/context/AnalyticsContext";
 import { getStructuredData } from "@/lib/structuredData";
-const nunito = Nunito({
-  variable: "--font-nunito",
+
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta",
   subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+const prompt = Prompt({
+  variable: "--font-prompt",
+  subsets: ["thai", "latin"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -19,14 +27,6 @@ const notoThai = Noto_Sans_Thai({
   weight: ["400", "600", "700", "800"],
   display: "swap",
 });
-
-const notoSC = Noto_Sans_SC({
-  variable: "--font-noto-sc",
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  display: "swap",
-});
-
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tripdee.co';
 
 export const metadata: Metadata = {
@@ -116,12 +116,16 @@ export default function RootLayout({
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
   return (
-    <html lang="th" suppressHydrationWarning className={`${nunito.variable} ${notoThai.variable} ${notoSC.variable} h-full antialiased`}>
+    <html lang="th" suppressHydrationWarning className={`${plusJakarta.variable} ${prompt.variable} ${notoThai.variable} h-full antialiased`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+        {/* Noto Sans SC is loaded via <link> instead of next/font/google because that
+            build fails when Google intermittently serves extensionless /l/font?kit= URLs
+            (https://github.com/vercel/next.js/issues/99114). */}
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet" />
         <script async src="/theme.js" />
         {Object.entries(getStructuredData()).map(([key, schema]) => (
           <script

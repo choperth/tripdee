@@ -3,6 +3,7 @@
  */
 
 import { ZoneId } from '@/data/mockData';
+import type { LeadFeeStatus, OrgType, VehicleTier } from '@/lib/b2b';
 
 export type Json =
   | string
@@ -11,6 +12,8 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[];
+
+export type QuotationStatus = 'pending' | 'quoted' | 'confirmed' | 'cancelled';
 
 export type Database = {
   public: {
@@ -26,7 +29,14 @@ export type Database = {
           passengers: string;
           needs_tax_invoice: boolean;
           estimated_price: number;
-          status: 'pending' | 'quoted' | 'confirmed';
+          car_count: number;
+          vehicle_tier: VehicleTier;
+          org_type: OrgType;
+          include_insurance: boolean;
+          assigned_partner: string | null;
+          lead_fee_status: LeadFeeStatus;
+          lead_fee_amount: number;
+          status: QuotationStatus;
           created_at: string;
         };
         Insert: {
@@ -39,7 +49,14 @@ export type Database = {
           passengers?: string;
           needs_tax_invoice?: boolean;
           estimated_price?: number;
-          status?: 'pending' | 'quoted' | 'confirmed';
+          car_count?: number;
+          vehicle_tier?: VehicleTier;
+          org_type?: OrgType;
+          include_insurance?: boolean;
+          assigned_partner?: string | null;
+          lead_fee_status?: LeadFeeStatus;
+          lead_fee_amount?: number;
+          status?: QuotationStatus;
           created_at?: string;
         };
         Update: {
@@ -52,7 +69,14 @@ export type Database = {
           passengers?: string;
           needs_tax_invoice?: boolean;
           estimated_price?: number;
-          status?: 'pending' | 'quoted' | 'confirmed';
+          car_count?: number;
+          vehicle_tier?: VehicleTier;
+          org_type?: OrgType;
+          include_insurance?: boolean;
+          assigned_partner?: string | null;
+          lead_fee_status?: LeadFeeStatus;
+          lead_fee_amount?: number;
+          status?: QuotationStatus;
           created_at?: string;
         };
         Relationships: [];

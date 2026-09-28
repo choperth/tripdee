@@ -39,7 +39,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
 
   if (variant === 'row') {
     return (
-      <div className="flex items-center gap-1 rounded-input bg-paper-2 p-1" role="group" aria-label={t('lang.switch')}>
+      <div className="flex items-center gap-1 rounded-none border border-slate-200 dark:border-slate-800 bg-paper-2 p-1" role="group" aria-label={t('lang.switch')}>
         {LOCALES.map((l) => {
           const active = l.code === locale;
           return (
@@ -51,8 +51,8 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
                 onPick?.();
               }}
               aria-pressed={active}
-              className={`flex-1 rounded-lg px-2 py-2 text-[13px] font-extrabold transition duration-220 ease-out ${
-                active ? 'bg-card text-ink shadow-sm' : 'text-ink-2 hover:text-ink'
+              className={`flex-1 rounded-none px-2 py-1.5 text-xs font-bold transition duration-150 cursor-pointer ${
+                active ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:text-slate-950'
               }`}
             >
               {l.label}
@@ -71,7 +71,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={t('lang.switch')}
-        className="inline-flex items-center gap-0.5 sm:gap-1 rounded-pill px-1.5 sm:px-2.5 py-1 sm:py-2 text-xs sm:text-[13px] font-extrabold text-ink-2 transition duration-220 ease-out hover:bg-paper-2 hover:text-ink"
+        className="inline-flex items-center gap-1 border border-slate-200 dark:border-slate-800 rounded-none px-2.5 py-1 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
       >
         <Globe className="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
         <span>{current.short}</span>
@@ -86,7 +86,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         <ul
           role="listbox"
           aria-label={t('lang.switch')}
-          className="td-elev-lift absolute right-0 top-full z-300 mt-2 w-36 overflow-hidden rounded-card bg-card p-1.5"
+          className="absolute right-0 top-full z-300 mt-1 w-36 overflow-hidden rounded-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-md p-1"
         >
           {LOCALES.map((l) => {
             const active = l.code === locale;
@@ -99,8 +99,8 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
                     setOpen(false);
                     onPick?.();
                   }}
-                  className={`flex w-full items-center justify-between gap-2 rounded-input px-3 py-2.5 text-left text-sm transition duration-220 ease-out ${
-                    active ? 'bg-paper-2 font-extrabold text-ink' : 'font-bold text-ink-2 hover:bg-paper-2 hover:text-ink'
+                  className={`flex w-full items-center justify-between gap-2 rounded-none px-3 py-2 text-left text-xs transition-colors cursor-pointer ${
+                    active ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold' : 'font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >
                   <span>{l.label}</span>

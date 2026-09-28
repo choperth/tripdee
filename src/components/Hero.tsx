@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface HeroProps {
@@ -56,7 +55,6 @@ export const Hero: React.FC<HeroProps> = ({
       if (setPlateFilter) setPlateFilter('yellow');
     } else if (type === 'massage') {
       setSelectedSeats('9');
-      // Data keyword: vehicle data is in Thai, so the filter value stays Thai in every locale.
       setSearchKeyword(t('hero.quickMassage'));
     } else if (type === 'majesty') {
       setSearchKeyword('Majesty');
@@ -76,250 +74,227 @@ export const Hero: React.FC<HeroProps> = ({
   };
 
   return (
-    <section aria-label={t('hero.searchAria')} className="relative w-full overflow-hidden bg-paper pt-5 sm:pt-12 pb-5 sm:pb-14 transition-colors">
-      {/* Subtle Ambient Backdrop Circles (Stitch Signature) */}
-      <div className="absolute inset-x-0 top-0 h-px bg-rule" />
-
-      <div className="max-w-7xl mx-auto px-margin lg:px-gutter relative z-10">
-        {/* Top Title Group */}
-        <div className="text-left max-w-4xl mx-auto space-y-2 sm:space-y-space-sm mb-5 sm:mb-8">
-          <h1 className="font-display-hero text-display-hero max-w-3xl text-ink tracking-tight">
-            {t('hero.titleA')} <span className="text-blue-action">{t('hero.titleB')}</span>
+    <section
+      aria-label={t('hero.searchAria')}
+      className="relative w-full bg-[#0a192f] text-white pt-8 sm:pt-10 pb-12 sm:pb-16 border-b border-slate-200 dark:border-slate-800"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Header Tagline & Minimal Trust Badges */}
+        <div className="max-w-3xl mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight mb-3">
+            {t('hero.titleA')}{' '}
+            <span className="text-amber-400 border-b-2 border-amber-400">{t('hero.titleB')}</span>
           </h1>
-          <p className="max-w-2xl font-body-large text-sm sm:text-body-large text-ink-2">
+          <p className="text-xs sm:text-sm md:text-base text-slate-300 font-normal leading-relaxed max-w-2xl">
             {t('hero.subtitle')}
           </p>
 
-          {/* Trust Badges Row */}
-          <div className="flex flex-wrap items-center justify-start gap-2 sm:gap-3 pt-1">
-            <div className="flex items-center gap-1 text-ink-primary dark:text-slate-200 font-bold text-[11px] sm:text-body-medium bg-paper-elevated dark:bg-slate-900 px-2.5 py-1 sm:px-space-sm sm:py-space-2xs rounded-full shadow-2xs border border-border-subtle dark:border-slate-800">
-              <span className="material-symbols-outlined text-verified-emerald text-[16px] sm:text-[18px]">
-                check_circle
-              </span>
+          {/* 3 Sharp Badges */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 text-xs text-slate-300 font-medium">
+            <div className="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-3 py-1">
+              <span className="material-symbols-outlined text-emerald-400 text-[15px]">verified_user</span>
               <span>{t('hero.trust1')}</span>
             </div>
-            <div className="flex items-center gap-1 text-ink-primary dark:text-slate-200 font-bold text-[11px] sm:text-body-medium bg-paper-elevated dark:bg-slate-900 px-2.5 py-1 sm:px-space-sm sm:py-space-2xs rounded-full shadow-2xs border border-border-subtle dark:border-slate-800">
-              <span className="material-symbols-outlined text-blue-action text-[16px] sm:text-[18px]">
-                ring_volume
-              </span>
+            <div className="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-3 py-1">
+              <span className="material-symbols-outlined text-amber-400 text-[15px]">security</span>
               <span>{t('hero.trust2')}</span>
             </div>
-            <div className="flex items-center gap-1 text-ink-primary dark:text-slate-200 font-bold text-[11px] sm:text-body-medium bg-paper-elevated dark:bg-slate-900 px-2.5 py-1 sm:px-space-sm sm:py-space-2xs rounded-full shadow-2xs border border-border-subtle dark:border-slate-800">
-              <span className="material-symbols-outlined text-amber-accent text-[16px] sm:text-[18px]">
-                receipt_long
-              </span>
+            <div className="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-3 py-1">
+              <span className="material-symbols-outlined text-sky-400 text-[15px]">receipt</span>
               <span>{t('hero.trust3')}</span>
             </div>
           </div>
         </div>
 
-        {/* Advanced Integrated Floating Search Console (Stitch Redesign) */}
-        <div className="bg-card rounded-card shadow-card border border-rule p-3 sm:p-5 lg:p-6 max-w-5xl mx-auto mb-3 sm:mb-8">
-          {/* Search Category Sub-Tabs */}
-          <div className="flex items-center gap-space-xs overflow-x-auto pb-1.5 mb-2 sm:mb-space-sm no-scrollbar text-body-subtext font-body-medium">
+        {/* SHARP GEOMETRIC SEARCH CONTAINER (Bauhaus Swiss Grid) */}
+        <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 shadow-sm rounded-none">
+          {/* Sharp Category Service Tabs */}
+          <div className="flex items-stretch overflow-x-auto border-b border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/50" id="search-tabs">
             <button
               type="button"
               onClick={() => handleTabChange('van')}
-              className={`px-space-md py-space-xs rounded-lg font-bold shadow-sm whitespace-nowrap flex items-center gap-space-2xs transition-all ${
+              className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-bold text-xs border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 cursor-pointer ${
                 activeTab === 'van'
-                  ? 'bg-navy-deep text-on-primary'
-                  : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
+                  ? 'bg-white dark:bg-slate-900 text-slate-950 dark:text-white border-t-2 border-t-slate-950 dark:border-t-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-850'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">airport_shuttle</span>
+              <span className="material-symbols-outlined text-[18px]">airport_shuttle</span>
               <span>{t('nav.van')}</span>
             </button>
             <button
               type="button"
               onClick={() => handleTabChange('suv_driver')}
-              className={`px-space-md py-space-xs rounded-lg font-bold shadow-sm whitespace-nowrap flex items-center gap-space-2xs transition-all ${
+              className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-semibold text-xs border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 cursor-pointer ${
                 activeTab === 'suv_driver'
-                  ? 'bg-navy-deep text-on-primary'
-                  : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
+                  ? 'bg-white dark:bg-slate-900 text-slate-950 dark:text-white border-t-2 border-t-slate-950 dark:border-t-white font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-850'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">directions_car</span>
-              <span>{t('nav.suvDriver')}</span>
+              <span className="material-symbols-outlined text-[18px]">directions_car</span>
+              <span>{t('nav.suvDriverShort')}</span>
             </button>
             <button
               type="button"
               onClick={() => handleTabChange('car')}
-              className={`px-space-md py-space-xs rounded-lg font-bold whitespace-nowrap flex items-center gap-space-2xs transition-all ${
+              className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-semibold text-xs border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 cursor-pointer ${
                 activeTab === 'car'
-                  ? 'bg-navy-deep text-on-primary shadow-sm'
-                  : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
+                  ? 'bg-white dark:bg-slate-900 text-slate-950 dark:text-white border-t-2 border-t-slate-950 dark:border-t-white font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-850'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">key</span>
+              <span className="material-symbols-outlined text-[18px]">key</span>
               <span>{t('nav.car')}</span>
             </button>
             <button
               type="button"
-              onClick={() => handleTabChange('hotel')}
-              className={`px-space-md py-space-xs rounded-lg font-bold whitespace-nowrap flex items-center gap-space-2xs transition-all ${
-                activeTab === 'hotel'
-                  ? 'bg-navy-deep text-on-primary shadow-sm'
-                  : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
+              onClick={() => handleTabChange('corporate')}
+              className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-semibold text-xs border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 cursor-pointer ${
+                activeTab === 'corporate'
+                  ? 'bg-white dark:bg-slate-900 text-slate-950 dark:text-white border-t-2 border-t-slate-950 dark:border-t-white font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-850'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">hotel</span>
-              <span>{t('nav.hotel')}</span>
+              <span className="material-symbols-outlined text-[18px]">corporate_fare</span>
+              <span>{t('nav.corp')}</span>
             </button>
             <button
               type="button"
-              onClick={() => handleTabChange('corporate')}
-              className={`px-space-md py-space-xs rounded-lg font-bold whitespace-nowrap flex items-center gap-space-2xs transition-all ${
-                activeTab === 'corporate'
-                  ? 'bg-navy-deep text-on-primary shadow-sm'
-                  : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
-              }`}
+              onClick={() => {
+                document.getElementById('tripboard')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="flex items-center gap-2 px-4 sm:px-6 py-3 font-semibold text-xs text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-850 transition-all shrink-0 cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[16px]">corporate_fare</span>
-              <span>{t('nav.corp')}</span>
+              <span className="material-symbols-outlined text-[18px]">groups</span>
+              <span>TripBoard หางาน / แชร์ทริป</span>
             </button>
           </div>
 
-          {/* Form Filter Fields */}
+          {/* Sharp Connected Form Grid (Zero rounded inputs, 1px precision dividers) */}
           <form
-            className="grid grid-cols-1 md:grid-cols-12 gap-space-sm items-end"
-            id="hero-search-form"
-            aria-label={t('hero.filterAria')}
             onSubmit={(e) => {
               e.preventDefault();
               scrollToResults();
             }}
+            className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800"
           >
-            {/* 1: Destination */}
-            <div className="md:col-span-4 space-y-space-2xs">
-              <label htmlFor="destination-select" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider">
-                {t('hero.zoneLabel')}
+            {/* 1. Destination Field */}
+            <div className="md:col-span-4 p-3.5 sm:p-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <label htmlFor="hero-destination-select" className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 cursor-pointer">
+                <span className="material-symbols-outlined text-[16px] text-amber-500">location_on</span>
+                <span>{t('hero.zoneLabel')}</span>
               </label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none text-[20px]">
-                  location_on
-                </span>
-                <select
-                  id="destination-select"
-                  aria-label={t('hero.zoneLabel')}
-                  value={selectedZone}
-                  onChange={(e) => {
-                    setSelectedZone(e.target.value);
-                    scrollToResults();
-                  }}
-                  className="w-full h-11 pl-10 pr-8 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-ink-primary font-body-base text-body-base appearance-none focus:outline-none focus:bg-paper-elevated dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-action border border-transparent focus:border-blue-action transition-all cursor-pointer"
-                >
-                  <option value="all">{t('hero.zoneAll')}</option>
-                  <option value="central">{t('hero.zoneBkk')}</option>
-                  <option value="north">{t('hero.zoneNorth')}</option>
-                  <option value="east">{t('hero.zoneEast')}</option>
-                  <option value="south">{t('hero.zoneSouth')}</option>
-                  <option value="isan">{t('hero.zoneIsan')}</option>
-                </select>
-                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none text-[18px]">
-                  expand_more
-                </span>
-              </div>
+              <select
+                id="hero-destination-select"
+                aria-label={t('hero.zoneLabel')}
+                value={selectedZone}
+                onChange={(e) => {
+                  setSelectedZone(e.target.value);
+                  scrollToResults();
+                }}
+                className="bg-transparent font-bold text-slate-900 dark:text-white text-xs sm:text-sm md:text-base focus:ring-0 focus:outline-none cursor-pointer w-full p-0 border-0"
+              >
+                <option value="all" className="dark:bg-slate-900">{t('hero.zoneAll')}</option>
+                <option value="central" className="dark:bg-slate-900">{t('hero.zoneBkk')}</option>
+                <option value="north" className="dark:bg-slate-900">{t('hero.zoneNorth')}</option>
+                <option value="east" className="dark:bg-slate-900">{t('hero.zoneEast')}</option>
+                <option value="south" className="dark:bg-slate-900">{t('hero.zoneSouth')}</option>
+                <option value="isan" className="dark:bg-slate-900">{t('hero.zoneIsan')}</option>
+              </select>
             </div>
 
-            {/* 2: Passenger Count */}
-            <div className="md:col-span-3 space-y-space-2xs">
-              <label htmlFor="passengers-select" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider">
-                {t('hero.seatsLabel')}
+            {/* 2. Keyword / Special Specs Field */}
+            <div className="md:col-span-3 p-3.5 sm:p-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <label htmlFor="hero-search-keyword" className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 cursor-pointer">
+                <span className="material-symbols-outlined text-[16px] text-sky-600">tune</span>
+                <span>{t('hero.keywordLabel')}</span>
               </label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none text-[20px]">
-                  group
-                </span>
-                <select
-                  id="passengers-select"
-                  aria-label={t('hero.seatsLabel')}
-                  value={selectedSeats}
-                  onChange={(e) => {
-                    setSelectedSeats(e.target.value);
-                    scrollToResults();
-                  }}
-                  className="w-full h-11 pl-10 pr-8 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-ink-primary font-body-base text-body-base appearance-none focus:outline-none focus:bg-paper-elevated dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-action border border-transparent focus:border-blue-action transition-all cursor-pointer"
-                >
-                  <option value="all">{t('hero.seatsAll')}</option>
-                  <option value="4-5">{t('hero.seats45')}</option>
-                  <option value="7">{t('hero.seats7')}</option>
-                  <option value="9">{t('hero.seats9')}</option>
-                  <option value="10">{t('hero.seats10')}</option>
-                  <option value="11-14">{t('hero.seats11')}</option>
-                  <option value="16-24">{t('hero.seats16')}</option>
-                </select>
-                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none text-[18px]">
-                  expand_more
-                </span>
-              </div>
+              <input
+                id="hero-search-keyword"
+                type="text"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                placeholder={t('hero.keywordPh')}
+                className="bg-transparent font-bold text-slate-900 dark:text-white text-xs sm:text-sm md:text-base focus:ring-0 focus:outline-none w-full p-0 border-0 placeholder:text-slate-400 placeholder:font-normal"
+              />
             </div>
 
-            {/* 3: Special Specs / Keywords */}
-            <div className="md:col-span-3 space-y-space-2xs">
-              <label htmlFor="search-keyword-input" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider">
-                {t('hero.keywordLabel')}
+            {/* 3. Passengers & Vehicle Type Field */}
+            <div className="md:col-span-3 p-3.5 sm:p-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <label htmlFor="hero-passengers-select" className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 cursor-pointer">
+                <span className="material-symbols-outlined text-[16px] text-emerald-600">airline_seat_recline_extra</span>
+                <span>{t('hero.seatsLabel')}</span>
               </label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none text-[20px]">
-                  tune
-                </span>
-                <input
-                  id="search-keyword-input"
-                  aria-label={t('hero.keywordLabel')}
-                  type="text"
-                  value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
-                  placeholder={t('hero.keywordPh')}
-                  className="w-full h-11 pl-10 pr-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-ink-primary font-body-base text-body-base focus:outline-none focus:bg-paper-elevated dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-action border border-transparent focus:border-blue-action transition-all"
-                />
-              </div>
+              <select
+                id="hero-passengers-select"
+                aria-label={t('hero.seatsLabel')}
+                value={selectedSeats}
+                onChange={(e) => {
+                  setSelectedSeats(e.target.value);
+                  scrollToResults();
+                }}
+                className="bg-transparent font-bold text-slate-900 dark:text-white text-xs sm:text-sm md:text-base focus:ring-0 focus:outline-none cursor-pointer w-full p-0 border-0"
+              >
+                <option value="all" className="dark:bg-slate-900">{t('hero.seatsAll')}</option>
+                <option value="4-5" className="dark:bg-slate-900">{t('hero.seats45')}</option>
+                <option value="7" className="dark:bg-slate-900">{t('hero.seats7')}</option>
+                <option value="9" className="dark:bg-slate-900">{t('hero.seats9')}</option>
+                <option value="10" className="dark:bg-slate-900">{t('hero.seats10')}</option>
+                <option value="11-14" className="dark:bg-slate-900">{t('hero.seats11')}</option>
+                <option value="16-24" className="dark:bg-slate-900">{t('hero.seats16')}</option>
+              </select>
             </div>
 
-            {/* 4: Submit Button */}
-            <div className="md:col-span-2">
+            {/* 4. Primary CTA Search Button */}
+            <div className="md:col-span-2 p-2.5 flex items-center bg-slate-50 dark:bg-slate-800/60">
               <button
                 type="submit"
                 onClick={scrollToResults}
-                className="w-full h-11 bg-blue-action hover:bg-blue-action-hover text-on-primary font-title-card text-title-card rounded-xl flex items-center justify-center gap-space-2xs shadow-md transition-all active:scale-[0.98]"
+                className="w-full h-full min-h-[50px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.99] border border-amber-600 rounded-none cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[20px]">search</span>
-                <span>{t('hero.searchBtn', { count: resultCount })}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[20px] font-bold">search</span>
+                  <span>{t('hero.searchBtn', { count: resultCount })}</span>
+                </div>
+                <span className="text-[10px] text-slate-900 font-semibold tracking-wide">0% คอมมิชชั่น</span>
               </button>
             </div>
           </form>
 
-          {/* Quick filter chips underneath */}
-          <div className="flex items-center gap-space-xs mt-space-sm pt-space-xs flex-wrap text-body-subtext">
-            <span className="text-ink-muted dark:text-slate-400 font-body-subtext">{t('hero.quickTitle')}</span>
+          {/* Sharp Quick Filter Bar */}
+          <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-slate-500 dark:text-slate-400 font-semibold text-[11px] uppercase tracking-wider flex items-center gap-1 mr-1">
+              <span className="material-symbols-outlined text-[14px]">tune</span> {t('hero.quickTitle')}:
+            </span>
             {activeTab === 'suv_driver' ? (
               <>
                 <button
                   type="button"
                   onClick={() => applyQuickFilter('suv7')}
-                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
                 >
                   {t('hero.quickSuv7')}
                 </button>
                 <button
                   type="button"
                   onClick={() => applyQuickFilter('fortuner')}
-                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
                 >
                   {t('hero.quickFortuner')}
                 </button>
                 <button
                   type="button"
                   onClick={() => applyQuickFilter('camry')}
-                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
                 >
                   {t('hero.quickCamry')}
                 </button>
                 <button
                   type="button"
                   onClick={() => applyQuickFilter('tax')}
-                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
                 >
-                  {t('hero.quickTax')}
+                  🏢 {t('hero.quickTax')}
                 </button>
               </>
             ) : activeTab === 'car' ? (
@@ -327,23 +302,23 @@ export const Hero: React.FC<HeroProps> = ({
                 <button
                   type="button"
                   onClick={() => applyQuickFilter('ecocar')}
-                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
                 >
                   Eco Car
                 </button>
                 <button
                   type="button"
                   onClick={() => applyQuickFilter('suv7')}
-                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
                 >
                   {t('hero.quickSuv7')}
                 </button>
                 <button
                   type="button"
                   onClick={() => applyQuickFilter('tax')}
-                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
                 >
-                  {t('hero.quickTax')}
+                  🏢 {t('hero.quickTax')}
                 </button>
               </>
             ) : (
@@ -351,59 +326,34 @@ export const Hero: React.FC<HeroProps> = ({
                 <button
                   type="button"
                   onClick={() => applyQuickFilter('yellow')}
-                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
                 >
-                  {t('hero.quickYellow')}
+                  🟡 {t('hero.quickYellow')}
                 </button>
                 <button
                   type="button"
                   onClick={() => applyQuickFilter('massage')}
-                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
                 >
-                  {t('hero.quickMassage')}
+                  💆 {t('hero.quickMassage')}
                 </button>
                 <button
                   type="button"
                   onClick={() => applyQuickFilter('majesty')}
-                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
                 >
-                  Toyota Majesty
+                  👑 Toyota Majesty
                 </button>
                 <button
                   type="button"
                   onClick={() => applyQuickFilter('tax')}
-                  className="px-space-xs py-space-2xs rounded-full bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant dark:hover:bg-slate-700 transition-colors"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
                 >
-                  {t('hero.quickTax')}
+                  🏢 {t('hero.quickTax')}
                 </button>
               </>
             )}
           </div>
-        </div>
-
-        {/* Hero Visual Panorama Display Banner */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={scrollToResults}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              scrollToResults();
-            }
-          }}
-          className="hidden sm:block relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-border-subtle dark:border-slate-800 group cursor-pointer bg-navy-deep transition-transform duration-200 active:scale-[0.99]"
-          title={t('hero.imageTitle')}
-        >
-          <Image
-            src="/hero-banner.png"
-            alt={t('hero.imageAlt')}
-            width={1024}
-            height={381}
-            priority
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
-            className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.01]"
-          />
         </div>
       </div>
     </section>

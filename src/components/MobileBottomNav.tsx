@@ -109,7 +109,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   return (
     <nav
       aria-label="Mobile Navigation Bar"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-[150] bg-paper-elevated/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-border-subtle/80 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.07)] pb-[env(safe-area-inset-bottom,0px)]"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-[150] bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-sm pb-[env(safe-area-inset-bottom,0px)]"
     >
       <div className="grid grid-cols-4 items-stretch h-14 max-w-lg mx-auto select-none touch-manipulation">
         {/* 1. Vehicles / Home */}
@@ -117,21 +117,21 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           type="button"
           onClick={() => handleNavigate('results', 'van')}
           aria-label="ค้นหารถ"
-          className={`flex flex-col items-center justify-center gap-0.5 h-full w-full py-1 cursor-pointer transition-all active:scale-95 touch-manipulation ${
+          className={`flex flex-col items-center justify-center gap-0.5 h-full w-full py-1 cursor-pointer transition-all active:scale-95 touch-manipulation rounded-none ${
             isResultsActive
-              ? 'text-blue-action dark:text-blue-400 font-extrabold'
-              : 'text-ink-secondary dark:text-slate-400 hover:text-navy-deep dark:hover:text-slate-200 font-medium'
+              ? 'text-slate-950 dark:text-white font-black'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-200 font-medium'
           }`}
         >
           <span
-            className="material-symbols-outlined text-[22px] transition-transform"
+            className="material-symbols-outlined text-[20px] transition-transform"
             style={{ fontVariationSettings: isResultsActive ? '"FILL" 1' : '"FILL" 0' }}
           >
             airport_shuttle
           </span>
           <span className="text-[10px] tracking-tight">ค้นหารถ</span>
           {isResultsActive && (
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-action dark:bg-blue-400 -mt-0.5" />
+            <span className="w-3 h-0.5 bg-amber-500 rounded-none -mt-0.5" />
           )}
         </button>
 
@@ -140,21 +140,21 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           type="button"
           onClick={() => handleNavigate('tripboard', 'van')}
           aria-label="TripBoard"
-          className={`flex flex-col items-center justify-center gap-0.5 h-full w-full py-1 cursor-pointer transition-all active:scale-95 touch-manipulation ${
+          className={`flex flex-col items-center justify-center gap-0.5 h-full w-full py-1 cursor-pointer transition-all active:scale-95 touch-manipulation rounded-none ${
             isTripBoardActive
-              ? 'text-blue-action dark:text-blue-400 font-extrabold'
-              : 'text-ink-secondary dark:text-slate-400 hover:text-navy-deep dark:hover:text-slate-200 font-medium'
+              ? 'text-slate-950 dark:text-white font-black'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-200 font-medium'
           }`}
         >
           <span
-            className="material-symbols-outlined text-[22px] transition-transform"
+            className="material-symbols-outlined text-[20px] transition-transform"
             style={{ fontVariationSettings: isTripBoardActive ? '"FILL" 1' : '"FILL" 0' }}
           >
             forum
           </span>
           <span className="text-[10px] tracking-tight">TripBoard</span>
           {isTripBoardActive && (
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-action dark:bg-blue-400 -mt-0.5" />
+            <span className="w-3 h-0.5 bg-amber-500 rounded-none -mt-0.5" />
           )}
         </button>
 
@@ -163,21 +163,21 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           type="button"
           onClick={() => handleNavigate('corporate', 'corporate')}
           aria-label="บริการองค์กร"
-          className={`flex flex-col items-center justify-center gap-0.5 h-full w-full py-1 cursor-pointer transition-all active:scale-95 touch-manipulation ${
+          className={`flex flex-col items-center justify-center gap-0.5 h-full w-full py-1 cursor-pointer transition-all active:scale-95 touch-manipulation rounded-none ${
             isCorporateActive
-              ? 'text-blue-action dark:text-blue-400 font-extrabold'
-              : 'text-ink-secondary dark:text-slate-400 hover:text-navy-deep dark:hover:text-slate-200 font-medium'
+              ? 'text-slate-950 dark:text-white font-black'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-200 font-medium'
           }`}
         >
           <span
-            className="material-symbols-outlined text-[22px] transition-transform"
+            className="material-symbols-outlined text-[20px] transition-transform"
             style={{ fontVariationSettings: isCorporateActive ? '"FILL" 1' : '"FILL" 0' }}
           >
             corporate_fare
           </span>
           <span className="text-[10px] tracking-tight">องค์กร</span>
           {isCorporateActive && (
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-action dark:bg-blue-400 -mt-0.5" />
+            <span className="w-3 h-0.5 bg-amber-500 rounded-none -mt-0.5" />
           )}
         </button>
 
@@ -187,11 +187,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           target="_blank"
           rel="noopener noreferrer"
           aria-label="ติดต่อ LINE TripDee"
-          className="flex flex-col items-center justify-center gap-0.5 h-full w-full py-1 text-line-green hover:text-line-green-hover active:scale-95 transition-all cursor-pointer touch-manipulation"
+          className="flex flex-col items-center justify-center gap-0.5 h-full w-full py-1 text-[#06C755] hover:text-[#05b04b] active:scale-95 transition-all cursor-pointer touch-manipulation rounded-none"
         >
           <div className="relative">
-            <span className="material-symbols-outlined text-[22px]">chat</span>
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-line-green ring-2 ring-white dark:ring-slate-950 animate-pulse" />
+            <span className="material-symbols-outlined text-[20px]">chat</span>
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[#06C755] ring-1 ring-white dark:ring-slate-950" />
           </div>
           <span className="text-[10px] font-extrabold tracking-tight">ทัก LINE</span>
         </a>

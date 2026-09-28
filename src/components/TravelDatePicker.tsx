@@ -218,7 +218,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
     if (onDaysChange) onDaysChange(Math.max(1, dayCount));
   };
 
-  // Day selection logic — standard calendar UX:
+  // Day selection logic - standard calendar UX:
   // 1) empty or finished selection → first click = one day
   // 2) one day selected → later click extends range; earlier click starts over
   // 3) range selected → move start/end; click inside does nothing

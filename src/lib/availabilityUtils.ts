@@ -49,7 +49,7 @@ export function formatSingleDate(iso: string, locale: string = 'th'): string {
 
 /**
  * Groups a list of 'YYYY-MM-DD' date strings into contiguous ranges and formats them.
- * e.g. ['2026-10-25', '2026-10-26', '2026-10-27'] -> "25–27 ต.ค."
+ * e.g. ['2026-10-25', '2026-10-26', '2026-10-27'] -> "25-27 ต.ค."
  */
 export function groupBusyDates(
   dates: string[] = [],
@@ -113,23 +113,23 @@ function formatRangeLabel(startIso: string, endIso: string, locale: string): str
 
   if (locale === 'en') {
     if (sm === em) {
-      return `${EN_MONTHS_SHORT[sm - 1]} ${sd}–${ed}`;
+      return `${EN_MONTHS_SHORT[sm - 1]} ${sd}-${ed}`;
     }
-    return `${EN_MONTHS_SHORT[sm - 1]} ${sd} – ${EN_MONTHS_SHORT[em - 1]} ${ed}`;
+    return `${EN_MONTHS_SHORT[sm - 1]} ${sd} - ${EN_MONTHS_SHORT[em - 1]} ${ed}`;
   }
 
   if (locale === 'zh') {
     if (sm === em) {
-      return `${sm}月${sd}日–${ed}日`;
+      return `${sm}月${sd}日-${ed}日`;
     }
-    return `${sm}月${sd}日–${em}月${ed}日`;
+    return `${sm}月${sd}日-${em}月${ed}日`;
   }
 
   // Thai
   if (sm === em) {
-    return `${sd}–${ed} ${THAI_MONTHS_SHORT[sm - 1]}`;
+    return `${sd}-${ed} ${THAI_MONTHS_SHORT[sm - 1]}`;
   }
-  return `${sd} ${THAI_MONTHS_SHORT[sm - 1]} – ${ed} ${THAI_MONTHS_SHORT[em - 1]}`;
+  return `${sd} ${THAI_MONTHS_SHORT[sm - 1]} - ${ed} ${THAI_MONTHS_SHORT[em - 1]}`;
 }
 
 /**

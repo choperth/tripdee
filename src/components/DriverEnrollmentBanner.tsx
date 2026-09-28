@@ -1,0 +1,55 @@
+'use client';
+
+import React from 'react';
+import { OFFICIAL_LINE_URL } from '@/lib/constants';
+
+interface DriverEnrollmentBannerProps {
+  onOpenRegister?: () => void;
+}
+
+export const DriverEnrollmentBanner: React.FC<DriverEnrollmentBannerProps> = ({ onOpenRegister }) => {
+
+  return (
+    <section aria-label="สมัครเป็นพาร์ทเนอร์คนขับ" className="max-w-7xl mx-auto px-4 sm:px-6 my-10 sm:my-12">
+      <div className="bg-emerald-800 text-white border border-emerald-900 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 rounded-none shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-white/10 border border-white/20 flex items-center justify-center shrink-0 text-white rounded-none">
+            <span className="material-symbols-outlined text-[28px]">directions_car</span>
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <h3 className="text-lg md:text-xl font-bold tracking-tight">คุณเป็นคนขับรถตู้ หรือเจ้าของรถใช่หรือไม่?</h3>
+              <span className="bg-amber-400 text-slate-950 font-black text-[10px] px-1.5 py-0.5 uppercase rounded-none">
+                0% ค่าสมัคร
+              </span>
+            </div>
+            <p className="text-xs md:text-sm text-emerald-100 max-w-xl font-light leading-relaxed">
+              ร่วมเป็นพาร์ทเนอร์คนขับกับ TripDee รับงานตรงจากผู้เดินทางทั่วประเทศ จัดการคิวรถว่างเองได้ 24 ชม. ไม่มีหักเปอร์เซ็นต์ค่ารอบ
+            </p>
+          </div>
+        </div>
+        <div className="shrink-0 w-full md:w-auto flex items-center gap-2 flex-wrap">
+          {onOpenRegister ? (
+            <button
+              type="button"
+              onClick={onOpenRegister}
+              className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-emerald-900 font-bold text-xs px-5 py-3 border border-white transition-colors rounded-none cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[17px]">person_add</span>
+              <span>ลงทะเบียนคนขับผ่านเว็บ</span>
+            </button>
+          ) : null}
+          <a
+            className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-emerald-950 hover:bg-emerald-900 text-white font-bold text-xs px-5 py-3 border border-emerald-700 transition-colors rounded-none cursor-pointer"
+            href={OFFICIAL_LINE_URL}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <span className="material-symbols-outlined text-[17px]">chat</span>
+            <span>ลงทะเบียนคนขับผ่าน LINE</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+};

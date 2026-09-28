@@ -559,26 +559,23 @@ export const TripBoard: React.FC = () => {
   };
 
   return (
-    <section id="tripboard" aria-label={t('board.aria')} className="w-full py-6 sm:py-space-2xl bg-paper-surface-muted dark:bg-slate-950 transition-colors scroll-mt-20 sm:scroll-mt-24">
-      {/* 1. Dynamic Notification Bar / Stats Strip (Stitch Top Bar) */}
-      <div className="w-full bg-blue-subtle/70 dark:bg-blue-950/40 py-space-sm px-margin border-y border-border-subtle/60 dark:border-slate-800 mb-3 sm:mb-space-lg">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-space-sm font-body-subtext text-body-subtext">
-          <div className="flex items-center gap-space-xs text-ink-primary dark:text-slate-200">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-line-green opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-line-green" />
-            </span>
-            <span className="font-bold text-navy-deep dark:text-blue-300">TripBoard Real-time:</span>
-            <span className="text-ink-secondary dark:text-slate-400">
+    <section id="tripboard" aria-label={t('board.aria')} className="w-full py-8 sm:py-12 bg-slate-900 text-white border border-slate-800 rounded-none transition-colors scroll-mt-20 sm:scroll-mt-24">
+      {/* 1. Dynamic Notification Bar / Stats Strip */}
+      <div className="w-full bg-slate-950/70 py-2.5 px-4 sm:px-6 border-b border-slate-800 mb-6">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-slate-200">
+            <span className="w-2 h-2 bg-emerald-400 rounded-none animate-pulse" />
+            <span className="font-bold text-white uppercase text-[11px] tracking-wider">TripBoard Real-time:</span>
+            <span className="text-slate-300">
               {t('board.liveStats', { done: 48, open: 19 })}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-ink-muted dark:text-slate-400">
+          <div className="flex items-center gap-2 text-slate-400">
             <a
               href={OFFICIAL_LINE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#06C755]/15 text-[#06C755] border border-[#06C755]/30 text-xs font-bold hover:bg-[#06C755] hover:text-white transition-all active:scale-95"
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-[#06C755]/15 text-[#06C755] border border-[#06C755]/30 text-xs font-bold hover:bg-[#06C755] hover:text-white transition-all rounded-none"
             >
               <span>🔔 รับแจ้งเตือนงานทาง LINE</span>
             </a>
@@ -586,37 +583,39 @@ export const TripBoard: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-margin lg:px-gutter">
-        {/* 2. Hero Header & Quick Action Triggers (Stitch Redesign) */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-lg mb-space-xl">
-          <div className="space-y-space-2xs max-w-3xl">
-            <h2 className="font-display-hero text-display-hero text-navy-deep dark:text-white tracking-tight">
-              {t('board.title')} <span className="text-blue-action">(TripBoard)</span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        {/* 2. Hero Header & Quick Action Triggers */}
+        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-4 pb-5 border-b border-slate-800 mb-6">
+          <div className="space-y-1.5 max-w-3xl">
+            <div className="inline-flex items-center gap-1.5 border border-emerald-500/40 bg-emerald-950/60 text-emerald-400 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider mb-1 rounded-none">
+              <span className="w-1.5 h-1.5 bg-emerald-400"></span>
+              <span>TripBoard Real-time Activity</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              {t('board.title')} (TripBoard)
             </h2>
-            <p className="font-body-large text-body-large text-ink-secondary dark:text-slate-300">
+            <p className="text-xs sm:text-sm text-slate-400 max-w-2xl font-light">
               {t('board.caption')}
             </p>
           </div>
 
-          {/* Call To Action Dual Triggers */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-space-sm w-full lg:w-auto">
+          {/* Call To Action Dual Triggers (Bauhaus Sharp) */}
+          <div className="flex items-center gap-2 flex-wrap w-full lg:w-auto">
             <button
               id="open-post-modal-btn"
               type="button"
               onClick={() => openNewPost('request')}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-space-xs bg-blue-action hover:bg-blue-action-hover text-on-primary font-body-medium text-body-medium px-space-lg py-space-md rounded-xl shadow-md transition-all active:scale-[0.98]"
+              className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 border border-amber-600 transition-all rounded-none cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[20px]">post_add</span>
+              <span className="material-symbols-outlined text-[17px]">post_add</span>
               <span>{t('board.postFree')}</span>
             </button>
             <button
               type="button"
               onClick={() => openNewPost('share')}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-space-xs bg-navy-deep hover:bg-navy-surface text-surface font-body-medium text-body-medium px-space-lg py-space-md rounded-xl shadow-md transition-all active:scale-[0.98]"
+              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-1.5 border border-slate-700 transition-all rounded-none cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[20px] text-amber-accent">
-                group_add
-              </span>
+              <span className="material-symbols-outlined text-[17px] text-amber-400">group_add</span>
               <span>{t('board.postShare')}</span>
             </button>
           </div>

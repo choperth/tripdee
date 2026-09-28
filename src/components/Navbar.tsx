@@ -141,21 +141,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 w-full z-200">
-      {/* MAIN NAVBAR (Stitch Glassmorphism & Navy Accents) */}
-      <nav
-        aria-label={t('nav.main')}
-        className={`w-full bg-paper/92 backdrop-blur-xl border-b border-rule transition-all ${
-          scrolled ? 'shadow-sm' : ''
-        }`}
-      >
-        <div className="h-16 sm:h-[72px] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4">
-          {/* LEFT: Official Logo */}
-          <div className="flex items-center shrink-0">
+    <header className={`fixed top-0 left-0 right-0 w-full z-50 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 transition-shadow ${scrolled ? 'shadow-xs' : ''}`}>
+      <nav aria-label={t('nav.main')} className="w-full">
+        <div className="h-16 max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4 sm:gap-6">
+          {/* LEFT: Official Logo & Live Signal */}
+          <div className="flex items-center gap-4 sm:gap-6 shrink-0">
             <button
               type="button"
               onClick={() => selectTab('van')}
-              className="flex shrink-0 items-center py-1 transition-transform hover:scale-[1.02] focus:outline-none cursor-pointer"
+              className="flex shrink-0 items-center py-1 transition-transform hover:scale-[1.01] focus:outline-none cursor-pointer"
               aria-label={t('nav.home')}
             >
               <Image
@@ -163,7 +157,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 alt={t('brand.logoAlt')}
                 width={140}
                 height={36}
-                className="h-7 sm:h-9 w-auto object-contain block dark:hidden"
+                className="h-8 w-auto object-contain block dark:hidden"
                 priority
               />
               <Image
@@ -171,71 +165,72 @@ export const Navbar: React.FC<NavbarProps> = ({
                 alt={t('brand.logoAlt')}
                 width={140}
                 height={36}
-                className="h-7 sm:h-9 w-auto object-contain hidden dark:block"
+                className="h-8 w-auto object-contain hidden dark:block"
                 priority
               />
             </button>
+            <div className="hidden xl:flex items-center gap-2 pl-4 border-l border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500">
+              <span className="inline-block w-1.5 h-1.5 bg-[#06C755] rounded-full"></span>
+            </div>
           </div>
 
-          {/* CENTER: Navigation Links (balanced & centered) */}
-          <div className="hidden lg:flex flex-1 items-center justify-center gap-1 xl:gap-2 px-2">
+          {/* CENTER: Main Navigation Links (Clean sharp borders - Bauhaus Swiss style) */}
+          <div className="hidden lg:flex items-center h-16 gap-1">
             <button
               type="button"
               onClick={() => selectTab('van')}
-              className={`transition-colors text-xs xl:text-sm font-bold rounded-full px-3 xl:px-3.5 py-2 whitespace-nowrap ${
+              className={`h-full px-3 text-xs flex items-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
                 activeTab === 'van'
-                  ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
-                  : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
+                  ? 'font-bold text-slate-950 dark:text-white border-slate-950 dark:border-white bg-slate-50/60 dark:bg-slate-900/60'
+                  : 'font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white border-transparent hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
-              {t('nav.van')}
+              <span className="material-symbols-outlined text-[17px]">airport_shuttle</span>
+              <span>{t('nav.van')}</span>
             </button>
             <button
               type="button"
               onClick={() => selectTab('suv_driver')}
-              className={`transition-colors text-xs xl:text-sm font-bold rounded-full px-3 xl:px-3.5 py-2 whitespace-nowrap ${
+              className={`h-full px-3 text-xs flex items-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
                 activeTab === 'suv_driver'
-                  ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
-                  : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
+                  ? 'font-bold text-slate-950 dark:text-white border-slate-950 dark:border-white bg-slate-50/60 dark:bg-slate-900/60'
+                  : 'font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white border-transparent hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
-              {t('nav.suvDriverShort')}
+              <span className="material-symbols-outlined text-[17px]">directions_car</span>
+              <span>{t('nav.suvDriverShort')}</span>
             </button>
             <button
               type="button"
               onClick={() => selectTab('car')}
-              className={`transition-colors text-xs xl:text-sm font-bold rounded-full px-3 xl:px-3.5 py-2 whitespace-nowrap ${
+              className={`h-full px-3 text-xs flex items-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
                 activeTab === 'car'
-                  ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
-                  : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
+                  ? 'font-bold text-slate-950 dark:text-white border-slate-950 dark:border-white bg-slate-50/60 dark:bg-slate-900/60'
+                  : 'font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white border-transparent hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
-              {t('nav.car')}
+              <span className="material-symbols-outlined text-[17px]">key</span>
+              <span>{t('nav.car')}</span>
             </button>
             <button
               type="button"
               onClick={() => scrollTo('tripboard', 'van')}
-              className="text-xs xl:text-sm font-bold text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white transition-colors rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap"
+              className="h-full px-3 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white flex items-center gap-1.5 border-b-2 border-transparent hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer"
             >
-              {t('nav.tripboardShort')}
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollTo('routes', 'van')}
-              className="text-xs xl:text-sm font-bold text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white transition-colors rounded-lg px-2.5 xl:px-3 py-1.5 whitespace-nowrap"
-            >
-              {t('nav.routesShort')}
+              <span className="material-symbols-outlined text-[17px]">sync_alt</span>
+              <span>{t('nav.tripboardShort')}</span>
+              <span className="text-[9px] bg-red-600 text-white font-black px-1 py-0.2 tracking-wider">HOT</span>
             </button>
             <button
               type="button"
               onClick={() => scrollTo('corporate', 'corporate')}
-              className={`transition-colors text-xs xl:text-sm font-bold rounded-full px-3 xl:px-3.5 py-2 whitespace-nowrap ${
+              className={`h-full px-3 text-xs flex items-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
                 activeTab === 'corporate'
-                  ? 'bg-surface-container text-navy-deep dark:bg-slate-800 dark:text-white shadow-xs'
-                  : 'text-ink-secondary hover:text-navy-deep dark:text-slate-300 dark:hover:text-white'
+                  ? 'font-bold text-slate-950 dark:text-white border-slate-950 dark:border-white bg-slate-50/60 dark:bg-slate-900/60'
+                  : 'font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white border-transparent hover:bg-slate-50 dark:hover:bg-slate-900'
               }`}
             >
-              {t('nav.b2bShort')}
+              <span className="material-symbols-outlined text-[17px]">domain</span>
             </button>
           </div>
 
@@ -259,20 +254,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onOpenDriverSelfService}
-                className="hidden xl:inline-flex items-center gap-1.5 bg-paper-surface-muted hover:bg-surface-variant dark:bg-slate-900 dark:hover:bg-slate-800 text-navy-deep dark:text-slate-200 text-xs xl:text-sm font-bold px-3 py-1.5 rounded-lg border border-border-subtle dark:border-slate-700 shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
+                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:border-emerald-300 transition-all rounded-none cursor-pointer"
                 title={t('nav.driverCta')}
               >
-                <span className="material-symbols-outlined text-[17px] text-amber-accent">
-                  airport_shuttle
+                <span className="material-symbols-outlined text-[16px] text-[#06C755]">
+                  local_taxi
                 </span>
                 <span>{t('nav.driverCtaShort')}</span>
-                <span className="px-1.5 py-0.5 rounded-full bg-verified-emerald-soft text-verified-emerald text-[10px] font-extrabold">
+                <span className="text-[9px] bg-[#E8F9EE] dark:bg-emerald-950 text-[#06C755] border border-emerald-200 dark:border-emerald-800 px-1 font-bold">
                   {t('nav.free')}
                 </span>
               </button>
             )}
 
-            {/* Customer Post Request Button (Stitch Action) */}
+            {/* Customer Post Request Button */}
             <button
               type="button"
               onClick={() => {
@@ -294,7 +289,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 requestAnimationFrame(tryOpenPostModal);
               }}
               aria-label={t('nav.postJobShort')}
-              className="inline-flex items-center justify-center gap-1 sm:gap-1.5 bg-blue-action hover:bg-blue-action-hover text-on-primary font-bold p-2 xs:px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg shadow-sm transition-all active:scale-[0.98] whitespace-nowrap text-xs sm:text-sm"
+              className="inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 text-xs border border-amber-600 transition-all active:scale-[0.98] whitespace-nowrap rounded-none cursor-pointer"
             >
               <PlusCircle className="w-4 h-4 shrink-0" />
               <span className="hidden xs:inline">{t('nav.postJobShort')}</span>
@@ -319,7 +314,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? (user.companyName || user.name)
                     : t('nav.admin')
                 }
-                className="inline-flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold bg-navy-deep text-surface hover:bg-navy-surface transition-all shrink-0"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 border border-slate-900 transition-all rounded-none shrink-0 cursor-pointer"
               >
                 {user.role === 'driver' && <CarFront className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
                 {user.role === 'customer' && <Briefcase className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
@@ -334,10 +329,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onOpenLoginModal}
-                className="inline-flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-bold border border-border-subtle dark:border-slate-700 bg-card hover:bg-paper-surface-muted text-navy-deep dark:text-slate-100 transition-colors shadow-sm shrink-0"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 transition-all rounded-none shrink-0 cursor-pointer"
                 aria-label={t('nav.login')}
               >
-                <User className="w-4 h-4 text-ink-secondary" />
+                <User className="w-4 h-4" />
                 <span className="hidden sm:inline">{t('nav.login')}</span>
               </button>
             )}
