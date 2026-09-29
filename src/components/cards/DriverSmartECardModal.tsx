@@ -3,24 +3,32 @@
 import React, { useState, useRef, useMemo } from 'react';
 import {
   X,
-  Share2,
-  Copy,
-  Check,
-  Download,
   Phone,
   MessageCircle,
   ExternalLink,
   Star,
   QrCode,
-  Sparkles,
+  Download,
+  Copy,
+  Check,
+  Share2,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Send,
+  ShieldCheck,
+  Tv,
+  Luggage,
+  Users,
+  Award,
 } from 'lucide-react';
 import { Vehicle } from '@/data/mockData';
 import { vehicleTitle, vehicleLocation, vehicleAmenities } from '@/data/vehicleI18n';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { getPublicDriverName, maskPlateNumber } from '@/lib/privacy';
-import { generateQrMatrix, renderQrSvgPath } from '@/lib/qrCode';
-import { formatLineLink, buildVehicleLineMessage } from '@/lib/contactUtils';
+import { formatLineLink } from '@/lib/contactUtils';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAnalytics } from '@/context/AnalyticsContext';
 
 interface DriverSmartECardModalProps {
   vehicle: Vehicle;
@@ -28,605 +36,981 @@ interface DriverSmartECardModalProps {
   onClose: () => void;
 }
 
-type QrMode = 'line' | 'tel' | 'web';
-type CardTheme = 'navy' | 'gold' | 'light';
-
 export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
   vehicle,
   isOpen,
   onClose,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
   const { t, locale } = useLanguage();
+  const { trackCall } = useAnalytics();
 
-  const [qrMode, setQrMode] = useState<QrMode>('line');
-  const [theme, setTheme] = useState<CardTheme>('navy');
-  const [copiedLink, setCopiedLink] = useState(false);
-  const [copiedIntro, setCopiedIntro] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-
+  // Dynamic driver meta
   const publicName = getPublicDriverName(vehicle.driverName, vehicle.driverNickname);
-  const cleanPhone = vehicle.driverPhone.replace(/\D/g, '');
-  const cleanPlate = vehicle.plateNumber ? maskPlateNumber(vehicle.plateNumber) : t('ecard.legalPlate');
-  const title = vehicleTitle(vehicle, locale);
+  const driverNick = vehicle.driverNickname || publicName.split(' ')[0] || 'พี่ชัย';
+  const cleanPhone = vehicle.driverPhone.replace(/\D/g, '') || '0812345678';
+  const displayPhone = vehicle.driverPhone || '081-234-5678';
+  const lineId = vehicle.driverLine || '@chaivan_cnx';
+  const cleanPlate = vehicle.plateNumber ? maskPlateNumber(vehicle.plateNumber) : '30-8899 เชียงใหม่';
+  const title = vehicleTitle(vehicle, locale) || 'Toyota Commuter VIP 9 ที่นั่ง Custom Luxury';
   const location = vehicleLocation(vehicle, locale);
-  const amenities = vehicleAmenities(vehicle, locale);
-  const locationShort = location.split('/')[0].trim();
+  const rating = vehicle.rating || 4.96;
+  const reviewCount = vehicle.reviewCount || 128;
+  const driverCode = `DRV-${(vehicle.region || 'CM').toUpperCase()}-${(vehicle.id || '50821').replace(/[^0-9]/g, '').slice(-5) || '50821'}`;
 
-  // Dynamic QR Code target URL / Payload
-  const qrTarget = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    const baseUrl = window.location.origin;
-    const vehicleUrl = `${baseUrl}/#vehicle-${vehicle.id}`;
+  // Interactive Fare Calculator State
+  const [selectedRouteKey, setSelectedRouteKey] = useState('city');
+  const [startDate, setStartDate] = useState('2026-10-06');
+  const [daysCount, setDaysCount] = useState(3);
+  const [passengers, setPassengers] = useState('5-7');
+  const [copiedLink, setCopiedLink] = useState(false);
 
-    switch (qrMode) {
-      case 'line':
-        return formatLineLink(
-          vehicle.driverLine || `https://line.me/ti/p/~${cleanPhone}`,
-          buildVehicleLineMessage(vehicle)
-        );
-      case 'tel':
-        return `tel:${cleanPhone}`;
-      case 'web':
-      default:
-        return vehicleUrl;
-    }
-  }, [qrMode, vehicle, cleanPhone]);
+  const routeRates: Record<string, { label: string; price: number }> = {
+    city: { label: 'ในเมืองเชียงใหม่ / แม่ริม / ม่อนแจ่ม', price: 2000 },
+    inthanon: { label: 'ดอยอินทนนท์ / กิ่วแม่ปาน / แม่แจ่ม', price: 2400 },
+    chiangdao: { label: 'เชียงดาว / เมืองคอง / ดอยอ่างขาง', price: 2300 },
+    pai: { label: 'ทริปข้ามจังหวัด: ปาย - แม่ฮ่องสอน', price: 2800 },
+    chiangrai: { label: 'ทริปข้ามจังหวัด: เชียงราย - สามเหลี่ยมทองคำ', price: 2700 },
+    custom: { label: 'กำหนดเส้นทางเอง / จัดทริปตามใจชอบ', price: 2200 },
+  };
 
-  // Generate QR Matrix
-  const qrMatrix = useMemo(() => {
-    if (!qrTarget) return [];
-    try {
-      return generateQrMatrix(qrTarget);
-    } catch {
-      return [];
-    }
-  }, [qrTarget]);
+  const currentRate = routeRates[selectedRouteKey] || routeRates.city;
+  const estimatedTotal = currentRate.price * daysCount;
 
-  const qrSvgPath = useMemo(() => {
-    if (!qrMatrix.length) return '';
-    return renderQrSvgPath(qrMatrix);
-  }, [qrMatrix]);
+  // Primary image previews
+  const heroImage =
+    Array.isArray(vehicle.images) && vehicle.images.length > 0
+      ? vehicle.images[0]
+      : 'https://lh3.googleusercontent.com/aida-public/AB6AXuAisN1P5FSsx9DeHQvRzmwtHWpsoyZTboAoXSo3GstPGe72wQU03UjyGjnGR86b4mEEF5u1yzl_RhITqVZKaCXdZrihgL16bWHJNH8HIvXmnZhq3iMiCxx1ZQaJUuJMvkHAp6XxmbE_Eaain-gJ72P2hCe9ataF_p_ruY0NSVR6lA0Aqe_xgMyP1Am1udmSGmx_E7cCBixDULfvKs5rqu2Vv_Q6xx-KFl7xdrwlsiGowfb5OWi0-wQPFQ';
+
+  const interiorImage =
+    Array.isArray(vehicle.images) && vehicle.images.length > 1
+      ? vehicle.images[1]
+      : 'https://lh3.googleusercontent.com/aida-public/AB6AXuB1TgXZtzqqHv8JERwMTS3h93A2Mk7Uh1ifJR2ItgGHQBaAPMzwSHDc8yH4lJTpeCOv9eFNt2riZUEq_q8fz6DtyHxB1LnLquJJJd_CHmZSK-1zeqDBhQUMmOC73z4-_8iH0flS2l5gDdVRz3a5_wnMNaP_IF8NTXfKLriIhxuwlwFIcfr4RtWUm0mT17PUpB2UFJeZULXB5R6CW_UaOT0TbSQVtS9iiPMQA77uPjwaYt1_J8LGrPdeBw';
+
+  const luggageImage =
+    Array.isArray(vehicle.images) && vehicle.images.length > 2
+      ? vehicle.images[2]
+      : 'https://lh3.googleusercontent.com/aida-public/AB6AXuCj4IEjGbot2BUfvUvQRcy6KF6Fgl3Vb-hJBOx4TLyZpGh8lH53YGUfQIFa3HE6Ooosp_4N86-xu7Qb5nNnSUPlfpSyZilZciJ0MmfNpwDOf-HaGXH5AVGPFy5th_zxi78svHZfwc6GbFJUqlX2_6K5g5-cqhaOmrnAijVnOGx8fGAKcxBRnwpu4gLwtHL6NRiGi5mXzAQxe1B1uh9tT_2ByskVEputp8zsRnbwHgzrGSRos2tomMODpw';
 
   if (!isOpen) return null;
 
-  const profileUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/#vehicle-${vehicle.id}`
-      : `https://tripdee.com/#vehicle-${vehicle.id}`;
+  // vCard generator & download
+  const handleDownloadVCard = () => {
+    const vcardContent = `BEGIN:VCARD
+VERSION:3.0
+N:${publicName};;;;
+FN:${publicName} (${driverNick})
+ORG:TripDee Driver Network
+TITLE:Chauffeur / Van Operator ${driverCode}
+TEL;TYPE=CELL:${cleanPhone}
+NOTE:${title} ทะเบียน ${cleanPlate} LINE: ${lineId}
+URL:${typeof window !== 'undefined' ? window.location.href : 'https://tripdee.co'}
+END:VCARD`;
 
-  const introText = `${t('ecard.introTitle', { name: publicName })}
-${t('ecard.introVehicle', { title, seats: String(vehicle.seats) })}
-${t('ecard.introLocation', { location })}
-${t('ecard.introRating', { rating: String(vehicle.rating), reviews: String(vehicle.reviewCount) })}
-${t('ecard.introPhone', { phone: vehicle.driverPhone })}
-${t('ecard.introLine', { line: vehicle.driverLine })}
-${t('ecard.introCta', { url: profileUrl })}`;
+    const blob = new Blob([vcardContent], { type: 'text/vcard;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `${driverCode}_vCard.vcf`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(profileUrl);
+    if (typeof window === 'undefined') return;
+    navigator.clipboard.writeText(window.location.href);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const handleCopyIntro = () => {
-    navigator.clipboard.writeText(introText);
-    setCopiedIntro(true);
-    setTimeout(() => setCopiedIntro(false), 2500);
-  };
-
   const handleShareLine = () => {
-    const lineShareUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(
-      profileUrl
-    )}&text=${encodeURIComponent(introText)}`;
-    window.open(lineShareUrl, '_blank', 'noopener,noreferrer');
+    if (typeof window === 'undefined') return;
+    const shareUrl = encodeURIComponent(window.location.href);
+    window.open(`https://social-plugins.line.me/lineit/share?url=${shareUrl}`, '_blank');
   };
 
-  // Export card as high-res PNG image via HTML5 Canvas
-  const handleDownloadImage = async () => {
-    setIsExporting(true);
-    try {
-      const canvas = document.createElement('canvas');
-      const width = 1000;
-      const height = 600;
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+  const handleInquirySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const lineText =
+      `สวัสดีครับ ${driverNick} สนใจสอบถามคิวรถตู้ VIP:\n` +
+      `- เส้นทาง: ${currentRate.label}\n` +
+      `- เริ่มเดินทาง: ${startDate} (${daysCount} วัน)\n` +
+      `- จำนวนผู้โดยสาร: ${passengers} ท่าน\n` +
+      `- ยอดประเมินเบื้องต้น: ฿${estimatedTotal.toLocaleString()} บาท\n` +
+      `(ติดต่อผ่านนามบัตรดิจิทัล TripDee ${driverCode})`;
 
-      // Background
-      if (theme === 'light') {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, width, height);
-        // Soft border
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(10, 10, width - 20, height - 20);
-      } else if (theme === 'gold') {
-        const bgGrad = ctx.createLinearGradient(0, 0, width, height);
-        bgGrad.addColorStop(0, '#1c1917');
-        bgGrad.addColorStop(1, '#292524');
-        ctx.fillStyle = bgGrad;
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.strokeStyle = '#eab308';
-        ctx.lineWidth = 6;
-        ctx.strokeRect(12, 12, width - 24, height - 24);
-      } else {
-        // Deep Navy (Default)
-        const bgGrad = ctx.createLinearGradient(0, 0, width, height);
-        bgGrad.addColorStop(0, '#0b192c');
-        bgGrad.addColorStop(1, '#1e3e62');
-        ctx.fillStyle = bgGrad;
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.strokeStyle = '#d4af37';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(12, 12, width - 24, height - 24);
-      }
-
-      // Brand Header
-      ctx.fillStyle = theme === 'light' ? '#0b192c' : '#ffffff';
-      ctx.font = 'bold 28px sans-serif';
-      ctx.fillText(t('ecard.canvasTagline'), 50, 65);
-
-      // Featured badge
-      ctx.fillStyle = '#f59e0b';
-      ctx.font = 'bold 18px sans-serif';
-      ctx.fillText(t('ecard.canvasFeatured'), 50, 100);
-
-      // Driver Name
-      ctx.fillStyle = theme === 'light' ? '#0f172a' : '#f8fafc';
-      ctx.font = 'bold 44px sans-serif';
-      ctx.fillText(publicName, 50, 175);
-
-      // Rating & Plate
-      ctx.fillStyle = '#f59e0b';
-      ctx.font = 'bold 22px sans-serif';
-      ctx.fillText(`★ ${vehicle.rating} ${t('ecard.reviewsCount', { n: String(vehicle.reviewCount) })}`, 50, 220);
-
-      ctx.fillStyle = theme === 'light' ? '#475569' : '#94a3b8';
-      ctx.font = '18px sans-serif';
-      ctx.fillText(`• ${cleanPlate} (${locationShort})`, 250, 220);
-
-      // Vehicle Title
-      ctx.fillStyle = theme === 'light' ? '#1e293b' : '#e2e8f0';
-      ctx.font = 'bold 24px sans-serif';
-      ctx.fillText(title.substring(0, 48), 50, 275);
-
-      // Amenities line
-      ctx.fillStyle = theme === 'light' ? '#64748b' : '#cbd5e1';
-      ctx.font = '18px sans-serif';
-      const amenitiesText = amenities.slice(0, 4).join(' • ');
-      ctx.fillText(`${t('ecard.amenitiesLabel')} ${amenitiesText}`, 50, 320);
-
-      // Contact info boxes
-      ctx.fillStyle = theme === 'light' ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)';
-      ctx.fillRect(50, 360, 450, 70);
-      ctx.fillStyle = theme === 'light' ? '#0b192c' : '#ffffff';
-      ctx.font = 'bold 26px sans-serif';
-      ctx.fillText(`📞 ${t('ecard.directCall', { phone: vehicle.driverPhone })}`, 70, 405);
-
-      ctx.fillStyle = theme === 'light' ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)';
-      ctx.fillRect(50, 445, 450, 70);
-      ctx.fillStyle = '#06c755';
-      ctx.font = 'bold 24px sans-serif';
-      ctx.fillText(`💬 LINE: ${vehicle.driverLine}`, 70, 490);
-
-      // Draw QR Code on the right
-      const qrBoxX = 640;
-      const qrBoxY = 120;
-      const qrBoxSize = 310;
-
-      // QR White Background Card
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.roundRect(qrBoxX - 15, qrBoxY - 15, qrBoxSize + 30, qrBoxSize + 85, 20);
-      ctx.fill();
-
-      // Draw QR Matrix
-      if (qrMatrix.length > 0) {
-        const matrixSize = qrMatrix.length;
-        const cellSize = qrBoxSize / matrixSize;
-        ctx.fillStyle = '#0b192c';
-
-        for (let r = 0; r < matrixSize; r++) {
-          for (let c = 0; c < matrixSize; c++) {
-            if (qrMatrix[r][c]) {
-              ctx.fillRect(qrBoxX + c * cellSize, qrBoxY + r * cellSize, cellSize + 0.5, cellSize + 0.5);
-            }
-          }
-        }
-      }
-
-      // QR label
-      ctx.fillStyle = '#0b192c';
-      ctx.font = 'bold 18px sans-serif';
-      ctx.textAlign = 'center';
-      const label = qrMode === 'line' ? t('ecard.scanAddLine') : qrMode === 'tel' ? t('ecard.scanCallNow') : t('ecard.scanProfile');
-      ctx.fillText(label, qrBoxX + qrBoxSize / 2, qrBoxY + qrBoxSize + 35);
-      ctx.fillStyle = '#64748b';
-      ctx.font = '14px sans-serif';
-      ctx.fillText(t('ecard.canvasContact'), qrBoxX + qrBoxSize / 2, qrBoxY + qrBoxSize + 60);
-
-      // Footer
-      ctx.textAlign = 'left';
-      ctx.fillStyle = theme === 'light' ? '#94a3b8' : '#64748b';
-      ctx.font = '16px sans-serif';
-      ctx.fillText(t('ecard.canvasBook'), 50, 565);
-
-      // Trigger download
-      const dataUrl = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = `TripDee-ECard-${publicName.replace(/\s+/g, '-')}.png`;
-      link.href = dataUrl;
-      link.click();
-    } catch (err) {
-      console.error('Failed to export e-card image', err);
-    } finally {
-      setIsExporting(false);
-    }
+    const targetUrl = formatLineLink(lineId, lineText);
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
     <div
-      className="fixed inset-0 z-500 flex items-center justify-center overflow-y-auto bg-navy-deep/85 backdrop-blur-md p-3 sm:p-4 animate-fade-in"
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="นามบัตรดิจิทัลคนขับ (Digital Driver Business Card)"
+      className="fixed inset-0 z-500 flex items-start justify-center overflow-y-auto bg-slate-950/80 backdrop-blur-md p-0 sm:p-3 lg:p-5 animate-fade-in"
       onClick={onClose}
-      role="presentation"
     >
       <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('ecard.aria')}
         onClick={(e) => e.stopPropagation()}
-        className="relative flex flex-col w-full max-w-2xl max-h-[94vh] overflow-y-auto rounded-3xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 shadow-2xl text-ink-primary dark:text-slate-100 p-space-md sm:p-space-lg"
+        className="relative flex flex-col w-full max-w-[1280px] max-h-[96vh] overflow-y-auto rounded-none bg-[#f8fafc] dark:bg-slate-950 border border-slate-300 dark:border-slate-800 shadow-2xl text-slate-900 dark:text-slate-100"
       >
-        {/* Top Header & Customizer Bar */}
-        <div className="flex items-center justify-between gap-4 pb-space-sm border-b border-border-subtle dark:border-slate-800">
-          <div>
-            <div className="flex items-center gap-1.5 text-amber-500 font-label-badge text-label-badge font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Smart E-Card & QR</span>
-            </div>
-            <h2 className="font-headline-lg text-headline-lg text-navy-deep dark:text-white">
-              {t('ecard.title')}
-            </h2>
+        {/* Top Header Scrim */}
+        <div className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="font-bold text-slate-950 dark:text-white uppercase tracking-tight">TripDee</span>
+            <span className="text-slate-300 dark:text-slate-700">/</span>
+            <span className="font-semibold text-slate-600 dark:text-slate-400">นามบัตรดิจิทัลคนขับ (Digital Business Card)</span>
+            <span className="hidden md:inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#fef3c7] text-[#d97706] text-[10px] font-bold">
+              ค่าคอมมิชชั่น 0% ตลอดชีพ
+            </span>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('auth.close')}
-            className="w-8 h-8 rounded-full bg-paper-surface-muted dark:bg-slate-800 flex items-center justify-center text-ink-secondary hover:text-ink-primary hover:bg-surface-variant transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Theme & QR Mode Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-2 py-space-xs text-xs">
-          {/* Theme Selector */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-ink-muted dark:text-slate-400">{t('ecard.themeLabel')}</span>
-            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-paper-canvas dark:bg-slate-800 border border-border-subtle dark:border-slate-700">
-              <button
-                type="button"
-                onClick={() => setTheme('navy')}
-                className={`px-2.5 py-1 rounded-md transition-all font-medium cursor-pointer ${
-                  theme === 'navy'
-                    ? 'bg-navy-deep text-white shadow-xs font-bold'
-                    : 'text-ink-secondary dark:text-slate-300'
-                }`}
-              >
-                {t('ecard.themeNavy')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setTheme('gold')}
-                className={`px-2.5 py-1 rounded-md transition-all font-medium cursor-pointer ${
-                  theme === 'gold'
-                    ? 'bg-amber-600 text-white shadow-xs font-bold'
-                    : 'text-ink-secondary dark:text-slate-300'
-                }`}
-              >
-                {t('ecard.themeGold')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setTheme('light')}
-                className={`px-2.5 py-1 rounded-md transition-all font-medium cursor-pointer ${
-                  theme === 'light'
-                    ? 'bg-white text-navy-deep shadow-xs font-bold border border-border-subtle'
-                    : 'text-ink-secondary dark:text-slate-300'
-                }`}
-              >
-                {t('ecard.themeLight')}
-              </button>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#e8f9ee] text-[#06c755] text-xs font-semibold">
+              <span className="w-2 h-2 rounded-full bg-[#06c755] animate-pulse"></span>
+              <span>เปิดรับงานคิวว่างวันนี้</span>
             </div>
-          </div>
 
-          {/* QR Mode Selector */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-ink-muted dark:text-slate-400">{t('ecard.qrLabel')}</span>
-            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-paper-canvas dark:bg-slate-800 border border-border-subtle dark:border-slate-700">
-              <button
-                type="button"
-                onClick={() => setQrMode('line')}
-                className={`px-2 py-1 rounded-md transition-all font-medium cursor-pointer flex items-center gap-1 ${
-                  qrMode === 'line'
-                    ? 'bg-line-green text-white shadow-xs font-bold'
-                    : 'text-ink-secondary dark:text-slate-300'
-                }`}
-              >
-                <MessageCircle className="w-3 h-3" />
-                <span>LINE</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setQrMode('tel')}
-                className={`px-2 py-1 rounded-md transition-all font-medium cursor-pointer flex items-center gap-1 ${
-                  qrMode === 'tel'
-                    ? 'bg-blue-action text-white shadow-xs font-bold'
-                    : 'text-ink-secondary dark:text-slate-300'
-                }`}
-              >
-                <Phone className="w-3 h-3" />
-                <span>โทรออก</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setQrMode('web')}
-                className={`px-2 py-1 rounded-md transition-all font-medium cursor-pointer flex items-center gap-1 ${
-                  qrMode === 'web'
-                    ? 'bg-navy-deep text-white shadow-xs font-bold'
-                    : 'text-ink-secondary dark:text-slate-300'
-                }`}
-              >
-                <QrCode className="w-3 h-3" />
-                <span>เว็บโปรไฟล์</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="ปิดหน้าต่างนามบัตร"
+              className="w-8 h-8 rounded-none bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 grid place-items-center transition-colors cursor-pointer"
+            >
+              <X className="h-4 w-4" strokeWidth={2.5} />
+            </button>
           </div>
         </div>
 
-        {/* The Luxury E-Card Container */}
-        <div className="my-space-sm">
-          <div
-            ref={cardRef}
-            id="printable-ecard"
-            className={`relative rounded-3xl p-5 sm:p-7 shadow-2xl transition-all duration-300 overflow-hidden border ${
-              theme === 'navy'
-                ? 'bg-gradient-to-br from-[#0b192c] via-[#11243d] to-[#1e3e62] text-white border-amber-400/40'
-                : theme === 'gold'
-                ? 'bg-gradient-to-br from-neutral-950 via-neutral-900 to-amber-950/80 text-amber-50 border-amber-500/60'
-                : 'bg-white text-navy-deep border-slate-200 shadow-xl'
-            }`}
-          >
-            {/* Background Decorative Accents */}
-            <div className="absolute -top-24 -right-24 w-60 h-60 rounded-full bg-amber-400/10 blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -left-24 w-60 h-60 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
+        {/* ============================================================== */}
+        {/* SECTION 1: HERO BUSINESS CARD PANEL */}
+        {/* ============================================================== */}
+        <section className="w-full p-4 sm:p-6 lg:p-8 bg-[#f8fafc] dark:bg-slate-950">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden">
+            {/* Top Monolithic Accent Gradient Bar */}
+            <div className="h-2 w-full bg-gradient-to-r from-slate-950 via-[#0d1c32] to-[#fea619]"></div>
 
-            {/* Top Bar of the Card */}
-            <div className="relative z-10 flex items-center justify-between gap-3 pb-4 border-b border-white/10 dark:border-white/10">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 text-navy-deep flex items-center justify-center font-black text-sm shadow-md">
-                  TD
+            <div className="p-5 sm:p-8 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Left Column (7 Cols) */}
+              <div className="lg:col-span-7 flex flex-col space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                  <div className="relative shrink-0">
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 overflow-hidden relative shadow-xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDz488179DjzHie7dsIiRrYrw0yXZoErZifBiDXQ3IerK4d_-WxciLdb2JECxzGg_fa-LKEe7TZyJrik0apwNik09UANoVQgev_NflQ0x2FKmPOFyTYJHBhO08DMDA3lWtzsBZa7ZrguGFeVxTCK2lTaaJPz-W6pfPiNHPCsMq12W1_FZkenqaF2GN311lA2mu8x8Swj5PIhY3jmx4_clFCMJ4cI3ev7ltlJziYiTzzqMripFPjngSCAQ"
+                        alt={`ภาพถ่ายคนขับ ${publicName}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="absolute -bottom-2 -right-2 bg-slate-950 text-white px-1.5 py-0.5 text-[10px] tracking-wider uppercase font-bold border border-white">
+                      VIP CNX
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-2.5 py-0.5 bg-[#fef3c7] text-[#d97706] text-xs font-bold tracking-tight inline-flex items-center gap-1 border border-amber-300">
+                        <span className="material-symbols-outlined text-[16px]">verified</span>
+                        VERIFIED DRIVER 100%
+                      </span>
+                      <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] text-xs font-semibold border border-emerald-200">
+                        ป้ายเหลือง 30 ถูกกฎหมาย
+                      </span>
+                    </div>
+
+                    <h1 className="text-xl sm:text-2xl font-extrabold text-slate-950 dark:text-white tracking-tight flex flex-wrap items-baseline gap-2">
+                      <span>{publicName}</span>
+                      <span className="text-sm sm:text-base text-slate-500 font-semibold">({driverNick})</span>
+                    </h1>
+
+                    <div className="text-xs text-slate-600 dark:text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono">
+                      <span>รหัส: <strong className="text-slate-950 dark:text-white font-bold">{driverCode}</strong></span>
+                      <span className="text-slate-300">•</span>
+                      <span>ใบขับขี่ ท.2 (ขนส่งรับรอง)</span>
+                      <span className="text-slate-300">•</span>
+                      <span>ทะเบียน {cleanPlate}</span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-bold text-sm tracking-wide block leading-none">
-                    TRIPDEE
-                  </span>
-                  <span className="text-[10px] opacity-75 uppercase tracking-wider block mt-0.5">
-                    {vehicle.isVerified ? 'Featured VIP Driver' : 'VIP Driver Partner'}
-                  </span>
+
+                {/* 4 Trust Meta Pillars */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200 dark:border-slate-700 text-center">
+                  <div className="flex flex-col items-center justify-center p-2">
+                    <div className="flex items-center gap-1 text-[#fea619]">
+                      <span className="text-lg font-bold text-slate-950 dark:text-white">{rating}</span>
+                      <span className="material-symbols-outlined text-[18px]">star</span>
+                    </div>
+                    <span className="text-[11px] text-slate-500">ผู้โดยสารจริง {reviewCount} ทริป</span>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center p-2 border-l border-slate-200 dark:border-slate-700">
+                    <span className="text-lg font-bold text-slate-950 dark:text-white">14 ปี</span>
+                    <span className="text-[11px] text-slate-500">ประสบการณ์ขับขึ้นดอย</span>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center p-2 border-l border-slate-200 dark:border-slate-700">
+                    <span className="text-lg font-bold text-[#06c755]">&lt; 3 นาที</span>
+                    <span className="text-[11px] text-slate-500">อัตราตอบกลับรวดเร็ว</span>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center p-2 border-l border-slate-200 dark:border-slate-700">
+                    <span className="text-lg font-bold text-[#d97706]">0% GP</span>
+                    <span className="text-[11px] text-slate-500">ดีลตรงไม่ผ่านนายหน้า</span>
+                  </div>
+                </div>
+
+                {/* Location & Coverage */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-950 dark:text-white">
+                    <span className="material-symbols-outlined text-[#fea619] text-[20px]">explore</span>
+                    <span>สถานีประจำการ & เส้นทางชำนาญการพิเศษ</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 text-xs">
+                    {['ท่าอากาศยานเชียงใหม่ (CNX)', 'ม่อนแจ่ม - แม่ริม', 'ดอยอินทนนท์ - แม่แจ่ม', 'เชียงดาว - อ่างขาง', 'ปาย - แม่ฮ่องสอน (1,864 โค้ง)', 'เชียงราย - วัดร่องขุ่น', 'น่าน - สะปัน'].map((tag, idx) => (
+                      <span key={idx} className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Value Propositions */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div className="flex items-start gap-2 bg-slate-50 dark:bg-slate-800/40 p-3 border border-slate-200 dark:border-slate-700">
+                    <span className="material-symbols-outlined text-[#06c755] text-[20px] shrink-0 mt-0.5">verified_user</span>
+                    <div>
+                      <span className="font-bold text-slate-950 dark:text-white block">ผ่านตรวจประวัติอาชญากรรม ตร.</span>
+                      <span className="text-slate-500 text-[11px]">ตรวจสอบความปลอดภัยระดับประวัติอาชญากรรม 100%</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2 bg-slate-50 dark:bg-slate-800/40 p-3 border border-slate-200 dark:border-slate-700">
+                    <span className="material-symbols-outlined text-[#fea619] text-[20px] shrink-0 mt-0.5">receipt_long</span>
+                    <div>
+                      <span className="font-bold text-slate-950 dark:text-white block">ออกใบกำกับภาษีเต็มรูปแบบได้</span>
+                      <span className="text-slate-500 text-[11px]">รองรับองค์กร B2B หัก ณ ที่จ่าย 3% ถูกต้อง</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-500/30 shadow-xs">
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  <span>{vehicle.isVerified ? t('ecard.verifiedZone') : t('ecard.dealDirect')}</span>
+              {/* Right Column: Direct Contact & QR Box (5 Cols) */}
+              <div className="lg:col-span-5 bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 p-5 sm:p-6 flex flex-col justify-between space-y-6">
+                <div>
+                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-slate-950 dark:text-white text-[22px]">contact_phone</span>
+                      <h3 className="text-xs uppercase tracking-wider text-slate-950 dark:text-white font-bold">
+                        Digital Business Card
+                      </h3>
+                    </div>
+                    <span className="px-2 py-0.5 bg-slate-950 text-white font-mono text-[10px] uppercase font-bold tracking-widest">
+                      DIRECT DEAL
+                    </span>
+                  </div>
+
+                  {/* Direct Contact Actions */}
+                  <div className="space-y-3">
+                    <a
+                      href={`tel:${cleanPhone}`}
+                      onClick={() =>
+                        trackCall({
+                          targetType: 'driver_card',
+                          targetId: vehicle.id,
+                          targetTitle: `${publicName} (${title})`,
+                          phoneNumber: cleanPhone,
+                          driverName: publicName,
+                        })
+                      }
+                      className="w-full flex items-center justify-between px-4 py-3.5 bg-slate-950 hover:bg-slate-800 text-white transition-colors text-left group shadow-xs cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-white/10 flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-[#fea619] text-[22px]">call</span>
+                        </div>
+                        <div>
+                          <span className="text-[11px] text-slate-300 block uppercase tracking-wide">
+                            โทรติดต่อ{driverNick}โดยตรง (สายด่วน 24 ชม.)
+                          </span>
+                          <span className="text-base font-bold font-mono tracking-wide text-white group-hover:text-amber-200 transition-colors">
+                            {displayPhone}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="material-symbols-outlined text-white text-[20px] group-hover:translate-x-1 transition-transform">
+                        arrow_forward
+                      </span>
+                    </a>
+
+                    <a
+                      href={formatLineLink(lineId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-between px-4 py-3 bg-[#06c755] hover:brightness-105 text-white transition-all shadow-xs cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-white/20 flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-white text-[22px]">chat</span>
+                        </div>
+                        <div>
+                          <span className="text-[11px] text-emerald-100 block uppercase tracking-wide">
+                            คุยไลน์ส่งโปรแกรมเที่ยว & นัดหมาย
+                          </span>
+                          <span className="text-xs font-bold tracking-wide">LINE ID: {lineId}</span>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 bg-white text-[#06c755] text-xs font-bold">ทักแชท</span>
+                    </a>
+
+                    <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+                      <a
+                        href={vehicle.driverWhatsapp ? `https://wa.me/${vehicle.driverWhatsapp.replace(/\D/g, '')}` : `https://wa.me/${cleanPhone}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 font-semibold transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px] text-[#06c755]">forum</span>
+                        <span>WhatsApp</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => alert(`WeChat ID คนขับ: ${vehicle.driverWechat || 'chaicnx_van'}`)}
+                        className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 font-semibold transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px] text-slate-950 dark:text-white">chat_bubble</span>
+                        <span>WeChat ID</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* QR Code Card & Download vCard Container */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 bg-slate-950 p-1.5 shrink-0 flex items-center justify-center">
+                      <div className="w-full h-full bg-white p-1 flex items-center justify-center relative">
+                        {/* High Precision SVG QR Pattern */}
+                        <svg className="w-full h-full fill-current text-slate-950" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                          <rect height="30" width="30" x="0" y="0"></rect>
+                          <rect fill="white" height="20" width="20" x="5" y="5"></rect>
+                          <rect height="12" width="12" x="9" y="9"></rect>
+                          <rect height="30" width="30" x="70" y="0"></rect>
+                          <rect fill="white" height="20" width="20" x="75" y="5"></rect>
+                          <rect height="12" width="12" x="79" y="9"></rect>
+                          <rect height="30" width="30" x="0" y="70"></rect>
+                          <rect fill="white" height="20" width="20" x="5" y="75"></rect>
+                          <rect height="12" width="12" x="9" y="79"></rect>
+                          <rect height="8" width="8" x="36" y="10"></rect>
+                          <rect height="8" width="8" x="48" y="10"></rect>
+                          <rect height="8" width="8" x="36" y="24"></rect>
+                          <rect height="8" width="16" x="48" y="32"></rect>
+                          <rect height="8" width="12" x="10" y="44"></rect>
+                          <rect height="8" width="8" x="30" y="44"></rect>
+                          <rect height="12" width="12" x="44" y="48"></rect>
+                          <rect height="8" width="12" x="64" y="44"></rect>
+                          <rect height="12" width="10" x="80" y="40"></rect>
+                          <rect height="16" width="8" x="36" y="70"></rect>
+                          <rect height="8" width="12" x="50" y="74"></rect>
+                          <rect height="8" width="16" x="72" y="70"></rect>
+                          <rect height="12" width="8" x="70" y="84"></rect>
+                          <rect height="10" width="10" x="84" y="84"></rect>
+                        </svg>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-slate-950 dark:text-white">สแกนบันทึกนามบัตรดิจิทัล</h4>
+                      <p className="text-[11px] text-slate-500 leading-snug">บันทึกลงสมุดโทรศัพท์ (vCard) พร้อมลิงก์ไลน์คนขับได้ทันที</p>
+                      <div className="flex items-center gap-2 pt-1 text-[11px]">
+                        <span className="inline-flex items-center text-[#06c755] font-semibold gap-1">
+                          <span className="material-symbols-outlined text-[14px]">check_circle</span> vCard 3.0
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-slate-400">iOS / Android</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+                    <button
+                      type="button"
+                      onClick={handleDownloadVCard}
+                      className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 font-semibold text-slate-900 dark:text-white transition-colors flex items-center justify-center gap-1 border border-slate-200 dark:border-slate-700 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">download</span>
+                      <span>บันทึก (.vcf)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 font-semibold text-slate-900 dark:text-white transition-colors flex items-center justify-center gap-1 border border-slate-200 dark:border-slate-700 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">content_copy</span>
+                      <span>{copiedLink ? 'คัดลอกแล้ว!' : 'คัดลอกลิงก์'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleShareLine}
+                      className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 font-semibold text-[#06c755] transition-colors flex items-center justify-center gap-1 border border-slate-200 dark:border-slate-700 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">share</span>
+                      <span>แชร์ LINE</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* SECTION 2: REAL VEHICLE SHOWCASE & GALLERY */}
+        {/* ============================================================== */}
+        <section className="w-full px-4 sm:px-6 lg:px-8 py-6 bg-[#f8fafc] dark:bg-slate-950">
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-2.5 h-2.5 bg-[#fea619]"></span>
+                  <span className="text-xs uppercase tracking-wider text-slate-500 font-bold">VERIFIED VEHICLE PROFILE</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-950 dark:text-white tracking-tight">
+                  พาหนะประจำตัว: {title}
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  รถจริงตรงปก 100% เบาะนวดไฟฟ้าพร้อมระบบแอร์ Microbus กระจายความเย็นรอบคัน
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-xs px-3 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-bold text-slate-900 dark:text-white">
+                  ทะเบียน {cleanPlate}
+                </span>
+                <span className="px-2.5 py-1 bg-[#e8f9ee] text-[#06c755] text-xs font-bold border border-emerald-200">
+                  ตรวจสภาพปี 2568 ผ่าน
                 </span>
               </div>
             </div>
 
-            {/* Main Card Body (2 Columns: Driver Info + QR Code) */}
-            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-5 pt-4 items-center">
-              {/* Left Column: Driver Info (7 cols) */}
-              <div className="sm:col-span-7 space-y-3">
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
-                      {publicName}
-                    </h3>
+            {/* Bento Mosaic Gallery */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-8 group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="aspect-[16/10] w-full relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={heroImage}
+                    alt={`ภาพภายนอกตัวรถ ${title}`}
+                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                  />
+                  <div className="absolute top-3 left-3 bg-slate-950 text-white px-3 py-1 text-xs font-semibold">
+                    ภาพภายนอกตัวรถจริง (Exterior 360°)
                   </div>
-
-                  <div className="flex items-center gap-2 text-xs mt-1">
-                    <span className="flex items-center gap-1 text-amber-400 font-bold">
-                      <Star className="w-3.5 h-3.5 fill-amber-400" />
-                      <span>{vehicle.rating}</span>
-                      <span className="opacity-80 font-normal">{t('ecard.reviewsCount', { n: String(vehicle.reviewCount) })}</span>
-                    </span>
-                    <span>•</span>
-                    <span className="opacity-80 truncate">{cleanPlate}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1 text-xs">
-                  <div className="font-bold text-sm opacity-95">
+                  <div className="absolute bottom-3 right-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-mono">
                     {title}
                   </div>
-                  <div className="opacity-75 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[15px]">location_on</span>
-                    <span>{t('ecard.basedLabel')} {location}</span>
-                  </div>
-                </div>
-
-                {/* Amenities Pills */}
-                <div className="flex flex-wrap gap-1 pt-0.5">
-                  {amenities.slice(0, 4).map((item) => (
-                    <span
-                      key={item}
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                        theme === 'light'
-                          ? 'bg-slate-100 text-slate-700 border border-slate-200'
-                          : 'bg-white/10 text-white/90 border border-white/10'
-                      }`}
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Direct Action Contacts */}
-                <div className="pt-2 flex flex-col gap-1.5">
-                  <a
-                    href={`tel:${cleanPhone}`}
-                    className={`flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-xl transition-all ${
-                      theme === 'light'
-                        ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                        : 'bg-white/10 text-white hover:bg-white/15 border border-white/15'
-                    }`}
-                  >
-                    <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{t('ecard.directCall', { phone: vehicle.driverPhone })}</span>
-                  </a>
-
-                  <a
-                    href={formatLineLink(vehicle.driverLine, buildVehicleLineMessage(vehicle))}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-xl transition-all ${
-                      theme === 'light'
-                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                        : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30'
-                    }`}
-                  >
-                    <MessageCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span className="truncate">LINE: {vehicle.driverLine}</span>
-                  </a>
                 </div>
               </div>
 
-              {/* Right Column: Scannable QR Code (5 cols) */}
-              <div className="sm:col-span-5 flex flex-col items-center justify-center">
-                <div className="p-3 bg-white rounded-2xl shadow-xl border border-white/20 flex flex-col items-center">
-                  {/* SVG Vector QR Code */}
-                  <div className="w-36 h-36 relative flex items-center justify-center">
-                    {qrMatrix.length > 0 ? (
-                      <svg
-                        viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}
-                        className="w-full h-full text-navy-deep fill-current"
-                        shapeRendering="crispEdges"
-                      >
-                        <path d={qrSvgPath} />
-                      </svg>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
-                        {t('ecard.qrGenerating')}
-                      </div>
-                    )}
+              <div className="md:col-span-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
+                <div className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <div className="aspect-[16/10] md:aspect-[16/9.5] w-full relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={interiorImage}
+                      alt="ห้องโดยสาร VIP"
+                      className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                    />
+                    <div className="absolute bottom-2 left-2 bg-slate-950/90 text-white px-2.5 py-0.5 text-[11px] font-bold">
+                      เบาะนวดไฟฟ้าระดับ First Class
+                    </div>
                   </div>
+                </div>
 
-                  <div className="text-center mt-2 space-y-1">
-                    <span className="text-navy-deep font-bold text-xs block">
-                      {qrMode === 'line'
-                        ? t('ecard.scanLineBtn')
-                        : qrMode === 'tel'
-                        ? t('ecard.scanCallBtn')
-                        : t('ecard.scanVehicleBtn')}
-                    </span>
-                    <a
-                      href={qrTarget}
-                      target={qrMode === 'tel' ? '_self' : '_blank'}
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-1 text-[11px] font-bold text-[#06C755] hover:underline cursor-pointer"
-                    >
-                      <span>
-                        {qrMode === 'line'
-                          ? '👉 แตะเพื่อเปิด LINE ทันที'
-                          : qrMode === 'tel'
-                          ? '👉 แตะเพื่อโทรทันที'
-                          : '👉 แตะเพื่อเปิดโปรไฟล์'}
-                      </span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                <div className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <div className="aspect-[16/10] md:aspect-[16/9.5] w-full relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={luggageImage}
+                      alt="พื้นที่กระเป๋าสัมภาระ"
+                      className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                    />
+                    <div className="absolute bottom-2 left-2 bg-slate-950/90 text-white px-2.5 py-0.5 text-[11px] font-bold">
+                      พื้นที่วางกระเป๋าเดินทางขนาดใหญ่ (5-7 ใบ)
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Card Bottom Tagline */}
-            <div className="relative z-10 mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] opacity-75">
-              <span>{t('ecard.tagline')}</span>
-              <span className="font-mono">www.tripdee.com</span>
+            {/* 4 Technical Specifications Strip */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+              <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
+                <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-950 dark:text-white">
+                  <span className="material-symbols-outlined text-[24px]">airline_seat_recline_extra</span>
+                </div>
+                <h4 className="font-bold text-slate-950 dark:text-white">{vehicle.seats || 9} ที่นั่ง VIP เบาะใหญ่พิเศษ</h4>
+                <p className="text-slate-500 leading-relaxed">
+                  ผังที่นั่ง 3 แถว ระยะห่างวางขา Legroom กว้างพิเศษ เบาะปรับเอนนอน 150 องศา พร้อมระบบนวดไฟฟ้า
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
+                <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-950 dark:text-white">
+                  <span className="material-symbols-outlined text-[24px]">luggage</span>
+                </div>
+                <h4 className="font-bold text-slate-950 dark:text-white">พื้นที่จุสัมภาระขนาดใหญ่</h4>
+                <p className="text-slate-500 leading-relaxed">
+                  รองรับกระเป๋าเดินทาง 28 นิ้วได้ 5-6 ใบ หรือขนาด 24 นิ้วได้ถึง 8 ใบ พร้อมช่องเก็บของสัมภาระส่วนตัว
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
+                <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-950 dark:text-white">
+                  <span className="material-symbols-outlined text-[24px]">tv_gen</span>
+                </div>
+                <h4 className="font-bold text-slate-950 dark:text-white">ความบันเทิง & ชาร์จไฟครบครัน</h4>
+                <p className="text-slate-500 leading-relaxed">
+                  สมาร์ททีวี Android 24 นิ้ว คาราโอเกะ ไวไฟ 5G พร้อมช่องชาร์จ Type-C & USB ทุกที่นั่ง และปลั๊กไฟ 220V
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
+                <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[#06c755]">
+                  <span className="material-symbols-outlined text-[24px]">shield_with_heart</span>
+                </div>
+                <h4 className="font-bold text-slate-950 dark:text-white">ความปลอดภัยและประกันภัย</h4>
+                <p className="text-slate-500 leading-relaxed">
+                  ป้ายเหลือง 30 ถูกต้อง, GPS ตรวจจับความเร็ว DLT 24 ชม., ประกันภัยผู้โดยสารชั้น 1 สูงสุด 1,000,000 บาท/ที่นั่ง
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Action Buttons Toolbar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-space-xs border-t border-border-subtle dark:border-slate-800">
-          {/* Share to LINE */}
-          <button
-            type="button"
-            onClick={handleShareLine}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-line-green hover:bg-line-green-hover text-white font-medium text-xs shadow-sm transition-all active:scale-[0.98] cursor-pointer"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>{t('ecard.shareLine')}</span>
-          </button>
+        {/* ============================================================== */}
+        {/* SECTION 3: AVAILABILITY CALENDAR & ROUTE FARE CALCULATOR */}
+        {/* ============================================================== */}
+        <section className="w-full px-4 sm:px-6 lg:px-8 py-6 bg-[#f8fafc] dark:bg-slate-950">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Live Monthly Calendar (7 Cols) */}
+            <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="material-symbols-outlined text-[#06c755] text-[20px]">calendar_month</span>
+                    <h3 className="text-base font-bold text-slate-950 dark:text-white">ปฏิทินคิวงาน{driverNick} (อัปเดตแบบเรียลไทม์)</h3>
+                  </div>
+                  <p className="text-xs text-slate-500">ตรวจสอบวันที่คิวว่างเพื่อวางแผนการเดินทางล่วงหน้า</p>
+                </div>
+                <div className="flex items-center bg-slate-100 dark:bg-slate-800 px-3 py-1 border border-slate-200 dark:border-slate-700 text-xs font-bold font-mono">
+                  <span>ตุลาคม 2569 / Oct 2026</span>
+                </div>
+              </div>
 
-          {/* Copy Intro Text */}
-          <button
-            type="button"
-            onClick={handleCopyIntro}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-paper-canvas dark:bg-slate-800 hover:bg-surface-variant border border-border-subtle dark:border-slate-700 text-ink-primary dark:text-slate-100 font-medium text-xs transition-all active:scale-[0.98] cursor-pointer"
-          >
-            {copiedIntro ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span>{t('ecard.copiedIntro')}</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5 text-ink-muted" />
-                <span>{t('ecard.copyIntro')}</span>
-              </>
-            )}
-          </button>
+              {/* Calendar Legend */}
+              <div className="flex items-center gap-4 text-xs">
+                <span className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200 font-semibold">
+                  <span className="w-3 h-3 bg-white border border-[#06c755] text-[#06c755] flex items-center justify-center font-bold text-[9px]">●</span>
+                  <span>คิวว่างพร้อมรับงาน</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-slate-500">
+                  <span className="w-3 h-3 bg-slate-100 border border-slate-300 text-slate-400 flex items-center justify-center text-[10px]">✕</span>
+                  <span>ติดงานแล้ว (Booked)</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-[#d97706] font-semibold">
+                  <span className="w-3 h-3 bg-[#fef3c7] border border-[#d97706]"></span>
+                  <span>วันนี้ (Today)</span>
+                </span>
+              </div>
 
-          {/* Download Image */}
-          <button
-            type="button"
-            disabled={isExporting}
-            onClick={handleDownloadImage}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-navy-deep hover:bg-navy-surface text-white font-medium text-xs shadow-sm transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>{isExporting ? t('ecard.exporting') : t('ecard.saveImage')}</span>
-          </button>
+              {/* Calendar Table Grid */}
+              <div className="border border-slate-200 dark:border-slate-800 text-center font-mono text-xs">
+                <div className="grid grid-cols-7 font-bold py-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                  <div className="text-rose-600">อา.</div>
+                  <div>จ.</div>
+                  <div>อ.</div>
+                  <div>พ.</div>
+                  <div>พฤ.</div>
+                  <div>ศ.</div>
+                  <div className="text-slate-950 dark:text-white">ส.</div>
+                </div>
 
-          {/* Copy Web Link */}
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-paper-canvas dark:bg-slate-800 hover:bg-surface-variant border border-border-subtle dark:border-slate-700 text-ink-primary dark:text-slate-100 font-medium text-xs transition-all active:scale-[0.98] cursor-pointer"
-          >
-            {copiedLink ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span>{t('ecard.copiedLink')}</span>
-              </>
-            ) : (
-              <>
-                <ExternalLink className="w-3.5 h-3.5 text-ink-muted" />
-                <span>{t('ecard.copyLink')}</span>
-              </>
-            )}
-          </button>
+                <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                  {/* Trailing days */}
+                  <div className="p-2.5 text-slate-300 bg-slate-50/50">28</div>
+                  <div className="p-2.5 text-slate-300 bg-slate-50/50">29</div>
+                  <div className="p-2.5 text-slate-300 bg-slate-50/50">30</div>
+                  {/* Booked Days */}
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
+                    <span className="block font-bold">1</span>
+                    <span className="text-[9px] block">ติดงาน</span>
+                  </div>
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
+                    <span className="block font-bold">2</span>
+                    <span className="text-[9px] block">ติดงาน</span>
+                  </div>
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
+                    <span className="block font-bold">3</span>
+                    <span className="text-[9px] block">ติดงาน</span>
+                  </div>
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
+                    <span className="block font-bold">4</span>
+                    <span className="text-[9px] block">ติดงาน</span>
+                  </div>
+
+                  {/* Today */}
+                  <div className="p-2 bg-[#fef3c7] border-2 border-[#d97706] text-slate-950 font-bold">
+                    <span className="block">5</span>
+                    <span className="text-[9px] text-[#d97706] font-bold block">วันนี้-ว่าง</span>
+                  </div>
+
+                  {/* Available Days */}
+                  {[6, 7, 8, 9].map((d) => (
+                    <div key={d} className="p-2 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold hover:bg-[#e8f9ee] transition-colors">
+                      <span className="block">{d}</span>
+                      <span className="text-[9px] text-[#06c755] block">ว่าง</span>
+                    </div>
+                  ))}
+
+                  {/* Booked weekend */}
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
+                    <span className="block font-bold">10</span>
+                    <span className="text-[9px] block">ติดงาน</span>
+                  </div>
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
+                    <span className="block font-bold">11</span>
+                    <span className="text-[9px] block">ติดงาน</span>
+                  </div>
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
+                    <span className="block font-bold">12</span>
+                    <span className="text-[9px] block">ติดงาน</span>
+                  </div>
+
+                  {[13, 14, 15, 16, 17].map((d) => (
+                    <div key={d} className="p-2 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold hover:bg-[#e8f9ee] transition-colors">
+                      <span className="block">{d}</span>
+                      <span className="text-[9px] text-[#06c755] block">ว่าง</span>
+                    </div>
+                  ))}
+
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
+                    <span className="block font-bold">18</span>
+                    <span className="text-[9px] block">ติดงาน</span>
+                  </div>
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
+                    <span className="block font-bold">19</span>
+                    <span className="text-[9px] block">ติดงาน</span>
+                  </div>
+
+                  {[20, 21, 22].map((d) => (
+                    <div key={d} className="p-2 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold hover:bg-[#e8f9ee] transition-colors">
+                      <span className="block">{d}</span>
+                      <span className="text-[9px] text-[#06c755] block">ว่าง</span>
+                    </div>
+                  ))}
+
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
+                    <span className="block font-bold">23</span>
+                    <span className="text-[9px] block">ติดงาน</span>
+                  </div>
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
+                    <span className="block font-bold">24</span>
+                    <span className="text-[9px] block">ติดงาน</span>
+                  </div>
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
+                    <span className="block font-bold">25</span>
+                    <span className="text-[9px] block">ติดงาน</span>
+                  </div>
+
+                  {[26, 27, 28, 29, 30, 31].map((d) => (
+                    <div key={d} className="p-2 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold hover:bg-[#e8f9ee] transition-colors">
+                      <span className="block">{d}</span>
+                      <span className="text-[9px] text-[#06c755] block">ว่าง</span>
+                    </div>
+                  ))}
+                  <div className="p-2.5 text-slate-300 bg-slate-50/50">1</div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                <span>หมายเหตุ: วันที่ติดงานแล้วสามารถสอบถามคิวรถในทีมงานเดียวกันของ{driverNick}ได้ตลอดเวลา</span>
+                <span className="font-bold text-slate-950 dark:text-white shrink-0">ทีมงาน 8 คัน</span>
+              </div>
+            </div>
+
+            {/* Quick Route Inquiry & Fare Estimator (5 Cols) */}
+            <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
+                <span className="text-xs uppercase tracking-wider text-[#d97706] font-bold block mb-1">INSTANT INQUIRY</span>
+                <h3 className="text-base font-bold text-slate-950 dark:text-white">เช็คคิวรถ & ประเมินราคาทริปกับ{driverNick}</h3>
+                <p className="text-xs text-slate-500 mt-0.5">ระบุวันเดินทางและเส้นทาง ระบบจะสร้างข้อความสรุปพร้อมส่งเข้า LINE ให้ทันที</p>
+              </div>
+
+              <form onSubmit={handleInquirySubmit} className="space-y-4 text-xs">
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block">จุดหมาย / เส้นทางท่องเที่ยวหลัก</label>
+                  <select
+                    value={selectedRouteKey}
+                    onChange={(e) => setSelectedRouteKey(e.target.value)}
+                    className="w-full h-11 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 text-slate-900 dark:text-white focus:outline-none focus:border-slate-950 cursor-pointer"
+                  >
+                    {Object.entries(routeRates).map(([k, val]) => (
+                      <option key={k} value={k}>
+                        {val.label} (฿{val.price.toLocaleString()} / วัน)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="font-semibold text-slate-700 dark:text-slate-300 block">วันที่เริ่มเดินทาง</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full h-11 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 text-slate-900 dark:text-white font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-semibold text-slate-700 dark:text-slate-300 block">จำนวนวันเดินทาง</label>
+                    <select
+                      value={daysCount}
+                      onChange={(e) => setDaysCount(Number(e.target.value))}
+                      className="w-full h-11 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 text-slate-900 dark:text-white cursor-pointer"
+                    >
+                      <option value={1}>1 วัน (ไปเช้า-เย็นกลับ)</option>
+                      <option value={2}>2 วัน 1 คืน</option>
+                      <option value={3}>3 วัน 2 คืน</option>
+                      <option value={4}>4 วัน 3 คืน</option>
+                      <option value={5}>5 วันขึ้นไป</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block">จำนวนผู้โดยสารโดยประมาณ</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['1-4', '5-7', '8-9'].map((count) => (
+                      <button
+                        key={count}
+                        type="button"
+                        onClick={() => setPassengers(count)}
+                        className={`py-2 px-3 border text-center font-semibold transition-colors cursor-pointer ${
+                          passengers === count
+                            ? 'bg-slate-950 text-white border-slate-950'
+                            : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200'
+                        }`}
+                      >
+                        {count} ท่าน
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Calculation summary */}
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-4 border border-slate-200 dark:border-slate-700 space-y-2">
+                  <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span>อัตราค่าบริการคนขับ + รถตู้ VIP:</span>
+                    <span className="font-mono font-bold text-slate-950 dark:text-white">฿{currentRate.price.toLocaleString()} / วัน</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span>ระยะเวลาการใช้งาน:</span>
+                    <span className="font-mono font-bold text-slate-950 dark:text-white">{daysCount} วัน</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span>ค่านายหน้า TripDee (0% GP):</span>
+                    <span className="font-mono font-bold text-[#06c755]">฿0 (ไม่มีบวกเพิ่ม)</span>
+                  </div>
+                  <div className="border-t border-slate-200 dark:border-slate-700 pt-2 flex items-baseline justify-between">
+                    <div>
+                      <span className="font-bold text-slate-950 dark:text-white block text-sm">ยอดประเมินรวม</span>
+                      <span className="text-[10px] text-slate-400">*ไม่รวมค่าน้ำมันและค่าผ่านทางตามจริง</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">฿{estimatedTotal.toLocaleString()}</span>
+                      <span className="text-[11px] text-slate-500 block">บาท</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full h-12 bg-[#06c755] hover:brightness-105 text-white font-bold transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer text-xs sm:text-sm"
+                >
+                  <span className="material-symbols-outlined text-[20px]">send</span>
+                  <span>ส่งข้อมูลเช็คคิวตรงกับ{driverNick}ผ่าน LINE</span>
+                </button>
+                <p className="text-[11px] text-center text-slate-400">
+                  ระบบจะเปิดแอป LINE พร้อมข้อความรายละเอียดทริป เพื่อให้คนขับตอบคอนเฟิร์มภายใน 3 นาที
+                </p>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* SECTION 4: SERVICE RATES & STANDARD POPULAR ROUTES */}
+        {/* ============================================================== */}
+        <section className="w-full px-4 sm:px-6 lg:px-8 py-6 bg-[#f8fafc] dark:bg-slate-950">
+          <div className="space-y-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-2 h-2 bg-[#06c755]"></span>
+                  <span className="text-xs uppercase tracking-wider text-slate-500 font-bold">TRANSPARENT 0% COMMISSION RATES</span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-950 dark:text-white">อัตราค่าบริการมาตรฐานคนขับ</h3>
+              </div>
+              <span className="text-xs text-slate-500 font-semibold">จ่ายเงินสดหรือโอนตรงเข้าบัญชีคนขับเมื่อสิ้นสุดวัน</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 space-y-3">
+                <span className="font-mono text-[10px] text-slate-400 block uppercase">ROUTE TIER 01</span>
+                <h4 className="font-bold text-slate-950 dark:text-white text-sm">เมืองเชียงใหม่ & แม่ริม</h4>
+                <p className="text-slate-500 text-[11px]">ม่อนแจ่ม, ปางช้างแม่สา, สวนสิริกิติ์, คาเฟ่หางดง, ไนท์ซาฟารี</p>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="text-xl font-bold font-mono text-slate-950 dark:text-white">฿2,000 <span className="text-xs text-slate-400 font-normal">/ วัน</span></div>
+                  <span className="text-[11px] text-slate-400 block mt-1">ให้บริการ 10-12 ชม./วัน • ฟรีน้ำดื่มผ้าเย็น</span>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 space-y-3">
+                <span className="font-mono text-[10px] text-[#d97706] block uppercase font-bold">ROUTE TIER 02 • ยอดนิยม</span>
+                <h4 className="font-bold text-slate-950 dark:text-white text-sm">ดอยอินทนนท์ / เชียงดาว</h4>
+                <p className="text-slate-500 text-[11px]">ยอดดอยอินทนนท์, กิ่วแม่ปาน, ป่าบงเปียง, อ่างขาง, สันป่าเกี๊ยะ</p>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="text-xl font-bold font-mono text-slate-950 dark:text-white">฿2,300 - 2,500 <span className="text-xs text-slate-400 font-normal">/ วัน</span></div>
+                  <span className="text-[11px] text-slate-400 block mt-1">ชำนาญทางโค้งลาดชันสูง • แนะนำจุดชมวิว</span>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 space-y-3">
+                <span className="font-mono text-[10px] text-slate-400 block uppercase">ROUTE TIER 03</span>
+                <h4 className="font-bold text-slate-950 dark:text-white text-sm">ปาย - แม่ฮ่องสอน / เชียงราย</h4>
+                <p className="text-slate-500 text-[11px]">ปาย 762 โค้ง, บ้านรักไทย, ปางอุ๋ง, วัดร่องขุ่น, สิงห์ปาร์ค, ดอยตุง</p>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="text-xl font-bold font-mono text-slate-950 dark:text-white">฿2,800 <span className="text-xs text-slate-400 font-normal">/ วัน</span></div>
+                  <span className="text-[11px] text-slate-400 block mt-1">ขับนุ่มนวล ไม่เมารถ • พักค้างคืนต่างจังหวัด</span>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-5 space-y-3">
+                <span className="font-mono text-[10px] text-slate-950 dark:text-white block uppercase font-bold">CORPORATE B2B</span>
+                <h4 className="font-bold text-slate-950 dark:text-white text-sm">คาราวานสัมมนา & องค์กร</h4>
+                <p className="text-slate-500 text-[11px]">รับส่งสนามบิน, ศึกษาดูงานหน่วยงานราชการและบริษัทเอกชน</p>
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                  <div className="text-xl font-bold font-mono text-slate-950 dark:text-white">e-Tax เต็มรูป</div>
+                  <span className="text-[11px] text-slate-400 block mt-1">หัก 3% ถูกต้อง • เครือข่ายฟลีทถึง 10 คัน</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* SECTION 5: VERIFIED REVIEWS */}
+        {/* ============================================================== */}
+        <section className="w-full px-4 sm:px-6 lg:px-8 py-6 bg-[#f8fafc] dark:bg-slate-950">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#fea619] text-[20px]">rate_review</span>
+                <h3 className="text-base font-bold text-slate-950 dark:text-white">เสียงตอบรับจริงจากผู้โดยสาร ({reviewCount} ทริป)</h3>
+              </div>
+              <div className="flex items-center gap-2 font-mono font-bold text-xs text-[#fea619]">
+                <span>★ {rating} / 5.0</span>
+                <span className="text-slate-400 font-normal">ความพึงพอใจ 99.2%</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 space-y-3 shadow-xs">
+                <div className="flex items-center justify-between text-[#fea619] font-bold">
+                  <span>★★★★★</span>
+                  <span className="text-slate-400 font-normal text-[11px]">22 ก.ย. 2569</span>
+                </div>
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
+                  &quot;พาคุณพ่อคุณแม่และญาติผู้ใหญ่ 7 คนไปเที่ยวดอยอินทนนท์และกิ่วแม่ปาน {driverNick}ขับรถนิ่มมาก ไม่กระชากเลย ผู้สูงอายุไม่เมารถ เบาะนวดไฟฟ้าถูกใจคุณแม่มาก รถสะอาดเหมือนใหม่ออกห้าง แนะนำเลยครับ!&quot;
+                </p>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <span className="font-bold text-slate-900 dark:text-white">คุณพงศกร และครอบครัว</span>
+                  <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] text-[10px] font-bold">VERIFIED RIDER</span>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 space-y-3 shadow-xs">
+                <div className="flex items-center justify-between text-[#fea619] font-bold">
+                  <span>★★★★★</span>
+                  <span className="text-slate-400 font-normal text-[11px]">14 ก.ย. 2569</span>
+                </div>
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
+                  &quot;ทางบริษัทจัดทริปพาลูกค้า VIP จากสิงคโปร์มาสัมมนาที่เชียงใหม่ {driverNick}แต่งตัวสุภาพเรียบร้อย พูดภาษาอังกฤษพื้นฐานสื่อสารได้ดีมาก ตรงต่อเวลาก่อนนัด 20 นาทีทุกวัน เรื่องเอกสารใบเสร็จออกได้รวดเร็ว มืออาชีพตัวจริง&quot;
+                </p>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <span className="font-bold text-slate-900 dark:text-white">คุณณิชาภัทร (ฝ่ายจัดซื้อ บมจ.)</span>
+                  <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] text-[10px] font-bold">CORPORATE CLIENT</span>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 space-y-3 shadow-xs">
+                <div className="flex items-center justify-between text-[#fea619] font-bold">
+                  <span>★★★★★</span>
+                  <span className="text-slate-400 font-normal text-[11px]">28 ส.ค. 2569</span>
+                </div>
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
+                  &quot;เส้นทางปาย-ปางอุ๋งโค้งโหดมาก แต่{driverNick}ขับนิ่งและปลอดภัยสุดๆ รู้จักมุมถ่ายรูปสวยๆ แวะร้านกาแฟวิวเด็ดที่คนไม่ค่อยรู้จัก คอยช่วยยกกระเป๋าทุกครั้ง ประทับใจมาก ทริปหน้าจะจองอีกแน่นอนค่ะ&quot;
+                </p>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <span className="font-bold text-slate-900 dark:text-white">คุณธนภรณ์ และแก๊งเพื่อน</span>
+                  <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] text-[10px] font-bold">VERIFIED RIDER</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Sticky Floating Bottom Bar */}
+        <div className="sticky bottom-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-3 px-4 sm:px-6 shadow-md flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 bg-slate-950 text-white flex items-center justify-center font-bold text-xs shrink-0">
+              {driverNick.charAt(0)}
+            </div>
+            <div className="min-w-0">
+              <span className="font-bold text-xs text-slate-900 dark:text-white block truncate">
+                {publicName} ({driverNick})
+              </span>
+              <span className="text-[11px] text-slate-500 block truncate">
+                {title} • ทะเบียน {cleanPlate}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 text-xs">
+            <a
+              href={`tel:${cleanPhone}`}
+              className="inline-flex items-center gap-1 px-3.5 py-2 bg-slate-950 hover:bg-slate-800 text-white font-bold transition-colors shadow-xs cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[16px]">call</span>
+              <span>โทร {displayPhone}</span>
+            </a>
+            <a
+              href={formatLineLink(lineId)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-3.5 py-2 bg-[#06c755] hover:brightness-105 text-white font-bold transition-all shadow-xs cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[16px]">chat</span>
+              <span>คุยไลน์ทันที</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>

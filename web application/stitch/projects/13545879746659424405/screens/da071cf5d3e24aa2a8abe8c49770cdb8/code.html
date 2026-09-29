@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+
+<html lang="th" style="width: 1280px; min-height: 100%; position: relative;"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="web_standard" name="shell-type"/>
+<title>TripDee - จองรถตู้ VIP รถเช่าพร้อมคนขับ ดีลตรงคนขับ 0% ค่าหัวคิว</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Prompt:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; font-family: 'Prompt', 'Plus Jakarta Sans', sans-serif; }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
+    }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-variant": "#d3e4fe",
+            "surface-canvas": "#F8FAFC",
+            "on-background": "#0b1c30",
+            "tertiary-container": "#00174b",
+            "surface-dim": "#cbdbf5",
+            "text-primary": "#0F172A",
+            "on-error": "#ffffff",
+            "on-tertiary-fixed": "#00174b",
+            "surface-container-high": "#dce9ff",
+            "amber-soft": "#FEF3C7",
+            "secondary-container": "#fea619",
+            "border-strong": "#CBD5E1",
+            "text-muted": "#94A3B8",
+            "text-secondary": "#475569",
+            "on-primary-fixed-variant": "#39475f",
+            "primary-container": "#0d1c32",
+            "surface-container-low": "#eff4ff",
+            "surface-container-highest": "#d3e4fe",
+            "on-primary": "#ffffff",
+            "primary-fixed-dim": "#b9c7e4",
+            "outline-variant": "#c5c6cd",
+            "secondary": "#855300",
+            "tertiary": "#000000",
+            "on-secondary": "#ffffff",
+            "on-error-container": "#93000a",
+            "on-tertiary-container": "#497cff",
+            "background": "#f8f9ff",
+            "surface-card": "#FFFFFF",
+            "brand-navy-light": "#1E293B",
+            "primary-fixed": "#d6e3ff",
+            "on-primary-container": "#76849f",
+            "secondary-fixed": "#ffddb8",
+            "on-surface": "#0b1c30",
+            "error": "#ba1a1a",
+            "on-tertiary-fixed-variant": "#003ea8",
+            "on-primary-fixed": "#0d1c32",
+            "error-container": "#ffdad6",
+            "surface-subtle": "#F1F5F9",
+            "primary": "#0a192f",
+            "inverse-surface": "#213145",
+            "on-secondary-fixed-variant": "#653e00",
+            "on-secondary-fixed": "#2a1700",
+            "surface-container": "#e5eeff",
+            "inverse-primary": "#b9c7e4",
+            "outline": "#75777e",
+            "tertiary-fixed-dim": "#b4c5ff",
+            "on-tertiary": "#ffffff",
+            "line-green-soft": "#E8F9EE",
+            "inverse-on-surface": "#eaf1ff",
+            "surface-bright": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "line-green": "#06C755",
+            "tertiary-fixed": "#dbe1ff",
+            "secondary-fixed-dim": "#ffb95f",
+            "on-surface-variant": "#44474d",
+            "border-subtle": "#E2E8F0",
+            "on-secondary-container": "#684000",
+            "surface-tint": "#515f78",
+            "surface": "#f8f9ff",
+            "amber-deep": "#D97706",
+            "brand-navy-dark": "#071224"
+          },
+          borderRadius: {
+            none: "0px",
+            sm: "2px",
+            DEFAULT: "2px",
+            lg: "2px",
+            xl: "2px",
+            "2xl": "2px",
+            "3xl": "2px",
+            full: "2px"
+          },
+          spacing: {
+            margin: "2rem",
+            "space-3xl": "4rem",
+            gutter: "1.5rem",
+            "space-2xs": "0.25rem",
+            "margin-mobile": "1rem",
+            "space-xs": "0.5rem",
+            "space-xl": "2rem",
+            "space-2xl": "2.75rem",
+            "gutter-mobile": "1rem",
+            "space-sm": "0.75rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem"
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-surface-canvas text-on-surface min-h-screen flex flex-col antialiased selection:bg-amber-100 selection:text-slate-900">
+<!-- Top Navigation (Crisp Swiss Minimalist Geometric Header) -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200">
+<div class="h-16 max-w-7xl mx-auto px-6 flex items-center justify-between gap-6">
+<!-- Brand Logo & Live Signal -->
+<div class="flex items-center gap-6 flex-shrink-0">
+<a class="flex items-center" data-path="home" href="#">
+<img alt="TripDee ทริปดี - แพลตฟอร์มเช่ารถตู้และคนขับมืออาชีพ" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Umr5CvkZxBxfike9Ygyj5OeO9sHpPVwORr6KEZ8Ve0eyhGcr8FYPlGQSpxAsyEmMk76hlj15TOGze8tRUpPdNeUbn_fIA6Jp44L8f58iJ2CPXCtBHH1AEl56AWsq_tEmMrTgKtDhrnJBRsP8Jby8voJzC0Hh5HNWRG28DaOXxJzgBVEDyhT1pFxzerR54Uh4a7BZxw_AUP98DWq1tyXqZ-ADX1k8ICq-VSX-eiA5AYb1M4zGXhFUsEhj0"/>
+</a>
+<div class="hidden xl:flex items-center gap-2 pl-4 border-l border-slate-200 text-xs font-medium text-slate-500">
+<span class="inline-block w-1.5 h-1.5 bg-line-green"></span>
+</div>
+</div>
+<!-- Main Navigation Links (Clean sharp borders) -->
+<nav class="hidden lg:flex items-center h-full gap-1">
+<a class="h-full px-3 text-xs font-bold text-slate-950 flex items-center gap-1.5 border-b-2 border-slate-950 bg-slate-50/60" data-path="van-with-driver" href="#">
+<span class="material-symbols-outlined text-[17px]">airport_shuttle</span>
+<span class="">รถตู้พร้อมคนขับ</span>
+</a>
+<a class="h-full px-3 text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-colors flex items-center gap-1.5 border-b-2 border-transparent" data-path="sedan-suv" href="#">
+<span class="material-symbols-outlined text-[17px]">directions_car</span>
+<span class="">รถเก๋ง / SUV</span>
+</a>
+<a class="h-full px-3 text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-colors flex items-center gap-1.5 border-b-2 border-transparent" data-path="self-drive" href="#">
+<span class="material-symbols-outlined text-[17px]">key</span>
+<span class="">เช่าขับเอง</span>
+</a>
+<a class="h-full px-3 text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-colors flex items-center gap-1.5 border-b-2 border-transparent" data-path="trip-board" href="#">
+<span class="material-symbols-outlined text-[17px]">sync_alt</span>
+<span class="">TripBoard กระดานงาน</span>
+<span class="text-[9px] bg-red-600 text-white font-black px-1 py-0.2 tracking-wider">HOT</span>
+</a>
+<a class="h-full px-3 text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-colors flex items-center gap-1.5 border-b-2 border-transparent" data-path="corporate-b2b" href="#">
+<span class="material-symbols-outlined text-[17px]">domain</span>
+<span class="">องค์กร B2B</span>
+</a>
+</nav>
+<!-- Right Utility Actions (Sharp Rectangular Buttons) -->
+<div class="flex items-center gap-2 flex-shrink-0"><div class="flex items-center border border-slate-200 text-slate-600 text-xs"><button class="px-2 py-1 bg-slate-900 text-white font-bold" type="button">TH</button><button class="px-2 py-1 hover:text-slate-900 font-medium" type="button">EN</button></div><a class="hidden md:inline-flex items-center gap-1.5 text-xs text-slate-700 hover:text-emerald-700 px-2.5 py-1 border border-slate-200 bg-slate-50 transition-colors" data-path="driver-partner" href="#"><span class="material-symbols-outlined text-[15px] text-line-green">local_taxi</span><span class="font-medium">สำหรับคนขับ</span><span class="text-[9px] bg-line-green-soft text-line-green border border-emerald-200 px-1 font-bold">0% คอมมิชชั่น</span></a><div class="h-4 w-px bg-slate-200 hidden md:block"></div><a class="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 border border-slate-900 transition-all" data-path="login" href="#"><span class="material-symbols-outlined text-[16px]">person</span><span class="">เข้าสู่ระบบ / สมัครสมาชิก</span></a></div>
+</div>
+</header>
+<main class="w-full pt-16 flex-1"><div class="flex flex-col w-full">
+<!-- Subtle Architectural Header Scrim / Live Status Strip -->
+<div class="w-full bg-surface-card border-b border-border-hairline shadow-sm">
+<div class="max-w-7xl mx-auto px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+<!-- Breadcrumb -->
+<nav aria-label="Breadcrumb" class="flex items-center gap-2">
+<a class="font-label-sm text-label-sm text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px] text-text-muted">home</span>
+<span>หน้าหลักพาร์ทเนอร์</span>
+</a>
+<span class="text-text-muted text-[10px]">/</span>
+<span class="font-label-sm text-label-sm text-text-primary">จัดการข้อมูลคนขับและคิวงาน (เชียงใหม่)</span>
+</nav>
+<!-- Live Node & Auto-save Indicator -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 bg-surface-subtle px-3 py-1 text-text-secondary font-caption text-caption">
+<span class="w-2 h-2 rounded-full bg-line-green animate-pulse"></span>
+<span>ระบบออนไลน์: คลาวด์ซิงก์เรียลไทม์</span>
+<span class="text-text-muted">|</span>
+<span class="font-mono text-text-muted">CNX-SVR-04</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Canvas Container -->
+<div class="max-w-7xl mx-auto px-6 py-8 w-full flex flex-col gap-6">
+<!-- 1. Driver Profile Master Bento Module -->
+<div class="bg-surface-card p-6 shadow-sm border border-border-hairline relative overflow-hidden">
+<!-- Top Geometric Accent Bar -->
+<div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary-container to-line-green"></div>
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-border-hairline">
+<!-- Identity Block -->
+<div class="flex items-start md:items-center gap-4 min-w-0">
+<!-- Geometric Avatar -->
+<div class="relative w-16 h-16 bg-primary-container text-on-primary flex items-center justify-center flex-shrink-0 shadow-sm border border-border-hairline">
+<span class="material-symbols-outlined text-[32px] text-primary-fixed">airport_shuttle</span>
+<div class="absolute -bottom-1 -right-1 bg-line-green text-surface-card w-5 h-5 flex items-center justify-center">
+<span class="material-symbols-outlined text-[12px] font-bold">check</span>
+</div>
+</div>
+<!-- Driver Meta -->
+<div class="flex flex-col min-w-0">
+<div class="flex flex-wrap items-center gap-2">
+<h1 class="font-headline-md text-headline-md text-text-primary truncate">นายสุรชัย ใจดี (พี่ชัย รถตู้เชียงใหม่)</h1>
+<span class="inline-flex items-center gap-1 bg-line-green-soft text-line-green px-2 py-0.5 font-label-sm text-[11px] font-bold tracking-wider">
+<span class="material-symbols-outlined text-[13px]">verified</span>
+                VERIFIED PARTNER
+              </span>
+</div>
+<div class="flex flex-wrap items-center gap-3 mt-1.5 font-body-md text-body-md text-text-secondary">
+<span class="font-mono text-xs bg-surface-subtle px-2 py-0.5 text-text-primary font-semibold">รหัส: TD-VN-50821</span>
+<span class="text-text-muted hidden sm:inline">•</span>
+<span class="flex items-center gap-1 text-xs">
+<span class="material-symbols-outlined text-[15px] text-text-muted">location_on</span>
+                จุดประจำ: ท่าอากาศยานนานาชาติเชียงใหม่ (CNX) / ภาคเหนือตอนบน
+              </span>
+</div>
+</div>
+</div>
+<!-- Master Availability Toggle Switch -->
+<div class="flex items-center gap-3 bg-surface-canvas p-2.5 border border-border-hairline flex-shrink-0">
+<div class="flex flex-col text-right">
+<span class="font-label-sm text-label-sm text-text-primary">สถานะการรับงาน</span>
+<span class="font-caption text-caption text-line-green font-bold" id="availability-label">พร้อมรับงานทันที 24 ชม.</span>
+</div>
+<button aria-pressed="true" class="relative inline-flex h-8 w-16 items-center bg-line-green transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" id="toggle-availability-btn" type="button">
+<span class="inline-block h-6 w-6 transform translate-x-9 bg-surface-card transition-transform shadow-sm" id="toggle-dot"></span>
+</button>
+</div>
+</div>
+<!-- 4 KPI Metrics Monolithic Rail -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6">
+<!-- KPI 1 -->
+<div class="bg-surface-subtle p-4 border border-border-hairline flex flex-col justify-between">
+<div class="flex items-center justify-between text-text-secondary font-label-sm text-caption">
+<span>คะแนนรีวิวคนขับ</span>
+<span class="material-symbols-outlined text-[18px] text-amber-deep">star</span>
+</div>
+<div class="mt-2 flex items-baseline gap-1.5">
+<span class="font-headline-xl text-headline-xl text-text-primary font-mono font-bold">4.96</span>
+<span class="text-amber-deep text-xs font-bold">★★★★★</span>
+</div>
+<span class="font-caption text-caption text-text-secondary mt-1">อิงจากผู้โดยสารจริง 128 ทริป</span>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-subtle p-4 border border-border-hairline flex flex-col justify-between">
+<div class="flex items-center justify-between text-text-secondary font-label-sm text-caption">
+<span>การตอบกลับเฉลี่ย</span>
+<span class="material-symbols-outlined text-[18px] text-line-green">bolt</span>
+</div>
+<div class="mt-2 flex items-baseline gap-1.5">
+<span class="font-headline-xl text-headline-xl text-text-primary font-mono font-bold">&lt; 3</span>
+<span class="font-label-md text-label-md text-text-secondary">นาที</span>
+</div>
+<span class="font-caption text-caption text-line-green font-semibold mt-1">⚡ สถิติตอบไวมากระดับเหรียญทอง</span>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-subtle p-4 border border-border-hairline flex flex-col justify-between">
+<div class="flex items-center justify-between text-text-secondary font-label-sm text-caption">
+<span>ยอดเข้าชมรถ (30 วัน)</span>
+<span class="material-symbols-outlined text-[18px] text-text-muted">trending_up</span>
+</div>
+<div class="mt-2 flex items-baseline gap-1.5">
+<span class="font-headline-xl text-headline-xl text-text-primary font-mono font-bold">1,420</span>
+<span class="font-caption text-caption text-line-green font-bold bg-line-green-soft px-1.5 py-0.2">+24%</span>
+</div>
+<span class="font-caption text-caption text-text-secondary mt-1">ผู้ค้นหาเจาะจงโซนเชียงใหม่</span>
+</div>
+<!-- KPI 4 -->
+<div class="bg-surface-subtle p-4 border border-border-hairline flex flex-col justify-between">
+<div class="flex items-center justify-between text-text-secondary font-label-sm text-caption">
+<span>อัตราคอมมิชชั่น</span>
+<span class="material-symbols-outlined text-[18px] text-primary">percent</span>
+</div>
+<div class="mt-2 flex items-baseline gap-1.5">
+<span class="font-headline-xl text-headline-xl text-text-primary font-mono font-bold">0%</span>
+<span class="font-label-md text-label-md text-line-green font-semibold">ตลอดชีพ</span>
+</div>
+<span class="font-caption text-caption text-text-secondary mt-1">รับเงินสดตรงจากผู้โดยสาร 100%</span>
+</div>
+</div>
+</div>
+<!-- 2. Featured Status Banner (Sharp Gold Architectural Accent) -->
+<div class="bg-amber-soft border border-amber-deep/40 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm relative">
+<div class="flex items-start gap-3.5">
+<div class="w-10 h-10 bg-amber-deep text-surface-card flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[24px]">grade</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-md text-base md:text-lg text-text-primary font-bold">
+              สถานะ: ได้รับคัดเลือกเป็น 'รถแนะนำ' (Featured TOP RATED)
+            </h2>
+<span class="bg-amber-deep text-surface-card font-mono text-[10px] font-bold px-2 py-0.5 tracking-wider uppercase">ACTIVE</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5 leading-relaxed">
+            รถตู้ของคุณมีตราดาวทองแนะนำ ช่วยเพิ่มความน่าเชื่อถือ ลูกค้าติดต่อเฉลี่ยเพิ่มขึ้น 3-5 เท่า พร้อมสิทธิ์ติดอันดับผลลัพธ์แรกสุดบนหน้าค้นหารถภาคเหนือ
+          </p>
+</div>
+</div>
+<button class="inline-flex items-center gap-2 bg-text-primary hover:bg-slate-800 text-surface-card font-label-sm text-label-sm px-4 py-2.5 transition-colors flex-shrink-0 self-stretch md:self-auto justify-center" type="button">
+<span>ดูสิทธิประโยชน์</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+<!-- 3. Master Navigation Tab Switcher (Geometric Bauhaus Strict Line) -->
+<div class="flex items-center border-b border-border-hairline bg-surface-card overflow-x-auto shadow-sm">
+<button class="flex items-center gap-2 px-6 py-4 font-label-md text-label-md text-text-primary font-bold border-b-2 border-text-primary bg-surface-canvas transition-colors flex-shrink-0" type="button">
+<span class="material-symbols-outlined text-[18px]">directions_car</span>
+<span>ข้อมูลรถและช่องทางติดต่อ</span>
+</button>
+<button class="flex items-center gap-2 px-6 py-4 font-label-md text-label-md text-text-secondary hover:text-text-primary hover:bg-surface-subtle transition-colors flex-shrink-0 border-b-2 border-transparent" type="button">
+<span class="material-symbols-outlined text-[18px] text-amber-deep">workspace_premium</span>
+<span>สิทธิประโยชน์รถแนะนำ</span>
+</button>
+<button class="flex items-center gap-2 px-6 py-4 font-label-md text-label-md text-text-secondary hover:text-text-primary hover:bg-surface-subtle transition-colors flex-shrink-0 border-b-2 border-transparent" type="button">
+<span class="material-symbols-outlined text-[18px]">inbox</span>
+<span>กล่องงานลูกค้า</span>
+<span class="bg-amber-deep text-surface-card font-mono text-[10px] font-bold px-1.5 py-0.5 leading-none">2 งานใหม่</span>
+</button>
+<button class="flex items-center gap-2 px-6 py-4 font-label-md text-label-md text-text-secondary hover:text-text-primary hover:bg-surface-subtle transition-colors flex-shrink-0 border-b-2 border-transparent" type="button">
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span>ประวัติรีวิวลูกค้า</span>
+</button>
+</div>
+<!-- 4. Real Vehicle Photos Gallery Module (2/8 Slots) -->
+<section class="bg-surface-card p-6 shadow-sm border border-border-hairline">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-border-hairline">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-primary text-[22px]">photo_library</span>
+<h2 class="font-headline-md text-headline-md text-text-primary">รูปถ่ายจริงสำหรับแสดงบนเว็บไซต์ (2/8 รูป)</h2>
+</div>
+<span class="font-caption text-caption text-text-secondary">แนะนำ 3-5 รูปภาพ (ภายนอก, ภายในเบาะ VIP, สิ่งอำนวยความสะดวก) รองรับ JPG, PNG, WebP สูงสุด 15MB</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+<!-- Photo Card 1 (Hero Exterior) -->
+<div class="relative group bg-surface-subtle border border-border-hairline flex flex-col">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-200">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Modern Toyota Commuter VIP van in pristine white exterior parked sharply in front of Chiang Mai mountain scenery, crisp lighting, high contrast commercial automotive showcase" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAS93Lp5tyiq38Q_n22TpfbbKacX038jBbYwO5RuyZUQztVRvefnvBxCjnr5tOWW_NYriItTmR_eAbeU03VGReHeAPlhd3_pn2VagF9BopeuhwROEM4B7fGxbacwxTQ3XndDHkoIy82Ab4N2KosofEc-H2pRCciI_-oJDN8s2N3aJLzGnKOfhr_hVRG5gOkx13aoVuELco9uUYLxm4Yyi65VWzDqBDiBtfEVUr5GAb-d1nTeNHTg9ZJ3A"/>
+<span class="absolute top-2 left-2 bg-text-primary text-surface-card font-label-sm text-[10px] px-2 py-0.5 font-bold tracking-wider flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[12px] text-amber-deep">star</span>
+              #1 รูปหน้าปกภายนอก
+            </span>
+<button class="absolute top-2 right-2 w-7 h-7 bg-surface-card/90 hover:bg-error hover:text-on-error text-text-primary flex items-center justify-center transition-colors shadow-sm" title="ลบรูปภาพนี้" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<div class="p-3 bg-surface-card border-t border-border-hairline flex items-center justify-between">
+<span class="font-caption text-caption text-text-secondary truncate">cnx-commuter-exterior.jpg</span>
+<span class="font-mono text-[10px] text-text-muted">2.4 MB</span>
+</div>
+</div>
+<!-- Photo Card 2 (VIP Cabin Luxury) -->
+<div class="relative group bg-surface-subtle border border-border-hairline flex flex-col">
+<div class="relative aspect-[16/10] overflow-hidden bg-slate-200">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Interior luxury passenger cabin of VIP passenger van with custom beige leather captain massage seats, modern ambient LED ceiling mood lighting, clean Swiss geometric composition" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBr0Jnx4Zp38sVSSSh605OCALpmCVZRB2A2Z2-__1MqJJs-g7BRiRwWVpH2h-3EGisOuCseR7gESRLtly9jGmInYdr82IEiTFDfRa5KUbto1gUaJrEWyJNPCD8iX5zPd3c9BVyJ7eZLnjDAqUdtVwRyzkyZXpne9RMCfO8X9hvZOJ4UVaUb-lDKkMiV2xcUDuFcR9k7iFO7tjIl9z4RY-rskAdQ0Pqfs4UiIzk53nth-Pgn0Jfxwzn2NA"/>
+<span class="absolute top-2 left-2 bg-text-primary text-surface-card font-label-sm text-[10px] px-2 py-0.5 font-bold tracking-wider flex items-center gap-1 shadow-sm">
+              #2 ห้องโดยสารเบาะ VIP
+            </span>
+<button class="absolute top-2 right-2 w-7 h-7 bg-surface-card/90 hover:bg-error hover:text-on-error text-text-primary flex items-center justify-center transition-colors shadow-sm" title="ลบรูปภาพนี้" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<div class="p-3 bg-surface-card border-t border-border-hairline flex items-center justify-between">
+<span class="font-caption text-caption text-text-secondary truncate">vip-cabin-seats.jpg</span>
+<span class="font-mono text-[10px] text-text-muted">3.1 MB</span>
+</div>
+</div>
+<!-- Upload Slot Placeholder 1 -->
+<label class="cursor-pointer border-2 border-dashed border-border-strong hover:border-text-primary bg-surface-canvas hover:bg-surface-subtle p-6 flex flex-col items-center justify-center text-center transition-colors min-h-[190px]">
+<div class="w-10 h-10 bg-surface-card text-text-secondary flex items-center justify-center mb-2 shadow-sm border border-border-hairline">
+<span class="material-symbols-outlined text-[22px]">add_a_photo</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-primary font-bold">+ เพิ่มรูปรถ (รูปที่ 3)</span>
+<span class="font-caption text-caption text-text-muted mt-1">เช่น ภาพคอนโซล สิ่งอำนวยความสะดวก</span>
+<input accept="image/*" class="hidden" type="file"/>
+</label>
+<!-- Upload Slot Placeholder 2 -->
+<label class="cursor-pointer border-2 border-dashed border-border-hairline hover:border-text-primary bg-surface-canvas/60 hover:bg-surface-subtle p-6 flex flex-col items-center justify-center text-center transition-colors min-h-[190px]">
+<div class="w-10 h-10 bg-surface-card text-text-muted flex items-center justify-center mb-2 shadow-sm border border-border-hairline">
+<span class="material-symbols-outlined text-[22px]">cloud_upload</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-secondary font-medium">เพิ่มรูปกระเป๋า / ท้ายรถ</span>
+<span class="font-caption text-caption text-text-muted mt-1">ลากวางไฟล์ที่นี่ หรือกดเลือกรูป</span>
+<input accept="image/*" class="hidden" type="file"/>
+</label>
+</div>
+</section>
+<!-- 5. Direct Contact & Specifications Form (Sharp Bauhaus Inputs) -->
+<section class="bg-surface-card p-6 shadow-sm border border-border-hairline">
+<!-- Header Banner with Trust Stamp -->
+<div class="p-4 bg-line-green-soft border border-line-green/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[22px] text-line-green font-bold">shield_person</span>
+<div>
+<h3 class="font-label-md text-label-md text-text-primary font-bold">ข้อมูลติดต่อตรง &amp; ข้อมูลจำเพาะรถยนต์</h3>
+<p class="font-caption text-caption text-text-secondary">ผู้โดยสารและลูกค้าองค์กร B2B จะติดต่อคุณโดยตรงผ่านเบอร์โทรและ LINE โดยไม่มีการหักค่าบริการ</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 font-mono text-[11px] font-bold text-line-green bg-surface-card px-2.5 py-1 border border-line-green/20">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+          DIRECT CLIENT CONNECTION 100%
+        </div>
+</div>
+<form class="grid grid-cols-1 lg:grid-cols-2 gap-8" id="driver-specs-form">
+<!-- Left Column: Primary Contact & Brand -->
+<div class="flex flex-col gap-5">
+<!-- Team / Driver Title -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-text-secondary flex items-center gap-1" for="driver-title">
+<span>ชื่อเล่น / ชื่อทีมรถสำหรับแสดงผลหน้าเว็บ</span>
+<span class="text-error">*</span>
+</label>
+<input class="w-full h-12 px-4 bg-surface-card border border-border-strong text-text-primary font-body-md text-body-md focus:border-text-primary focus:outline-none focus:ring-1 focus:ring-text-primary transition-all" id="driver-title" type="text" value="พี่ชัย รถตู้เชียงใหม่"/>
+</div>
+<!-- LINE ID with Green Badge -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-text-secondary flex items-center justify-between" for="driver-line">
+<span class="flex items-center gap-1">
+<span>LINE ID หรือ ลิงก์ LINE Official</span>
+<span class="text-error">*</span>
+</span>
+<span class="font-mono text-[11px] text-line-green flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">chat</span> ปุ่มแอดไลน์อัตโนมัติ
+              </span>
+</label>
+<div class="relative flex items-center">
+<div class="absolute left-0 top-0 bottom-0 w-12 bg-line-green text-surface-card flex items-center justify-center font-bold font-mono text-sm">
+                LINE
+              </div>
+<input class="w-full h-12 pl-16 pr-4 bg-surface-card border border-border-strong text-text-primary font-body-md text-body-md focus:border-text-primary focus:outline-none focus:ring-1 focus:ring-text-primary transition-all" id="driver-line" type="text" value="@chaivan_cnx"/>
+</div>
+</div>
+<!-- WeChat ID (Foreign Tour Market) -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-text-secondary flex items-center gap-1" for="driver-wechat">
+<span>WECHAT ID (สำหรับรองรับนักท่องเที่ยวต่างชาติ)</span>
+</label>
+<input class="w-full h-12 px-4 bg-surface-card border border-border-strong text-text-primary font-body-md text-body-md focus:border-text-primary focus:outline-none focus:ring-1 focus:ring-text-primary transition-all" id="driver-wechat" type="text" value="chaicnx_van"/>
+</div>
+<!-- License Plate Number -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-text-secondary flex items-center justify-between" for="driver-plate">
+<span class="flex items-center gap-1">
+<span>ป้ายทะเบียนรถ (ตรวจสอบมาตรฐานกรมการขนส่ง)</span>
+<span class="text-error">*</span>
+</span>
+<span class="font-label-sm text-[11px] text-line-green bg-line-green-soft px-2 py-0.5 font-bold">
+                ✓ ป้ายเหลืองถูกต้อง 100%
+              </span>
+</label>
+<input class="w-full h-12 px-4 bg-surface-card border border-border-strong text-text-primary font-body-md text-body-md focus:border-text-primary focus:outline-none focus:ring-1 focus:ring-text-primary transition-all font-mono font-semibold" id="driver-plate" type="text" value="นข-8899 เชียงใหม่ (ป้ายเหลือง 30)"/>
+</div>
+<!-- Vehicle Model Headline Description -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-text-secondary flex items-center gap-1" for="driver-headline">
+<span>หัวข้อรุ่นรถ &amp; จุดเด่นที่ดึงดูดลูกค้า</span>
+<span class="text-error">*</span>
+</label>
+<textarea class="w-full p-4 bg-surface-card border border-border-strong text-text-primary font-body-md text-body-md focus:border-text-primary focus:outline-none focus:ring-1 focus:ring-text-primary transition-all" id="driver-headline" rows="3">Toyota Commuter VIP 9 ที่นั่ง เบาะนวดไฟฟ้าพร้อมระบบแอร์ไมโครบัส และเครื่องเสียงคาราโอเกะพร้อมจอ Android</textarea>
+<span class="font-caption text-caption text-text-muted text-right">สูงสุด 120 ตัวอักษร</span>
+</div>
+</div>
+<!-- Right Column: Secondary Channels & Specs -->
+<div class="flex flex-col gap-5">
+<!-- Primary Phone Number -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-text-secondary flex items-center justify-between" for="driver-phone">
+<span class="flex items-center gap-1">
+<span>เบอร์โทรติดต่อตรง (ลูกค้ากดโทรออกทันที)</span>
+<span class="text-error">*</span>
+</span>
+<span class="font-label-sm text-[11px] text-line-green flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">check_circle</span> ตรวจสอบเบอร์แล้ว
+              </span>
+</label>
+<div class="relative flex items-center">
+<div class="absolute left-0 top-0 bottom-0 w-12 bg-surface-subtle text-text-secondary flex items-center justify-center border-r border-border-strong">
+<span class="material-symbols-outlined text-[18px]">call</span>
+</div>
+<input class="w-full h-12 pl-16 pr-4 bg-surface-card border border-border-strong text-text-primary font-body-md text-body-md font-mono font-bold focus:border-text-primary focus:outline-none focus:ring-1 focus:ring-text-primary transition-all" id="driver-phone" type="tel" value="081-234-5678"/>
+</div>
+</div>
+<!-- WhatsApp -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-text-secondary flex items-center gap-1" for="driver-whatsapp">
+<span>WHATSAPP เบอร์ หรือ ลิงก์ (สำหรับลูกค้ายุโรป/สิงคโปร์)</span>
+</label>
+<input class="w-full h-12 px-4 bg-surface-card border border-border-strong text-text-primary font-body-md text-body-md focus:border-text-primary focus:outline-none focus:ring-1 focus:ring-text-primary transition-all font-mono" id="driver-whatsapp" type="text" value="+66812345678"/>
+</div>
+<!-- KakaoTalk -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-text-secondary flex items-center gap-1" for="driver-kakao">
+<span>KAKAOTALK ID (ตลาดเกาหลี)</span>
+</label>
+<input class="w-full h-12 px-4 bg-surface-card border border-border-strong text-text-primary font-body-md text-body-md focus:border-text-primary focus:outline-none focus:ring-1 focus:ring-text-primary transition-all font-mono" id="driver-kakao" type="text" value="chaivan_cnx"/>
+</div>
+<!-- Capacity Dropdown -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-text-secondary flex items-center gap-1" for="driver-capacity">
+<span>จำนวนที่นั่งผู้โดยสารตามโครงสร้างจริง</span>
+<span class="text-error">*</span>
+</label>
+<select class="w-full h-12 px-4 bg-surface-card border border-border-strong text-text-primary font-body-md text-body-md focus:border-text-primary focus:outline-none focus:ring-1 focus:ring-text-primary transition-all" id="driver-capacity">
+<option selected="" value="9">9 ที่นั่ง VIP เบาะใหญ่พิเศษ 3 แถว (นั่งสบายที่สุด ไม่แออัด)</option>
+<option value="10">10 ที่นั่ง VIP เบาะหนังพรีเมียม</option>
+<option value="12">12 ที่นั่ง Standard สำหรับหมู่คณะ</option>
+<option value="13">13-14 ที่นั่ง Commuter มาตรฐานโรงงาน</option>
+</select>
+</div>
+<!-- Luggage Capacity Indicator Tag Strip -->
+<div class="p-4 bg-surface-subtle border border-border-hairline flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-secondary text-[24px]">luggage</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-text-primary font-bold">ความจุกระเป๋าสัมภาระสูงสุด</span>
+<span class="font-caption text-caption text-text-muted">กระเป๋าเดินทางขนาด 24-28 นิ้ว ได้ 5-7 ใบ (เมื่อพับเบาะหลังสุด)</span>
+</div>
+</div>
+<span class="font-mono text-xs font-bold text-text-primary bg-surface-card px-2.5 py-1 border border-border-hairline">
+              7 ใบใหญ่
+            </span>
+</div>
+</div>
+</form>
+</section>
+<!-- 6. Real-time Live Availability Calendar Module -->
+<section class="bg-surface-card p-6 shadow-sm border border-border-hairline">
+<!-- Title & Live Bar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border-hairline">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[22px] text-text-primary">calendar_month</span>
+<h2 class="font-headline-md text-headline-md text-text-primary">ปฏิทินระบุสถานะ "คิวว่าง / ติดงาน" (อัปเดตสด 24 ชม.)</h2>
+</div>
+<div class="flex items-center gap-2 text-xs font-mono text-text-secondary">
+<span class="w-2 h-2 rounded-full bg-line-green"></span>
+<span>ซิงก์ตรงกับผลการค้นหาของลูกค้าทันที</span>
+</div>
+</div>
+<!-- Current Availability Banner -->
+<div class="mt-4 p-4 bg-line-green-soft border border-line-green/30 flex items-center gap-3">
+<span class="material-symbols-outlined text-[22px] text-line-green font-bold flex-shrink-0">check_circle</span>
+<p class="font-body-md text-body-md text-text-primary">
+<strong class="font-bold">ขณะนี้ไม่มีคิวติดงาน</strong> — รถของคุณเปิดสถานะว่างพร้อมรับงานทุกวัน 24 ชั่วโมง (ลูกค้าบน TripDee สามารถกดติดต่อจองคิวทริปของคุณได้ตลอดเวลา)
+        </p>
+</div>
+<!-- Quick Add Blocked Date Interval -->
+<div class="mt-6 p-4 bg-surface-canvas border border-border-hairline flex flex-col md:flex-row items-stretch md:items-end gap-4">
+<div class="flex-1">
+<label class="block font-label-sm text-label-sm text-text-secondary mb-1.5">วันที่เริ่มต้นติดคิวงาน</label>
+<div class="relative">
+<input class="w-full h-11 px-3 bg-surface-card border border-border-strong text-text-primary font-mono text-sm focus:outline-none focus:border-text-primary" type="text" value="05/10/2569"/>
+</div>
+</div>
+<div class="flex-1">
+<label class="block font-label-sm text-label-sm text-text-secondary mb-1.5">ถึงวันที่สิ้นสุด (วันสุดท้าย)</label>
+<div class="relative">
+<input class="w-full h-11 px-3 bg-surface-card border border-border-strong text-text-primary font-mono text-sm focus:outline-none focus:border-text-primary" type="text" value="07/10/2569"/>
+</div>
+</div>
+<div class="flex-1">
+<label class="block font-label-sm text-label-sm text-text-secondary mb-1.5">หมายเหตุงาน (เห็นเฉพาะคุณ)</label>
+<input class="w-full h-11 px-3 bg-surface-card border border-border-strong text-text-primary text-sm focus:outline-none focus:border-text-primary" placeholder="เช่น ทริปดอยอินทนนท์ 3 วัน" type="text"/>
+</div>
+<button class="h-11 px-5 bg-amber-deep hover:bg-amber-600 text-surface-card font-label-sm text-label-sm font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm flex-shrink-0" type="button">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>+ เพิ่มวันติดคิว</span>
+</button>
+</div>
+<!-- Monthly Calendar Grid Visual (September / October View) -->
+<div class="mt-6 border border-border-hairline bg-surface-card">
+<!-- Month Navigation Bar -->
+<div class="flex items-center justify-between p-3.5 bg-surface-subtle border-b border-border-hairline">
+<button class="p-1 hover:bg-surface-card border border-transparent hover:border-border-hairline text-text-secondary transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-base text-text-primary font-bold">กันยายน 2569 / September 2026</span>
+<span class="font-mono text-xs bg-surface-card px-2 py-0.5 text-text-secondary border border-border-hairline">โซนเวลา: Asia/Bangkok</span>
+</div>
+<button class="p-1 hover:bg-surface-card border border-transparent hover:border-border-hairline text-text-secondary transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+<!-- Days of Week Header -->
+<div class="grid grid-cols-7 text-center font-label-sm text-[12px] font-bold py-2 bg-surface-canvas border-b border-border-hairline">
+<span class="text-error">อา (Sun)</span>
+<span class="text-text-secondary">จ (Mon)</span>
+<span class="text-text-secondary">อ (Tue)</span>
+<span class="text-text-secondary">พ (Wed)</span>
+<span class="text-text-secondary">พฤ (Thu)</span>
+<span class="text-text-secondary">ศ (Fri)</span>
+<span class="text-text-primary">ส (Sat)</span>
+</div>
+<!-- Calendar Cells Grid -->
+<div class="grid grid-cols-7 divide-x divide-y divide-border-hairline">
+<!-- Row 1: Days 1-7 -->
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs text-text-muted">31</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">1</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">2</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">3</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">4</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">5</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">6</span>
+</div>
+<!-- Row 2: Days 8-14 -->
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-error">7</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">8</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">9</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">10</span>
+</div>
+<!-- Busy Day Demo -->
+<div class="p-2 min-h-[64px] bg-error-container/40 border-l-2 border-l-error">
+<div class="flex items-center justify-between">
+<span class="font-mono text-xs font-bold text-error">11</span>
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+</div>
+<span class="block mt-1 font-caption text-[10px] text-error font-semibold truncate">ติดคิว (เชียงราย)</span>
+</div>
+<div class="p-2 min-h-[64px] bg-error-container/40 border-l-2 border-l-error">
+<div class="flex items-center justify-between">
+<span class="font-mono text-xs font-bold text-error">12</span>
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+</div>
+<span class="block mt-1 font-caption text-[10px] text-error font-semibold truncate">ติดคิว (เชียงราย)</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">13</span>
+</div>
+<!-- Row 3: Days 15-21 -->
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-error">14</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">15</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">16</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">17</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">18</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">19</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">20</span>
+</div>
+<!-- Row 4: Days 22-28 -->
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-error">21</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">22</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">23</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">24</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">25</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">26</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">27</span>
+</div>
+<!-- Row 5: Days 29 (Today) - 30 -->
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-error">28</span>
+</div>
+<!-- Today High-Contrast Geometric Box -->
+<div class="p-2 min-h-[64px] bg-surface-canvas border-2 border-text-primary relative shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-mono text-xs font-extrabold text-text-primary">29</span>
+<span class="bg-text-primary text-surface-card font-mono text-[9px] px-1 py-0.2 uppercase font-bold">วันนี้</span>
+</div>
+<span class="block mt-1 font-caption text-[10px] text-line-green font-bold">● ว่างพร้อมรับ</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors">
+<span class="font-mono text-xs font-bold text-text-primary">30</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors opacity-40">
+<span class="font-mono text-xs text-text-muted">1</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors opacity-40">
+<span class="font-mono text-xs text-text-muted">2</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors opacity-40">
+<span class="font-mono text-xs text-text-muted">3</span>
+</div>
+<div class="p-3 min-h-[64px] bg-surface-card hover:bg-surface-canvas transition-colors opacity-40">
+<span class="font-mono text-xs text-text-muted">4</span>
+</div>
+</div>
+<!-- Legend Ribbon -->
+<div class="p-3 bg-surface-canvas border-t border-border-hairline flex flex-wrap items-center justify-between gap-4 font-caption text-caption text-text-secondary">
+<div class="flex items-center gap-4">
+<span class="flex items-center gap-1.5">
+<span class="w-3 h-3 bg-surface-card border border-border-strong inline-block"></span>
+              คิวว่างรับงานได้
+            </span>
+<span class="flex items-center gap-1.5">
+<span class="w-3 h-3 bg-error-container border border-error inline-block"></span>
+              ติดงาน / คิวเต็ม
+            </span>
+<span class="flex items-center gap-1.5">
+<span class="w-3 h-3 border-2 border-text-primary inline-block"></span>
+              วันนี้ (ปัจจุบัน)
+            </span>
+</div>
+<span class="text-text-muted">คลิกที่ช่องวันที่ในปฏิทินเพื่อสลับสถานะ ว่าง/ติดงาน ได้โดยตรง</span>
+</div>
+</div>
+</section>
+<!-- 7. Primary Action Command Bar -->
+<div class="bg-surface-card p-4 border border-border-hairline shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-line-green text-[22px]">cloud_done</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-text-primary font-bold">การเปลี่ยนแปลงล่าสุดถูกบันทึกชั่วคราวแล้ว</span>
+<span class="font-caption text-caption text-text-muted">กดบันทึกเพื่อให้อัปเดตสถานะขึ้นเว็บไซต์จริงและแอปพลิเคชันทันที</span>
+</div>
+</div>
+<div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+<button class="px-4 py-2.5 bg-surface-subtle hover:bg-error-container hover:text-error text-text-secondary font-label-sm text-label-sm transition-colors border border-border-hairline flex items-center gap-1.5" id="btn-logout" type="button">
+<span class="material-symbols-outlined text-[16px]">logout</span>
+<span>ออกจากระบบ</span>
+</button>
+<button class="px-8 py-2.5 bg-text-primary hover:bg-slate-800 text-surface-card font-label-md text-label-md font-bold flex items-center justify-center gap-2 transition-colors shadow-sm" id="btn-save-master" type="button">
+<span class="material-symbols-outlined text-[18px]">save</span>
+<span>บันทึกการแก้ไขทั้งหมด</span>
+</button>
+</div>
+</div>
+<!-- 8. Danger Zone & Privacy PDPA Module (Architectural Alert Box) -->
+<section class="bg-surface-card border border-error/30 p-6 shadow-sm mb-12">
+<div class="flex flex-col md:flex-row items-start justify-between gap-6">
+<div class="flex items-start gap-4">
+<div class="w-12 h-12 bg-error-container text-error flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[26px]">gavel</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h3 class="font-headline-md text-base md:text-lg text-error font-bold">โซนอันตรายและการจัดการข้อมูลส่วนบุคคล (PDPA)</h3>
+<span class="bg-error text-on-error font-mono text-[10px] px-2 py-0.2 font-bold uppercase">DANGER ZONE</span>
+</div>
+<p class="font-body-md text-body-md text-text-secondary mt-1 max-w-3xl leading-relaxed">
+              หากคุณต้องการหยุดให้บริการถาวร คุณสามารถส่งคำขอลบข้อมูลรถ หมายเลขโทรศัพท์ และประวัติทั้งหมดของคุณออกจากฐานข้อมูล TripDee อย่างถาวร ข้อมูลจะไม่สามารถกู้คืนได้ตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562
+            </p>
+</div>
+</div>
+<button class="px-5 py-2.5 bg-error text-on-error hover:bg-red-700 font-label-sm text-label-sm font-bold flex items-center gap-2 transition-colors shadow-sm flex-shrink-0 self-stretch md:self-auto justify-center" onclick="confirm('คุณแน่ใจหรือไม่ว่าต้องการขอลบบัญชีคนขับและทำลายข้อมูลรถทั้งหมดออกจากระบบ TripDee? การดำเนินการนี้ไม่สามารถยกเลิกได้') &amp;&amp; alert('ส่งคำขอลบข้อมูลเรียบร้อยแล้ว ทีมงาน PDPA จะดำเนินการภายใน 24 ชม.')" type="button">
+<span class="material-symbols-outlined text-[18px]">delete_forever</span>
+<span>ขอลบบัญชีและทำลายข้อมูล</span>
+</button>
+</div>
+</section>
+</div>
+</div>
+<!-- Inline Micro-interactions -->
+<script>
+  (function initDriverDashboard() {
+    // 1. Availability Master Switch Toggle
+    const toggleBtn = document.getElementById('toggle-availability-btn');
+    const toggleDot = document.getElementById('toggle-dot');
+    const label = document.getElementById('availability-label');
+    let isAvailable = true;
+
+    if (toggleBtn && toggleDot && label) {
+      toggleBtn.addEventListener('click', () => {
+        isAvailable = !isAvailable;
+        if (isAvailable) {
+          toggleBtn.classList.remove('bg-text-secondary');
+          toggleBtn.classList.add('bg-line-green');
+          toggleDot.classList.remove('translate-x-1');
+          toggleDot.classList.add('translate-x-9');
+          label.textContent = 'พร้อมรับงานทันที 24 ชม.';
+          label.className = 'font-caption text-caption text-line-green font-bold';
+        } else {
+          toggleBtn.classList.remove('bg-line-green');
+          toggleBtn.classList.add('bg-text-secondary');
+          toggleDot.classList.remove('translate-x-9');
+          toggleDot.classList.add('translate-x-1');
+          label.textContent = 'พักงานชั่วคราว (ไม่แสดงผล)';
+          label.className = 'font-caption text-caption text-text-secondary font-bold';
+        }
+      });
+    }
+
+    // 2. Save Notification Feedback
+    const saveBtn = document.getElementById('btn-save-master');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> บันทึกเรียบร้อย!';
+        saveBtn.classList.add('bg-line-green');
+        setTimeout(() => {
+          saveBtn.innerHTML = originalText;
+          saveBtn.classList.remove('bg-line-green');
+        }, 1800);
+      });
+    }
+  })();
+</script></main>
+<!-- MODERN MINIMALIST ARCHITECTURAL FOOTER -->
+<footer class="w-full bg-white border-t border-slate-300 text-slate-700 py-12">
+<div class="max-w-7xl mx-auto px-6">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-8 border-b border-slate-200">
+<!-- Col 1: Brand Info -->
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-2">
+<img alt="TripDee Logo" class="h-7 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Umr5CvkZxBxfike9Ygyj5OeO9sHpPVwORr6KEZ8Ve0eyhGcr8FYPlGQSpxAsyEmMk76hlj15TOGze8tRUpPdNeUbn_fIA6Jp44L8f58iJ2CPXCtBHH1AEl56AWsq_tEmMrTgKtDhrnJBRsP8Jby8voJzC0Hh5HNWRG28DaOXxJzgBVEDyhT1pFxzerR54Uh4a7BZxw_AUP98DWq1tyXqZ-ADX1k8ICq-VSX-eiA5AYb1M4zGXhFUsEhj0"/>
+</div>
+<p class="text-xs text-slate-500 leading-relaxed font-light">
+          แพลตฟอร์มเช่าเหมารถตู้ VIP และยานพาหนะพร้อมคนขับอันดับ 1 ของไทย คอนเนกต์ลูกค้าและเจ้าของรถโดยตรง โปร่งใส ไร้ค่าหัวคิว
+        </p>
+<div class="flex items-center gap-2 pt-1 font-mono text-[10px]">
+<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 px-2 py-0.5 font-bold border border-emerald-300">
+<span class="material-symbols-outlined text-[12px]">verified</span> ดีลตรง 100%
+          </span>
+<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-800 px-2 py-0.5 font-bold border border-amber-300">
+<span class="material-symbols-outlined text-[12px]">security</span> พ.ร.บ. คุ้มครอง
+          </span>
+</div>
+</div>
+<!-- Col 2: Services -->
+<div class="flex flex-col gap-2.5">
+<h4 class="text-xs font-bold text-slate-950 uppercase tracking-wider">บริการของเรา</h4>
+<ul class="flex flex-col gap-1.5 text-xs text-slate-600">
+<li class=""><a class="hover:text-slate-950 transition-colors" href="#">เช่ารถตู้ VIP 9-10 ที่นั่งพร้อมคนขับ</a></li>
+<li class=""><a class="hover:text-slate-950 transition-colors" href="#">เช่า Toyota Majesty / Alphard รับรอง VIP</a></li>
+<li class=""><a class="hover:text-slate-950 transition-colors" href="#">เช่ารถเก๋ง / SUV ขับเองทั่วไทย</a></li>
+<li class=""><a class="hover:text-slate-950 transition-colors" href="#">TripBoard กระดานหารถ &amp; แชร์ทริป</a></li>
+<li class=""><a class="hover:text-slate-950 transition-colors" href="#">บริการเหมารถคาราวานสัมมนา B2B</a></li>
+</ul>
+</div>
+<!-- Col 3: Popular Routes -->
+<div class="flex flex-col gap-2.5">
+<h4 class="text-xs font-bold text-slate-950 uppercase tracking-wider">เส้นทางยอดนิยม</h4>
+<ul class="flex flex-col gap-1.5 text-xs text-slate-600">
+<li class=""><a class="hover:text-slate-950 transition-colors" href="#">เช่ารถตู้ กรุงเทพฯ - เขาใหญ่ / ปากช่อง</a></li>
+<li class=""><a class="hover:text-slate-950 transition-colors" href="#">เช่ารถตู้ กรุงเทพฯ - พัทยา / ชลบุรี</a></li>
+<li class=""><a class="hover:text-slate-950 transition-colors" href="#">เช่ารถตู้ เชียงใหม่ - ม่อนแจ่ม / อินทนนท์</a></li>
+<li class=""><a class="hover:text-slate-950 transition-colors" href="#">เช่ารถตู้ กรุงเทพฯ - หัวหิน / ชะอำ</a></li>
+<li class=""><a class="hover:text-slate-950 transition-colors" href="#">บริการรับส่งสนามบินสุวรรณภูมิ &amp; ดอนเมือง</a></li>
+</ul>
+</div>
+<!-- Col 4: Contact & Socials -->
+<div class="flex flex-col gap-2.5">
+<h4 class="text-xs font-bold text-slate-950 uppercase tracking-wider">ติดต่อและช่วยเหลือ</h4>
+<ul class="flex flex-col gap-1.5 text-xs text-slate-600">
+<li class=""><a class="hover:text-slate-950 transition-colors" href="#">สมัครเข้าร่วมเป็นคนขับ (0% Fee)</a></li>
+<li class=""><span class="text-slate-500">ศูนย์ประสานงานลูกค้า 24 ชั่วโมง</span></li>
+<li class="">
+<a class="inline-flex items-center gap-1.5 text-emerald-700 font-bold hover:underline" href="https://lin.ee/SYKrWJB" rel="noopener noreferrer" target="_blank">
+<span class="material-symbols-outlined text-[15px]">chat</span>
+<span class="">LINE Official: @tripdee</span>
+</a>
+</li>
+<li class="">
+<a class="inline-flex items-center gap-1.5 hover:text-slate-950 transition-colors" href="#">
+<span class="material-symbols-outlined text-[15px]">call</span>
+<span class="">โทรศัพท์: 02-123-4567</span>
+</a>
+</li>
+</ul>
+</div>
+</div>
+<div class="pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
+<p class="">© 2025 TripDee Co., Ltd. สงวนลิขสิทธิ์ทุกประการ. ทะเบียนพาณิชย์อิเล็กทรอนิกส์ DBD Registered.</p>
+<div class="flex items-center gap-4">
+<a class="hover:text-slate-900 transition-colors" href="#">นโยบายความเป็นส่วนตัว</a>
+<span class="">/</span>
+<a class="hover:text-slate-900 transition-colors" href="#">ข้อกำหนดการให้บริการ</a>
+<span class="">/</span>
+<a class="hover:text-slate-900 transition-colors" href="#">มาตรฐานความปลอดภัยคนขับ</a>
+</div>
+</div>
+</div>
+</footer>
+<!-- B2B Calculator & Tabs Interaction Logic -->
+<script>
+    (function() {
+      // B2B Pricing Calculator
+      const vanSelect = document.getElementById('b2b-van-count');
+      const daysSelect = document.getElementById('b2b-trip-days');
+      const totalDisplay = document.getElementById('b2b-estimated-total');
+
+      function calculateB2BPrice() {
+        if (!vanSelect || !daysSelect || !totalDisplay) return;
+        const vans = parseInt(vanSelect.value, 10) || 1;
+        const days = parseInt(daysSelect.value, 10) || 1;
+        const dailyRate = 2500;
+        const total = vans * days * dailyRate;
+        totalDisplay.textContent = '฿' + total.toLocaleString('th-TH');
+      }
+
+      if (vanSelect && daysSelect) {
+        vanSelect.addEventListener('change', calculateB2BPrice);
+        daysSelect.addEventListener('change', calculateB2BPrice);
+        calculateB2BPrice();
+      }
+
+      // Search Category Tabs Switcher (Geometric Sharp Active Style)
+      const searchTabButtons = document.querySelectorAll('#search-tabs button');
+      searchTabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          searchTabButtons.forEach(b => {
+            b.className = 'flex items-center gap-2 px-6 py-3.5 font-semibold text-xs text-slate-600 hover:text-slate-950 hover:bg-slate-50 border-r border-slate-200 transition-all flex-shrink-0';
+          });
+          btn.className = 'flex items-center gap-2 px-6 py-3.5 font-bold text-xs bg-white text-slate-950 border-r border-slate-200 border-t-2 border-t-slate-950 transition-all flex-shrink-0';
+        });
+      });
+    })();
+  </script>
+</body></html>

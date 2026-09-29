@@ -2031,6 +2031,13 @@ const th = {
   'pcus.b2bMgrName': 'คุณป๊ะตา (เจ้าหน้าที่ประสานบัญชีคุณ)',
   'pcus.b2bMgrDesc': 'พร้อมประสานงานขบวนคาราวานสัมมนา จัดหารถตู้เสริม และออกเอกสารเร่งด่วน 24 ชม.',
   'pcus.b2bMgrCall': 'โทรสายตรง: 02-123-4567 ต่อ 802',
+  // ---- customer portal session + header actions ----
+  'pcus.editCompany': 'แก้ไขข้อมูลบริษัท (Edit Profile / Tax Info)',
+  'pcus.sessionTitle': 'เซสชัน & ความปลอดภัย',
+  'pcus.sessionCompany': 'บริษัท',
+  'pcus.sessionSecure': '● เซสชันปลอดภัย (256-bit Encrypted Session)',
+  'pcus.refreshSession': 'รีเฟรชเซสชัน (Refresh Security Token)',
+  'pcus.sessionRefreshed': 'ต่ออายุโทเค็นความปลอดภัยแล้ว',
 } as const;
 
 export type DictKey = keyof typeof th;
@@ -4049,6 +4056,14 @@ const en: Record<DictKey, string> = {
   'pcus.b2bMgrName': 'Ms. Pata (Your Corporate Liaison)',
   'pcus.b2bMgrDesc': 'Dedicated support for seminar caravans, additional vans, and urgent documentation 24/7.',
   'pcus.b2bMgrCall': 'Direct Line: 02-123-4567 ext. 802',
+
+  // ---- customer portal session + header actions ----
+  'pcus.editCompany': 'Edit Profile / Tax Info',
+  'pcus.sessionTitle': 'Active Session & Security',
+  'pcus.sessionCompany': 'Company',
+  'pcus.sessionSecure': '● Secure session (256-bit Encrypted Session)',
+  'pcus.refreshSession': 'Refresh Session (Security Token)',
+  'pcus.sessionRefreshed': 'Security token refreshed',
 };
 
 const zh: Record<DictKey, string> = {
@@ -6065,6 +6080,13 @@ const zh: Record<DictKey, string> = {
   'pcus.b2bMgrName': '帕塔 女士（您的专属财务对接官）',
   'pcus.b2bMgrDesc': '24小时待命，协助研讨会车队调度、增调车辆及加急单据开具。',
   'pcus.b2bMgrCall': '专线电话: 02-123-4567 分机 802',
+  // ---- customer portal session + header actions ----
+  'pcus.editCompany': '编辑公司资料',
+  'pcus.sessionTitle': '活动会话与安全',
+  'pcus.sessionCompany': '公司',
+  'pcus.sessionSecure': '● 安全会话（256-bit 加密）',
+  'pcus.refreshSession': '刷新会话（安全令牌）',
+  'pcus.sessionRefreshed': '安全令牌已续期',
 };
 
 export const dictionaries: Record<Locale, Record<DictKey, string>> = { th, en, zh };

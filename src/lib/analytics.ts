@@ -14,6 +14,7 @@ export type CallTargetType =
   | 'sponsor'
   | 'admin_fleet'
   | 'driver_job'
+  | 'driver_card'
   | 'corporate_quote';
 
 export interface SponsorClickEvent {
@@ -111,6 +112,7 @@ export function createEmptySummary(): AnalyticsSummary {
         sponsor: 0,
         admin_fleet: 0,
         driver_job: 0,
+        driver_card: 0,
         corporate_quote: 0,
       },
       byTarget: {},

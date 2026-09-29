@@ -256,6 +256,8 @@ export const Footer: React.FC<FooterProps> = ({
             <span className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">{t('foot.termsLink')}</span>
             <span>/</span>
             <span className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">{t('foot.safety')}</span>
+            <span>/</span>
+            <a href="/admin" className="hover:text-slate-900 dark:hover:text-white transition-colors">แอดมิน (Console)</a>
           </div>
         </div>
       </div>

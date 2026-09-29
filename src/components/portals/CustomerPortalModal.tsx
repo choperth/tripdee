@@ -22,6 +22,7 @@ import {
   Phone,
   MessageCircle,
   LogIn,
+  RefreshCw,
   KeyRound,
   BadgeCheck,
   Landmark,
@@ -35,7 +36,7 @@ interface CustomerPortalModalProps {
   onOpenNewQuote: () => void;
 }
 
-type InnerTab = 'quotes' | 'taxProfile' | 'caravans';
+type InnerTab = 'quotes' | 'company' | 'caravans';
 
 export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
   isOpen,
@@ -75,6 +76,18 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
   const [personalTaxId, setPersonalTaxId] = useState(user?.taxId || '');
 
   if (!isOpen || !user) return null;
+
+  const isAuthenticated = !!user;
+
+  const handleRefreshSession = () => {
+    setSessionVerified(true);
+    setTimeout(() => setSessionVerified(false), 3000);
+  };
+
+  const handleOpenDriverPortal = () => {
+    onClose();
+    window.dispatchEvent(new CustomEvent('tripdee-open-driver-portal'));
+  };
 
   const effectiveType = customerType;
   const isCorporate = effectiveType === 'corporate';
@@ -190,12 +203,12 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
             </div>
             <button
               type="button"
-              onClick={() => handleSwitchAccountType(isCorporate ? 'individual' : 'corporate')}
+              onClick={() => setActiveTab('company')}
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold hover:border-slate-500 transition-colors cursor-pointer"
-              title="สลับผู้ใช้"
+              title={t('pcus.editCompany')}
             >
-              <Users className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">สลับผู้ใช้</span>
+              <Building2 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t('pcus.editCompany')}</span>
             </button>
             <button
               type="button"
@@ -280,7 +293,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
                 {pendingQuotes.length > 0 ? `${pendingQuotes.length} ทริปกําลังถึง` : '1 ทริปกําลังถึง'}
               </span>
             </button>
-            <div className="flex items-center gap-3 p-3.5 rounded-none border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+            <button type="button" onClick={handleOpenDriverPortal} className="flex items-center gap-3 p-3.5 rounded-none border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-950 dark:hover:border-white text-left transition-colors cursor-pointer">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                 <CarFront className="h-4.5 w-4.5" />
               </span>
@@ -291,7 +304,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
               <span className="text-[10px] font-black px-2 py-0.5 shrink-0 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                 คิวว่าง
               </span>
-            </div>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
@@ -375,9 +388,9 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
               <div className="flex flex-wrap gap-2">
                 {(
                   [
-                    { id: 'quotes', label: `ประวัติใบเสนอราคา & เอกสาร (${quotations.length})`, icon: FileText },
-                    { id: 'taxProfile', label: 'ข้อมูลบริษัทสำหรับออกบิล (ภ.พ.20)', icon: Building2 },
-                    { id: 'caravans', label: 'คาราวานที่กำลังเดินทาง', icon: CarFront },
+                    { id: 'quotes', label: t('pcus.tabQuotesHist', { n: quotations.length }), icon: FileText },
+                    { id: 'company', label: t('pcus.tabCompany'), icon: Building2 },
+                    { id: 'caravans', label: t('pcus.tabCaravans'), icon: CarFront },
                   ] as { id: InnerTab; label: string; icon: typeof FileText }[]
                 ).map((tab) => (
                   <button
@@ -545,7 +558,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
               )}
 
               {/* TAB: tax profile */}
-              {activeTab === 'taxProfile' && (
+              {activeTab === 'company' && (
                 <form onSubmit={handleSaveTaxProfile} className="rounded-none border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 space-y-4">
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                     {isCorporate ? t('pcus.taxIntro') : t('pcus.personalTaxIntro')}
@@ -766,85 +779,129 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
 
             {/* RIGHT sidebar */}
             <div className="space-y-5 min-w-0">
-              {/* SSO quick panel */}
-              <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none p-4 sm:p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs font-black flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-amber-500" />
-                    เข้าสู่ระบบด่วน 3 บทบาท
-                  </h3>
-                  <span className="text-[10px] font-mono text-slate-400">SSO v24</span>
-                </div>
-                <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 dark:bg-slate-800 mb-3 text-[11px] font-bold">
-                  {['องค์กร', 'เบอร์โทร OTP', 'ใบขับขี่คนขับ'].map((label, i) => (
-                    <span
-                      key={label}
-                      className={`text-center py-1.5 px-1 ${i === 0 ? 'bg-white dark:bg-slate-900 shadow-xs' : 'text-slate-400'}`}
-                    >
-                      {label}
-                    </span>
-                  ))}
-                </div>
-                <div className="space-y-2.5">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
-                      เลขประจำตัวผู้เสียภาษี (Tax ID)
-                    </label>
-                    <input
-                      type="text"
-                      readOnly
-                      value={displayTaxId}
-                      className="w-full h-10 rounded-none border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-xs font-mono font-bold text-slate-700 dark:text-slate-200"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
-                      อีเมลผู้อำนวยหรือรหัสผ่านองค์กร
-                    </label>
-                    <input
-                      type="password"
-                      disabled
-                      value="••••••••"
-                      className="w-full h-10 rounded-none border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-3 text-xs text-slate-400"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-[11px]">
-                    <label className="flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={rememberDevice}
-                        onChange={(e) => setRememberDevice(e.target.checked)}
-                        className="w-3.5 h-3.5 accent-slate-950"
-                      />
-                      <span>จดจำข้อมูลเครื่องนี้</span>
-                    </label>
-                    <a href={OFFICIAL_LINE_URL} target="_blank" rel="noopener noreferrer" className="font-bold text-amber-700 dark:text-amber-400 hover:underline">
-                      ลืมรหัสผ่าน?
-                    </a>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSessionVerified(true);
-                      setTimeout(() => setSessionVerified(false), 3000);
-                    }}
-                    className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-none bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
-                  >
-                    {sessionVerified ? <Check className="h-4 w-4 text-emerald-400" strokeWidth={3} /> : <LogIn className="h-4 w-4" />}
-                    <span>{sessionVerified ? 'เซสชันปลอดภัย • ต่ออายุแล้ว' : 'ยืนยันเข้าสู่ระบบความปลอดภัยสูง'}</span>
-                  </button>
-                  <p className="text-center text-[11px] text-slate-400">หรือเข้าสู่ระบบด้วยบัญชีทางเลือก</p>
-                  <a
-                    href={OFFICIAL_LINE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-none bg-[#06C755] hover:bg-[#05b04b] text-white text-xs font-bold transition-colors"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    <span>LINE One-Click Login</span>
-                  </a>
-                </div>
-              </section>
+          {/* Security & Active Session (authenticated) / SSO login form (guest) */}
+          {isAuthenticated ? (
+          <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-black flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-emerald-500" />
+                {t('pcus.sessionTitle')}
+              </h3>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 bg-emerald-500 animate-pulse" />
+                LIVE
+              </span>
+            </div>
+            <div className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3 space-y-1.5 mb-3">
+              <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{t('pcus.sessionCompany')}</p>
+              <p className="text-sm font-black truncate">{displayCompany}</p>
+              <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">Tax ID: {displayTaxId}</p>
+              <span className="inline-block text-[10px] font-black px-2 py-0.5 bg-slate-950 text-white dark:bg-white dark:text-slate-950">
+                B2B Enterprise Corporate
+              </span>
+            </div>
+            <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1.5 mb-3">
+              {t('pcus.sessionSecure')}
+            </p>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={handleRefreshSession}
+                className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-none bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
+              >
+                {sessionVerified ? <Check className="h-4 w-4 text-emerald-400" strokeWidth={3} /> : <RefreshCw className="h-4 w-4" />}
+                <span>{sessionVerified ? t('pcus.sessionRefreshed') : t('pcus.refreshSession')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  onClose();
+                }}
+                className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-none border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>{t('pcus.logout')}</span>
+              </button>
+            </div>
+          </section>
+          ) : (
+          <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-black flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-amber-500" />
+                เข้าสู่ระบบด่วน 3 บทบาท
+              </h3>
+              <span className="text-[10px] font-mono text-slate-400">SSO v24</span>
+            </div>
+            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 dark:bg-slate-800 mb-3 text-[11px] font-bold">
+              {['องค์กร', 'เบอร์โทร OTP', 'ใบขับขี่คนขับ'].map((label, i) => (
+                <span
+                  key={label}
+                  className={`text-center py-1.5 px-1 ${i === 0 ? 'bg-white dark:bg-slate-900 shadow-xs' : 'text-slate-400'}`}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+            <div className="space-y-2.5">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  เลขประจำตัวผู้เสียภาษี (Tax ID)
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={displayTaxId}
+                  className="w-full h-10 rounded-none border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-xs font-mono font-bold text-slate-700 dark:text-slate-200"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  อีเมลผู้อำนวยหรือรหัสผ่านองค์กร
+                </label>
+                <input
+                  type="password"
+                  disabled
+                  value="••••••••"
+                  className="w-full h-10 rounded-none border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-3 text-xs text-slate-400"
+                />
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <label className="flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rememberDevice}
+                    onChange={(e) => setRememberDevice(e.target.checked)}
+                    className="w-3.5 h-3.5 accent-slate-950"
+                  />
+                  <span>จดจำข้อมูลเครื่องนี้</span>
+                </label>
+                <a href={OFFICIAL_LINE_URL} target="_blank" rel="noopener noreferrer" className="font-bold text-amber-700 dark:text-amber-400 hover:underline">
+                  ลืมรหัสผ่าน?
+                </a>
+              </div>
+              <button
+                type="button"
+                onClick={handleRefreshSession}
+                className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-none bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
+              >
+                {sessionVerified ? <Check className="h-4 w-4 text-emerald-400" strokeWidth={3} /> : <LogIn className="h-4 w-4" />}
+                <span>{sessionVerified ? 'เซสชันปลอดภัย • ต่ออายุแล้ว' : 'ยืนยันเข้าสู่ระบบความปลอดภัยสูง'}</span>
+              </button>
+              <p className="text-center text-[11px] text-slate-400">หรือเข้าสู่ระบบด้วยบัญชีทางเลือก</p>
+              <a
+                href={OFFICIAL_LINE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-none bg-[#06C755] hover:bg-[#05b04b] text-white text-xs font-bold transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span>LINE One-Click Login</span>
+              </a>
+            </div>
+          </section>
+          )}
 
               {/* Tax compliance */}
               <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none p-4 sm:p-5">

@@ -1,54 +1,139 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
-import { X, CarFront, LogOut, Check, Star } from 'lucide-react';
-import { VehiclePhotoManager } from '@/components/portals/VehiclePhotoManager';
-import { DangerZone } from '@/components/portals/DangerZone';
-import { DriverAvailabilityCalendar } from '@/components/portals/DriverAvailabilityCalendar';
+import {
+  X,
+  Phone,
+  MessageSquare,
+  Star,
+  Check,
+  AlertCircle,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Trash2,
+  Upload,
+  Image as ImageIcon,
+  ShieldCheck,
+  Sparkles,
+  Award,
+  Inbox,
+  LogOut,
+  Save,
+  Clock,
+  CarFront,
+  Users,
+  Luggage,
+  Gavel,
+  RefreshCw,
+  ExternalLink,
+} from 'lucide-react';
+import { compressImage } from '@/lib/imageCompression';
+import {
+  toISODateString,
+  generateDateRange,
+  getBangkokTodayIso,
+} from '@/lib/availabilityUtils';
 
 interface DriverPortalModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: 'profile' | 'perks' | 'jobs' | 'reviews';
 }
 
-export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, onClose }) => {
+type TabType = 'profile' | 'perks' | 'jobs' | 'reviews';
+
+export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
+  isOpen,
+  onClose,
+  initialTab = 'profile',
+}) => {
   const { user, toggleDriverAvailability, updateDriverProfile, logout, deleteAccount } = useAuth();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { trackCall } = useAnalytics();
-  const [activeTab, setActiveTab] = useState<'profile' | 'verification' | 'jobs'>('profile');
+
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [saveSuccess, setSaveSuccess] = useState(false);
-
-  // Form states
-  const [nickname, setNickname] = useState(user?.driverNickname || '');
-  const [phone, setPhone] = useState(user?.emailOrPhone || '');
-  const [lineId, setLineId] = useState(user?.lineId || '');
-  const [whatsapp, setWhatsapp] = useState(user?.whatsapp || '');
-  const [wechat, setWechat] = useState(user?.wechat || '');
-  const [kakao, setKakao] = useState(user?.kakao || '');
-  const [vehicleTitle, setVehicleTitle] = useState(user?.vehicleTitle || '');
-  const [vehiclePlate, setVehiclePlate] = useState(user?.vehiclePlate || '');
-  const [seats, setSeats] = useState(user?.seats || 9);
-  const [images, setImages] = useState<string[]>(
-    Array.isArray(user?.images) && user.images.length > 0
-      ? user.images
-      : ['https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80']
-  );
-  const [busyDates, setBusyDates] = useState<string[]>(
-    Array.isArray(user?.busyDates) ? user.busyDates : []
-  );
-
+  const [isSaving, setIsSaving] = useState(false);
   const [featuredRequested, setFeaturedRequested] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
+  // Form states initialized from user
+  const [nickname, setNickname] = useState(user?.driverNickname || 'พี่ชัย รถตู้เชียงใหม่');
+  const [phone, setPhone] = useState(user?.emailOrPhone || '081-234-5678');
+  const [lineId, setLineId] = useState(user?.lineId || '@chaivan_cnx');
+  const [whatsapp, setWhatsapp] = useState(user?.whatsapp || '+66812345678');
+  const [wechat, setWechat] = useState(user?.wechat || 'chaicnx_van');
+  const [kakao, setKakao] = useState(user?.kakao || 'chaivan_cnx');
+  const [vehicleTitle, setVehicleTitle] = useState(
+    user?.vehicleTitle ||
+      'Toyota Commuter VIP 9 ที่นั่ง เบาะนวดไฟฟ้าพร้อมระบบแอร์ไมโครบัส และเครื่องเสียงคาราโอเกะพร้อมจอ Android'
+  );
+  const [vehiclePlate, setVehiclePlate] = useState(
+    user?.vehiclePlate || 'นข-8899 เชียงใหม่ (ป้ายเหลือง 30)'
+  );
+  const [seats, setSeats] = useState(user?.seats || 9);
+
+  // Images state
+  const defaultImages = [
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuAS93Lp5tyiq38Q_n22TpfbbKacX038jBbYwO5RuyZUQztVRvefnvBxCjnr5tOWW_NYriItTmR_eAbeU03VGReHeAPlhd3_pn2VagF9BopeuhwROEM4B7fGxbacwxTQ3XndDHkoIy82Ab4N2KosofEc-H2pRCciI_-oJDN8s2N3aJLzGnKOfhr_hVRG5gOkx13aoVuELco9uUYLxm4Yyi65VWzDqBDiBtfEVUr5GAb-d1nTeNHTg9ZJ3A',
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuBr0Jnx4Zp38sVSSSh605OCALpmCVZRB2A2Z2-__1MqJJs-g7BRiRwWVpH2h-3EGisOuCseR7gESRLtly9jGmInYdr82IEiTFDfRa5KUbto1gUaJrEWyJNPCD8iX5zPd3c9BVyJ7eZLnjDAqUdtVwRyzkyZXpne9RMCfO8X9hvZOJ4UVaUb-lDKkMiV2xcUDuFcR9k7iFO7tjIl9z4RY-rskAdQ0Pqfs4UiIzk53nth-Pgn0Jfxwzn2NA',
+  ];
+
+  const [images, setImages] = useState<string[]>(() => {
+    if (Array.isArray(user?.images) && user.images.length > 0) {
+      return user.images;
+    }
+    return defaultImages;
+  });
+
+  const [photoMeta, setPhotoMeta] = useState<Record<number, { name: string; size: string }>>({
+    0: { name: 'cnx-commuter-exterior.jpg', size: '2.4 MB' },
+    1: { name: 'vip-cabin-seats.jpg', size: '3.1 MB' },
+  });
+
+  // Busy Dates state
+  const [busyDates, setBusyDates] = useState<string[]>(() => {
+    if (Array.isArray(user?.busyDates) && user.busyDates.length > 0) {
+      return user.busyDates;
+    }
+    // Demo busy dates in line with mockup (Sept 11, 12, etc.)
+    const bkk = getBangkokTodayIso();
+    const [y, m] = bkk.split('-');
+    return [`${y}-${m}-11`, `${y}-${m}-12`];
+  });
+
+  // Calendar Interval Form states
+  const [intervalStart, setIntervalStart] = useState('');
+  const [intervalEnd, setIntervalEnd] = useState('');
+  const [intervalNote, setIntervalNote] = useState('');
+
+  // Calendar month view
+  const today = useMemo(() => new Date(), []);
+  const [viewDate, setViewDate] = useState<Date>(new Date(today.getFullYear(), today.getMonth(), 1));
+
   const dialogRef = useRef<HTMLDivElement>(null);
+  const fileInputRef1 = useRef<HTMLInputElement>(null);
+  const fileInputRef2 = useRef<HTMLInputElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
   if (!isOpen || !user) return null;
 
-  const handleSaveProfile = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Driver Meta
+  const driverCode = `TD-VN-${(user.id || '50821').replace(/[^0-9]/g, '').slice(-5) || '50821'}`;
+  const driverDisplayName = user.name || 'นายสุรชัย ใจดี';
+  const driverNick = nickname || user.driverNickname || 'พี่ชัย รถตู้เชียงใหม่';
+
+
+  // Profile Save
+  const handleSaveProfile = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSaving(true);
     updateDriverProfile({
       driverNickname: nickname,
       emailOrPhone: phone,
@@ -62,464 +147,1517 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
       images,
       busyDates,
     });
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 2500);
-  };
-
-  const handleRequestFeatured = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFeaturedRequested(true);
     setTimeout(() => {
+      setIsSaving(false);
       setSaveSuccess(true);
-    }, 400);
+      setTimeout(() => setSaveSuccess(false), 2500);
+    }, 600);
   };
 
-  const isVerified = user.verificationStatus === 'verified';
+  // Image Upload handler
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, slotIndex?: number) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    try {
+      const file = files[0];
+      const result = await compressImage(file, { maxWidth: 1600, quality: 0.85 });
+      const newImages = [...images];
+      const targetIdx = slotIndex !== undefined && slotIndex < newImages.length ? slotIndex : newImages.length;
+      newImages[targetIdx] = result.dataUrl;
+      setImages(newImages);
+      setPhotoMeta((prev) => ({
+        ...prev,
+        [targetIdx]: {
+          name: file.name,
+          size: `${(result.compressedSize / (1024 * 1024)).toFixed(1)} MB`,
+        },
+      }));
+    } catch {
+      // Fallback
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    if (images.length <= 1) {
+      alert('จำเป็นต้องมีรูปถ่ายรถยนต์อย่างน้อย 1 รูปสำหรับแสดงผลหน้าเว็บ');
+      return;
+    }
+    const updated = images.filter((_, i) => i !== index);
+    setImages(updated);
+  };
+
+  // Calendar Helpers
+  const currentYear = viewDate.getFullYear();
+  const currentMonth = viewDate.getMonth();
+  const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay(); // 0 = Sun
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
+  const todayIso = toISODateString(today);
+
+
+  const toggleDateBusy = (isoString: string) => {
+    if (busyDates.includes(isoString)) {
+      setBusyDates(busyDates.filter((d) => d !== isoString));
+    } else {
+      setBusyDates([...busyDates, isoString].sort());
+    }
+  };
+
+  const handleAddInterval = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!intervalStart || !intervalEnd) {
+      alert('กรุณาระบุวันที่เริ่มต้นและวันที่สิ้นสุด');
+      return;
+    }
+    const dates = generateDateRange(intervalStart, intervalEnd);
+    const merged = Array.from(new Set([...busyDates, ...dates])).sort();
+    setBusyDates(merged);
+    setIntervalStart('');
+    setIntervalEnd('');
+    setIntervalNote('');
+  };
+
+  const monthNamesTh = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
+  ];
+  const monthNamesEn = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+
+  const monthDisplayTitle =
+    locale === 'en'
+      ? `${monthNamesEn[currentMonth]} ${currentYear}`
+      : `${monthNamesTh[currentMonth]} ${currentYear + 543} / ${monthNamesEn[currentMonth]} ${currentYear}`;
 
   return (
     <div
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="driver-portal-title"
-      className="fixed inset-0 z-400 flex items-center justify-center overflow-y-auto bg-navy-deep/75 backdrop-blur-md p-3 sm:p-4 animate-fade-in"
+      aria-labelledby="driver-dashboard-title"
+      className="fixed inset-0 z-400 flex items-start justify-center overflow-y-auto bg-slate-950/75 backdrop-blur-sm p-2 sm:p-4 lg:p-6 animate-fade-in"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative flex flex-col w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 shadow-2xl text-ink-primary dark:text-slate-100"
+        className="relative flex flex-col w-full max-w-7xl max-h-[96vh] overflow-y-auto rounded-none bg-[#F8FAFC] dark:bg-slate-950 border border-slate-300 dark:border-slate-800 shadow-2xl text-slate-900 dark:text-slate-100"
       >
-        {/* Sticky Header Bar */}
-        <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 px-5 sm:px-7 py-4 sm:py-5 bg-paper-elevated/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-border-subtle dark:border-slate-800">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-navy-deep text-white dark:bg-slate-800 dark:text-blue-400 border border-navy-deep/20 dark:border-slate-700 shadow-xs">
-              <CarFront className="h-5 w-5" strokeWidth={2.5} />
-            </span>
-            <div className="min-w-0">
-              <h2 id="driver-portal-title" className="font-headline-md text-base sm:text-lg font-bold text-navy-deep dark:text-white leading-tight truncate">
-                {t('pdrv.title')}
-              </h2>
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                {user.name} ({user.driverNickname || t('pdrv.noNick')})
-              </p>
+        {/* ============================================================== */}
+        {/* Subtle Architectural Header Scrim / Live Status Strip */}
+        {/* ============================================================== */}
+        <div className="sticky top-0 z-30 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-xs">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+            {/* Breadcrumb */}
+            <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs">
+              <span className="flex items-center gap-1 font-semibold text-slate-600 dark:text-slate-400">
+                <span className="material-symbols-outlined text-[16px] text-slate-400">home</span>
+                <span>หน้าหลักพาร์ทเนอร์</span>
+              </span>
+              <span className="text-slate-300 dark:text-slate-600 text-[10px]">/</span>
+              <span className="font-bold text-slate-950 dark:text-white" id="driver-dashboard-title">
+                จัดการข้อมูลคนขับและคิวงาน (เชียงใหม่ & ภาคเหนือ)
+              </span>
+            </nav>
+
+            {/* Live Node & Close Action */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1 text-slate-600 dark:text-slate-300 text-xs">
+                <span className="w-2 h-2 rounded-full bg-[#06C755] animate-pulse"></span>
+                <span className="hidden sm:inline">ระบบออนไลน์: คลาวด์ซิงก์เรียลไทม์</span>
+                <span className="sm:hidden">ออนไลน์ 24 ชม.</span>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span className="font-mono text-slate-500 dark:text-slate-400">CNX-SVR-04</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="ปิดหน้าต่างแดชบอร์ด"
+                className="w-8 h-8 rounded-none bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 grid place-items-center transition-colors cursor-pointer"
+              >
+                <X className="h-4 w-4" strokeWidth={2.5} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Canvas Container */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full flex flex-col gap-6">
+          {/* ============================================================== */}
+          {/* 1. Driver Profile Master Bento Module */}
+          {/* ============================================================== */}
+          <div className="bg-white dark:bg-slate-900 p-6 shadow-xs border border-slate-200 dark:border-slate-800 relative overflow-hidden">
+            {/* Top Geometric Accent Bar */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0a192f] via-[#fea619] to-[#06C755]"></div>
+
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-800">
+              {/* Identity Block */}
+              <div className="flex items-start md:items-center gap-4 min-w-0">
+                {/* Geometric Avatar */}
+                <div className="relative w-16 h-16 bg-[#0d1c32] text-white flex items-center justify-center shrink-0 shadow-xs border border-slate-300 dark:border-slate-700">
+                  <span className="material-symbols-outlined text-[32px] text-[#d6e3ff]">
+                    airport_shuttle
+                  </span>
+                  <div className="absolute -bottom-1 -right-1 bg-[#06C755] text-white w-5 h-5 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[12px] font-bold">check</span>
+                  </div>
+                </div>
+
+                {/* Driver Meta */}
+                <div className="flex flex-col min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="text-lg sm:text-xl font-bold text-slate-950 dark:text-white truncate">
+                      {driverDisplayName} ({driverNick})
+                    </h1>
+                    <span className="inline-flex items-center gap-1 bg-[#E8F9EE] text-[#06C755] px-2 py-0.5 text-[11px] font-bold tracking-wider border border-emerald-200 dark:border-emerald-800">
+                      <span className="material-symbols-outlined text-[13px]">verified</span>
+                      VERIFIED PARTNER
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-600 dark:text-slate-400">
+                    <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-slate-900 dark:text-slate-200 font-semibold">
+                      รหัส: {driverCode}
+                    </span>
+                    <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">•</span>
+                    <span className="flex items-center gap-1 text-xs">
+                      <span className="material-symbols-outlined text-[15px] text-slate-400">
+                        location_on
+                      </span>
+                      จุดประจำ: ท่าอากาศยานนานาชาติเชียงใหม่ (CNX) / ภาคเหนือตอนบน
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Master Availability Toggle Switch */}
+              <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200 dark:border-slate-700 shrink-0">
+                <div className="flex flex-col text-right">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">
+                    สถานะการรับงาน
+                  </span>
+                  <span
+                    className={`text-xs font-bold ${
+                      user.isAvailable !== false ? 'text-[#06C755]' : 'text-slate-500'
+                    }`}
+                  >
+                    {user.isAvailable !== false
+                      ? 'พร้อมรับงานทันที 24 ชม.'
+                      : 'พักงานชั่วคราว (ไม่แสดงผล)'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  aria-pressed={user.isAvailable !== false}
+                  onClick={toggleDriverAvailability}
+                  className={`relative inline-flex h-8 w-16 items-center transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer ${
+                    user.isAvailable !== false ? 'bg-[#06C755]' : 'bg-slate-400 dark:bg-slate-600'
+                  }`}
+                  title="คลิกเพื่อสลับสถานะ ว่าง/พักงาน"
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform bg-white transition-transform shadow-xs ${
+                      user.isAvailable !== false ? 'translate-x-9' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* 4 KPI Metrics Monolithic Rail */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-6">
+              {/* KPI 1 */}
+              <div className="bg-[#F8FAFC] dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-semibold">
+                  <span>คะแนนรีวิวคนขับ</span>
+                  <span className="material-symbols-outlined text-[18px] text-[#D97706]">
+                    star
+                  </span>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1.5">
+                  <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
+                    4.96
+                  </span>
+                  <span className="text-[#D97706] text-xs font-bold">★★★★★</span>
+                </div>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  อิงจากผู้โดยสารจริง 128 ทริป
+                </span>
+              </div>
+
+              {/* KPI 2 */}
+              <div className="bg-[#F8FAFC] dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-semibold">
+                  <span>การตอบกลับเฉลี่ย</span>
+                  <span className="material-symbols-outlined text-[18px] text-[#06C755]">
+                    bolt
+                  </span>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1.5">
+                  <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
+                    &lt; 3
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500">นาที</span>
+                </div>
+                <span className="text-[11px] text-[#06C755] font-semibold mt-1">
+                  ⚡ สถิติตอบไวมากระดับเหรียญทอง
+                </span>
+              </div>
+
+              {/* KPI 3 */}
+              <div className="bg-[#F8FAFC] dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-semibold">
+                  <span>ยอดเข้าชมรถ (30 วัน)</span>
+                  <span className="material-symbols-outlined text-[18px] text-slate-400">
+                    trending_up
+                  </span>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1.5">
+                  <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
+                    1,420
+                  </span>
+                  <span className="text-[11px] text-[#06C755] font-bold bg-[#E8F9EE] px-1.5 py-0.2">
+                    +24%
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  ผู้ค้นหาเจาะจงโซนเชียงใหม่
+                </span>
+              </div>
+
+              {/* KPI 4 */}
+              <div className="bg-[#F8FAFC] dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-semibold">
+                  <span>อัตราคอมมิชชั่น</span>
+                  <span className="material-symbols-outlined text-[18px] text-slate-950 dark:text-slate-200">
+                    percent
+                  </span>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1.5">
+                  <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
+                    0%
+                  </span>
+                  <span className="text-xs font-bold text-[#06C755]">ตลอดชีพ</span>
+                </div>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  รับเงินสดตรงจากผู้โดยสาร 100%
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Availability Toggle Button */}
+          {/* ============================================================== */}
+          {/* 2. Featured Status Banner (Sharp Gold Architectural Accent) */}
+          {/* ============================================================== */}
+          <div className="bg-[#FEF3C7] dark:bg-amber-950/30 border border-[#D97706]/40 p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs relative">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 bg-[#D97706] text-white flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[24px]">grade</span>
+              </div>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg text-slate-950 dark:text-amber-100 font-bold">
+                    สถานะ: ได้รับคัดเลือกเป็น &apos;รถแนะนำ&apos; (Featured TOP RATED)
+                  </h2>
+                  <span className="bg-[#D97706] text-white font-mono text-[10px] font-bold px-2 py-0.5 tracking-wider uppercase">
+                    ACTIVE
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-amber-200/90 mt-1 leading-relaxed">
+                  รถตู้ของคุณมีตราดาวทองแนะนำ ช่วยเพิ่มความน่าเชื่อถือ ลูกค้าติดต่อเฉลี่ยเพิ่มขึ้น
+                  3-5 เท่า พร้อมสิทธิ์ติดอันดับผลลัพธ์แรกสุดบนหน้าค้นหารถภาคเหนือ
+                </p>
+              </div>
+            </div>
             <button
               type="button"
-              onClick={toggleDriverAvailability}
-              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shadow-xs cursor-pointer ${
-                user.isAvailable
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                  : 'bg-paper-surface-muted hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+              onClick={() => setActiveTab('perks')}
+              className="inline-flex items-center gap-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 transition-colors shrink-0 self-stretch md:self-auto justify-center cursor-pointer"
+            >
+              <span>ดูสิทธิประโยชน์</span>
+              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+            </button>
+          </div>
+
+          {/* ============================================================== */}
+          {/* 3. Master Navigation Tab Switcher (Geometric Bauhaus Strict Line) */}
+          {/* ============================================================== */}
+          <div className="flex items-center border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-x-auto shadow-xs">
+            <button
+              type="button"
+              onClick={() => setActiveTab('profile')}
+              className={`flex items-center gap-2 px-5 sm:px-6 py-3.5 text-xs sm:text-sm font-bold transition-colors shrink-0 cursor-pointer ${
+                activeTab === 'profile'
+                  ? 'text-slate-950 dark:text-white border-b-2 border-slate-950 dark:border-white bg-[#F8FAFC] dark:bg-slate-800'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 border-b-2 border-transparent'
               }`}
             >
-              <span className={`h-2.5 w-2.5 rounded-full ${user.isAvailable ? 'bg-white animate-pulse' : 'bg-slate-400'}`} />
-              <span>{user.isAvailable ? t('pdrv.availOn') : t('pdrv.availOff')}</span>
+              <span className="material-symbols-outlined text-[18px]">directions_car</span>
+              <span>ข้อมูลรถและช่องทางติดต่อ</span>
             </button>
 
             <button
-              onClick={onClose}
-              aria-label={t('pdrv.close')}
-              className="w-9 h-9 rounded-full bg-paper-surface-muted hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 grid place-items-center transition-colors cursor-pointer"
+              type="button"
+              onClick={() => setActiveTab('perks')}
+              className={`flex items-center gap-2 px-5 sm:px-6 py-3.5 text-xs sm:text-sm font-bold transition-colors shrink-0 cursor-pointer ${
+                activeTab === 'perks'
+                  ? 'text-slate-950 dark:text-white border-b-2 border-slate-950 dark:border-white bg-[#F8FAFC] dark:bg-slate-800'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 border-b-2 border-transparent'
+              }`}
             >
-              <X className="h-4 w-4" strokeWidth={2.5} />
+              <span className="material-symbols-outlined text-[18px] text-[#D97706]">
+                workspace_premium
+              </span>
+              <span>สิทธิประโยชน์รถแนะนำ</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('jobs')}
+              className={`flex items-center gap-2 px-5 sm:px-6 py-3.5 text-xs sm:text-sm font-bold transition-colors shrink-0 cursor-pointer ${
+                activeTab === 'jobs'
+                  ? 'text-slate-950 dark:text-white border-b-2 border-slate-950 dark:border-white bg-[#F8FAFC] dark:bg-slate-800'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 border-b-2 border-transparent'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">inbox</span>
+              <span>กล่องงานลูกค้า</span>
+              <span className="bg-[#D97706] text-white font-mono text-[10px] font-bold px-1.5 py-0.5 leading-none">
+                2 งานใหม่
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('reviews')}
+              className={`flex items-center gap-2 px-5 sm:px-6 py-3.5 text-xs sm:text-sm font-bold transition-colors shrink-0 cursor-pointer ${
+                activeTab === 'reviews'
+                  ? 'text-slate-950 dark:text-white border-b-2 border-slate-950 dark:border-white bg-[#F8FAFC] dark:bg-slate-800'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 border-b-2 border-transparent'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px] text-[#D97706]">star</span>
+              <span>ประวัติรีวิวลูกค้า</span>
             </button>
           </div>
-        </div>
 
-        {/* Main Content Area */}
-        <div className="p-5 sm:p-7 space-y-6">
-        {/* Verification Status Banner */}
-        <div
-          className={`mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4 ${
-            isVerified
-              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border border-amber-300/60'
-              : 'bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 border border-blue-200'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white dark:bg-slate-800 text-ink-primary dark:text-white shadow-2xs">
-              {isVerified ? (
-                <Star className="h-5 w-5 fill-amber-500 text-amber-500" />
-              ) : (
-                <CarFront className="h-5 w-5 text-blue-600" strokeWidth={2.5} />
-              )}
-            </span>
-            <div>
-              <p className="text-sm font-extrabold">
-                {isVerified ? t('pdrv.verTitleOk') : t('pdrv.verTitleNone')}
-              </p>
-              <p className="text-xs font-medium text-ink-2">
-                {isVerified ? t('pdrv.verDescOk') : t('pdrv.verDescNone')}
-              </p>
-            </div>
-          </div>
+          {/* ============================================================== */}
+          {/* TAB 1: ข้อมูลรถและช่องทางติดต่อ (Photos + Specs + Calendar) */}
+          {/* ============================================================== */}
+          {activeTab === 'profile' && (
+            <div className="flex flex-col gap-6">
+              {/* 4. Real Vehicle Photos Gallery Module (X/8 Slots) */}
+              <section className="bg-white dark:bg-slate-900 p-6 shadow-xs border border-slate-200 dark:border-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-slate-950 dark:text-white text-[22px]">
+                      photo_library
+                    </span>
+                    <h2 className="text-base sm:text-lg font-bold text-slate-950 dark:text-white">
+                      รูปถ่ายจริงสำหรับแสดงบนเว็บไซต์ ({images.length}/8 รูป)
+                    </h2>
+                  </div>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    แนะนำ 3-5 รูปภาพ (ภายนอก, ภายในเบาะ VIP, สิ่งอำนวยความสะดวก) รองรับ JPG, PNG,
+                    WebP สูงสุด 15MB
+                  </span>
+                </div>
 
-          <button
-            onClick={() => setActiveTab('verification')}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-white dark:bg-slate-800 px-3.5 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs transition-colors cursor-pointer"
-          >
-            {isVerified ? t('pdrv.viewDocs') : t('pdrv.uploadDocs')}
-          </button>
-        </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                  {images.map((imgUrl, idx) => {
+                    const meta = photoMeta[idx] || {
+                      name: `vehicle-photo-${idx + 1}.jpg`,
+                      size: '2.5 MB',
+                    };
+                    return (
+                      <div
+                        key={idx}
+                        className="relative group bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col"
+                      >
+                        <div className="relative aspect-[16/10] overflow-hidden bg-slate-200 dark:bg-slate-800">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={imgUrl}
+                            alt={`ภาพรถคันจริง #${idx + 1}`}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <span className="absolute top-2 left-2 bg-slate-950 text-white text-[10px] px-2 py-0.5 font-bold tracking-wider flex items-center gap-1 shadow-xs">
+                            {idx === 0 ? (
+                              <>
+                                <span className="material-symbols-outlined text-[12px] text-[#D97706]">
+                                  star
+                                </span>
+                                #1 รูปหน้าปกภายนอก
+                              </>
+                            ) : idx === 1 ? (
+                              '#2 ห้องโดยสารเบาะ VIP'
+                            ) : (
+                              `#${idx + 1} รายละเอียดตัวรถ`
+                            )}
+                          </span>
 
-        {/* Sub-tabs Segmented Control */}
-        <div className="flex p-1.5 rounded-2xl bg-paper-surface-muted dark:bg-slate-800/80 border border-border-subtle dark:border-slate-800">
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === 'profile'
-                ? 'bg-white dark:bg-slate-900 text-navy-deep dark:text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            {t('pdrv.tabProfile')}
-          </button>
-          <button
-            onClick={() => setActiveTab('verification')}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === 'verification'
-                ? 'bg-white dark:bg-slate-900 text-navy-deep dark:text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            {t('pdrv.tabVerif')}
-          </button>
-          <button
-            onClick={() => setActiveTab('jobs')}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === 'jobs'
-                ? 'bg-white dark:bg-slate-900 text-navy-deep dark:text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            {t('pdrv.tabJobs')}
-          </button>
-        </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(idx)}
+                            title="ลบรูปภาพนี้"
+                            className="absolute top-2 right-2 w-7 h-7 bg-white/90 dark:bg-slate-900/90 hover:bg-rose-600 hover:text-white text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">close</span>
+                          </button>
+                        </div>
 
-        {/* Tab 1: Profile & Vehicle Details */}
-        {activeTab === 'profile' && (
-          <form onSubmit={handleSaveProfile} className="space-y-4">
-            {/* 1.1 Driver Photo Manager */}
-            <VehiclePhotoManager
-              images={images}
-              onChange={setImages}
-              maxPhotos={8}
-            />
+                        <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+                          <span className="text-slate-600 dark:text-slate-400 truncate max-w-[140px]">
+                            {meta.name}
+                          </span>
+                          <span className="font-mono text-[10px] text-slate-400">{meta.size}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="drv-nick" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
-                  {t('pdrv.fNick')}
-                </label>
-                <input
-                  id="drv-nick"
-                  type="text"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  placeholder={t('pdrv.fNickPh')}
-                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+                  {/* Upload Slot 1 */}
+                  {images.length < 8 && (
+                    <label className="cursor-pointer border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-950 dark:hover:border-white bg-[#F8FAFC] dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 p-6 flex flex-col items-center justify-center text-center transition-colors min-h-[190px]">
+                      <div className="w-10 h-10 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-2 shadow-xs border border-slate-200 dark:border-slate-700">
+                        <span className="material-symbols-outlined text-[22px]">add_a_photo</span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-950 dark:text-white">
+                        + เพิ่มรูปรถ (รูปที่ {images.length + 1})
+                      </span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                        เช่น ภาพคอนโซล สิ่งอำนวยความสะดวก
+                      </span>
+                      <input
+                        ref={fileInputRef1}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(e)}
+                      />
+                    </label>
+                  )}
 
-              <div>
-                <label htmlFor="drv-phone" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
-                  {t('pdrv.fPhone')}
-                </label>
-                <input
-                  id="drv-phone"
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="08x-xxx-xxxx"
-                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+                  {/* Upload Slot 2 */}
+                  {images.length < 7 && (
+                    <label className="cursor-pointer border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-slate-950 dark:hover:border-white bg-[#F8FAFC]/60 dark:bg-slate-800/20 hover:bg-slate-100 dark:hover:bg-slate-800 p-6 flex flex-col items-center justify-center text-center transition-colors min-h-[190px]">
+                      <div className="w-10 h-10 bg-white dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-2 shadow-xs border border-slate-200 dark:border-slate-700">
+                        <span className="material-symbols-outlined text-[22px]">cloud_upload</span>
+                      </div>
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                        เพิ่มรูปกระเป๋า / ท้ายรถ
+                      </span>
+                      <span className="text-[11px] text-slate-400 mt-1">
+                        ลากวางไฟล์ที่นี่ หรือกดเลือกรูป
+                      </span>
+                      <input
+                        ref={fileInputRef2}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(e)}
+                      />
+                    </label>
+                  )}
+                </div>
+              </section>
 
-              <div>
-                <label htmlFor="drv-line" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
-                  {t('pdrv.fLine')}
-                </label>
-                <input
-                  id="drv-line"
-                  type="text"
-                  value={lineId}
-                  onChange={(e) => setLineId(e.target.value)}
-                  placeholder={t('pdrv.fLinePh')}
-                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              {/* 5. Direct Contact & Specifications Form (Sharp Bauhaus Inputs) */}
+              <section className="bg-white dark:bg-slate-900 p-6 shadow-xs border border-slate-200 dark:border-slate-800">
+                {/* Header Banner with Trust Stamp */}
+                <div className="p-4 bg-[#E8F9EE] dark:bg-emerald-950/30 border border-[#06C755]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+                  <div className="flex items-center gap-2.5">
+                    <span className="material-symbols-outlined text-[22px] text-[#06C755] font-bold">
+                      shield_person
+                    </span>
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-950 dark:text-emerald-100">
+                        ข้อมูลติดต่อตรง & ข้อมูลจำเพาะรถยนต์
+                      </h3>
+                      <p className="text-xs text-slate-600 dark:text-emerald-200/80 mt-0.5">
+                        ผู้โดยสารและลูกค้าองค์กร B2B จะติดต่อคุณโดยตรงผ่านเบอร์โทรและ LINE
+                        โดยไม่มีการหักค่าบริการ
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-mono text-[11px] font-bold text-[#06C755] bg-white dark:bg-slate-900 px-2.5 py-1 border border-[#06C755]/20 shrink-0">
+                    <span className="material-symbols-outlined text-[14px]">lock</span>
+                    DIRECT CLIENT CONNECTION 100%
+                  </div>
+                </div>
 
-              <div>
-                <label htmlFor="drv-whatsapp" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
-                  {t('pdrv.fWhatsapp')}
-                </label>
-                <input
-                  id="drv-whatsapp"
-                  type="tel"
-                  value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
-                  placeholder={t('pdrv.fWhatsappPh')}
-                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="drv-wechat" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
-                  {t('pdrv.fWechat')}
-                </label>
-                <input
-                  id="drv-wechat"
-                  type="text"
-                  value={wechat}
-                  onChange={(e) => setWechat(e.target.value)}
-                  placeholder={t('pdrv.fWechatPh')}
-                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="drv-kakao" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
-                  {t('pdrv.fKakao')}
-                </label>
-                <input
-                  id="drv-kakao"
-                  type="text"
-                  value={kakao}
-                  onChange={(e) => setKakao(e.target.value)}
-                  placeholder={t('pdrv.fKakaoPh')}
-                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="drv-plate" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
-                  {t('pdrv.fPlate')}
-                </label>
-                <input
-                  id="drv-plate"
-                  type="text"
-                  value={vehiclePlate}
-                  onChange={(e) => setVehiclePlate(e.target.value)}
-                  placeholder={t('pdrv.fPlatePh')}
-                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label htmlFor="drv-vehicle" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
-                  {t('pdrv.fVehicle')}
-                </label>
-                <input
-                  id="drv-vehicle"
-                  type="text"
-                  value={vehicleTitle}
-                  onChange={(e) => setVehicleTitle(e.target.value)}
-                  placeholder={t('pdrv.fVehiclePh')}
-                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="drv-seats" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
-                  {t('pdrv.fSeats')}
-                </label>
-                <select
-                  id="drv-seats"
-                  value={seats}
-                  onChange={(e) => setSeats(Number(e.target.value))}
-                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <form
+                  className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8"
+                  onSubmit={handleSaveProfile}
                 >
-                  <option value={7}>{t('pdrv.seats7')}</option>
-                  <option value={9}>{t('pdrv.seats9')}</option>
-                  <option value={10}>{t('pdrv.seats10')}</option>
-                  <option value={13}>{t('pdrv.seats13')}</option>
-                </select>
+                  {/* Left Column: Primary Contact & Brand */}
+                  <div className="flex flex-col gap-4 sm:gap-5">
+                    {/* Team / Driver Title */}
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                        htmlFor="driver-title"
+                      >
+                        <span>ชื่อเล่น / ชื่อทีมรถสำหรับแสดงผลหน้าเว็บ</span>
+                        <span className="text-rose-600">*</span>
+                      </label>
+                      <input
+                        id="driver-title"
+                        type="text"
+                        value={nickname}
+                        onChange={(e) => setNickname(e.target.value)}
+                        className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                      />
+                    </div>
+
+                    {/* LINE ID with Green Badge */}
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between"
+                        htmlFor="driver-line"
+                      >
+                        <span className="flex items-center gap-1">
+                          <span>LINE ID หรือ ลิงก์ LINE Official</span>
+                          <span className="text-rose-600">*</span>
+                        </span>
+                        <span className="font-mono text-[11px] text-[#06C755] flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px]">chat</span>
+                          ปุ่มแอดไลน์อัตโนมัติ
+                        </span>
+                      </label>
+                      <div className="relative flex items-center">
+                        <div className="absolute left-0 top-0 bottom-0 w-12 bg-[#06C755] text-white flex items-center justify-center font-bold font-mono text-xs">
+                          LINE
+                        </div>
+                        <input
+                          id="driver-line"
+                          type="text"
+                          value={lineId}
+                          onChange={(e) => setLineId(e.target.value)}
+                          className="w-full h-12 pl-16 pr-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* WeChat ID */}
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                        htmlFor="driver-wechat"
+                      >
+                        <span>WECHAT ID (สำหรับรองรับนักท่องเที่ยวต่างชาติ)</span>
+                      </label>
+                      <input
+                        id="driver-wechat"
+                        type="text"
+                        value={wechat}
+                        onChange={(e) => setWechat(e.target.value)}
+                        className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                      />
+                    </div>
+
+                    {/* License Plate Number */}
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between"
+                        htmlFor="driver-plate"
+                      >
+                        <span className="flex items-center gap-1">
+                          <span>ป้ายทะเบียนรถ (ตรวจสอบมาตรฐานกรมการขนส่ง)</span>
+                          <span className="text-rose-600">*</span>
+                        </span>
+                        <span className="text-[11px] text-[#06C755] bg-[#E8F9EE] px-2 py-0.5 font-bold">
+                          ✓ ป้ายเหลืองถูกต้อง 100%
+                        </span>
+                      </label>
+                      <input
+                        id="driver-plate"
+                        type="text"
+                        value={vehiclePlate}
+                        onChange={(e) => setVehiclePlate(e.target.value)}
+                        className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm font-mono font-semibold focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                      />
+                    </div>
+
+                    {/* Vehicle Model Headline Description */}
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                        htmlFor="driver-headline"
+                      >
+                        <span>หัวข้อรุ่นรถ & จุดเด่นที่ดึงดูดลูกค้า</span>
+                        <span className="text-rose-600">*</span>
+                      </label>
+                      <textarea
+                        id="driver-headline"
+                        rows={3}
+                        maxLength={120}
+                        value={vehicleTitle}
+                        onChange={(e) => setVehicleTitle(e.target.value)}
+                        className="w-full p-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                      />
+                      <span className="text-[11px] text-slate-400 text-right">
+                        {vehicleTitle.length}/120 ตัวอักษร
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Secondary Channels & Specs */}
+                  <div className="flex flex-col gap-4 sm:gap-5">
+                    {/* Primary Phone Number */}
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between"
+                        htmlFor="driver-phone"
+                      >
+                        <span className="flex items-center gap-1">
+                          <span>เบอร์โทรติดต่อตรง (ลูกค้ากดโทรออกทันที)</span>
+                          <span className="text-rose-600">*</span>
+                        </span>
+                        <span className="text-[11px] text-[#06C755] flex items-center gap-0.5 font-bold">
+                          <span className="material-symbols-outlined text-[13px]">
+                            check_circle
+                          </span>
+                          ตรวจสอบเบอร์แล้ว
+                        </span>
+                      </label>
+                      <div className="relative flex items-center">
+                        <div className="absolute left-0 top-0 bottom-0 w-12 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center border-r border-slate-300 dark:border-slate-700">
+                          <span className="material-symbols-outlined text-[18px]">call</span>
+                        </div>
+                        <input
+                          id="driver-phone"
+                          type="tel"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="w-full h-12 pl-16 pr-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono font-bold text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* WhatsApp */}
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                        htmlFor="driver-whatsapp"
+                      >
+                        <span>WHATSAPP เบอร์ หรือ ลิงก์ (สำหรับลูกค้ายุโรป/สิงคโปร์)</span>
+                      </label>
+                      <input
+                        id="driver-whatsapp"
+                        type="text"
+                        value={whatsapp}
+                        onChange={(e) => setWhatsapp(e.target.value)}
+                        className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                      />
+                    </div>
+
+                    {/* KakaoTalk */}
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                        htmlFor="driver-kakao"
+                      >
+                        <span>KAKAOTALK ID (ตลาดเกาหลี)</span>
+                      </label>
+                      <input
+                        id="driver-kakao"
+                        type="text"
+                        value={kakao}
+                        onChange={(e) => setKakao(e.target.value)}
+                        className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                      />
+                    </div>
+
+                    {/* Capacity Dropdown */}
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                        htmlFor="driver-capacity"
+                      >
+                        <span>จำนวนที่นั่งผู้โดยสารตามโครงสร้างจริง</span>
+                        <span className="text-rose-600">*</span>
+                      </label>
+                      <select
+                        id="driver-capacity"
+                        value={seats}
+                        onChange={(e) => setSeats(Number(e.target.value))}
+                        className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors cursor-pointer"
+                      >
+                        <option value={9}>
+                          9 ที่นั่ง VIP เบาะใหญ่พิเศษ 3 แถว (นั่งสบายที่สุด ไม่แออัด)
+                        </option>
+                        <option value={10}>10 ที่นั่ง VIP เบาะหนังพรีเมียม</option>
+                        <option value={12}>12 ที่นั่ง Standard สำหรับหมู่คณะ</option>
+                        <option value={13}>13-14 ที่นั่ง Commuter มาตรฐานโรงงาน</option>
+                        <option value={7}>7 ที่นั่ง SUV / Alphard พรีเมียม</option>
+                      </select>
+                    </div>
+
+                    {/* Luggage Capacity Indicator Tag Strip */}
+                    <div className="p-4 bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-slate-500 text-[24px]">
+                          luggage
+                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-slate-950 dark:text-white">
+                            ความจุกระเป๋าสัมภาระสูงสุด
+                          </span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            กระเป๋าเดินทางขนาด 24-28 นิ้ว ได้ 5-7 ใบ (เมื่อพับเบาะหลังสุด)
+                          </span>
+                        </div>
+                      </div>
+                      <span className="font-mono text-xs font-bold text-slate-950 dark:text-white bg-white dark:bg-slate-900 px-2.5 py-1 border border-slate-200 dark:border-slate-700 shrink-0">
+                        7 ใบใหญ่
+                      </span>
+                    </div>
+                  </div>
+                </form>
+              </section>
+
+              {/* 6. Real-time Live Availability Calendar Module */}
+              <section className="bg-white dark:bg-slate-900 p-6 shadow-xs border border-slate-200 dark:border-slate-800">
+                {/* Title & Live Bar */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[22px] text-slate-950 dark:text-white">
+                      calendar_month
+                    </span>
+                    <h2 className="text-base sm:text-lg font-bold text-slate-950 dark:text-white">
+                      ปฏิทินระบุสถานะ &quot;คิวว่าง / ติดงาน&quot; (อัปเดตสด 24 ชม.)
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-slate-400">
+                    <span className="w-2 h-2 rounded-full bg-[#06C755]"></span>
+                    <span>ซิงก์ตรงกับผลการค้นหาของลูกค้าทันที</span>
+                  </div>
+                </div>
+
+                {/* Current Availability Banner */}
+                <div className="mt-4 p-4 bg-[#E8F9EE] dark:bg-emerald-950/30 border border-[#06C755]/30 flex items-center gap-3">
+                  <span className="material-symbols-outlined text-[22px] text-[#06C755] font-bold shrink-0">
+                    check_circle
+                  </span>
+                  <p className="text-xs sm:text-sm text-slate-900 dark:text-emerald-100">
+                    {busyDates.length === 0 ? (
+                      <>
+                        <strong className="font-bold">ขณะนี้ไม่มีคิวติดงาน</strong> —
+                        รถของคุณเปิดสถานะว่างพร้อมรับงานทุกวัน 24 ชั่วโมง
+                        (ลูกค้าบน TripDee สามารถกดติดต่อจองคิวทริปของคุณได้ตลอดเวลา)
+                      </>
+                    ) : (
+                      <>
+                        <strong className="font-bold">
+                          ขณะนี้มีคิวติดงาน {busyDates.length} วัน
+                        </strong>{' '}
+                        — ระบบซิงก์ผลการค้นหากับลูกค้าเพื่อแจ้งเตือนล่วงหน้า และป้องกันการจองซ้อนทับ
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                {/* Quick Add Blocked Date Interval */}
+                <form
+                  onSubmit={handleAddInterval}
+                  className="mt-6 p-4 bg-[#F8FAFC] dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row items-stretch md:items-end gap-3 sm:gap-4"
+                >
+                  <div className="flex-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                      วันที่เริ่มต้นติดคิวงาน
+                    </label>
+                    <input
+                      type="date"
+                      value={intervalStart}
+                      onChange={(e) => setIntervalStart(e.target.value)}
+                      className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:outline-none focus:border-slate-950 dark:focus:border-white"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                      ถึงวันที่สิ้นสุด (วันสุดท้าย)
+                    </label>
+                    <input
+                      type="date"
+                      value={intervalEnd}
+                      onChange={(e) => setIntervalEnd(e.target.value)}
+                      className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:outline-none focus:border-slate-950 dark:focus:border-white"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                      หมายเหตุงาน (เห็นเฉพาะคุณ)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="เช่น ทริปดอยอินทนนท์ 3 วัน"
+                      value={intervalNote}
+                      onChange={(e) => setIntervalNote(e.target.value)}
+                      className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-slate-950 dark:focus:border-white"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="h-11 px-5 bg-[#D97706] hover:bg-amber-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs shrink-0 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                    <span>+ เพิ่มวันติดคิว</span>
+                  </button>
+                </form>
+
+                {/* Monthly Calendar Grid Visual */}
+                <div className="mt-6 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                  {/* Month Navigation Bar */}
+                  <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                    <button
+                      type="button"
+                      onClick={() => setViewDate(new Date(currentYear, currentMonth - 1, 1))}
+                      className="p-1 hover:bg-white dark:hover:bg-slate-700 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm sm:text-base text-slate-950 dark:text-white font-bold">
+                        {monthDisplayTitle}
+                      </span>
+                      <span className="font-mono text-xs bg-white dark:bg-slate-900 px-2 py-0.5 text-slate-500 border border-slate-200 dark:border-slate-700 hidden sm:inline">
+                        โซนเวลา: Asia/Bangkok
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setViewDate(new Date(currentYear, currentMonth + 1, 1))}
+                      className="p-1 hover:bg-white dark:hover:bg-slate-700 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+                    </button>
+                  </div>
+
+                  {/* Days of Week Header */}
+                  <div className="grid grid-cols-7 text-center text-[12px] font-bold py-2 bg-[#F8FAFC] dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                    <span className="text-rose-600">อา (Sun)</span>
+                    <span className="text-slate-600 dark:text-slate-400">จ (Mon)</span>
+                    <span className="text-slate-600 dark:text-slate-400">อ (Tue)</span>
+                    <span className="text-slate-600 dark:text-slate-400">พ (Wed)</span>
+                    <span className="text-slate-600 dark:text-slate-400">พฤ (Thu)</span>
+                    <span className="text-slate-600 dark:text-slate-400">ศ (Fri)</span>
+                    <span className="text-slate-950 dark:text-slate-200">ส (Sat)</span>
+                  </div>
+
+                  {/* Calendar Cells Grid */}
+                  <div className="grid grid-cols-7 divide-x divide-y divide-slate-200 dark:divide-slate-800">
+                    {/* Previous Month Padding */}
+                    {Array.from({ length: firstDayOfWeek }).map((_, i) => {
+                      const dayNum = prevMonthDays - firstDayOfWeek + i + 1;
+                      return (
+                        <div
+                          key={`prev-${i}`}
+                          className="p-2 sm:p-3 min-h-[64px] bg-[#F8FAFC] dark:bg-slate-900/40 text-slate-300 dark:text-slate-700"
+                        >
+                          <span className="font-mono text-xs">{dayNum}</span>
+                        </div>
+                      );
+                    })}
+
+                    {/* Current Month Days */}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                      const dayNum = i + 1;
+                      const monthStr = String(currentMonth + 1).padStart(2, '0');
+                      const dayStr = String(dayNum).padStart(2, '0');
+                      const dateIso = `${currentYear}-${monthStr}-${dayStr}`;
+
+                      const isBusy = busyDates.includes(dateIso);
+                      const isToday = dateIso === todayIso;
+                      const dayOfWeek = (firstDayOfWeek + i) % 7;
+                      const isSunday = dayOfWeek === 0;
+
+                      if (isBusy) {
+                        return (
+                          <div
+                            key={dateIso}
+                            onClick={() => toggleDateBusy(dateIso)}
+                            className="p-2 min-h-[64px] bg-[#ffdad6]/40 dark:bg-rose-950/30 border-l-2 border-l-[#ba1a1a] cursor-pointer hover:opacity-90 transition-opacity"
+                            title="คลิกเพื่อปลดล็อคให้ว่าง"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-xs font-bold text-[#ba1a1a] dark:text-rose-400">
+                                {dayNum}
+                              </span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]"></span>
+                            </div>
+                            <span className="block mt-1 text-[10px] text-[#ba1a1a] dark:text-rose-300 font-semibold truncate">
+                              ติดคิว (เชียงราย)
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      if (isToday) {
+                        return (
+                          <div
+                            key={dateIso}
+                            onClick={() => toggleDateBusy(dateIso)}
+                            className="p-2 min-h-[64px] bg-white dark:bg-slate-800 border-2 border-slate-950 dark:border-white relative shadow-xs cursor-pointer"
+                            title="คลิกเพื่อสลับเป็นติดคิว"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-xs font-extrabold text-slate-950 dark:text-white">
+                                {dayNum}
+                              </span>
+                              <span className="bg-slate-950 dark:bg-white text-white dark:text-slate-950 font-mono text-[9px] px-1 py-0.2 uppercase font-bold">
+                                วันนี้
+                              </span>
+                            </div>
+                            <span className="block mt-1 text-[10px] text-[#06C755] font-bold">
+                              ● ว่างพร้อมรับ
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={dateIso}
+                          onClick={() => toggleDateBusy(dateIso)}
+                          className="p-2 sm:p-3 min-h-[64px] bg-white dark:bg-slate-900 hover:bg-[#F8FAFC] dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          title="คลิกเพื่อสลับสถานะ"
+                        >
+                          <span
+                            className={`font-mono text-xs font-bold ${
+                              isSunday ? 'text-rose-600' : 'text-slate-800 dark:text-slate-200'
+                            }`}
+                          >
+                            {dayNum}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Legend Ribbon */}
+                  <div className="p-3 bg-[#F8FAFC] dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600 dark:text-slate-400">
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-3 h-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 inline-block"></span>
+                        คิวว่างรับงานได้
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-3 h-3 bg-[#ffdad6] border border-[#ba1a1a] inline-block"></span>
+                        ติดงาน / คิวเต็ม
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-3 h-3 border-2 border-slate-950 dark:border-white inline-block"></span>
+                        วันนี้ (ปัจจุบัน)
+                      </span>
+                    </div>
+                    <span className="text-slate-400 dark:text-slate-500 text-[11px]">
+                      คลิกที่ช่องวันที่ในปฏิทินเพื่อสลับสถานะ ว่าง/ติดงาน ได้โดยตรง
+                    </span>
+                  </div>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB 2: สิทธิประโยชน์รถแนะนำ (Featured Perks & Verification) */}
+          {/* ============================================================== */}
+          {activeTab === 'perks' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-slate-900 p-6 shadow-xs border border-slate-200 dark:border-slate-800 space-y-6">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#D97706] uppercase tracking-wider mb-1">
+                    <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
+                    <span>TripDee Verified Partner Program</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-950 dark:text-white">
+                    สิทธิประโยชน์พิเศษสำหรับสถานะ &apos;รถแนะนำยอดนิยม&apos; (TOP RATED)
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    การได้รับเลือกเป็นรถแนะนำช่วยเพิ่มโอกาสในการถูกเลือกจากลูกค้าบุคคลและองค์กรธุรกิจ
+                    B2B สูงสุดถึง 400%
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="w-8 h-8 bg-slate-950 text-white flex items-center justify-center font-bold">
+                      1
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-950 dark:text-white">
+                      อันดับแรกบนผลการค้นหา
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      ระบบจะจัดอันดับรถของคุณให้อยู่ในโซนหน้าแรก เมื่อลูกค้าค้นหารถในเขตเชียงใหม่
+                      ลำพูน และแม่ฮ่องสอน
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="w-8 h-8 bg-slate-950 text-white flex items-center justify-center font-bold">
+                      2
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-950 dark:text-white">
+                      ตราสัญลักษณ์ดาวทองการันตี
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      เพิ่มความมั่นใจให้ผู้โดยสาร ลูกค้าองค์กร และเอเจนซีท่องเที่ยวต่างชาติ
+                      ด้วยตราดาวทองรับรองมาตรฐาน
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="w-8 h-8 bg-slate-950 text-white flex items-center justify-center font-bold">
+                      3
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-950 dark:text-white">
+                      รับงานสัมมนาองค์กร B2B
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      สิทธิ์เข้าร่วมกองคาราวานทริปสัมมนาบริษัท และงานประชุมนานาชาติของพันธมิตร
+                      TripDee
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                  <h4 className="text-sm font-bold text-slate-950 dark:text-white mb-3">
+                    สถานะการตรวจสอบเอกสารเพื่อรักษาสิทธิ์ (Verification Checklist)
+                  </h4>
+                  <div className="space-y-2.5">
+                    {[
+                      {
+                        title: '1. ประกันภัยชั้น 1 คุ้มครองผู้โดยสาร และ พ.ร.บ.',
+                        status: 'ผ่านการตรวจสอบแล้ว (Active)',
+                        valid: 'คุ้มครองถึง 31 ธ.ค. 2569',
+                      },
+                      {
+                        title: '2. ป้ายทะเบียนรถยนต์สาธารณะ (ป้ายเหลือง 30 หรือ 36)',
+                        status: 'ผ่านการตรวจสอบแล้ว (Active)',
+                        valid: 'ตรงตามมาตรฐานกรมการขนส่งทางบก',
+                      },
+                      {
+                        title: '3. การตรวจสภาพความปลอดภัย (ถังดับเพลิง, ค้อนทุบกระจก, GPS)',
+                        status: 'ผ่านเกณฑ์มาตรฐานความปลอดภัย',
+                        valid: 'ตรวจรอบล่าสุด ก.ย. 2569',
+                      },
+                      {
+                        title: '4. มาตรฐานบริการดีเด่น ปลอดกลิ่นบุหรี่ 100%',
+                        status: 'ผ่านการรับรอง (100% Smoke-Free)',
+                        valid: 'ประเมินจากรีวิวผู้โดยสารจริง',
+                      },
+                    ].map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 bg-[#F8FAFC] dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[18px] text-[#06C755]">
+                            check_circle
+                          </span>
+                          <span className="text-xs font-bold text-slate-900 dark:text-white">
+                            {item.title}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="font-semibold text-[#06C755]">{item.status}</span>
+                          <span className="text-slate-400">·</span>
+                          <span className="text-slate-500 font-mono text-[11px]">{item.valid}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  {featuredRequested ? (
+                    <div className="p-3 bg-[#E8F9EE] text-[#06C755] font-bold text-xs border border-emerald-300">
+                      ✓ ส่งคำขออัปเดตเอกสารไปยังทีมงานเรียบร้อยแล้ว (จะดำเนินการภายใน 24 ชม.)
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFeaturedRequested(true);
+                        setTimeout(() => setFeaturedRequested(false), 5000);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                      <span>ส่งเอกสารเพิ่มเติม / ตรวจสอบรอบใหม่</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB 3: กล่องงานลูกค้า (Incoming Leads & Jobs Feed) */}
+          {/* ============================================================== */}
+          {activeTab === 'jobs' && (
+            <div className="space-y-4">
+              <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-950 dark:text-white">
+                    กล่องข้อความและคิวงานใหม่จากผู้โดยสาร
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    งานติดต่อตรงจากลูกค้าที่ค้นหาและเจาะจงเลือกรถของคุณ — ดีลตรง 100% ไม่มีหักค่าหัวคิว
+                  </p>
+                </div>
+                <span className="font-mono text-xs bg-[#E8F9EE] text-[#06C755] font-bold px-2 py-1 border border-emerald-200">
+                  2 งานรอการติดต่อ
+                </span>
+              </div>
+
+              {/* Job Card 1 */}
+              <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-slate-950 text-white text-[10px] font-bold px-2 py-0.5">
+                      B2B สัมมนาองค์กร
+                    </span>
+                    <span className="text-xs font-bold text-slate-950 dark:text-white">
+                      บจก. ทีซีที อินเตอร์เทรด (ติดต่อ: คุณศิริพร)
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono text-slate-500">15 นาทีที่แล้ว</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">เส้นทางเดินทาง:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      เชียงใหม่ - เชียงราย (3 วัน 2 คืน)
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">ช่วงเวลาเดินทาง:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      15 - 17 ต.ค. 2569 (8 ท่าน)
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">งบประมาณที่ลูกค้าเสนอ:</span>
+                    <span className="font-bold text-[#D97706] text-sm">฿10,500 สุทธิ</span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-600 dark:text-slate-300 bg-[#F8FAFC] dark:bg-slate-800/40 p-2.5 border border-slate-200 dark:border-slate-700">
+                  &quot;ต้องการรถตู้ VIP 9 ที่นั่ง เบาะนวดไฟฟ้า คนขับชำนาญเส้นทางดอยแม่สลอง
+                  และต้องการใบกำกับภาษีเต็มรูปแบบสำหรับเบิกจ่ายบริษัท&quot;
+                </p>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span className="material-symbols-outlined text-[16px] text-[#06C755]">
+                      verified
+                    </span>
+                    <span>ลูกค้าผ่านการยืนยันเบอร์โทรศัพท์แล้ว</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href="tel:0891234567"
+                      onClick={() =>
+                        trackCall({
+                          targetType: 'driver_job',
+                          targetId: 'job-b2b-01',
+                          targetTitle: 'B2B บจก. ทีซีที อินเตอร์เทรด',
+                          phoneNumber: '0891234567',
+                        })
+                      }
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">call</span>
+                      <span>โทรคุยรายละเอียด (089-123-4567)</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Job Card 2 */}
+              <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-[#D97706] text-white text-[10px] font-bold px-2 py-0.5">
+                      ทริปท่องเที่ยวส่วนตัว
+                    </span>
+                    <span className="text-xs font-bold text-slate-950 dark:text-white">
+                      คุณธนากร และครอบครัว (5 ท่าน)
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono text-slate-500">45 นาทีที่แล้ว</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">เส้นทางเดินทาง:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      สนามบินเชียงใหม่ - ม่อนแจ่ม - แม่กำปอง
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">ช่วงเวลาเดินทาง:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      22 - 23 ต.ค. 2569 (2 วัน 1 คืน)
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">งบประมาณที่ลูกค้าเสนอ:</span>
+                    <span className="font-bold text-[#D97706] text-sm">฿4,800 สุทธิ</span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-600 dark:text-slate-300 bg-[#F8FAFC] dark:bg-slate-800/40 p-2.5 border border-slate-200 dark:border-slate-700">
+                  &quot;มีเด็ก 1 คน และผู้สูงอายุ ต้องการคนขับใจเย็น ขับรถนุ่มนวล
+                  กระเป๋าเดินทางใบใหญ่ 4 ใบ&quot;
+                </p>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span className="material-symbols-outlined text-[16px] text-[#06C755]">
+                      verified
+                    </span>
+                    <span>ลูกค้ากดค้นหาเจาะจงรถตู้ VIP พี่ชัย</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href="tel:0819876543"
+                      onClick={() =>
+                        trackCall({
+                          targetType: 'driver_job',
+                          targetId: 'job-fam-02',
+                          targetTitle: 'ทริปครอบครัว คุณธนากร',
+                          phoneNumber: '0819876543',
+                        })
+                      }
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">call</span>
+                      <span>โทรติดต่อผู้โดยสาร (081-987-6543)</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* TAB 4: ประวัติรีวิวลูกค้า (Reviews History) */}
+          {/* ============================================================== */}
+          {activeTab === 'reviews' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-slate-900 p-6 shadow-xs border border-slate-200 dark:border-slate-800 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-950 dark:text-white">
+                      ผลคะแนนและความคิดเห็นจากผู้โดยสารจริง
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                      คะแนนทั้งหมดรวบรวมจากผู้โดยสารที่ทำการจองและใช้บริการผ่านระบบ TripDee
+                    </p>
+                  </div>
+                  <div className="flex items-baseline gap-2 bg-[#F8FAFC] dark:bg-slate-800 p-3 border border-slate-200 dark:border-slate-700 shrink-0">
+                    <span className="text-3xl font-extrabold font-mono text-slate-950 dark:text-white">
+                      4.96
+                    </span>
+                    <span className="text-xs text-slate-500 font-medium">/ 5.0 (128 รีวิว)</span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {[
+                    {
+                      author: 'คุณณัฐพล รัตนกุล',
+                      trip: 'ทริปครอบครัว เชียงใหม่ - ดอยอินทนนท์',
+                      date: '24 ก.ย. 2569',
+                      score: '5.0',
+                      text: 'พี่ชัยขับรถดีมากครับ สุภาพ นุ่มนวล นั่งสบายไม่เวียนหัวเลย รถสะอาดมาก แอร์เย็นเจี๊ยบ เบาะนวดไฟฟ้าทำงานสมบูรณ์แบบ แนะนำเลยครับสำหรับใครที่จะพาครอบครัวมาเที่ยวเชียงใหม่',
+                    },
+                    {
+                      author: 'Khun Sarah & Group (Singapore)',
+                      trip: 'Chiang Mai City & Chiang Rai Highlights (3 Days)',
+                      date: '18 ก.ย. 2569',
+                      score: '5.0',
+                      text: 'Surachai was our driver for 3 full days. Exceptional service, always punctual, extremely safe driving through mountain curves. Great local lunch recommendations too! 10/10.',
+                    },
+                    {
+                      author: 'คุณวรัญญา (ฝ่ายจัดซื้อ บจก. พีแอนด์ที)',
+                      trip: 'รับรองคณะผู้บริหารญี่ปุ่น งานประชุมนานาชาติ',
+                      date: '10 ก.ย. 2569',
+                      score: '5.0',
+                      text: 'เช่าเหมารถตู้ 2 คัน รับรองคณะผู้บริหาร รถสวยตรงปก ป้ายเหลืองถูกต้องตามระเบียบบริษัท ออกใบกำกับภาษีได้สะดวกรวดเร็วมากค่ะ',
+                    },
+                  ].map((rev, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 bg-[#F8FAFC] dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-2"
+                    >
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900 dark:text-white">
+                            {rev.author}
+                          </span>
+                          <span className="text-slate-400">·</span>
+                          <span className="text-slate-500">{rev.trip}</span>
+                        </div>
+                        <div className="flex items-center gap-1 font-mono font-bold text-[#D97706]">
+                          <span>★</span>
+                          <span>{rev.score}</span>
+                          <span className="text-slate-400 font-normal ml-2">{rev.date}</span>
+                        </div>
+                      </div>
+                      <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                        &quot;{rev.text}&quot;
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* 7. Primary Action Command Bar */}
+          {/* ============================================================== */}
+          <div className="bg-white dark:bg-slate-900 p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-[#06C755] text-[22px]">
+                cloud_done
+              </span>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-slate-950 dark:text-white">
+                  การเปลี่ยนแปลงล่าสุดถูกบันทึกชั่วคราวแล้ว
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  กดบันทึกเพื่อให้อัปเดตสถานะขึ้นเว็บไซต์จริงและแอปพลิเคชันทันที
+                </span>
               </div>
             </div>
 
-            {/* 1.3 Driver Availability & Schedule Calendar */}
-            <div className="pt-2">
-              <DriverAvailabilityCalendar
-                busyDates={busyDates}
-                onChange={setBusyDates}
-              />
-            </div>
-
-            {saveSuccess && (
-              <div className="flex items-center gap-2 rounded-xl bg-leaf-soft p-3 text-xs font-extrabold text-leaf">
-                <Check className="h-4 w-4" strokeWidth={3} />
-                <span>{t('pdrv.saved')}</span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between pt-2">
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-blue-action hover:bg-blue-action-hover active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer"
-              >
-                {t('pdrv.saveBtn')}
-              </button>
-
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
               <button
                 type="button"
                 onClick={() => {
                   logout();
                   onClose();
                 }}
-                className="flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 transition-colors cursor-pointer hover:underline"
+                className="px-4 py-2.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 dark:bg-slate-800 dark:hover:bg-rose-950/40 text-slate-600 dark:text-slate-300 text-xs font-semibold transition-colors border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer"
               >
-                <LogOut className="h-4 w-4" />
-                <span>{t('pdrv.logout')}</span>
+                <span className="material-symbols-outlined text-[16px]">logout</span>
+                <span>ออกจากระบบ</span>
               </button>
-            </div>
-          </form>
-        )}
 
-        {/* Tab 2: Featured Perks & Promotion */}
-        {activeTab === 'verification' && (
-          <form onSubmit={handleRequestFeatured} className="space-y-4">
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-transparent border border-amber-400/40 space-y-2">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-extrabold text-sm">
-                <Star className="w-5 h-5 fill-amber-500 text-amber-500" />
-                <span>{t('pdrv.verIntroB')}</span>
-              </div>
-              <p className="text-xs text-ink-2 font-medium leading-relaxed">
-                {t('pdrv.verIntroA')} {t('pdrv.verIntroB')} {t('pdrv.verIntroC')}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div className="rounded-2xl border border-rule bg-paper p-4 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-navy-deep dark:text-white flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px] text-amber-500">arrow_upward</span>
-                    <span>{t('pdrv.doc1')}</span>
-                  </span>
-                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{t('pdrv.hasData')}</span>
-                </div>
-                <p className="text-xs text-ink-2">{t('pdrv.doc1Ph')}</p>
-              </div>
-
-              <div className="rounded-2xl border border-rule bg-paper p-4 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-navy-deep dark:text-white flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px] text-amber-500">hotel_class</span>
-                    <span>{t('pdrv.doc2')}</span>
-                  </span>
-                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{t('pdrv.hasData')}</span>
-                </div>
-                <p className="text-xs text-ink-2">{t('pdrv.doc2Ph')}</p>
-              </div>
-            </div>
-
-            {featuredRequested ? (
-              <div className="rounded-xl bg-amber-100 dark:bg-amber-950/60 p-4 text-center font-extrabold text-amber-900 dark:text-amber-200 text-xs border border-amber-300">
-                {t('pdrv.docsSent')}
-              </div>
-            ) : (
               <button
-                type="submit"
-                className="td-btn td-pop flex w-full items-center justify-center gap-2 rounded-pill bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 py-3 px-4 text-sm font-extrabold text-white shadow-md transition-all cursor-pointer"
+                type="button"
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+                className={`px-8 py-2.5 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer ${
+                  saveSuccess
+                    ? 'bg-[#06C755]'
+                    : isSaving
+                    ? 'bg-slate-700'
+                    : 'bg-slate-950 hover:bg-slate-800'
+                }`}
               >
-                <Star className="h-4 w-4 fill-white text-white" />
-                <span>{t('pdrv.docsSubmit')}</span>
+                {isSaving ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>กำลังบันทึก...</span>
+                  </>
+                ) : saveSuccess ? (
+                  <>
+                    <Check className="h-4 w-4" strokeWidth={3} />
+                    <span>บันทึกเรียบร้อย!</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-[18px]">save</span>
+                    <span>บันทึกการแก้ไขทั้งหมด</span>
+                  </>
+                )}
               </button>
-            )}
-          </form>
-        )}
-
-        {/* Tab 3: Incoming Leads Feed */}
-        {activeTab === 'jobs' && (
-          <div className="space-y-3">
-            <p className="text-xs font-bold text-ink-2">
-              {t('pdrv.jobsIntro')}
-            </p>
-
-            <div className="rounded-2xl border border-border-subtle dark:border-slate-800 bg-white dark:bg-slate-800/80 p-4 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2.5 py-0.5 text-xs font-bold text-blue-700 dark:text-blue-300">
-                  {t('pdrv.jobCorp')}
-                </span>
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{t('pdrv.jobDate1')}</span>
-              </div>
-              <h4 className="font-bold text-sm text-navy-deep dark:text-white mb-1">
-                {t('pdrv.jobTitle1')}
-              </h4>
-              <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
-                {t('pdrv.jobDesc1')}
-              </p>
-              <div className="flex items-center justify-between pt-2.5 border-t border-border-subtle dark:border-slate-700/60">
-                <span className="font-extrabold text-sm text-blue-action dark:text-blue-400">{t('pdrv.jobBudget1')}</span>
-                <a
-                  href="tel:0812345678"
-                  onClick={() => {
-                    trackCall({
-                      targetType: 'driver_job',
-                      targetId: 'job-sem-01',
-                      targetTitle: 'งานสัมมนาบริษัท เชียงใหม่-เชียงราย',
-                      phoneNumber: '0812345678',
-                    });
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-action hover:bg-blue-action-hover active:scale-[0.98] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
-                >
-                  {t('pdrv.jobAccept')}
-                </a>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border-subtle dark:border-slate-800 bg-white dark:bg-slate-800/80 p-4 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
-                  {t('pdrv.jobFamily')}
-                </span>
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{t('pdrv.jobDate2')}</span>
-              </div>
-              <h4 className="font-bold text-sm text-navy-deep dark:text-white mb-1">
-                {t('pdrv.jobTitle2')}
-              </h4>
-              <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
-                {t('pdrv.jobDesc2')}
-              </p>
-              <div className="flex items-center justify-between pt-2.5 border-t border-border-subtle dark:border-slate-700/60">
-                <span className="font-extrabold text-sm text-blue-action dark:text-blue-400">{t('pdrv.jobBudget2')}</span>
-                <a
-                  href="tel:0812345678"
-                  onClick={() => {
-                    trackCall({
-                      targetType: 'driver_job',
-                      targetId: 'job-fam-02',
-                      targetTitle: 'ทริปครอบครัว ม่อนแจ่ม-แม่ริม',
-                      phoneNumber: '0812345678',
-                    });
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-action hover:bg-blue-action-hover active:scale-[0.98] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
-                >
-                  {t('pdrv.jobAccept')}
-                </a>
-              </div>
             </div>
           </div>
-        )}
 
-        {/* 1.2 Danger Zone: Self-Service Account & Vehicle Deletion (PDPA) */}
-        <div className="mt-6 pt-5 border-t border-rule/60">
-          <DangerZone
-            targetName={user.vehicleTitle ? `${user.vehicleTitle} (${user.name})` : user.name}
-            title={t('danger.title')}
-            description={t('danger.driverDesc')}
-            buttonLabel={t('danger.deleteBtn')}
-            onDelete={async () => {
-              await deleteAccount();
-              onClose();
-            }}
-          />
+          {/* ============================================================== */}
+          {/* 8. Danger Zone & Privacy PDPA Module (Architectural Alert Box) */}
+          {/* ============================================================== */}
+          <section className="bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-900/60 p-6 shadow-xs mb-6">
+            <div className="flex flex-col md:flex-row items-start justify-between gap-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[26px]">gavel</span>
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg text-rose-600 font-bold">
+                      โซนอันตรายและการจัดการข้อมูลส่วนบุคคล (PDPA)
+                    </h3>
+                    <span className="bg-rose-600 text-white font-mono text-[10px] px-2 py-0.2 font-bold uppercase">
+                      DANGER ZONE
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">
+                    หากคุณต้องการหยุดให้บริการถาวร คุณสามารถส่งคำขอลบข้อมูลรถ หมายเลขโทรศัพท์
+                    และประวัติทั้งหมดของคุณออกจากฐานข้อมูล TripDee อย่างถาวร ข้อมูลจะไม่สามารถกู้คืนได้ตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล
+                    พ.ศ. 2562
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmOpen(true)}
+                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 transition-colors shadow-xs shrink-0 self-stretch md:self-auto justify-center cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete_forever</span>
+                <span>ขอลบบัญชีและทำลายข้อมูล</span>
+              </button>
+            </div>
+          </section>
+
+          {/* Confirmation Modal for Delete */}
+          {deleteConfirmOpen && (
+            <div className="fixed inset-0 z-500 flex items-center justify-center bg-black/70 p-4 animate-fade-in">
+              <div className="bg-white dark:bg-slate-900 border border-rose-400 p-6 max-w-md w-full shadow-2xl space-y-4">
+                <div className="flex items-center gap-3 text-rose-600">
+                  <span className="material-symbols-outlined text-[28px]">warning</span>
+                  <h4 className="font-bold text-base">ยืนยันการลบบัญชีคนขับอย่างถาวร</h4>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีและทำลายข้อมูลรถยนต์ทั้งหมดออกจากระบบ TripDee?
+                  การดำเนินการนี้จะไม่สามารถกู้คืนได้
+                </p>
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirmOpen(false)}
+                    className="px-4 py-2 border border-slate-300 dark:border-slate-700 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setDeleteConfirmOpen(false);
+                      await deleteAccount();
+                      onClose();
+                    }}
+                    className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    ยืนยันลบข้อมูลถาวร
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
-  </div>
   );
 };

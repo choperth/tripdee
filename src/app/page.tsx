@@ -152,6 +152,24 @@ export default function HomePage() {
     window.addEventListener('tripdee-filter-plate', handlePlateFilter);
     return () => window.removeEventListener('tripdee-filter-plate', handlePlateFilter);
   }, []);
+  const [isDriverPortalOpen, setIsDriverPortalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleDriverPortalEvent = () => {
+      setIsDriverPortalOpen(true);
+    };
+    window.addEventListener('tripdee-open-driver-portal', handleDriverPortalEvent);
+    return () => window.removeEventListener('tripdee-open-driver-portal', handleDriverPortalEvent);
+  }, []);
+  const [isAdminPortalOpen, setIsAdminPortalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleAdminPortalEvent = () => {
+      setIsAdminPortalOpen(true);
+    };
+    window.addEventListener('tripdee-open-admin-portal', handleAdminPortalEvent);
+    return () => window.removeEventListener('tripdee-open-admin-portal', handleAdminPortalEvent);
+  }, []);
 
   const [selectedVehicleDetail, setSelectedVehicleDetail] = useState<Vehicle | null>(null);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState<boolean>(false);
@@ -838,8 +856,14 @@ export default function HomePage() {
         }}
       />
 
-      {user?.role === 'driver' && (
-        <DriverPortalModal isOpen={isPortalOpen} onClose={() => setIsPortalOpen(false)} />
+      {((user?.role === 'driver' && isPortalOpen) || isDriverPortalOpen) && (
+        <DriverPortalModal
+          isOpen={isPortalOpen || isDriverPortalOpen}
+          onClose={() => {
+            setIsPortalOpen(false);
+            setIsDriverPortalOpen(false);
+          }}
+        />
       )}
       {user?.role === 'customer' && (
         <CustomerPortalModal
@@ -848,8 +872,14 @@ export default function HomePage() {
           onOpenNewQuote={() => navigateToSection('corporate', 'corporate')}
         />
       )}
-      {user?.role === 'admin' && (
-        <AdminPortalModal isOpen={isPortalOpen} onClose={() => setIsPortalOpen(false)} />
+      {((user?.role === 'admin' && isPortalOpen) || isAdminPortalOpen) && (
+        <AdminPortalModal
+          isOpen={isPortalOpen || isAdminPortalOpen}
+          onClose={() => {
+            setIsPortalOpen(false);
+            setIsAdminPortalOpen(false);
+          }}
+        />
       )}
 
       {/* Scroll & Layout Quality Monitor (Dev/Benchmark tool - only active with ?debug=perf) */}

@@ -172,9 +172,18 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
               </button>
             </h3>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center flex-wrap gap-1 mb-2">
               <span className="material-symbols-outlined text-[14px] text-slate-400">person</span>
               <span>{publicName} • {shortLocation}</span>
+              <a
+                href={`/driver/card?id=${vehicle.id}`}
+                className="inline-flex items-center gap-0.5 text-[10px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-1.5 py-0.2 hover:bg-amber-100 transition-colors ml-1 font-bold"
+                title="เปิดดูนามบัตรดิจิทัลคนขับ (Digital Business Card)"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="material-symbols-outlined text-[11px]">contact_phone</span>
+                <span>นามบัตร</span>
+              </a>
               {companionVehicles.length > 0 && (
                 <button
                   type="button"

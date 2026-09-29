@@ -9,25 +9,27 @@ import {
   Briefcase,
   User,
   Crown,
+  ChevronRight,
+  Globe,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 interface NavbarProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  onOpenRegisterModal: () => void;
-  onOpenLoginModal: () => void;
-  onOpenPortal: () => void;
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
+  onOpenRegisterModal?: () => void;
+  onOpenLoginModal?: () => void;
+  onOpenPortal?: () => void;
   onOpenDriverSelfService?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  activeTab,
-  setActiveTab,
-  onOpenRegisterModal,
-  onOpenLoginModal,
-  onOpenPortal,
+  activeTab = 'van',
+  setActiveTab = () => {},
+  onOpenRegisterModal = () => {},
+  onOpenLoginModal = () => {},
+  onOpenPortal = () => {},
   onOpenDriverSelfService,
 }) => {
   const { user } = useAuth();
@@ -59,6 +61,23 @@ export const Navbar: React.FC<NavbarProps> = ({
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
   }, []);
+
+  // Lock body scroll and handle Escape key when mobile menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden';
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setMenuOpen(false);
+      };
+      window.addEventListener('keydown', onKeyDown);
+      return () => {
+        document.body.style.overflow = '';
+        window.removeEventListener('keydown', onKeyDown);
+      };
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [menuOpen]);
 
   const scrollTo = (id: string, requiredTab?: string) => {
     setMenuOpen(false);
@@ -116,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 w-full z-50 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 transition-shadow ${scrolled ? 'shadow-xs' : ''}`}>
+    <header className={`fixed top-0 left-0 right-0 w-full z-[160] bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 transition-shadow ${scrolled ? 'shadow-xs' : ''}`}>
       <nav aria-label={t('nav.main')} className="w-full">
         <div className="h-16 max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4 sm:gap-6">
           {/* LEFT: Official Logo & Live Signal */}
@@ -210,12 +229,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* RIGHT: Actions, Language Switcher, Driver Portal, Customer Post CTA */}
-          <div className="flex items-center justify-end shrink-0 gap-1 sm:gap-2 min-w-0">
-            {/* Language Switcher */}
-            <LanguageSwitcher />
+          <div className="flex items-center justify-end shrink-0 gap-1.5 sm:gap-2 min-w-0">
+            {/* Language Switcher: desktop & tablet pill dropdown; mobile uses the row switcher in the drawer */}
+            <div className="hidden sm:block shrink-0">
+              <LanguageSwitcher />
+            </div>
 
             {/* Driver Portal CTA */}
-            {onOpenDriverSelfService && (
+            {onOpenDriverSelfService ? (
               <button
                 type="button"
                 onClick={onOpenDriverSelfService}
@@ -230,6 +251,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {t('nav.free')}
                 </span>
               </button>
+            ) : (
+              <a
+                href="/driver"
+                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:border-emerald-300 transition-all rounded-none cursor-pointer"
+                title={t('nav.driverCta')}
+              >
+                <span className="material-symbols-outlined text-[16px] text-[#06C755]">
+                  local_taxi
+                </span>
+                <span>{t('nav.driverCtaShort')}</span>
+                <span className="text-[9px] bg-[#E8F9EE] dark:bg-emerald-950 text-[#06C755] border border-emerald-200 dark:border-emerald-800 px-1 font-bold">
+                  {t('nav.free')}
+                </span>
+              </a>
             )}
 
             {/* User Login/Portal */}
@@ -251,7 +286,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? (user.companyName || user.name)
                     : t('nav.admin')
                 }
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 border border-slate-900 transition-all rounded-none shrink-0 cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 border border-slate-900 transition-all rounded-none shrink-0 cursor-pointer"
               >
                 {user.role === 'driver' && <CarFront className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
                 {user.role === 'customer' && (
@@ -260,9 +295,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                     : <Briefcase className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                 )}
                 {user.role === 'admin' && <Crown className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
-                <span className="hidden sm:inline max-w-[85px] truncate">
-                  {user.role === 'driver' && (user.driverNickname || user.name)}
-                  {user.role === 'customer' && (user.customerType === 'individual' ? user.name : (user.companyName || user.name))}
+                <span className="max-w-[80px] sm:max-w-[120px] truncate text-[11px] sm:text-xs">
+                  {user.role === 'driver' && (user.driverNickname ? user.driverNickname.split(' ')[0] : user.name)}
+                  {user.role === 'customer' && (user.customerType === 'individual' ? user.name.split(' ')[0] : (user.companyName || user.name))}
                   {user.role === 'admin' && t('nav.admin')}
                 </span>
               </button>
@@ -270,18 +305,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onOpenLoginModal}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 transition-all rounded-none shrink-0 cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 transition-all rounded-none shrink-0 cursor-pointer"
                 aria-label={t('nav.login')}
               >
                 <User className="w-4 h-4" />
-                <span className="hidden sm:inline">{t('nav.login')}</span>
+                <span className="text-[11px] sm:text-xs">{t('nav.login')}</span>
               </button>
             )}
+
             {/* Mobile Hamburger Toggle */}
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="lg:hidden p-1.5 sm:p-2 rounded-lg text-ink-primary dark:text-slate-200 hover:bg-paper-surface-muted dark:hover:bg-slate-800 transition-colors"
+              className="lg:hidden p-1.5 sm:p-2 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-none transition-colors cursor-pointer"
               aria-label={menuOpen ? t('nav.menuClose') : t('nav.menuOpen')}
             >
               {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -290,155 +326,205 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* MOBILE SLIDE-DOWN DRAWER */}
+        {/* MOBILE SLIDE-DOWN DRAWER & BACKDROP */}
         {menuOpen && (
-          <div className="lg:hidden bg-paper-elevated dark:bg-slate-900 border-b border-border-subtle dark:border-slate-800 px-margin py-space-md space-y-space-sm shadow-xl max-h-[calc(100dvh-5rem)] overflow-y-auto">
-            {/* Quick Actions in Mobile Drawer: Language Row + Theme Toggle */}
-            <div className="pb-space-xs border-b border-border-subtle dark:border-slate-800">
-              <LanguageSwitcher variant="row" onPick={() => setMenuOpen(false)} />
-            </div>
+          <>
+            {/* Backdrop overlay */}
+            <div
+              className="fixed inset-0 top-16 bg-slate-950/50 backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-150"
+              onClick={() => setMenuOpen(false)}
+              aria-hidden="true"
+            />
 
-            <div className="grid grid-cols-2 gap-space-xs pb-space-xs">
-              <button
-                type="button"
-                onClick={() => selectTab('van')}
-                className={`px-space-md py-space-sm rounded-xl font-body-medium text-body-medium text-left flex items-center gap-2 transition-colors ${
-                  activeTab === 'van'
-                    ? 'bg-blue-subtle dark:bg-blue-950/80 text-blue-action dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800'
-                    : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-slate-200 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                <span>🚐</span>
-                <span className="truncate">{t('nav.van')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => selectTab('suv_driver')}
-                className={`px-space-md py-space-sm rounded-xl font-body-medium text-body-medium text-left flex items-center gap-2 transition-colors ${
-                  activeTab === 'suv_driver'
-                    ? 'bg-blue-subtle dark:bg-blue-950/80 text-blue-action dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800'
-                    : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-slate-200 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                <span>🚗</span>
-                <span className="truncate">{t('nav.suvDriver')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => selectTab('car')}
-                className={`px-space-md py-space-sm rounded-xl font-body-medium text-body-medium text-left flex items-center gap-2 transition-colors ${
-                  activeTab === 'car'
-                    ? 'bg-blue-subtle dark:bg-blue-950/80 text-blue-action dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800'
-                    : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-slate-200 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                <span>🔑</span>
-                <span className="truncate">{t('nav.car')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  selectTab('corporate');
-                  scrollTo('corporate');
-                }}
-                className={`px-space-md py-space-sm rounded-xl font-body-medium text-body-medium text-left flex items-center gap-2 transition-colors ${
-                  activeTab === 'corporate'
-                    ? 'bg-blue-subtle dark:bg-blue-950/80 text-blue-action dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800'
-                    : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-slate-200 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                <span>🏢</span>
-                <span className="truncate">{t('nav.b2b')}</span>
-              </button>
-            </div>
+            {/* Mobile Drawer Panel */}
+            <div
+              className="fixed inset-x-0 top-16 z-50 lg:hidden bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 shadow-2xl max-h-[calc(100dvh-4rem)] overflow-y-auto"
+              role="dialog"
+              aria-modal="true"
+              aria-label={t('nav.main')}
+            >
+              <div className="p-4 space-y-4 max-w-lg mx-auto">
+                {/* 1. Language Row Switcher */}
+                <div className="pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-1.5 mb-2 text-slate-500 dark:text-slate-400">
+                    <Globe className="w-3.5 h-3.5" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">{t('lang.switch')}</span>
+                  </div>
+                  <LanguageSwitcher variant="row" onPick={() => setMenuOpen(false)} />
+                </div>
 
-            <div className="flex flex-col gap-1 border-t border-border-subtle dark:border-slate-800 pt-space-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  scrollTo('tripboard', 'van');
-                }}
-                className="py-2.5 px-3 rounded-lg text-left font-body-medium text-ink-primary dark:text-slate-200 hover:bg-paper-surface-muted dark:hover:bg-slate-800 transition-colors"
-              >
-                📋 {t('nav.boardJobs')}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  scrollTo('routes', 'van');
-                }}
-                className="py-2.5 px-3 rounded-lg text-left font-body-medium text-ink-primary dark:text-slate-200 hover:bg-paper-surface-muted dark:hover:bg-slate-800 transition-colors"
-              >
-                🗺️ {t('nav.routesPopular')}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  scrollTo('corporate', 'corporate');
-                }}
-                className="py-2.5 px-3 rounded-lg text-left font-body-medium text-ink-primary dark:text-slate-200 hover:bg-paper-surface-muted dark:hover:bg-slate-800 transition-colors"
-              >
-                🏢 {t('nav.corpService')}
-              </button>
-            </div>
+                {/* 2. Vehicle / Service Categories (2x2 Grid) */}
+                <div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => selectTab('van')}
+                      className={`p-3 text-left flex items-center gap-2.5 rounded-none border transition-all cursor-pointer ${
+                        activeTab === 'van'
+                          ? 'bg-slate-950 dark:bg-white text-white dark:text-slate-950 border-slate-950 dark:border-white shadow-2xs font-bold'
+                          : 'bg-slate-50 dark:bg-slate-900/60 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[20px] shrink-0">airport_shuttle</span>
+                      <span className="text-xs leading-tight">{t('nav.van')}</span>
+                    </button>
 
-            <div className="border-t border-border-subtle dark:border-slate-800 pt-space-sm flex flex-col gap-space-xs">
-              {user ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenPortal();
-                  }}
-                  className="w-full h-11 bg-navy-deep hover:bg-navy-surface dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm transition-colors"
-                >
-                  {user.role === 'driver' && <CarFront className="w-4 h-4" />}
-                  {user.role === 'customer' && <Briefcase className="w-4 h-4" />}
-                  {user.role === 'admin' && <Crown className="w-4 h-4" />}
-                  <span>{t('nav.dashboard', { name: user.driverNickname || user.companyName || user.name })}</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenLoginModal();
-                  }}
-                  className="w-full h-11 bg-navy-deep hover:bg-navy-surface dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm transition-colors"
-                >
-                  <User className="w-4 h-4" />
-                  <span>{t('nav.loginMobile')}</span>
-                </button>
-              )}
-              {onOpenDriverSelfService && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenDriverSelfService();
-                  }}
-                  className="w-full h-11 border border-border-subtle dark:border-slate-700 bg-paper-surface-muted dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-navy-deep dark:text-slate-100 rounded-xl font-body-medium flex items-center justify-center gap-2 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[18px] text-amber-accent">
-                    airport_shuttle
-                  </span>
-                  <span>{t('nav.driverManage')}</span>
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  onOpenRegisterModal();
-                }}
-                className="w-full h-10 border border-border-subtle dark:border-slate-700 rounded-xl text-ink-primary dark:text-slate-200 font-body-medium text-center hover:bg-paper-surface-muted dark:hover:bg-slate-800 transition-colors"
-              >
-                {t('nav.driverJoin')}
-              </button>
+                    <button
+                      type="button"
+                      onClick={() => selectTab('suv_driver')}
+                      className={`p-3 text-left flex items-center gap-2.5 rounded-none border transition-all cursor-pointer ${
+                        activeTab === 'suv_driver'
+                          ? 'bg-slate-950 dark:bg-white text-white dark:text-slate-950 border-slate-950 dark:border-white shadow-2xs font-bold'
+                          : 'bg-slate-50 dark:bg-slate-900/60 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[20px] shrink-0">directions_car</span>
+                      <span className="text-xs leading-tight">{t('nav.suvDriverShort')}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => selectTab('car')}
+                      className={`p-3 text-left flex items-center gap-2.5 rounded-none border transition-all cursor-pointer ${
+                        activeTab === 'car'
+                          ? 'bg-slate-950 dark:bg-white text-white dark:text-slate-950 border-slate-950 dark:border-white shadow-2xs font-bold'
+                          : 'bg-slate-50 dark:bg-slate-900/60 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[20px] shrink-0">key</span>
+                      <span className="text-xs leading-tight">{t('nav.car')}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        selectTab('corporate');
+                        scrollTo('corporate');
+                      }}
+                      className={`p-3 text-left flex items-center gap-2.5 rounded-none border transition-all cursor-pointer ${
+                        activeTab === 'corporate'
+                          ? 'bg-slate-950 dark:bg-white text-white dark:text-slate-950 border-slate-950 dark:border-white shadow-2xs font-bold'
+                          : 'bg-slate-50 dark:bg-slate-900/60 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[20px] shrink-0">corporate_fare</span>
+                      <span className="text-xs leading-tight">{t('nav.b2bShort')}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Navigation Links */}
+                <div className="space-y-1.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      scrollTo('tripboard', 'van');
+                    }}
+                    className="w-full flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-none text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="material-symbols-outlined text-[19px] text-slate-700 dark:text-slate-300">forum</span>
+                      <span>{t('nav.boardJobs')}</span>
+                      <span className="text-[9px] bg-red-600 text-white font-black px-1.5 py-0.2 tracking-wider">HOT</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      scrollTo('routes', 'van');
+                    }}
+                    className="w-full flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-none text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="material-symbols-outlined text-[19px] text-slate-700 dark:text-slate-300">map</span>
+                      <span>{t('nav.routesPopular')}</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      scrollTo('corporate', 'corporate');
+                    }}
+                    className="w-full flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-none text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="material-symbols-outlined text-[19px] text-slate-700 dark:text-slate-300">corporate_fare</span>
+                      <span>{t('nav.corpService')}</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                </div>
+
+                {/* 4. Action / Driver Buttons */}
+                <div className="border-t border-slate-200 dark:border-slate-800 pt-3 space-y-2">
+                  {user ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onOpenPortal();
+                      }}
+                      className="w-full h-11 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-none font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+                    >
+                      {user.role === 'driver' && <CarFront className="w-4 h-4" />}
+                      {user.role === 'customer' && <Briefcase className="w-4 h-4" />}
+                      {user.role === 'admin' && <Crown className="w-4 h-4" />}
+                      <span>{t('nav.dashboard', { name: user.driverNickname || user.companyName || user.name })}</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onOpenLoginModal();
+                      }}
+                      className="w-full h-11 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-none font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>{t('nav.loginMobile')}</span>
+                    </button>
+                  )}
+
+                  {onOpenDriverSelfService && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onOpenDriverSelfService();
+                      }}
+                      className="w-full h-11 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-none font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-[#06C755]">
+                        local_taxi
+                      </span>
+                      <span>{t('nav.driverManage')}</span>
+                    </button>
+                  )}
+
+                  {user?.role !== 'driver' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onOpenRegisterModal();
+                      }}
+                      className="w-full h-10 border border-emerald-300 dark:border-emerald-800 bg-[#E8F9EE] dark:bg-emerald-950/60 hover:bg-[#d8f5e2] text-emerald-800 dark:text-emerald-200 rounded-none text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <span className="text-[10px] bg-[#06C755] text-white px-1 font-bold">0%</span>
+                      <span>{t('nav.driverJoin')}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          </>
         )}
       </nav>
     </header>
