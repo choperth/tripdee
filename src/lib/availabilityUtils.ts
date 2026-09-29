@@ -299,6 +299,8 @@ export function parseTravelEndDate(
       const be2Match = trimmed.match(/\b(6[5-9]|7[0-9]|8[0-9])\b/);
       if (be2Match) {
         year = 2500 + parseInt(be2Match[1], 10) - 543;
+      } else if (month < refDate.getMonth()) {
+        year += 1;
       }
     }
   }

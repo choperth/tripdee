@@ -3,8 +3,8 @@
 import React, { memo } from 'react';
 import Image from 'next/image';
 import { Vehicle } from '@/data/mockData';
-import { vehicleTitle, vehicleLocation, vehicleAmenities } from '@/data/vehicleI18n';
-import { maskPhoneNumber, maskPlateNumber, getPublicDriverName } from '@/lib/privacy';
+import { vehicleTitle, vehicleLocation, vehicleAmenities, vehicleDescription } from '@/data/vehicleI18n';
+import { maskPlateNumber, getPublicDriverName } from '@/lib/privacy';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { getUpcomingBusyRanges, toISODateString } from '@/lib/availabilityUtils';
@@ -21,7 +21,6 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
   const { t, locale } = useLanguage();
   const { trackCall } = useAnalytics();
   const [copiedWechat, setCopiedWechat] = React.useState(false);
-  const [isPhoneRevealed, setIsPhoneRevealed] = React.useState(false);
 
   const todayIso = React.useMemo(() => toISODateString(new Date()), []);
   const isBusyToday = Boolean(vehicle.busyDates && vehicle.busyDates.includes(todayIso));
@@ -62,7 +61,12 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
   };
 
   const isSelfDrive = vehicle.rentalType === 'self_drive' || (vehicle.type !== 'van' && vehicle.rentalType !== 'with_driver');
-  const basePrice = vehicle.zoneRates?.city || (isSelfDrive ? 1200 : 1900);
+  const rates = vehicle.zoneRates ? Object.values(vehicle.zoneRates).filter((r): r is number => typeof r === 'number' && r > 0) : [];
+  const minRate = rates.length > 0 ? Math.min(...rates) : (isSelfDrive ? 1200 : 1800);
+  const maxRate = rates.length > 0 ? Math.max(...rates) : (isSelfDrive ? 1800 : 2500);
+  const priceDisplay = minRate < maxRate
+    ? `฿${minRate.toLocaleString()} - ${maxRate.toLocaleString()}`
+    : `฿${minRate.toLocaleString()}`;
   const publicName = getPublicDriverName(vehicle.driverName, vehicle.driverNickname);
   const title = vehicleTitle(vehicle, locale);
   const location = vehicleLocation(vehicle, locale);
@@ -153,7 +157,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
               </span>
               <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1 text-[11px]">
                 <span className="material-symbols-outlined text-[13px]">phone_in_talk</span>
-                <span>โทรตรงคนขับ 100%</span>
+                <span>{t('vc.direct100')}</span>
               </span>
             </div>
 
@@ -184,13 +188,13 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                   }}
                   className="ml-1 text-[10px] text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer"
                 >
-                  (+{companionVehicles.length} คันในทีม)
+                  {t('vc.teamCount', { n: companionVehicles.length })}
                 </button>
               )}
             </p>
 
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
-              {vehicle.description || 'รถสภาพใหม่ แอร์เย็น สะอาด ตรวจสอบประวัติคนขับ ปลอดภัยทุกการเดินทาง'}
+              {vehicleDescription(vehicle, locale) || t('vc.descFallback')}
             </p>
 
             {/* Crisp 4-cell Spec Grid (Bauhaus Hairline Grid) */}
@@ -199,63 +203,63 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                 <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-slate-200">
                   {amenities[0] ? getAmenityIcon(amenities[0], 0) : 'chair'}
                 </span>
-                <span className="truncate">{amenities[0] || 'เบาะปรับเอน VIP'}</span>
+                <span className="truncate">{amenities[0] || t('vc.amSeatFallback')}</span>
               </div>
               <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-none">
                 <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-slate-200">luggage</span>
-                <span className="truncate">{amenities[1] || 'กระเป๋า 4-8 ใบ'}</span>
+                <span className="truncate">{amenities[1] || t('vc.amLuggageFallback')}</span>
               </div>
               <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-none">
                 <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-slate-200">receipt_long</span>
-                <span className="truncate">{vehicle.canIssueTaxInvoice ? 'ออกใบกำกับภาษีได้' : 'ใบเสร็จรับเงิน'}</span>
+                <span className="truncate">{vehicle.canIssueTaxInvoice ? t('vc.taxInvoice') : t('vc.receipt')}</span>
               </div>
               <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-none">
                 <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-slate-200">verified_user</span>
-                <span className="truncate">ตรวจประวัติคนขับ</span>
+                <span className="truncate">{t('vc.driverChecked')}</span>
               </div>
             </div>
           </div>
 
           {/* 3. Price & Action Buttons */}
-          <div className="mt-5 pt-3.5 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+          <div className="mt-5 pt-3.5 border-t border-slate-200 dark:border-slate-800">
+            <div className="flex items-baseline justify-between gap-2 mb-2.5">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                 {t('vehicle.priceFrom')}
               </span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-lg sm:text-xl font-black text-slate-950 dark:text-white font-mono">
-                  ฿{basePrice.toLocaleString()}
+              <div className="flex items-baseline gap-1 whitespace-nowrap">
+                <span className="text-base sm:text-lg font-black text-slate-950 dark:text-white font-mono">
+                  {priceDisplay}
                 </span>
-                <span className="text-xs text-slate-500">{t('vehicle.perDay')}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('vehicle.perDay')}
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              {/* Call CTA */}
+            <div className="grid grid-cols-2 gap-2">
+              {/* Call CTA - matching attached image: white bg, border, teal call icon, "โทรตรง" */}
               <a
                 href={`tel:${vehicle.driverPhone}`}
                 onClick={() => {
-                  setIsPhoneRevealed(true);
                   handleCallClick();
                 }}
-                className="inline-flex items-center justify-center gap-1 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-2 border border-slate-900 transition-colors rounded-none cursor-pointer"
-                title="โทรหาคนขับตรง"
+                className="inline-flex items-center justify-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-950 dark:text-white font-bold text-xs sm:text-sm py-2 px-2 border border-slate-300 dark:border-slate-700 transition-colors rounded-none cursor-pointer shadow-2xs"
+                title={t('vc.callTitle', { phone: vehicle.driverPhone })}
               >
-                <span className="material-symbols-outlined text-[14px]">call</span>
-                <span className="whitespace-nowrap">
-                  {isPhoneRevealed ? vehicle.driverPhone : maskPhoneNumber(vehicle.driverPhone)}
-                </span>
+                <span className="material-symbols-outlined text-[15px] text-teal-700 dark:text-teal-400">call</span>
+                <span className="whitespace-nowrap">{t('vehicle.directCall')}</span>
               </a>
 
-              {/* LINE / WeChat CTA */}
+              {/* LINE / WeChat CTA - matching attached image: green bg, white chat icon, "ทัก LINE" */}
               {locale === 'zh' && vehicle.driverWechat ? (
                 <button
                   type="button"
                   onClick={handleWechatClick}
-                  className="inline-flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-2 border border-emerald-600 transition-colors rounded-none cursor-pointer"
+                  className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm py-2 px-2 border border-emerald-600 transition-colors rounded-none cursor-pointer shadow-2xs"
+                  title="微信联系司机"
                 >
-                  <span className="material-symbols-outlined text-[14px]">chat</span>
-                  <span>{copiedWechat ? '已复制' : 'WeChat'}</span>
+                  <span className="material-symbols-outlined text-[15px] text-white">chat</span>
+                  <span className="whitespace-nowrap">{copiedWechat ? '已复制' : 'WeChat'}</span>
                 </button>
               ) : (
                 <a
@@ -267,24 +271,13 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                   }}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1 bg-[#06C755] hover:bg-[#05b04b] text-white font-bold text-xs px-3 py-2 border border-emerald-600 transition-colors rounded-none cursor-pointer"
-                  title="ทัก LINE คนขับ"
+                  className="inline-flex items-center justify-center gap-1.5 bg-[#06C755] hover:bg-[#05b04b] text-white font-bold text-xs sm:text-sm py-2 px-2 border border-[#06C755] transition-colors rounded-none cursor-pointer shadow-2xs"
+                  title={t('vc.lineTitle')}
                 >
-                  <span className="material-symbols-outlined text-[14px]">chat</span>
+                  <span className="material-symbols-outlined text-[15px] text-white">chat</span>
                   <span className="whitespace-nowrap">{t('vehicle.lineChat')}</span>
                 </a>
               )}
-
-              {/* Details modal trigger */}
-              <button
-                type="button"
-                onClick={() => onSelectDetail(vehicle)}
-                className="inline-flex items-center justify-center gap-0.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs px-2.5 py-2 border border-slate-300 dark:border-slate-700 transition-colors rounded-none cursor-pointer"
-                title="ดูรูปและสเปกรถเพิ่มเติม"
-              >
-                <span>รายละเอียด</span>
-                <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-              </button>
             </div>
           </div>
         </div>

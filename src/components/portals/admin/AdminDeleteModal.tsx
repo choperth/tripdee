@@ -2,6 +2,7 @@
 
 import React, { useRef } from 'react';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
+import { useLanguage } from '@/context/LanguageContext';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 
 interface AdminDeleteModalProps {
@@ -22,6 +23,7 @@ export const AdminDeleteModal: React.FC<AdminDeleteModalProps> = ({
   isDeleting,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage();
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
   if (!isOpen) return null;
@@ -47,12 +49,12 @@ export const AdminDeleteModal: React.FC<AdminDeleteModalProps> = ({
           </span>
           <div>
             <h3 id="admin-delete-title" className="font-display font-extrabold text-lg text-ink">{title}</h3>
-            <p className="text-xs text-ink-2">การดำเนินการนี้ไม่สามารถย้อนกลับได้</p>
+            <p className="text-xs text-ink-2">{t('padm.warnIrreversible')}</p>
           </div>
         </div>
 
         <div className="my-4 rounded-xl bg-paper p-3 border border-rule/70 text-xs">
-          <span className="text-ink-2 block font-medium mb-1">รายการที่จะลบ:</span>
+          <span className="text-ink-2 block font-medium mb-1">{t('padm.itemToDelete')}</span>
           <span className="font-extrabold text-ink text-sm break-words">{itemTitle}</span>
         </div>
 
@@ -63,7 +65,7 @@ export const AdminDeleteModal: React.FC<AdminDeleteModalProps> = ({
             disabled={isDeleting}
             className="rounded-pill px-4 py-2 text-xs font-bold text-ink-2 hover:bg-paper"
           >
-            ยกเลิก
+            {t('padm.cancel')}
           </button>
           <button
             type="button"
@@ -72,7 +74,7 @@ export const AdminDeleteModal: React.FC<AdminDeleteModalProps> = ({
             className="flex items-center gap-1.5 rounded-pill bg-berry px-5 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-berry/90 transition-transform active:scale-95 disabled:opacity-50"
           >
             <Trash2 className="h-4 w-4" />
-            <span>{isDeleting ? 'กำลังลบ...' : 'ยืนยันการลบ'}</span>
+            <span>{isDeleting ? t('padm.deleting') : t('padm.confirmDelete')}</span>
           </button>
         </div>
       </div>

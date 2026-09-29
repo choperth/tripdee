@@ -97,7 +97,7 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
     if (e) e.preventDefault();
     const cleanQuery = normalizePhone(phoneNumber);
     if (cleanQuery.length < 9) {
-      setErrorMessage('กรุณาระบุเบอร์โทรศัพท์อย่างน้อย 9-10 หลัก');
+      setErrorMessage(t('dss.errPhoneLength'));
       return;
     }
 
@@ -156,10 +156,13 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                 isVerified: lead.status === 'verified',
                 images: ['https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80'],
                 zoneRates: { city: 1900, midHill: 2100, highHill: 2300, crossProvince: 2700 },
-                location: lead.routes || 'เชียงใหม่และใกล้เคียง',
-                popularRoutes: ['ตัวเมือง', 'สนามบิน'],
-                amenities: ['ตรวจสภาพรถและประวัติคนขับแล้ว 100%'],
-                description: `บริการรถตู้โดย ${lead.driverName} (สถานะ: ${lead.status === 'verified' ? 'ยืนยันตัวตนแล้ว' : 'อยู่ระหว่างรอการตรวจสอบ'})`,
+                location: lead.routes || t('dss.locationFallback'),
+                popularRoutes: [t('dss.routeCity'), t('dss.routeAirport')],
+                amenities: [t('dss.amenityVerified')],
+                description: t('dss.leadDescription', {
+                  name: lead.driverName,
+                  status: lead.status === 'verified' ? t('dss.statusVerified') : t('dss.statusPending'),
+                }),
                 plateType: lead.plateType || 'yellow',
                 plateNumber: lead.plateNumber,
                 canIssueTaxInvoice: Boolean(lead.canIssueTaxInvoice),
@@ -180,7 +183,7 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
         selectVehicle(null);
       }
     } catch {
-      setErrorMessage('เกิดข้อผิดพลาดในการค้นหาข้อมูล กรุณาลองใหม่อีกครั้ง');
+      setErrorMessage(t('dss.errSearchFailed'));
     } finally {
       setIsSearching(false);
     }
@@ -225,21 +228,21 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
             lineId: driverLine.trim() || undefined,
           }),
         });
-        if (!res.ok) throw new Error('บันทึกข้อมูลไม่สำเร็จ');
+        if (!res.ok) throw new Error(t('dss.errSaveFailed'));
       } else {
         const res = await fetch('/api/vehicles', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: selectedVehicle.id, ...updatedData }),
         });
-        if (!res.ok) throw new Error('บันทึกข้อมูลไม่สำเร็จ');
+        if (!res.ok) throw new Error(t('dss.errSaveFailed'));
       }
 
       setSaveSuccess(true);
       window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      setErrorMessage((err as Error).message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+      setErrorMessage((err as Error).message || t('dss.errSaveUnknown'));
     } finally {
       setIsSaving(false);
     }
@@ -407,7 +410,7 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                   <div className="flex items-center gap-space-md">
                     <div className="relative">
                       <div className="w-18 h-18 rounded-full bg-blue-subtle text-blue-action font-bold flex items-center justify-center text-3xl shadow-md border-2 border-white/20">
-                        {selectedVehicle.driverNickname.charAt(0) || 'พ'}
+                        {selectedVehicle.driverNickname.charAt(0) || t('dss.avatarFallback')}
                       </div>
                       <span className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-verified-emerald flex items-center justify-center text-on-primary shadow-sm ring-2 ring-navy-deep">
                         <span className="material-symbols-outlined text-[16px]">verified</span>
@@ -515,7 +518,7 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                       14 <span className="font-body-base text-body-base font-normal text-ink-muted">{t('pself.unitTrips')}</span>
                     </span>
                     <span className="font-label-badge text-label-badge text-verified-emerald font-bold">
-                      +3 สัปดาห์นี้
+                      {t('dss.deltaWeek', { n: 3 })}
                     </span>
                   </div>
                 </div>
@@ -534,7 +537,7 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                       {selectedVehicle.rating || '4.96'} <span className="text-amber-accent font-bold">★</span>
                     </span>
                     <span className="font-label-badge text-label-badge text-ink-muted dark:text-slate-400">
-                      จาก {selectedVehicle.reviewCount || 48} รีวิว
+                      {t('dss.reviewsFrom', { n: selectedVehicle.reviewCount || 48 })}
                     </span>
                   </div>
                 </div>
@@ -553,7 +556,7 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                       62 <span className="font-body-base text-body-base font-normal text-ink-muted">{t('pself.unitTimes')}</span>
                     </span>
                     <span className="font-label-badge text-label-badge text-verified-emerald font-bold">
-                      +18 สัปดาห์นี้
+                      {t('dss.deltaWeek', { n: 18 })}
                     </span>
                   </div>
                 </div>
@@ -758,7 +761,7 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                 onDelete={async () => {
                   const res = await fetch(`/api/vehicles?id=${selectedVehicle.id}`, { method: 'DELETE' });
                   if (!res.ok) {
-                    throw new Error('ไม่สามารถลบข้อมูลรถได้ กรุณาลองใหม่อีกครั้ง');
+                    throw new Error(t('dss.errDeleteVehicle'));
                   }
                   window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
                   setSelectedVehicle(null);

@@ -125,6 +125,7 @@ export default function RootLayout({
         {/* Noto Sans SC is loaded via <link> instead of next/font/google because that
             build fails when Google intermittently serves extensionless /l/font?kit= URLs
             (https://github.com/vercel/next.js/issues/99114). */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet" />
         <script async src="/theme.js" />
         {Object.entries(getStructuredData()).map(([key, schema]) => (

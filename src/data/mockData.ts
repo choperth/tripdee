@@ -275,7 +275,7 @@ export const SPONSORS: Sponsor[] = [
     categoryLabel: 'ทัวร์ & กิจกรรมท่องเที่ยว',
     tagline: 'นั่งเวสป้าคลาสสิกเที่ยวเชียงใหม่ 5 เส้นทาง - City Highlights, After Dark, Foodie (MICHELIN), Countryside และ Sunrise Monk Blessing',
     badgeText: 'ทัวร์เวสป้าสัมผัสเมือง',
-    image: 'https://vespaadv.sgp1.cdn.digitaloceanspaces.com/featured/11547/47869297.jpg',
+    image: '/images/vespa.jpg',
     link: 'https://vespaadventures.com/destination/thailand',
     discountText: 'ทัวร์เวสป้าคลาสสิกสัมผัสวิถีชีวิตและวัฒนธรรมเชียงใหม่',
     location: 'เชียงใหม่ / ภาคเหนือ',
@@ -289,7 +289,7 @@ export const SPONSORS: Sponsor[] = [
     categoryLabel: 'ที่พักแนะนำ',
     tagline: 'ห้องพักรายวันและรายเดือนสไตล์โมเดิร์นลอฟท์ เงียบสงบ ใกล้สนามบินเชียงใหม่และเซ็นทรัลแอร์พอร์ต พร้อมคาเฟ่ Coffee Connect และที่จอดรถ',
     badgeText: 'ที่พักใกล้สนามบิน เชียงใหม่',
-    image: '/images/the-connect-chiangmai.jpg',
+    image: '/images/connect.jpg',
     link: 'https://www.facebook.com/Theconnectchiangmai',
     discountText: 'ห้องพักสะอาด บรรยากาศเป็นกันเอง พร้อมคาเฟ่ในตัวและที่จอดรถสะดวกสบาย',
     location: 'ต.แม่เหียะ อ.เมือง จ.เชียงใหม่ (ใกล้สนามบินนานาชาติเชียงใหม่)',
@@ -1335,6 +1335,7 @@ export interface BoardPost {
   authorWeChat?: string;
   vehicleLabel?: string;
   detail: string;
+  pickupLocation?: string;
   postedAt: string;
   isVerified?: boolean;
   /** หมวดหมู่: general = ทั่วไป/หาเพื่อนเที่ยว, corporate = งานองค์กร/คาราวาน */
@@ -1359,22 +1360,39 @@ export interface BoardPost {
 
 export const BOARD_POSTS: BoardPost[] = [
   {
-    id: 'b-intl',
+    id: 'b-khaoyai',
     type: 'request',
-    title: 'Van with English driver: Chiang Mai - Chiang Rai 3D2N (White/Blue Temple)',
+    title: 'กรุงเทพฯ ➔ เขาใหญ่ (2 วัน 1 คืน)',
     zoneId: 'crossProvince',
-    date: '15-17 ต.ค. 69',
-    days: 3,
-    seats: 6,
-    price: 9500,
-    priceNote: 'งบรวมน้ำมันและทางด่วน',
-    authorName: 'David Lee (Singapore Family)',
-    authorPhone: '+65 9123 4567',
-    authorLine: '',
-    authorWhatsApp: '+6591234567',
-    authorWeChat: 'david_lee_sg',
-    detail: 'Family of 6 (4 adults, 2 kids) with 4 suitcases. Pickup at CNX Airport, tour White Temple & Golden Triangle. Driver with basic English preferred. Please contact via WhatsApp or WeChat.',
-    postedAt: '5 นาทีที่แล้ว',
+    date: '18-19 เม.ย.',
+    days: 2,
+    seats: 8,
+    price: 5000,
+    priceNote: 'รวมน้ำมัน',
+    authorName: 'คุณสมศักดิ์ (รับที่ลาดพร้าว)',
+    authorPhone: '081-234-5678',
+    authorLine: 'https://line.me',
+    detail: 'ผู้โดยสาร 8 คน ต้องการรถตู้ VIP แอร์เย็น คนขับสุภาพ ไม่สูบบุหรี่ มีแวะคาเฟ่ 3 จุด',
+    pickupLocation: 'รับที่ลาดพร้าว',
+    postedAt: '15 นาทีที่แล้ว',
+    isVerified: true,
+  },
+  {
+    id: 'b-inthanon',
+    type: 'share',
+    title: 'เชียงใหม่ ➔ ดอยอินทนนท์ กิ่วแม่ปาน',
+    zoneId: 'highHill',
+    date: 'เสาร์นี้ 05:00 น.',
+    days: 1,
+    seats: 2,
+    price: 450,
+    priceNote: 'ต่อท่าน',
+    authorName: 'คุณเมย์ (จุดนัดพบนิมมาน)',
+    authorPhone: '089-876-5432',
+    authorLine: 'https://line.me',
+    detail: 'เหมารถตู้ไว้แล้ว ขึ้นชมหมอกเช้า อยากได้เพื่อนร่วมทริปหารค่ารถ คนละประมาณ 450 บาท',
+    pickupLocation: 'จุดนัดพบนิมมาน',
+    postedAt: '45 นาทีที่แล้ว',
     isVerified: true,
   },
   {

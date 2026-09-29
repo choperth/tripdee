@@ -5,13 +5,10 @@ import Image from 'next/image';
 import {
   Menu,
   X,
-  Sun,
-  Moon,
   CarFront,
   Briefcase,
   User,
   Crown,
-  PlusCircle,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -37,19 +34,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-
+  // โหมดสว่างเป็นค่าพื้นฐาน: บังคับ light เสมอ (ปุ่มสลับธีมซ่อนไว้ โค้ด dark mode ยังอยู่ครบ)
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('td-theme');
-      if (saved === 'dark') {
-        queueMicrotask(() => {
-          setTheme('dark');
-          document.documentElement.setAttribute('data-theme', 'dark');
-          document.documentElement.classList.add('dark');
-        });
-      }
+      localStorage.removeItem('td-theme');
     } catch {}
+    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.classList.remove('dark');
+    document.documentElement.style.colorScheme = 'light';
   }, []);
 
   useEffect(() => {
@@ -67,23 +59,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
   }, []);
-
-  const toggleTheme = () => {
-    const next = theme === 'light' ? 'dark' : 'light';
-    setTheme(next);
-    if (next === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      document.documentElement.classList.add('dark');
-      document.documentElement.style.colorScheme = 'dark';
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-      document.documentElement.classList.remove('dark');
-      document.documentElement.style.colorScheme = 'light';
-    }
-    try {
-      localStorage.setItem('td-theme', next);
-    } catch {}
-  };
 
   const scrollTo = (id: string, requiredTab?: string) => {
     setMenuOpen(false);
@@ -236,16 +211,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* RIGHT: Actions, Language Switcher, Driver Portal, Customer Post CTA */}
           <div className="flex items-center justify-end shrink-0 gap-1 sm:gap-2 min-w-0">
-            {/* Dark / Light Toggle */}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              aria-label={theme === 'dark' ? t('nav.toLight') : t('nav.toDark')}
-              className="hidden sm:flex p-2 rounded-lg text-ink-secondary hover:text-navy-deep hover:bg-paper-surface-muted dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-accent" /> : <Moon className="w-4 h-4 text-slate-700" />}
-            </button>
-
             {/* Language Switcher */}
             <LanguageSwitcher />
 
@@ -266,34 +231,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </span>
               </button>
             )}
-
-            {/* Customer Post Request Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (activeTab === 'corporate' || activeTab === 'hotel') {
-                  setActiveTab('van');
-                }
-                let attempts = 0;
-                const tryOpenPostModal = () => {
-                  const trigger = document.getElementById('open-post-modal-btn');
-                  const el = document.getElementById('tripboard');
-                  if (trigger) {
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    trigger.click();
-                  } else if (attempts < 15) {
-                    attempts++;
-                    setTimeout(tryOpenPostModal, 40);
-                  }
-                };
-                requestAnimationFrame(tryOpenPostModal);
-              }}
-              aria-label={t('nav.postJobShort')}
-              className="inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 text-xs border border-amber-600 transition-all active:scale-[0.98] whitespace-nowrap rounded-none cursor-pointer"
-            >
-              <PlusCircle className="w-4 h-4 shrink-0" />
-              <span className="hidden xs:inline">{t('nav.postJobShort')}</span>
-            </button>
 
             {/* User Login/Portal */}
             {user ? (
@@ -317,11 +254,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 border border-slate-900 transition-all rounded-none shrink-0 cursor-pointer"
               >
                 {user.role === 'driver' && <CarFront className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
-                {user.role === 'customer' && <Briefcase className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
+                {user.role === 'customer' && (
+                  user.customerType === 'individual'
+                    ? <User className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                    : <Briefcase className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                )}
                 {user.role === 'admin' && <Crown className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
                 <span className="hidden sm:inline max-w-[85px] truncate">
                   {user.role === 'driver' && (user.driverNickname || user.name)}
-                  {user.role === 'customer' && (user.companyName || user.name)}
+                  {user.role === 'customer' && (user.customerType === 'individual' ? user.name : (user.companyName || user.name))}
                   {user.role === 'admin' && t('nav.admin')}
                 </span>
               </button>
@@ -352,19 +293,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         {menuOpen && (
           <div className="lg:hidden bg-paper-elevated dark:bg-slate-900 border-b border-border-subtle dark:border-slate-800 px-margin py-space-md space-y-space-sm shadow-xl max-h-[calc(100dvh-5rem)] overflow-y-auto">
             {/* Quick Actions in Mobile Drawer: Language Row + Theme Toggle */}
-            <div className="flex items-center justify-between gap-2 pb-space-xs border-b border-border-subtle dark:border-slate-800">
-              <div className="flex-1">
-                <LanguageSwitcher variant="row" onPick={() => setMenuOpen(false)} />
-              </div>
-              <button
-                type="button"
-                onClick={toggleTheme}
-                aria-label={theme === 'dark' ? t('nav.toLight') : t('nav.toDark')}
-                className="h-9 px-2.5 rounded-xl bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-slate-200 font-body-medium text-xs flex items-center gap-1.5 shrink-0"
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-accent" /> : <Moon className="w-4 h-4 text-slate-700" />}
-                <span className="hidden xs:inline">{theme === 'dark' ? t('nav.toLight') : t('nav.toDark')}</span>
-              </button>
+            <div className="pb-space-xs border-b border-border-subtle dark:border-slate-800">
+              <LanguageSwitcher variant="row" onPick={() => setMenuOpen(false)} />
             </div>
 
             <div className="grid grid-cols-2 gap-space-xs pb-space-xs">

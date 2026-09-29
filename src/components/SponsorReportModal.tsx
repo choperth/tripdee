@@ -35,7 +35,8 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
   onClose,
 }) => {
   const { summary, getSponsorClickCount } = useAnalytics();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const numLocale = locale === 'th' ? 'th-TH' : locale === 'zh' ? 'zh-CN' : 'en-US';
   const [copied, setCopied] = useState(false);
   const [isGeneratingImg, setIsGeneratingImg] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -54,28 +55,23 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
   const ctrPercentage =
     baselineImpressions > 0 ? ((uniqueClickCount / baselineImpressions) * 100).toFixed(1) : '0.0';
 
-  const reportDate = new Date().toLocaleDateString('th-TH', {
+  const reportDate = new Date().toLocaleDateString(numLocale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
 
   const generateLineText = () => {
-    return (
-      `📊 สรุปผลสถิติโฆษณา TripDee (ทริปดี) เชียงใหม่\n` +
-      `🏨 พันธมิตร: ${sponsor.title}\n` +
-      `📍 โซน: ${sponsor.location}\n` +
-      `🏷️ สิทธิพิเศษ: ${sponsor.discountText}\n` +
-      `--------------------------------\n` +
-      `🎯 ยอดคลิกไม่ซ้ำคน (Unique 24 ชม.): ${uniqueClickCount} ครั้ง (ยอดกดรวม ${clickCount} ครั้ง)\n` +
-      `👁️ ยอดแสดงผลโดยประมาณ: ${baselineImpressions.toLocaleString('th-TH')} ครั้ง\n` +
-      `📈 อัตราการคลิกจริง (Unique CTR): ${ctrPercentage}%\n` +
-      `🛡️ มาตรฐานความโปร่งใส: ระบบป้องกันการปั๊มยอดด้วย IP & Device Fingerprinting 24 ชม.\n` +
-      `📅 รายงาน ณ วันที่: ${reportDate}\n` +
-      `--------------------------------\n` +
-      `ขอขอบคุณที่ร่วมเป็นพาร์ตเนอร์กับ TripDee เริ่มต้นทริปดีๆ ไปด้วยกันครับ 🙏\n` +
-      `เว็บไซต์: https://tripdee.co`
-    );
+    return t('srep.lineMessage', {
+      title: sponsor.title,
+      location: sponsor.location,
+      discount: sponsor.discountText,
+      unique: uniqueClickCount,
+      total: clickCount,
+      impressions: baselineImpressions.toLocaleString(numLocale),
+      ctr: ctrPercentage,
+      date: reportDate,
+    });
   };
 
   const handleCopyText = async () => {
@@ -135,7 +131,7 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
       // Header: Brand & Title
       ctx.fillStyle = '#1c1b1f';
       ctx.font = 'bold 36px sans-serif';
-      ctx.fillText('TripDee (ทริปดี) เชียงใหม่', 70, 100);
+      ctx.fillText(t('srep.imgTitle'), 70, 100);
 
       // Dot
       ctx.fillStyle = '#d4be34';
@@ -149,12 +145,12 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
       ctx.fill();
       ctx.fillStyle = '#6741d9';
       ctx.font = 'bold 16px sans-serif';
-      ctx.fillText('รายงานสรุปผลสปอนเซอร์', width - 340, 94);
+      ctx.fillText(t('srep.imgBadge'), width - 340, 94);
 
       // Subtitle
       ctx.fillStyle = '#6b7280';
       ctx.font = '16px sans-serif';
-      ctx.fillText('แพลตฟอร์มค้นหารถตู้พร้อมคนขับ รถเช่า และที่พักคุณภาพ จังหวัดเชียงใหม่', 70, 135);
+      ctx.fillText(t('srep.imgSubtitle'), 70, 135);
 
       // Divider
       ctx.strokeStyle = '#e5e7eb';
@@ -175,11 +171,11 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
 
       ctx.fillStyle = '#4b5563';
       ctx.font = '18px sans-serif';
-      ctx.fillText(`หมวดหมู่: ${sponsor.categoryLabel}  •  ที่ตั้ง: ${sponsor.location}`, 100, 265);
+      ctx.fillText(t('srep.imgCatLoc', { cat: sponsor.categoryLabel, loc: sponsor.location }), 100, 265);
 
       ctx.fillStyle = '#c92a2a';
       ctx.font = 'bold 18px sans-serif';
-      ctx.fillText(`สิทธิพิเศษ: ${sponsor.discountText}`, 100, 295);
+      ctx.fillText(t('srep.imgPerk', { discount: sponsor.discountText }), 100, 295);
 
       // 3 Stat Metric Boxes
       const boxW = 325;
@@ -192,14 +188,14 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
       ctx.fill();
       ctx.fillStyle = '#a61e4d';
       ctx.font = 'bold 18px sans-serif';
-      ctx.fillText('ยอดคลิกจริง (Unique 24h)', 100, startY + 45);
+      ctx.fillText(t('srep.imgClicks'), 100, startY + 45);
       ctx.font = 'bold 50px sans-serif';
       ctx.fillText(`${uniqueClickCount}`, 100, startY + 105);
       ctx.font = 'bold 18px sans-serif';
-      ctx.fillText('ครั้ง', 100 + ctx.measureText(`${uniqueClickCount}`).width + 8, startY + 105);
+      ctx.fillText(t('srep.imgTimes'), 100 + ctx.measureText(`${uniqueClickCount}`).width + 8, startY + 105);
       ctx.font = '13px sans-serif';
       ctx.fillStyle = '#862e9c';
-      ctx.fillText(`(กดทั้งหมด ${clickCount} ครั้ง • กรองปั๊มยอด)`, 100, startY + 130);
+      ctx.fillText(t('srep.imgClicksNote', { total: clickCount }), 100, startY + 130);
 
       // Box 2: Impressions
       ctx.fillStyle = '#e7f5ff';
@@ -207,9 +203,9 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
       ctx.fill();
       ctx.fillStyle = '#1864ab';
       ctx.font = 'bold 18px sans-serif';
-      ctx.fillText('การแสดงผลประมาณการ', 467, startY + 45);
+      ctx.fillText(t('srep.imgImpr'), 467, startY + 45);
       ctx.font = 'bold 54px sans-serif';
-      ctx.fillText(`${baselineImpressions.toLocaleString('th-TH')}`, 467, startY + 115);
+      ctx.fillText(`${baselineImpressions.toLocaleString(numLocale)}`, 467, startY + 115);
 
       // Box 3: CTR
       ctx.fillStyle = '#ebfbee';
@@ -217,7 +213,7 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
       ctx.fill();
       ctx.fillStyle = '#2b8a3e';
       ctx.font = 'bold 18px sans-serif';
-      ctx.fillText('อัตราการคลิก (CTR)', 835, startY + 45);
+      ctx.fillText(t('srep.imgCtr'), 835, startY + 45);
       ctx.font = 'bold 54px sans-serif';
       ctx.fillText(`${ctrPercentage}%`, 835, startY + 115);
 
@@ -228,18 +224,18 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
 
       ctx.fillStyle = '#111827';
       ctx.font = 'bold 18px sans-serif';
-      ctx.fillText('📌 ข้อมูลเชิงลึกสำหรับพาร์ตเนอร์', 100, 550);
+      ctx.fillText(t('srep.imgInsights'), 100, 550);
 
       ctx.fillStyle = '#374151';
       ctx.font = '16px sans-serif';
-      ctx.fillText('• กลุ่มเป้าหมายหลัก: นักท่องเที่ยวครอบครัว / กรุ๊ปสัมมนา ที่ค้นหารถตู้และวางแผนจองที่พักในเชียงใหม่', 100, 580);
-      ctx.fillText('• ช่วงเวลาที่มีการค้นหาสูงสุด: วันศุกร์ - วันอาทิตย์ ช่วงเวลา 10:00 - 15:00 น.', 100, 610);
-      ctx.fillText(`• รายงานข้อมูลระบบเรียลไทม์ ณ วันที่ ${reportDate} ผ่านแพลตฟอร์ม TripDee`, 100, 640);
+      ctx.fillText(t('srep.imgInsight1'), 100, 580);
+      ctx.fillText(t('srep.imgInsight2'), 100, 610);
+      ctx.fillText(t('srep.imgInsight3', { date: reportDate }), 100, 640);
 
       // Footer Note
       ctx.fillStyle = '#9ca3af';
       ctx.font = '14px sans-serif';
-      ctx.fillText('TripDee Platform • เว็บไซต์: https://tripdee.co • เอกสารสร้างโดยอัตโนมัติจากแผงควบคุมผู้ดูแลระบบ', 70, 715);
+      ctx.fillText(t('srep.imgFooter'), 70, 715);
 
       // Download triggered
       const dataUrl = canvas.toDataURL('image/png');
@@ -398,7 +394,7 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
                 <span className="text-xs font-bold ml-1 text-ink-2">Unique</span>
               </p>
               <p className="text-[11px] text-ink-2 mt-1">
-                ยอดกดรวม {clickCount} ครั้ง • {lastClickedAt ? `ล่าสุด ${new Date(lastClickedAt).toLocaleTimeString('th-TH')}` : 'กรอง 24 ชม.'}
+                {t('srep.totalClicks', { n: clickCount })} • {lastClickedAt ? t('srep.latestAt', { time: new Date(lastClickedAt).toLocaleTimeString(numLocale) }) : t('srep.filtered24')}
               </p>
             </div>
 
@@ -408,7 +404,7 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
                 <Users className="h-4 w-4" />
               </div>
               <p className="td-fig mt-2 text-3xl font-extrabold text-ink">
-                {baselineImpressions.toLocaleString('th-TH')}
+                {baselineImpressions.toLocaleString(numLocale)}
                 <span className="text-xs font-bold ml-1 text-ink-2">{t('spn.times')}</span>
               </p>
               <p className="text-[11px] text-ink-2 mt-1">{t('spn.mImprNote')}</p>

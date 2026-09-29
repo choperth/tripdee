@@ -12,18 +12,20 @@ import {
   FUEL_PER_CAR_PER_DAY,
   MAX_CAR_COUNT,
   MIN_CAR_COUNT,
-  ORG_TYPE_META,
   ORG_TYPE_OPTIONS,
-  VEHICLE_TIER_META,
   VEHICLE_TIER_OPTIONS,
   clampCarCount,
   estimateBudget,
   formatBaht,
+  orgTypeLabel,
+  tierMetaFor,
 } from '@/lib/b2b';
 
 interface CorporateSectionProps {
   vehicles?: Vehicle[];
 }
+
+const LOCALE_DATE_TAG: Record<string, string> = { th: 'th-TH', en: 'en-GB', zh: 'zh-CN' };
 
 const PRINT_CSS = `
 @media print {
@@ -43,7 +45,7 @@ const PRINT_CSS = `
 `;
 
 export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: propVehicles }) => {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { addQuotation } = useAuth();
   const [fetchedVehicles, setFetchedVehicles] = useState<Vehicle[]>(() =>
     isMockEnvEnabled() ? VEHICLES : []
@@ -77,7 +79,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
     contactName: '',
     phone: '',
     email: '',
-    route: 'กรุงเทพฯ - สัมมนาพัทยา',
+    route: t('corp.defaultRoute'),
     vehicleTier: 'standard_vip' as VehicleTier,
     carCount: 3,
     orgType: 'corporate' as OrgType,
@@ -100,12 +102,11 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
     [formData.vehicleTier, formData.carCount, formData.totalDays]
   );
 
-  const tierMeta = VEHICLE_TIER_META[formData.vehicleTier];
-  const sizeLabel = `${tierMeta.shortLabel} ${budget.carCount} คัน`;
-  const passengerEstimate = `${budget.carCount * 9} คน (รถตู้ ${budget.carCount} คัน)`;
+  const tierMeta = tierMetaFor(formData.vehicleTier, locale);
+  const sizeLabel = `${tierMeta.shortLabel} ${t('corp.carsSuffix', { n: budget.carCount })}`;
+  const passengerEstimate = `${budget.carCount * 9} ${t('corp.paxUnit', { n: budget.carCount })}`;
 
   const totalVehicles = vehicles.length;
-  const yellowPlateCount = vehicles.filter((v) => v.plateType === 'yellow').length;
   const avgRating =
     totalVehicles > 0
       ? (vehicles.reduce((sum, v) => sum + (v.rating || 5.0), 0) / totalVehicles).toFixed(1)
@@ -182,14 +183,15 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
             : formData.companyName,
           authorPhone: formData.phone,
           authorLine: '',
-          vehicleLabel: `${tierMeta.specLine} x ${carCount} คัน`,
+          vehicleLabel: t('corp.dlVehicle', { spec: tierMeta.specLine, n: carCount }),
           detail:
-            `ขอใบเสนอราคาคาราวาน: ${formData.companyName} | เส้นทาง: ${formData.route} | ` +
-            `ระดับรถ: ${tierMeta.label} (${tierMeta.tagline}) | จำนวนรถ: ${carCount} คัน | ` +
-            `ประเภทองค์กร: ${ORG_TYPE_META[formData.orgType]} | จำนวนวัน: ${formData.totalDays} วัน | ` +
-            `ประกันกลุ่ม: ${formData.includeInsurance ? 'คุ้มครอง 1,000,000 บาท/ท่าน' : 'ไม่เพิ่ม'} | ` +
-            `ใบกำกับภาษี: ${formData.needsTaxInvoice ? 'ใช่' : 'ไม่'} | ` +
-            `ผู้ติดต่อ: ${formData.contactName || '-'} โทร ${formData.phone}`,
+            `${t('corp.dlIntro', { company: formData.companyName, route: formData.route })} | ` +
+            `${t('corp.dlTier', { tier: tierMeta.label, tagline: tierMeta.tagline })} | ` +
+            `${t('corp.dlCars', { n: carCount })} | ` +
+            `${t('corp.dlOrg', { org: orgTypeLabel(formData.orgType, locale), days: formData.totalDays })} | ` +
+            `${t('corp.dlIns', { ins: formData.includeInsurance ? t('corp.insCover') : t('corp.insNone') })} | ` +
+            `${t('corp.dlTax', { tax: formData.needsTaxInvoice ? t('corp.yes') : t('corp.no') })} | ` +
+            `${t('corp.dlContact', { name: formData.contactName || '-', phone: formData.phone })}`,
         }),
       });
     } catch (err) {
@@ -203,11 +205,11 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
   const tierSelector = (
     <fieldset className="border-0 p-0 m-0">
       <legend className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-        ระดับมาตรฐานรถขบวน *
+        {t('corp.tierPick')}
       </legend>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {VEHICLE_TIER_OPTIONS.map((key) => {
-          const meta = VEHICLE_TIER_META[key];
+          const meta = tierMetaFor(key, locale);
           const active = formData.vehicleTier === key;
           return (
             <label
@@ -254,7 +256,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                 {meta.highlights[0]}
               </span>
               <span className="text-[11px] font-mono font-bold text-slate-900 dark:text-amber-400">
-                เรท {formatBaht(meta.rateMin)} - {formatBaht(meta.rateMax)} บ./วัน/คัน
+                {t('corp.rateFmt', { min: formatBaht(meta.rateMin), max: formatBaht(meta.rateMax) })}
               </span>
             </label>
           );
@@ -275,7 +277,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
     <section
       id="corporate"
       aria-label={t('nav.corpService')}
-      className="w-full scroll-mt-20 sm:scroll-mt-24 py-10 sm:py-14 bg-[#0a192f] text-white border-t border-b border-slate-800 rounded-none transition-colors"
+      className="w-full scroll-mt-20 sm:scroll-mt-24 py-6 sm:py-8 bg-[#0a192f] text-white border-t border-b border-slate-800 rounded-none transition-colors"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -291,51 +293,49 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                 <span className="text-amber-400">{t('corp.titleB')}</span>
               </h2>
               <p className="text-xs md:text-sm text-slate-300 mt-2 font-light leading-relaxed">
-                จัดขบวนรถ 1-20 คัน สองระดับมาตรฐาน — Standard VIP (ป้ายฟ้า) สำหรับองค์กรทั่วไป ประหยัดงบ
-                และ Strict Compliance ป้ายเหลือง 30 สำหรับราชการและงานที่ต้องถูกระเบียบ TOR 100%
-                ออกใบกำกับภาษีเต็มรูป หัก ณ ที่จ่าย 3% ได้ถูกต้องตามระเบียบ
+                {t('corp.intro')}
               </p>
             </div>
 
-            {/* Features 4 Grid (Hairline borders) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="bg-slate-800/60 border border-slate-700 p-3.5 rounded-none">
+            {/* Features 4 Grid: 2-Col on Mobile & Desktop */}
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="bg-slate-800/60 border border-slate-700 p-2.5 sm:p-3.5 rounded-none">
                 <div className="flex items-center gap-1.5 text-amber-300 text-xs font-bold mb-1">
-                  <span className="material-symbols-outlined text-[16px]">verified_user</span>
-                  <span>2 ระดับมาตรฐานรถ</span>
+                  <span className="material-symbols-outlined text-[15px]">verified_user</span>
+                  <span className="truncate">{t('corp.f1Title')}</span>
                 </div>
-                <p className="text-xs text-slate-300 font-light">
-                  Standard VIP ป้ายฟ้า / Strict Compliance ป้ายเหลือง 30 GPS กรมขนส่งฯ เลือกตามระเบียบองค์กร
+                <p className="text-[11px] sm:text-xs text-slate-300 font-light line-clamp-2">
+                  {t('corp.f1Desc')}
                 </p>
               </div>
 
-              <div className="bg-slate-800/60 border border-slate-700 p-3.5 rounded-none">
+              <div className="bg-slate-800/60 border border-slate-700 p-2.5 sm:p-3.5 rounded-none">
                 <div className="flex items-center gap-1.5 text-amber-300 text-xs font-bold mb-1">
-                  <span className="material-symbols-outlined text-[16px]">receipt_long</span>
-                  <span>ออกใบกำกับภาษีเต็มรูป</span>
+                  <span className="material-symbols-outlined text-[15px]">receipt_long</span>
+                  <span className="truncate">{t('corp.f2Title')}</span>
                 </div>
-                <p className="text-xs text-slate-300 font-light">
-                  เอกสารใบวางบิล ใบเสร็จรับเงิน ยื่นหัก ณ ที่จ่าย 3% สะดวก รวดเร็ว
+                <p className="text-[11px] sm:text-xs text-slate-300 font-light line-clamp-2">
+                  {t('corp.f2Desc')}
                 </p>
               </div>
 
-              <div className="bg-slate-800/60 border border-slate-700 p-3.5 rounded-none">
+              <div className="bg-slate-800/60 border border-slate-700 p-2.5 sm:p-3.5 rounded-none">
                 <div className="flex items-center gap-1.5 text-amber-300 text-xs font-bold mb-1">
-                  <span className="material-symbols-outlined text-[16px]">radio</span>
-                  <span>ขบวนคาราวานพร้อมวิทยุ</span>
+                  <span className="material-symbols-outlined text-[15px]">radio</span>
+                  <span className="truncate">{t('corp.f3Title')}</span>
                 </div>
-                <p className="text-xs text-slate-300 font-light">
-                  คัดเลือกรถสีสุภาพ ขาว/บรอนซ์เงิน พร้อมทีมหัวขบวนวิ่งอย่างมีระเบียบ
+                <p className="text-[11px] sm:text-xs text-slate-300 font-light line-clamp-2">
+                  {t('corp.f3Desc')}
                 </p>
               </div>
 
-              <div className="bg-slate-800/60 border border-slate-700 p-3.5 rounded-none">
+              <div className="bg-slate-800/60 border border-slate-700 p-2.5 sm:p-3.5 rounded-none">
                 <div className="flex items-center gap-1.5 text-amber-300 text-xs font-bold mb-1">
-                  <span className="material-symbols-outlined text-[16px]">savings</span>
-                  <span>ตรงเจ้าของรถ ไร้ค่านายหน้า</span>
+                  <span className="material-symbols-outlined text-[15px]">savings</span>
+                  <span className="truncate">{t('corp.f4Title')}</span>
                 </div>
-                <p className="text-xs text-slate-300 font-light">
-                  ราคาเป็นธรรม โปร่งใส ตรวจสอบต้นทุนต่อหัวได้ง่าย เหมาะกับฝ่ายจัดซื้อ
+                <p className="text-[11px] sm:text-xs text-slate-300 font-light line-clamp-2">
+                  {t('corp.f4Desc')}
                 </p>
               </div>
             </div>
@@ -346,19 +346,19 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                 <span className="text-2xl font-black text-white block">
                   {totalVehicles > 0 ? `${totalVehicles}+` : '500+'}
                 </span>
-                <span className="text-[11px] text-slate-400 font-sans">รถตู้พร้อมจัดคาราวาน</span>
+                <span className="text-[11px] text-slate-400 font-sans">{t('corp.statFleet')}</span>
               </div>
               <div className="h-8 w-px bg-slate-700"></div>
               <div>
                 <span className="text-2xl font-black text-amber-400 block">{avgRating} ★</span>
-                <span className="text-[11px] text-slate-400 font-sans">คะแนนจากฝ่ายบุคคล & องค์กร</span>
+                <span className="text-[11px] text-slate-400 font-sans">{t('corp.statOrgRating')}</span>
               </div>
               <div className="h-8 w-px bg-slate-700"></div>
               <div>
                 <span className="text-2xl font-black text-emerald-400 block">
-                  {yellowPlateCount > 0 ? `${yellowPlateCount} คัน` : '2'}
+                  0%
                 </span>
-                <span className="text-[11px] text-slate-400 font-sans">ระดับมาตรฐานให้เลือก</span>
+                <span className="text-[11px] text-slate-400 font-sans">{t('corp.statFee')}</span>
               </div>
             </div>
           </div>
@@ -372,17 +372,17 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
             >
               <div>
                 <h3 className="text-base font-bold text-slate-950 dark:text-white">
-                  คำนวณราคา & ขอใบเสนอราคา
+                  {t('corp.calcTitle')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  ประเมินงบประมาณเบื้องต้นทันที ไม่มีข้อผูกมัด
+                  {t('corp.calcSub')}
                 </p>
               </div>
               <button
                 type="button"
                 className="px-3 py-1.5 bg-amber-500 text-slate-950 text-xs font-bold flex items-center gap-1 shrink-0 rounded-none"
               >
-                <span>{isMobileFormOpen ? 'ย่อฟอร์ม' : 'คำนวณราคา'}</span>
+                <span>{isMobileFormOpen ? t('corp.collapseForm') : t('corp.calcBtn')}</span>
                 <span className="material-symbols-outlined text-[16px]">
                   {isMobileFormOpen ? 'expand_less' : 'expand_more'}
                 </span>
@@ -408,7 +408,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                       className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-white font-bold text-xs rounded-none cursor-pointer inline-flex items-center gap-1.5"
                     >
                       <ClipboardList className="w-4 h-4" />
-                      <span>ดูใบประเมินงบประมาณ</span>
+                      <span>{t('corp.viewEstimate')}</span>
                     </button>
                     <button
                       type="button"
@@ -424,14 +424,14 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                   <div className="hidden lg:flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-4">
                     <div>
                       <h3 className="text-base font-bold text-slate-950 dark:text-white">
-                        คำนวณราคา & ขอใบเสนอราคา
+                        {t('corp.calcTitle')}
                       </h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        ประเมินงบประมาณเบื้องต้นทันที ไม่มีข้อผูกมัด
+                        {t('corp.calcSub')}
                       </p>
                     </div>
                     <span className="bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[11px] font-bold px-2 py-0.5 border border-emerald-300 dark:border-emerald-700 rounded-none">
-                      ตอบกลับใน 15 นาที
+                      {t('corp.reply15')}
                     </span>
                   </div>
 
@@ -442,7 +442,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label htmlFor="corp-company-name" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          ชื่อหน่วยงาน / บริษัท *
+                          {t('corp.fCompanyLabel')}
                         </label>
                         <input
                           id="corp-company-name"
@@ -450,13 +450,13 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                           required
                           value={formData.companyName}
                           onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                          placeholder="เช่น บจก. สยามอินโนเวชั่น"
+                          placeholder={t('corp.fCompanyEx')}
                           className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-xs text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:border-slate-900 rounded-none"
                         />
                       </div>
                       <div>
                         <label htmlFor="corp-phone" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          เบอร์โทรศัพท์ผู้ติดต่อ *
+                          {t('corp.fPhoneLabel')}
                         </label>
                         <input
                           id="corp-phone"
@@ -473,20 +473,20 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label htmlFor="corp-contact-name" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          ชื่อผู้ประสานงาน
+                          {t('corp.fContactName')}
                         </label>
                         <input
                           id="corp-contact-name"
                           type="text"
                           value={formData.contactName}
                           onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                          placeholder="เช่น คุณสมชาย (ฝ่ายบุคคล)"
+                          placeholder={t('corp.fContactEx')}
                           className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-xs text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:border-slate-900 rounded-none"
                         />
                       </div>
                       <div>
                         <label htmlFor="corp-org-type" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          ประเภทองค์กร *
+                          {t('corp.fOrgType')}
                         </label>
                         <select
                           id="corp-org-type"
@@ -496,7 +496,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                         >
                           {ORG_TYPE_OPTIONS.map((key) => (
                             <option key={key} value={key}>
-                              {ORG_TYPE_META[key]}
+                              {orgTypeLabel(key, locale)}
                             </option>
                           ))}
                         </select>
@@ -506,7 +506,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label htmlFor="corp-route" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          เส้นทางเดินทาง *
+                          {t('corp.fRouteLabel')}
                         </label>
                         <input
                           id="corp-route"
@@ -514,18 +514,18 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                           required
                           value={formData.route}
                           onChange={(e) => setFormData({ ...formData, route: e.target.value })}
-                          placeholder="เช่น กรุงเทพฯ - สัมมนาพัทยา"
+                          placeholder={t('corp.fRouteEx')}
                           className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-xs text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:border-slate-900 rounded-none"
                         />
                       </div>
                       <div>
                         <label htmlFor="corp-car-count" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          จำนวนคันรถที่ต้องการ * ({MIN_CAR_COUNT} - {MAX_CAR_COUNT} คัน)
+                          {t('corp.fCarCount', { min: MIN_CAR_COUNT, max: MAX_CAR_COUNT })}
                         </label>
                         <div className="flex items-stretch">
                           <button
                             type="button"
-                            aria-label="ลดจำนวนคันรถ"
+                            aria-label={t('corp.decCar')}
                             onClick={() =>
                               setCarCount(String(Math.max(MIN_CAR_COUNT, formData.carCount - 1)))
                             }
@@ -546,7 +546,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                           />
                           <button
                             type="button"
-                            aria-label="เพิ่มจำนวนคันรถ"
+                            aria-label={t('corp.incCar')}
                             onClick={() =>
                               setCarCount(String(Math.min(MAX_CAR_COUNT, formData.carCount + 1)))
                             }
@@ -561,7 +561,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label htmlFor="corp-total-days" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          ระยะเวลาเดินทาง
+                          {t('corp.fDuration')}
                         </label>
                         <select
                           id="corp-total-days"
@@ -569,16 +569,16 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                           onChange={(e) => setFormData({ ...formData, totalDays: Number(e.target.value) })}
                           className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-3 py-2 text-xs text-slate-900 dark:text-white focus:bg-white focus:outline-none focus:border-slate-900 cursor-pointer rounded-none"
                         >
-                          <option value={1}>1 วัน (ไปเช้า-เย็นกลับ)</option>
-                          <option value={2}>2 วัน 1 คืน</option>
-                          <option value={3}>3 วัน 2 คืน</option>
-                          <option value={4}>4 วัน 3 คืน</option>
-                          <option value={5}>5 วัน 4 คืน</option>
+                          <option value={1}>{t('corp.days1')}</option>
+                          <option value={2}>{t('corp.days2')}</option>
+                          <option value={3}>{t('corp.days3')}</option>
+                          <option value={4}>{t('corp.days4')}</option>
+                          <option value={5}>{t('corp.days5')}</option>
                         </select>
                       </div>
                       <div>
                         <label htmlFor="corp-travel-date" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          ช่วงวันที่เดินทาง
+                          {t('corp.fDateRange')}
                         </label>
                         <TravelDatePicker
                           id="corp-travel-date"
@@ -586,7 +586,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                           onChange={(dateStr) => setFormData({ ...formData, travelDate: dateStr })}
                           days={formData.totalDays}
                           onDaysChange={(newDays) => setFormData({ ...formData, totalDays: newDays })}
-                          placeholder="เช่น 25-26 พ.ค. 2568"
+                          placeholder={t('corp.fDateEx')}
                         />
                       </div>
                     </div>
@@ -601,7 +601,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                         className="w-4 h-4 text-slate-950 border-slate-400 focus:ring-0 cursor-pointer rounded-none"
                       />
                       <label htmlFor="tax-receipt-needed" className="text-xs text-slate-700 dark:text-slate-300 font-medium cursor-pointer select-none">
-                        ต้องการใบกำกับภาษีเต็มรูปแบบ / หัก ณ ที่จ่าย 3%
+                        {t('corp.wantTax')}
                       </label>
                     </div>
 
@@ -615,7 +615,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                         className="w-4 h-4 mt-0.5 text-slate-950 border-slate-400 focus:ring-0 cursor-pointer rounded-none"
                       />
                       <label htmlFor="group-insurance-needed" className="text-xs text-slate-700 dark:text-slate-300 font-medium cursor-pointer select-none leading-relaxed">
-                        เพิ่มประกันอุบัติเหตุการเดินทางกลุ่ม คุ้มครองผู้โดยสารรายบุคคล (1,000,000 บาท/ท่าน)
+                        {t('corp.addInsurance')}
                       </label>
                     </div>
 
@@ -623,10 +623,10 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                     <div className="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700 p-3.5 flex items-center justify-between gap-3 rounded-none">
                       <div>
                         <span className="text-[11px] text-amber-900 dark:text-amber-300 font-bold block">
-                          ประมาณการค่าเช่ารถ ({formData.totalDays} วัน · {tierMeta.shortLabel} · {budget.carCount} คัน):
+                          {t('corp.estRental', { days: formData.totalDays, tier: tierMeta.shortLabel, cars: budget.carCount })}
                         </span>
                         <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                          เรท {formatBaht(tierMeta.rateMin)}-{formatBaht(tierMeta.rateMax)} บ./วัน/คัน ตรงเจ้าของรถ ไม่ผ่านเอเจนซี่
+                          {t('corp.rateDirect', { min: formatBaht(tierMeta.rateMin), max: formatBaht(tierMeta.rateMax) })}
                         </span>
                       </div>
                       <div className="text-right font-mono shrink-0">
@@ -634,7 +634,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                           ฿{formatBaht(budget.rentalLow)} - {formatBaht(budget.rentalHigh)}
                         </span>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-sans">
-                          *ยังไม่รวมค่าน้ำมันและทางด่วน
+                          {t('corp.exclFuel')}
                         </span>
                       </div>
                     </div>
@@ -645,7 +645,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                       className="w-full bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold text-xs py-2.5 border border-slate-400 dark:border-slate-600 transition-colors flex items-center justify-center gap-1.5 rounded-none cursor-pointer"
                     >
                       <ClipboardList className="w-4 h-4" />
-                      <span>ดูใบประเมินงบประมาณเบื้องต้น</span>
+                      <span>{t('corp.viewEstBtn')}</span>
                     </button>
 
                     {/* Submit Button */}
@@ -657,12 +657,12 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                       {isSubmitting ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>กำลังส่งข้อมูล...</span>
+                          <span>{t('corp.sending')}</span>
                         </>
                       ) : (
                         <>
                           <span className="material-symbols-outlined text-[17px]">send</span>
-                          <span>ส่งข้อมูลขอใบเสนอราคาอย่างเป็นทางการ</span>
+                          <span>{t('corp.sendRfq')}</span>
                         </>
                       )}
                     </button>
@@ -704,14 +704,14 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  ใบประเมินงบประมาณเบื้องต้น / Preliminary Budget Estimate
+                  {t('corp.docQuoteTitle')}
                 </p>
               </div>
               <div className="text-right text-[11px] text-slate-600 dark:text-slate-300 font-mono leading-relaxed">
-                <div>เลขที่ {docRef}</div>
+                <div>{t('corp.docNo', { ref: docRef })}</div>
                 <div>
-                  วันที่{' '}
-                  {new Date().toLocaleDateString('th-TH', {
+                  {t('corp.docDate')}{' '}
+                  {new Date().toLocaleDateString(LOCALE_DATE_TAG[locale] ?? 'th-TH', {
                     day: 'numeric',
                     month: 'short',
                     year: 'numeric',
@@ -724,41 +724,41 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
               {/* Customer & trip details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
                 <div className="flex justify-between gap-2 border-b border-dotted border-slate-200 dark:border-slate-700 pb-1">
-                  <span className="text-slate-500 dark:text-slate-400">หน่วยงาน / บริษัท</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('corp.docCompany')}</span>
                   <span className="font-bold text-right">{formData.companyName || '-'}</span>
                 </div>
                 <div className="flex justify-between gap-2 border-b border-dotted border-slate-200 dark:border-slate-700 pb-1">
-                  <span className="text-slate-500 dark:text-slate-400">ผู้ติดต่อ</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('corp.docContact')}</span>
                   <span className="font-bold text-right">
                     {formData.contactName || '-'} {formData.phone ? `(${formData.phone})` : ''}
                   </span>
                 </div>
                 <div className="flex justify-between gap-2 border-b border-dotted border-slate-200 dark:border-slate-700 pb-1">
-                  <span className="text-slate-500 dark:text-slate-400">เส้นทาง</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('corp.docRoute')}</span>
                   <span className="font-bold text-right">{formData.route}</span>
                 </div>
                 <div className="flex justify-between gap-2 border-b border-dotted border-slate-200 dark:border-slate-700 pb-1">
-                  <span className="text-slate-500 dark:text-slate-400">วันเดินทาง</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('corp.docTravelDate')}</span>
                   <span className="font-bold text-right">
-                    {formData.travelDate || t('corp.dDateQuote')} ({formData.totalDays} วัน)
+                    {formData.travelDate || t('corp.dDateQuote')} ({t('corp.daysSuffix', { n: formData.totalDays })})
                   </span>
                 </div>
                 <div className="flex justify-between gap-2 border-b border-dotted border-slate-200 dark:border-slate-700 pb-1">
-                  <span className="text-slate-500 dark:text-slate-400">จำนวนรถ</span>
-                  <span className="font-bold text-right">{budget.carCount} คัน</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('corp.docCars')}</span>
+                  <span className="font-bold text-right">{t('corp.carsSuffix', { n: budget.carCount })}</span>
                 </div>
                 <div className="flex justify-between gap-2 border-b border-dotted border-slate-200 dark:border-slate-700 pb-1">
-                  <span className="text-slate-500 dark:text-slate-400">ประเภทรถ</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('corp.docVehicleType')}</span>
                   <span className="font-bold text-right">{tierMeta.specLine}</span>
                 </div>
                 <div className="flex justify-between gap-2 border-b border-dotted border-slate-200 dark:border-slate-700 pb-1">
-                  <span className="text-slate-500 dark:text-slate-400">ประเภทองค์กร</span>
-                  <span className="font-bold text-right">{ORG_TYPE_META[formData.orgType]}</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('corp.docOrgType')}</span>
+                  <span className="font-bold text-right">{orgTypeLabel(formData.orgType, locale)}</span>
                 </div>
                 <div className="flex justify-between gap-2 border-b border-dotted border-slate-200 dark:border-slate-700 pb-1">
-                  <span className="text-slate-500 dark:text-slate-400">ประกันอุบัติเหตุกลุ่ม</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('corp.docInsurance')}</span>
                   <span className="font-bold text-right">
-                    {formData.includeInsurance ? 'คุ้มครอง 1,000,000 บาท/ท่าน' : 'ไม่เพิ่ม'}
+                    {formData.includeInsurance ? t('corp.insCover') : t('corp.insNone')}
                   </span>
                 </div>
               </div>
@@ -767,57 +767,60 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
               <table className="w-full text-xs border border-slate-200 dark:border-slate-700 print:border-slate-400">
                 <thead>
                   <tr className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                    <th className="text-left font-bold px-3 py-2">รายการ</th>
-                    <th className="text-right font-bold px-3 py-2 w-40">จำนวนเงิน (บาท)</th>
+                    <th className="text-left font-bold px-3 py-2">{t('corp.tblItem')}</th>
+                    <th className="text-right font-bold px-3 py-2 w-40">{t('corp.tblAmount')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-t border-slate-200 dark:border-slate-700">
                     <td className="px-3 py-2">
-                      <span className="font-bold">ค่าเช่ารถพร้อมคนขับ</span>
+                      <span className="font-bold">{t('corp.tblRental')}</span>
                       <span className="block text-[10px] text-slate-500 dark:text-slate-400">
-                        {tierMeta.label} เรท {formatBaht(tierMeta.rateMin)} - {formatBaht(tierMeta.rateMax)} บ./วัน
-                         x {budget.carCount} คัน x {budget.days} วัน (ประเมินด้วยเรทสูงสุด)
+                        {t('corp.tblRentalDetail', {
+                          tier: tierMeta.label,
+                          min: formatBaht(tierMeta.rateMin),
+                          max: formatBaht(tierMeta.rateMax),
+                          cars: budget.carCount,
+                          days: budget.days,
+                        })}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-right font-mono font-bold">{formatBaht(budget.rentalTotal)}</td>
                   </tr>
                   <tr className="border-t border-slate-200 dark:border-slate-700">
                     <td className="px-3 py-2">
-                      <span className="font-bold">ประมาณการค่าน้ำมัน &amp; ทางด่วน</span>
+                      <span className="font-bold">{t('corp.tblFuel')}</span>
                       <span className="block text-[10px] text-slate-500 dark:text-slate-400">
-                        เฉลี่ย {formatBaht(FUEL_PER_CAR_PER_DAY)} บ./คัน/วัน (จ่ายตามจริง)
+                        {t('corp.tblFuelDetail', { per: formatBaht(FUEL_PER_CAR_PER_DAY) })}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-right font-mono font-bold">{formatBaht(budget.fuelTotal)}</td>
                   </tr>
                   <tr className="border-t border-slate-200 dark:border-slate-700">
                     <td className="px-3 py-2">
-                      <span className="font-bold">ประกันอุบัติเหตุการเดินทางกลุ่ม</span>
+                      <span className="font-bold">{t('corp.tblIns')}</span>
                       <span className="block text-[10px] text-slate-500 dark:text-slate-400">
-                        {formData.includeInsurance
-                          ? 'คุ้มครองผู้โดยสารรายบุคคล 1,000,000 บาท/ท่าน (รวมในแพ็กเกจ)'
-                          : 'ลูกค้าเลือกไม่เพิ่มความคุ้มครอง'}
+                        {formData.includeInsurance ? t('corp.tblInsCoverD') : t('corp.tblInsNoneD')}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-right font-mono font-bold">
-                      {formData.includeInsurance ? 'รวมในเรท' : '-'}
+                      {formData.includeInsurance ? t('corp.tblInsIncluded') : '-'}
                     </td>
                   </tr>
                   <tr className="border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
-                    <td className="px-3 py-2 font-bold">รวมประมาณการก่อนภาษี</td>
+                    <td className="px-3 py-2 font-bold">{t('corp.tblSubtotal')}</td>
                     <td className="px-3 py-2 text-right font-mono font-black">{formatBaht(budget.subtotal)}</td>
                   </tr>
                   <tr className="border-t border-slate-200 dark:border-slate-700">
                     <td className="px-3 py-2 text-rose-600 dark:text-rose-400">
-                      หัก ณ ที่จ่าย 3% (ภาษีเงินได้หัก ณ ที่จ่าย)
+                      {t('corp.tblWht')}
                     </td>
                     <td className="px-3 py-2 text-right font-mono font-bold text-rose-600 dark:text-rose-400">
                       -{formatBaht(budget.withholdingTax)}
                     </td>
                   </tr>
                   <tr className="border-t-2 border-slate-900 dark:border-slate-200 print:border-black">
-                    <td className="px-3 py-2.5 font-black">ยอดสุทธิหลังหัก ณ ที่จ่าย</td>
+                    <td className="px-3 py-2.5 font-black">{t('corp.tblNet')}</td>
                     <td className="px-3 py-2.5 text-right font-mono font-black text-base text-amber-600 dark:text-amber-400 print:text-black">
                       {formatBaht(budget.netAfterWithholding)}
                     </td>
@@ -827,19 +830,13 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
 
               {/* Terms */}
               <div className="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400 space-y-1">
-                <p className="font-bold text-slate-700 dark:text-slate-300">เงื่อนไขและข้อควรทราบ</p>
+                <p className="font-bold text-slate-700 dark:text-slate-300">{t('corp.termsTitle')}</p>
+                <p>{t('corp.term1')}</p>
+                <p>{t('corp.term2')}</p>
                 <p>
-                  1. เอกสารฉบับนี้เป็นการประเมินงบประมาณเบื้องต้นเท่านั้น ยังไม่ถือเป็นข้อเสนอผูกมัด
-                  อาจปรับเปลี่ยนตามเส้นทาง สภาพจราจร และวันหยุดนักขัตฤกษ์
+                  {formData.needsTaxInvoice ? t('corp.term3Tax') : t('corp.term3NoTax')}
                 </p>
-                <p>2. ราคาค่าเช่ารถไม่รวมค่าน้ำมัน ทางด่วน และค่าที่จอดรถ ซึ่งคิดตามจริงตามระยะทางที่ใช้งาน</p>
-                <p>
-                  3.{' '}
-                  {formData.needsTaxInvoice
-                    ? 'เมื่อยืนยันงาน TripDee ออกใบกำกับภาษีเต็มรูปแบบ และเอกสารหัก ณ ที่จ่าย 3% ให้ยื่นเป็นค่าใช้จ่ายขององค์กรได้'
-                    : 'กรณีไม่ต้องการใบกำกับภาษี จะออกใบเสร็จรับเงินทั่วไป'}
-                </p>
-                <p>4. รถที่จัดสรรเป็นไปตามมาตรฐานที่เลือก และขึ้นอยู่กับความพร้อมของรถในช่วงวันเดินทาง</p>
+                <p>{t('corp.term4')}</p>
               </div>
             </div>
 
@@ -850,7 +847,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                 onClick={() => setIsPreviewOpen(false)}
                 className="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-none cursor-pointer"
               >
-                ปิด
+                {t('corp.close')}
               </button>
               <button
                 type="button"
@@ -858,7 +855,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
                 className="px-5 py-2.5 text-xs font-black bg-slate-950 hover:bg-slate-800 text-white border border-slate-950 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Printer className="w-4 h-4" />
-                <span>พิมพ์ / บันทึก PDF</span>
+                <span>{t('corp.printSave')}</span>
               </button>
             </div>
           </div>

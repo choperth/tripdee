@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Sponsor } from '@/data/mockData';
 import { Building2, Plus, Pencil, Trash2, FileSpreadsheet, Search } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminSponsorTabProps {
@@ -18,6 +19,7 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
   getSponsorClickCount,
   onOpenReport,
 }) => {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -96,7 +98,7 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-ink-2" />
           <input
             type="text"
-            placeholder="ค้นหาชื่อโรงแรม/ร้านค้า..."
+            placeholder={t('padm.sponsorSearchPh')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-card border border-rule text-xs focus:outline-accent"
@@ -111,14 +113,14 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
           className="flex items-center gap-1.5 rounded-pill bg-accent px-4 py-1.5 text-xs font-extrabold text-white hover:bg-accent-deep transition-transform active:scale-95"
         >
           <Plus className="h-4 w-4" />
-          <span>เพิ่มสปอนเซอร์ใหม่</span>
+          <span>{t('padm.addSponsorNew')}</span>
         </button>
       </div>
 
       {/* Sponsors List */}
       {filtered.length === 0 ? (
         <p className="text-xs text-ink-2 italic p-6 text-center rounded-2xl bg-paper">
-          ไม่พบข้อมูลสปอนเซอร์
+          {t('padm.sponsorEmpty')}
         </p>
       ) : (
         <div className="space-y-3">
@@ -146,22 +148,22 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
                     <button
                       onClick={() => onOpenReport(sp)}
                       className="flex items-center gap-1 rounded-pill bg-card hover:bg-paper-2 text-ink border border-rule px-2.5 py-1 text-[11px] font-bold transition-transform active:scale-95"
-                      title="ดูรายงานสถิติคลิก"
+                      title={t('padm.viewReport')}
                     >
                       <FileSpreadsheet className="h-3.5 w-3.5 text-leaf" />
-                      <span>รายงาน</span>
+                      <span>{t('padm.reportBtn')}</span>
                     </button>
                     <button
                       onClick={() => setEditingSponsor(sp)}
                       className="grid h-7 w-7 place-items-center rounded-lg bg-card hover:bg-paper-2 text-ink border border-rule transition-transform active:scale-95"
-                      title="แก้ไขสปอนเซอร์"
+                      title={t('padm.editSponsorTitle')}
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => setDeletingSponsor(sp)}
                       className="grid h-7 w-7 place-items-center rounded-lg bg-berry-soft hover:bg-berry/20 text-berry transition-transform active:scale-95"
-                      title="ลบสปอนเซอร์"
+                      title={t('padm.deleteSponsorTitle')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -170,10 +172,10 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
 
                 <div className="mt-3 flex items-center justify-between rounded-xl bg-card p-2.5 border border-rule text-xs">
                   <div className="text-[11px] text-ink-2 truncate max-w-[280px]">
-                    ลิงก์: <span className="font-mono text-accent-deep">{sp.link}</span>
+                    {t('padm.link')} <span className="font-mono text-accent-deep">{sp.link}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-[11px] text-ink-2">สถิติคลิกจริง:</span>
+                    <span className="text-[11px] text-ink-2">{t('padm.clickStats')}</span>
                     <span className="rounded-pill bg-leaf-soft px-2.5 py-0.5 text-xs font-mono font-extrabold text-leaf">
                       {clicks} Clicks
                     </span>
@@ -190,73 +192,73 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-ink/70 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-lg rounded-2xl bg-card p-6 shadow-2xl border border-rule text-ink my-8">
             <h3 className="font-display font-extrabold text-lg mb-4 text-ink">
-              {editingSponsor ? '✏️ แก้ไขข้อมูลสปอนเซอร์ / โฆษณา' : '➕ เพิ่มสปอนเซอร์ใหม่'}
+              {editingSponsor ? t('padm.sponsorFormEdit') : t('padm.sponsorFormNew')}
             </h3>
 
             <form onSubmit={handleSaveSponsor} className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-ink block mb-1">ชื่อธุรกิจ / โรงแรม / ร้านค้า *</label>
+                <label className="font-bold text-ink block mb-1">{t('padm.fBizName')}</label>
                 <input
                   name="title"
                   defaultValue={editingSponsor?.title || ''}
                   required
-                  placeholder="เช่น ม่อนฟ้า พูลวิลล่า & แกลมปิ้ง ม่อนแจ่ม"
+                  placeholder={t('padm.fBizNamePh')}
                   className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">หมวดหมู่ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fCategory')}</label>
                   <select
                     name="category"
                     defaultValue={editingSponsor?.category || 'hotel'}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
-                    <option value="hotel">ที่พัก & โรงแรม (Hotel)</option>
-                    <option value="cooking">คลาสทำอาหาร & เวิร์กชอป</option>
-                    <option value="restaurant">ร้านอาหาร & คาเฟ่</option>
-                    <option value="auto_service">อู่ & ยาง & บริการรถ</option>
-                    <option value="activity">กิจกรรม & ปางช้าง</option>
-                    <option value="insurance">ประกันภัย</option>
-                    <option value="fuel">น้ำมัน & พลังงาน</option>
-                    <option value="tour">ทัวร์ & กิจกรรมท่องเที่ยว</option>
+                    <option value="hotel">{t('padm.catHotel')}</option>
+                    <option value="cooking">{t('padm.catCooking')}</option>
+                    <option value="restaurant">{t('padm.catRestaurant')}</option>
+                    <option value="auto_service">{t('padm.catAuto')}</option>
+                    <option value="activity">{t('padm.catActivity')}</option>
+                    <option value="insurance">{t('padm.catInsurance')}</option>
+                    <option value="fuel">{t('padm.catFuel')}</option>
+                    <option value="tour">{t('padm.catTour')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">ป้ายกำกับหมวดหมู่</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fCategoryLabel')}</label>
                   <input
                     name="categoryLabel"
-                    defaultValue={editingSponsor?.categoryLabel || 'ที่พักแนะนำพันธมิตร'}
+                    defaultValue={editingSponsor?.categoryLabel || t('padm.fCategoryLabelPh')}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-ink block mb-1">คำโฆษณา / สโลแกน (Tagline)</label>
+                <label className="font-bold text-ink block mb-1">{t('padm.fTagline')}</label>
                 <input
                   name="tagline"
                   defaultValue={editingSponsor?.tagline || ''}
-                  placeholder="เช่น สัมผัสทะเลหมอกหน้าห้องพัก สระว่ายน้ำส่วนตัว"
+                  placeholder={t('padm.fTaglinePh')}
                   className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ข้อความส่วนลด</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fDiscountText')}</label>
                   <input
                     name="discountText"
-                    defaultValue={editingSponsor?.discountText || 'ลดทันที 15% เมื่อแสดงใบยืนยัน TripDee'}
+                    defaultValue={editingSponsor?.discountText || t('padm.fDiscountTextPh')}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">ป้าย Badge</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fBadgeText')}</label>
                   <input
                     name="badgeText"
-                    defaultValue={editingSponsor?.badgeText || 'ส่วนลดพิเศษลูกค้า TripDee'}
+                    defaultValue={editingSponsor?.badgeText || t('padm.fBadgeTextPh')}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   />
                 </div>
@@ -264,15 +266,15 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ที่ตั้ง / พิกัด</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fLocation')}</label>
                   <input
                     name="location"
-                    defaultValue={editingSponsor?.location || 'ม่อนแจ่ม, เชียงใหม่'}
+                    defaultValue={editingSponsor?.location || t('padm.fLocationPh')}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">ลิงก์ปลายทาง (URL หรือ LINE)</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fLink')}</label>
                   <input
                     name="link"
                     defaultValue={editingSponsor?.link || 'https://line.me'}
@@ -282,7 +284,7 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
               </div>
 
               <div>
-                <label className="font-bold text-ink block mb-1">รูปภาพแบนเนอร์ (Image URL)</label>
+                <label className="font-bold text-ink block mb-1">{t('padm.fImage')}</label>
                 <input
                   name="image"
                   defaultValue={editingSponsor?.image || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80'}
@@ -299,14 +301,14 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
                   }}
                   className="rounded-pill px-4 py-2 text-xs font-bold text-ink-2 hover:bg-paper"
                 >
-                  ยกเลิก
+                  {t('padm.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="rounded-pill bg-accent px-5 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-accent-deep transition-transform active:scale-95 disabled:opacity-50"
                 >
-                  {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+                  {isSubmitting ? t('padm.saving') : t('padm.save')}
                 </button>
               </div>
             </form>
@@ -317,7 +319,7 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
       {/* Delete Confirmation Modal */}
       <AdminDeleteModal
         isOpen={Boolean(deletingSponsor)}
-        title="ยืนยันการลบสปอนเซอร์"
+        title={t('padm.delSponsorTitle')}
         itemTitle={deletingSponsor?.title || ''}
         isDeleting={isSubmitting}
         onClose={() => setDeletingSponsor(null)}

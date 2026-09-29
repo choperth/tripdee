@@ -918,7 +918,7 @@ export async function fetchBoardPosts(
 
     const validRows = allowMock ? data : data.filter((row) => !isMockPostId(row.id));
 
-    return validRows
+    const mapped = validRows
       .filter((row) => !deletedBoardPostIds.includes(row.id))
       .filter((row) => {
         if (includeClosed) return true;
@@ -949,7 +949,7 @@ export async function fetchBoardPosts(
           priceNote: row.price_note || undefined,
           authorName: row.author_name,
           authorPhone: row.author_phone,
-          authorLine: row.author_line,
+          authorLine: row.author_line || '',
           authorWhatsApp: row.author_whatsapp || undefined,
           authorWeChat: row.author_wechat || undefined,
           vehicleLabel: row.vehicle_label || undefined,
@@ -967,6 +967,14 @@ export async function fetchBoardPosts(
           viewToken: row.view_token || undefined,
         };
       });
+
+    if (allowMock && mapped.length < 2) {
+      const existingIds = new Set(mapped.map((r) => r.id));
+      const mockToAdd = processMockPosts(BOARD_POSTS).filter((p) => !existingIds.has(p.id));
+      return [...mapped, ...mockToAdd];
+    }
+
+    return mapped;
   } catch (err) {
     console.warn('[TripDee Supabase] Error fetching board posts:', err);
     if (!allowMock) return [];

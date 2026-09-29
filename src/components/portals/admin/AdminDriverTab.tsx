@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { DriverLead } from '@/lib/leadsStore';
 import { Check, CheckCircle2, Pencil, PhoneCall, Trash2, Search } from 'lucide-react';
 import { useAnalytics } from '@/context/AnalyticsContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminDriverTabProps {
@@ -18,6 +19,7 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
   onApprove,
 }) => {
   const { trackCall } = useAnalytics();
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [editingDriver, setEditingDriver] = useState<DriverLead | null>(null);
   const [deletingDriver, setDeletingDriver] = useState<DriverLead | null>(null);
@@ -96,20 +98,20 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-ink-2" />
           <input
             type="text"
-            placeholder="ค้นหาคนขับ รุ่นรถ เส้นทาง..."
+            placeholder={t('padm.driverSearchPh')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-card border border-rule text-xs focus:outline-accent"
           />
         </div>
         <span className="text-xs font-extrabold text-ink-2">
-          ทั้งหมด: {filtered.length} ท่าน
+          {t('padm.driverTotal', { n: filtered.length })}
         </span>
       </div>
 
       {filtered.length === 0 ? (
         <p className="text-xs text-ink-2 italic p-6 text-center rounded-2xl bg-paper">
-          ไม่มีรายการคนขับรอตรวจสอบ
+          {t('padm.driverEmpty')}
         </p>
       ) : (
         <div className="space-y-3">
@@ -124,11 +126,12 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
                       <span className={`rounded-pill px-2.5 py-0.5 text-[10px] font-extrabold ${
                         isApproved ? 'bg-leaf-soft text-leaf' : 'bg-sun-soft text-sun-ink'
                       }`}>
-                        {isApproved ? 'อนุมัติตราแล้ว' : 'รอตรวจสอบเอกสาร'}
+                        {isApproved ? t('padm.driverApproved') : t('padm.driverPendingDoc')}
                       </span>
                     </div>
                     <p className="text-xs text-ink-2 mt-0.5">
-                      {drv.vehicleModel} • {drv.seats} ที่นั่ง {drv.plateNumber ? `(ทะเบียน: ${drv.plateNumber})` : ''}
+                      {t('padm.driverMeta', { model: drv.vehicleModel, seats: drv.seats })}{' '}
+                      {drv.plateNumber ? t('padm.driverPlate', { plate: drv.plateNumber }) : ''}
                     </p>
                   </div>
 
@@ -136,14 +139,14 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
                     <button
                       onClick={() => setEditingDriver(drv)}
                       className="grid h-7 w-7 place-items-center rounded-lg bg-card hover:bg-paper-2 text-ink border border-rule transition-transform active:scale-95"
-                      title="แก้ไขข้อมูลคนขับ"
+                      title={t('padm.editDriverTitle')}
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => setDeletingDriver(drv)}
                       className="grid h-7 w-7 place-items-center rounded-lg bg-berry-soft hover:bg-berry/20 text-berry transition-transform active:scale-95"
-                      title="ลบ/ปฏิเสธใบสมัคร"
+                      title={t('padm.rejectDriverTitle')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -152,15 +155,15 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
 
                 <div className="my-3 space-y-1.5 rounded-xl border border-rule bg-card p-3 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-ink-2">เส้นทางที่ชำนาญ:</span>
-                    <span className="font-bold text-ink">{drv.routes || 'เชียงใหม่และใกล้เคียง'}</span>
+                    <span className="text-ink-2">{t('padm.driverRoutes')}</span>
+                    <span className="font-bold text-ink">{drv.routes || t('padm.driverDefaultRoutes')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink-2">LINE ID:</span>
                     <span className="font-mono text-accent-deep">{drv.lineId || '-'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-ink-2">เบอร์โทรติดต่อ:</span>
+                    <span className="text-ink-2">{t('padm.driverPhoneLabel')}</span>
                     <span className="font-mono font-bold text-ink">{drv.phone}</span>
                   </div>
                 </div>
@@ -172,20 +175,20 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
                       trackCall({
                         targetType: 'admin_fleet',
                         targetId: drv.id,
-                        targetTitle: `โทรสัมภาษณ์คนขับ: ${drv.nickname}`,
+                        targetTitle: t('padm.callInterviewTitle', { name: drv.nickname }),
                         phoneNumber: drv.phone,
                       });
                     }}
                     className="text-xs font-bold text-accent-deep hover:underline inline-flex items-center gap-1"
                   >
                     <PhoneCall className="h-3.5 w-3.5" />
-                    โทรสัมภาษณ์คนขับ
+                    {t('padm.callInterview')}
                   </a>
 
                   {isApproved ? (
                     <span className="flex items-center gap-1 text-xs font-extrabold text-leaf">
                       <CheckCircle2 className="h-4 w-4" />
-                      อนุมัติและขึ้นเว็บแล้ว
+                      {t('padm.approvedOnSite')}
                     </span>
                   ) : (
                     <button
@@ -193,7 +196,7 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
                       className="inline-flex items-center gap-1.5 rounded-pill bg-leaf px-4 py-1.5 text-xs font-extrabold text-white shadow-sm hover:bg-leaf/90 transition-transform active:scale-95"
                     >
                       <Check className="h-4 w-4" strokeWidth={3} />
-                      <span>อนุมัติขึ้นเว็บ</span>
+                      <span>{t('padm.approveOnSite')}</span>
                     </button>
                   )}
                 </div>
@@ -208,13 +211,13 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-ink/70 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-lg rounded-2xl bg-card p-6 shadow-2xl border border-rule text-ink my-8">
             <h3 className="font-display font-extrabold text-lg mb-4 text-ink">
-              ✏️ แก้ไขข้อมูลใบสมัครคนขับ
+              {t('padm.editDriverForm')}
             </h3>
 
             <form onSubmit={handleSaveDriver} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ชื่อ-นามสกุล *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fFullName')}</label>
                   <input
                     name="driverName"
                     defaultValue={editingDriver.driverName}
@@ -223,7 +226,7 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">ชื่อเล่น *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fNickname')}</label>
                   <input
                     name="nickname"
                     defaultValue={editingDriver.nickname}
@@ -235,7 +238,7 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">เบอร์โทรศัพท์ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPhone')}</label>
                   <input
                     name="phone"
                     defaultValue={editingDriver.phone}
@@ -255,7 +258,7 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
 
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
-                  <label className="font-bold text-ink block mb-1">รุ่นยานพาหนะ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fVehicleModel')}</label>
                   <input
                     name="vehicleModel"
                     defaultValue={editingDriver.vehicleModel}
@@ -264,7 +267,7 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">จำนวนที่นั่ง</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fSeats')}</label>
                   <input
                     name="seats"
                     defaultValue={editingDriver.seats}
@@ -275,30 +278,30 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ป้ายทะเบียนรถ</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPlate')}</label>
                   <input
                     name="plateNumber"
                     defaultValue={editingDriver.plateNumber || ''}
-                    placeholder="เช่น นข-4521 เชียงใหม่"
+                    placeholder={t('padm.fPlatePh')}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">สถานะ</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fStatus')}</label>
                   <select
                     name="status"
                     defaultValue={editingDriver.status}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
-                    <option value="pending">รอการตรวจสอบ (Pending)</option>
-                    <option value="verified">อนุมัติแล้ว (Verified)</option>
-                    <option value="rejected">ปฏิเสธใบสมัคร (Rejected)</option>
+                    <option value="pending">{t('padm.stPending')}</option>
+                    <option value="verified">{t('padm.stVerified')}</option>
+                    <option value="rejected">{t('padm.stRejected')}</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-ink block mb-1">เส้นทางที่ชำนาญ</label>
+                <label className="font-bold text-ink block mb-1">{t('padm.fRoutes')}</label>
                 <input
                   name="routes"
                   defaultValue={editingDriver.routes}
@@ -312,14 +315,14 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
                   onClick={() => setEditingDriver(null)}
                   className="rounded-pill px-4 py-2 text-xs font-bold text-ink-2 hover:bg-paper"
                 >
-                  ยกเลิก
+                  {t('padm.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="rounded-pill bg-accent px-5 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-accent-deep transition-transform active:scale-95 disabled:opacity-50"
                 >
-                  {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+                  {isSubmitting ? t('padm.saving') : t('padm.save')}
                 </button>
               </div>
             </form>
@@ -330,7 +333,7 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
       {/* Delete Confirmation Modal */}
       <AdminDeleteModal
         isOpen={Boolean(deletingDriver)}
-        title="ยืนยันการลบใบสมัครคนขับ"
+        title={t('padm.delDriverTitle')}
         itemTitle={`${deletingDriver?.driverName} (${deletingDriver?.nickname})`}
         isDeleting={isSubmitting}
         onClose={() => setDeletingDriver(null)}

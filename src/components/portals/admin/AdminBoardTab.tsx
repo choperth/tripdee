@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { BoardPost, BoardPostType, ZoneId } from '@/data/mockData';
 import { Pencil, Trash2, Search, Star } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminBoardTabProps {
@@ -11,6 +12,7 @@ interface AdminBoardTabProps {
 }
 
 export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }) => {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [editingPost, setEditingPost] = useState<BoardPost | null>(null);
   const [deletingPost, setDeletingPost] = useState<BoardPost | null>(null);
@@ -113,20 +115,20 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-ink-2" />
           <input
             type="text"
-            placeholder="ค้นหาโพสต์ในกระดาน ชื่อ เบอร์..."
+            placeholder={t('padm.boardSearchPh')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-card border border-rule text-xs focus:outline-accent"
           />
         </div>
         <span className="text-xs font-extrabold text-ink-2">
-          กระทู้ทั้งหมด: {filtered.length} โพสต์
+          {t('padm.boardTotal', { n: filtered.length })}
         </span>
       </div>
 
       {filtered.length === 0 ? (
         <p className="text-xs text-ink-2 italic p-6 text-center rounded-2xl bg-paper">
-          ไม่มีโพสต์ในกระดาน
+          {t('padm.boardEmpty')}
         </p>
       ) : (
         <div className="space-y-3">
@@ -143,10 +145,10 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                         : 'bg-sun-soft text-sun-ink'
                     }`}>
                       {post.type === 'share'
-                        ? 'หาเพื่อนร่วมทริป (Share)'
+                        ? t('padm.bpShare')
                         : post.type === 'offer'
-                        ? 'คนขับเสนอรถ (Offer เดิม)'
-                        : 'หาคนหาร/หารถตู้'}
+                        ? t('padm.bpOffer')
+                        : t('padm.bpRequest')}
                     </span>
                     <h4 className="font-extrabold text-sm text-ink">{post.title}</h4>
                     {post.isVerified && (
@@ -157,7 +159,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                     )}
                   </div>
                   <p className="text-xs text-ink-2 mt-0.5">
-                    โดย: <span className="font-bold text-ink">{post.authorName}</span> • วันที่: {post.date} • {post.seats} ที่นั่ง
+                    {t('padm.bpBy', { name: post.authorName, date: post.date, n: post.seats })}
                   </p>
                 </div>
 
@@ -168,19 +170,19 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                       post.isVerified ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/50 hover:bg-amber-500/30' : 'bg-rule text-ink-2 hover:bg-rule-2'
                     }`}
                   >
-                    {post.isVerified ? '⭐ แนะนำ' : '+ ดันแนะนำ'}
+                    {post.isVerified ? t('padm.featuredShort') : `+ ${t('padm.promote')}`}
                   </button>
                   <button
                     onClick={() => setEditingPost(post)}
                     className="grid h-7 w-7 place-items-center rounded-lg bg-card hover:bg-paper-2 text-ink border border-rule transition-transform active:scale-95"
-                    title="แก้ไขโพสต์"
+                    title={t('padm.editPostTitle')}
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => setDeletingPost(post)}
                     className="grid h-7 w-7 place-items-center rounded-lg bg-berry-soft hover:bg-berry/20 text-berry transition-transform active:scale-95"
-                    title="ลบโพสต์"
+                    title={t('padm.deletePostTitle')}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -188,12 +190,12 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
               </div>
 
               <p className="my-2 text-xs text-ink-2 line-clamp-2 bg-card p-2.5 rounded-xl border border-rule">
-                {post.detail || '- ไม่ได้ระบุรายละเอียด -'}
+                {post.detail || t('padm.noDetail')}
               </p>
 
               <div className="flex items-center justify-between text-xs pt-1">
                 <span className="font-mono text-ink font-bold">
-                  โทร: {post.authorPhone} {post.authorLine ? `(LINE: ${post.authorLine})` : ''}
+                  {t('padm.phoneLine', { phone: post.authorPhone })} {post.authorLine ? `(LINE: ${post.authorLine})` : ''}
                   {post.authorWhatsApp ? ` (WA: ${post.authorWhatsApp})` : ''}
                   {post.authorWeChat ? ` (WeChat: ${post.authorWeChat})` : ''}
                 </span>
@@ -211,12 +213,12 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-ink/70 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-lg rounded-2xl bg-card p-6 shadow-2xl border border-rule text-ink my-8">
             <h3 className="font-display font-extrabold text-lg mb-4 text-ink">
-              ✏️ แก้ไขกระทู้ในกระดาน
+              {t('padm.editPostForm')}
             </h3>
 
             <form onSubmit={handleSavePost} className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-ink block mb-1">หัวข้อประกาศ *</label>
+                <label className="font-bold text-ink block mb-1">{t('padm.fPostTitle')}</label>
                 <input
                   name="title"
                   defaultValue={editingPost.title}
@@ -227,35 +229,35 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ประเภทประกาศ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPostType')}</label>
                   <select
                     name="type"
                     defaultValue={editingPost.type}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
-                    <option value="request">หาคนหาร / หารถ (Request)</option>
-                    <option value="share">หาเพื่อนร่วมทริป (Share)</option>
-                    <option value="offer">คนขับเสนอรถ (Offer เดิม)</option>
+                    <option value="request">{t('padm.bpRequestLong')}</option>
+                    <option value="share">{t('padm.bpShareLong')}</option>
+                    <option value="offer">{t('padm.bpOfferLong')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">โซนท่องเที่ยว</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fZone')}</label>
                   <select
                     name="zoneId"
                     defaultValue={editingPost.zoneId}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
-                    <option value="city">ตัวเมือง & รอบนอก</option>
-                    <option value="midHill">ดอยปานกลาง (ม่อนแจ่ม/แม่กำปอง)</option>
-                    <option value="highHill">ดอยสูง (อินทนนท์/อ่างขาง)</option>
-                    <option value="crossProvince">ข้ามจังหวัด (เชียงราย/ปาย)</option>
+                    <option value="city">{t('padm.zoneCity')}</option>
+                    <option value="midHill">{t('padm.zoneMidHill')}</option>
+                    <option value="highHill">{t('padm.zoneHighHill')}</option>
+                    <option value="crossProvince">{t('padm.zoneCross')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ชื่อผู้โพสต์ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPosterName')}</label>
                   <input
                     name="authorName"
                     defaultValue={editingPost.authorName}
@@ -264,7 +266,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">เบอร์โทรศัพท์ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPhone')}</label>
                   <input
                     name="authorPhone"
                     defaultValue={editingPost.authorPhone}
@@ -288,7 +290,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                   <input
                     name="authorWhatsApp"
                     defaultValue={editingPost.authorWhatsApp || ''}
-                    placeholder="เช่น +66812345678"
+                    placeholder={t('padm.fWhatsAppPh2')}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink font-mono"
                   />
                 </div>
@@ -297,7 +299,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                   <input
                     name="authorWeChat"
                     defaultValue={editingPost.authorWeChat || ''}
-                    placeholder="เช่น wechat_user"
+                    placeholder={t('padm.fWeChatPh')}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink font-mono"
                   />
                 </div>
@@ -305,7 +307,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">วันที่เดินทาง</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fTravelDateShort')}</label>
                   <input
                     name="date"
                     defaultValue={editingPost.date}
@@ -313,7 +315,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">จำนวนที่นั่ง</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fSeatsShort')}</label>
                   <input
                     name="seats"
                     type="number"
@@ -322,7 +324,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">ราคา (บาท)</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPriceBaht')}</label>
                   <input
                     name="price"
                     type="number"
@@ -334,29 +336,29 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">สถานะปักหมุดแนะนำ (Featured)</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fFeaturedPin')}</label>
                   <select
                     name="isVerified"
                     defaultValue={editingPost.isVerified ? 'true' : 'false'}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
-                    <option value="true">⭐ แนะนำ (มีตรา Featured)</option>
-                    <option value="false">โพสต์ทั่วไป</option>
+                    <option value="true">{t('padm.featuredPinYes')}</option>
+                    <option value="false">{t('padm.featuredPinNo')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">หมายเหตุราคา</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPriceNote')}</label>
                   <input
                     name="priceNote"
                     defaultValue={editingPost.priceNote || ''}
-                    placeholder="เช่น ราคารวมน้ำมันแล้ว"
+                    placeholder={t('padm.fPriceNotePh')}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-ink block mb-1">รายละเอียดข้อความโพสต์</label>
+                <label className="font-bold text-ink block mb-1">{t('padm.fPostDetail')}</label>
                 <textarea
                   name="detail"
                   rows={3}
@@ -371,14 +373,14 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
                   onClick={() => setEditingPost(null)}
                   className="rounded-pill px-4 py-2 text-xs font-bold text-ink-2 hover:bg-paper"
                 >
-                  ยกเลิก
+                  {t('padm.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="rounded-pill bg-accent px-5 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-accent-deep transition-transform active:scale-95 disabled:opacity-50"
                 >
-                  {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+                  {isSubmitting ? t('padm.saving') : t('padm.save')}
                 </button>
               </div>
             </form>
@@ -389,7 +391,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
       {/* Delete Confirmation Modal */}
       <AdminDeleteModal
         isOpen={Boolean(deletingPost)}
-        title="ยืนยันการลบโพสต์ในกระดาน"
+        title={t('padm.delBoardTitle')}
         itemTitle={deletingPost?.title || ''}
         isDeleting={isSubmitting}
         onClose={() => setDeletingPost(null)}

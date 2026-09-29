@@ -126,54 +126,63 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
       role="dialog"
       aria-modal="true"
       aria-labelledby="admin-portal-title"
-      className="fixed inset-0 z-[400] flex items-center justify-center p-3 sm:p-4 bg-ink/65 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-400 flex items-center justify-center overflow-y-auto bg-navy-deep/75 backdrop-blur-md p-3 sm:p-4 animate-fade-in"
+      onClick={onClose}
     >
-      <div className="td-elev-lift relative w-full max-w-4xl rounded-modal bg-card p-5 sm:p-7 text-ink my-6 max-h-[94vh] overflow-y-auto">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          aria-label={t('padm.close')}
-          className="absolute top-5 right-5 grid h-9 w-9 place-items-center rounded-full bg-paper-2 text-ink hover:bg-rule transition-transform active:scale-95"
-        >
-          <X className="h-4.5 w-4.5" strokeWidth={2.5} />
-        </button>
-
-        {/* Portal Header */}
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-5 pr-8">
-          <div className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-sun text-sun-ink font-extrabold shadow-sm">
-              <Crown className="h-6 w-6" strokeWidth={2.5} />
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative flex flex-col w-full max-w-5xl max-h-[94vh] overflow-y-auto rounded-3xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 shadow-2xl text-ink-primary dark:text-slate-100"
+      >
+        {/* Sticky Header Bar */}
+        <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 px-5 sm:px-7 py-4 sm:py-5 bg-paper-elevated/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-border-subtle dark:border-slate-800">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20 dark:bg-amber-950/40 dark:text-amber-400 shadow-xs">
+              <Crown className="h-5 w-5" strokeWidth={2.5} />
             </span>
-            <div>
-              <h2 id="admin-portal-title" className="font-display text-2xl font-extrabold text-ink">
+            <div className="min-w-0">
+              <h2 id="admin-portal-title" className="font-headline-md text-base sm:text-lg font-bold text-navy-deep dark:text-white leading-tight truncate">
                 {t('padm.title')}
               </h2>
-              <p className="text-xs font-bold text-ink-2">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate mt-0.5">
                 {t('padm.tagline')}
               </p>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              logout();
-              onClose();
-            }}
-            className="flex items-center gap-1.5 text-xs font-bold text-berry hover:underline"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>{t('padm.logout')}</span>
-          </button>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                onClose();
+              }}
+              className="flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 transition-colors cursor-pointer hover:underline"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>{t('padm.logout')}</span>
+            </button>
+
+            <button
+              onClick={onClose}
+              aria-label={t('padm.close')}
+              className="w-9 h-9 rounded-full bg-paper-surface-muted hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 grid place-items-center transition-colors cursor-pointer"
+            >
+              <X className="h-4 w-4" strokeWidth={2.5} />
+            </button>
+          </div>
         </div>
 
-        {/* Navigation Tabs Bar */}
-        <div className="mb-6 flex gap-1.5 border-b-2 border-rule pb-2 overflow-x-auto scrollbar-none">
+        {/* Main Content Area */}
+        <div className="p-5 sm:p-7 space-y-6">
+        {/* Sub-tabs Segmented Control */}
+        <div className="flex p-1.5 rounded-2xl bg-paper-surface-muted dark:bg-slate-800/80 border border-border-subtle dark:border-slate-800 overflow-x-auto scrollbar-none gap-1">
           {/* Tab 1: Vehicles */}
           <button
             onClick={() => setActiveTab('vehicles')}
-            className={`flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-colors whitespace-nowrap ${
-              activeTab === 'vehicles' ? 'bg-ink text-paper' : 'text-ink-2 hover:text-ink hover:bg-paper'
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'vehicles'
+                ? 'bg-white dark:bg-slate-900 text-navy-deep dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <CarFront className="h-3.5 w-3.5" />
@@ -183,36 +192,42 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
           {/* Tab 2: Driver Leads */}
           <button
             onClick={() => setActiveTab('verifications')}
-            className={`flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-colors whitespace-nowrap ${
-              activeTab === 'verifications' ? 'bg-ink text-paper' : 'text-ink-2 hover:text-ink hover:bg-paper'
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'verifications'
+                ? 'bg-white dark:bg-slate-900 text-navy-deep dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Users className="h-3.5 w-3.5" />
             <span>{t('padm.tabDrivers', { n: pendingDriversCount })}</span>
             {pendingDriversCount > 0 && (
-              <span className="h-2 w-2 rounded-full bg-sun animate-pulse" />
+              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
             )}
           </button>
 
           {/* Tab 3: Corporate Quotes */}
           <button
             onClick={() => setActiveTab('quotations')}
-            className={`flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-colors whitespace-nowrap ${
-              activeTab === 'quotations' ? 'bg-ink text-paper' : 'text-ink-2 hover:text-ink hover:bg-paper'
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'quotations'
+                ? 'bg-white dark:bg-slate-900 text-navy-deep dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <FileText className="h-3.5 w-3.5" />
             <span>{t('padm.tabQuotesLive', { n: quoteLeads.length })}</span>
             {pendingQuotesCount > 0 && (
-              <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+              <span className="h-2 w-2 rounded-full bg-blue-action animate-pulse" />
             )}
           </button>
 
           {/* Tab 4: Trip Board */}
           <button
             onClick={() => setActiveTab('board')}
-            className={`flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-colors whitespace-nowrap ${
-              activeTab === 'board' ? 'bg-ink text-paper' : 'text-ink-2 hover:text-ink hover:bg-paper'
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'board'
+                ? 'bg-white dark:bg-slate-900 text-navy-deep dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <MessageSquare className="h-3.5 w-3.5" />
@@ -222,8 +237,10 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
           {/* Tab 5: Sponsors */}
           <button
             onClick={() => setActiveTab('sponsors')}
-            className={`flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-colors whitespace-nowrap ${
-              activeTab === 'sponsors' ? 'bg-ink text-paper' : 'text-ink-2 hover:text-ink hover:bg-paper'
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'sponsors'
+                ? 'bg-white dark:bg-slate-900 text-navy-deep dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Building2 className="h-3.5 w-3.5" />
@@ -233,15 +250,16 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
           {/* Tab 6: Analytics */}
           <button
             onClick={() => setActiveTab('analytics')}
-            className={`flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold transition-colors whitespace-nowrap ${
-              activeTab === 'analytics' ? 'bg-ink text-paper' : 'text-ink-2 hover:text-ink hover:bg-paper'
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'analytics'
+                ? 'bg-white dark:bg-slate-900 text-navy-deep dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <BarChart3 className="h-3.5 w-3.5" />
             <span>{t('padm.tabStats')}</span>
           </button>
         </div>
-
         {/* ============================================================== */}
         {/* TAB CONTENTS */}
         {/* ============================================================== */}
@@ -466,6 +484,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Sponsor Report 1-Page Modal */}

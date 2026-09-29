@@ -2,29 +2,31 @@
 
 import React from 'react';
 import { OFFICIAL_LINE_URL } from '@/lib/constants';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface DriverEnrollmentBannerProps {
   onOpenRegister?: () => void;
 }
 
 export const DriverEnrollmentBanner: React.FC<DriverEnrollmentBannerProps> = ({ onOpenRegister }) => {
+  const { t } = useLanguage();
 
   return (
-    <section aria-label="สมัครเป็นพาร์ทเนอร์คนขับ" className="max-w-7xl mx-auto px-4 sm:px-6 my-10 sm:my-12">
-      <div className="bg-emerald-800 text-white border border-emerald-900 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 rounded-none shadow-sm">
+    <section aria-label={t('enroll.aria')} className="max-w-7xl mx-auto px-4 sm:px-6 my-5 sm:my-7">
+      <div className="bg-emerald-800 text-white border border-emerald-900 p-5 md:p-6 flex flex-col md:flex-row items-center justify-between gap-5 rounded-none shadow-sm">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-white/10 border border-white/20 flex items-center justify-center shrink-0 text-white rounded-none">
             <span className="material-symbols-outlined text-[28px]">directions_car</span>
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h3 className="text-lg md:text-xl font-bold tracking-tight">คุณเป็นคนขับรถตู้ หรือเจ้าของรถใช่หรือไม่?</h3>
+              <h3 className="text-lg md:text-xl font-bold tracking-tight">{t('enroll.title')}</h3>
               <span className="bg-amber-400 text-slate-950 font-black text-[10px] px-1.5 py-0.5 uppercase rounded-none">
-                0% ค่าสมัคร
+                {t('enroll.freeBadge')}
               </span>
             </div>
             <p className="text-xs md:text-sm text-emerald-100 max-w-xl font-light leading-relaxed">
-              ร่วมเป็นพาร์ทเนอร์คนขับกับ TripDee รับงานตรงจากผู้เดินทางทั่วประเทศ จัดการคิวรถว่างเองได้ 24 ชม. ไม่มีหักเปอร์เซ็นต์ค่ารอบ
+              {t('enroll.desc')}
             </p>
           </div>
         </div>
@@ -36,7 +38,7 @@ export const DriverEnrollmentBanner: React.FC<DriverEnrollmentBannerProps> = ({ 
               className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-emerald-900 font-bold text-xs px-5 py-3 border border-white transition-colors rounded-none cursor-pointer"
             >
               <span className="material-symbols-outlined text-[17px]">person_add</span>
-              <span>ลงทะเบียนคนขับผ่านเว็บ</span>
+              <span>{t('enroll.webCta')}</span>
             </button>
           ) : null}
           <a
@@ -46,7 +48,7 @@ export const DriverEnrollmentBanner: React.FC<DriverEnrollmentBannerProps> = ({ 
             target="_blank"
           >
             <span className="material-symbols-outlined text-[17px]">chat</span>
-            <span>ลงทะเบียนคนขับผ่าน LINE</span>
+            <span>{t('enroll.lineCta')}</span>
           </a>
         </div>
       </div>

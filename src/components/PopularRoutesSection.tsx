@@ -125,7 +125,7 @@ export const PopularRoutesSection: React.FC<PopularRoutesSectionProps> = ({ onSe
             </p>
           </div>
           <div className="md:hidden flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
-            <span>ปัดซ้าย-ขวาเพื่อดูเส้นทาง</span>
+            <span>{t('home.routesSwipe')}</span>
             <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
           </div>
         </div>
@@ -157,7 +157,7 @@ export const PopularRoutesSection: React.FC<PopularRoutesSectionProps> = ({ onSe
                     rel="noopener noreferrer"
                     className="absolute bottom-2 right-2 rounded bg-navy-deep/70 px-1.5 py-0.5 text-[9px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
                   >
-                    ภาพ: {route.photoCredit}
+                    {t('home.photoCredit', { credit: route.photoCredit })}
                   </a>
                 </div>
 

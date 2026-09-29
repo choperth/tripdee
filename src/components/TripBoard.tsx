@@ -2,13 +2,10 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
-import { OFFICIAL_LINE_URL } from '@/lib/constants';
-import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import {
   BOARD_POSTS,
   ZONE_RATE_CARDS,
-  SPONSORS,
   BoardPost,
   BoardPostType,
   ZoneId,
@@ -16,10 +13,8 @@ import {
 } from '@/data/mockData';
 import { isMockEnvEnabled, isMockDataEnabled } from '@/lib/mockConfig';
 import { isMockPostId } from '@/lib/supabase/service';
-import { maskPhoneNumber } from '@/lib/privacy';
 import { isBoardPostExpired } from '@/lib/availabilityUtils';
 import {
-  Plus,
   X,
   CheckCircle2,
   Lock,
@@ -33,11 +28,8 @@ import { formatWhatsAppLink } from '@/lib/contactUtils';
 import {
   saveMyBoardPost,
   getMyBoardPostToken,
-  isMyBoardPost,
   buildMagicLink,
 } from '@/lib/boardStorage';
-
-type BoardFilter = 'all' | BoardPostType | 'corporate';
 
 interface PostFormState {
   type: BoardPostType;
@@ -83,8 +75,8 @@ const EMPTY_FORM: PostFormState = {
 
 export const TripBoard: React.FC = () => {
 
-  const { trackCall, trackSponsor } = useAnalytics();
-  const { t, locale } = useLanguage();
+  const { trackCall } = useAnalytics();
+  const { t } = useLanguage();
   const { user, loginWithOAuth } = useAuth();
   const [oauthLoading, setOauthLoading] = useState<'line' | 'google' | null>(null);
   const [autofilled, setAutofilled] = useState<boolean>(false);
@@ -95,8 +87,7 @@ export const TripBoard: React.FC = () => {
   );
   const isDemo = isClient ? isMockDataEnabled() : isMockEnvEnabled();
   const [posts, setPosts] = useState<BoardPost[]>(() => (isMockEnvEnabled() ? BOARD_POSTS : []));
-  const [filter, setFilter] = useState<BoardFilter>('all');
-  const [searchKeyword, setSearchKeyword] = useState<string>('');
+  // Board feed state
   const [formOpen, setFormOpen] = useState<boolean>(false);
   const [form, setForm] = useState<PostFormState>(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -121,24 +112,14 @@ export const TripBoard: React.FC = () => {
     driverWhatsApp: '',
     vehicleModel: '',
     price: '',
-    priceNote: 'รวมน้ำมันแล้ว',
+    priceNote: t('board.priceNoteIncluded'),
     message: '',
   });
   const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
   const [quoteSubmitError, setQuoteSubmitError] = useState('');
   const [quoteSubmitSuccess, setQuoteSubmitSuccess] = useState('');
 
-  // WeChat copy feedback state
-  const [copiedWeChatId, setCopiedWeChatId] = useState<string | null>(null);
-  const handleCopyWeChat = (wechatId: string) => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(wechatId).then(() => {
-        setCopiedWeChatId(wechatId);
-        setTimeout(() => setCopiedWeChatId(null), 2500);
-      });
-    }
-  };
-
+  // Customer View Quotes Modal State
   // Customer View Quotes Modal State
   const [viewQuotesPost, setViewQuotesPost] = useState<BoardPost | null>(null);
   const [customerQuotesPin, setCustomerQuotesPin] = useState('');
@@ -159,11 +140,7 @@ export const TripBoard: React.FC = () => {
   const [customerQuotesToken, setCustomerQuotesToken] = useState('');
   const [isQuotesUnlockedWithToken, setIsQuotesUnlockedWithToken] = useState(false);
 
-  // Toggle to show/hide past expired/closed posts
-  const [showClosedPosts, setShowClosedPosts] = useState<boolean>(false);
-
-  // Compact / Expand Board Feed (Mobile-First optimization to prevent page bloat)
-  const [showAllPosts, setShowAllPosts] = useState<boolean>(false);
+  // Board feed data loader
 
   const loadBoardPosts = React.useCallback(() => {
     const search = typeof window !== 'undefined' ? window.location.search : '';
@@ -190,54 +167,56 @@ export const TripBoard: React.FC = () => {
     return isDemo ? posts : posts.filter((p) => !isMockPostId(p.id));
   }, [posts, isDemo]);
 
+  const [filter, setFilter] = useState<'all' | 'request' | 'share' | 'corporate'>('all');
+  const [searchKeyword, setSearchKeyword] = useState<string>('');
+  const [showClosedPosts, setShowClosedPosts] = useState<boolean>(false);
+
   // Open vs Closed/Expired posts
   const openPosts = useMemo(() => {
     return activePosts.filter((p) => !p.isClosed && !isBoardPostExpired(p));
   }, [activePosts]);
 
+  const postMatchesQuery = React.useCallback((p: BoardPost) => {
+    if (filter === 'request' && p.type !== 'request') return false;
+    if (filter === 'share' && p.type !== 'share') return false;
+    if (filter === 'corporate' && p.category !== 'corporate') return false;
+    const q = searchKeyword.trim().toLowerCase();
+    if (q === '') return true;
+    const matchTitle = p.title.toLowerCase().includes(q);
+    const matchDetail = p.detail ? p.detail.toLowerCase().includes(q) : false;
+    const matchLocation = p.pickupLocation ? p.pickupLocation.toLowerCase().includes(q) : false;
+    const matchDate = p.date ? p.date.toLowerCase().includes(q) : false;
+    return matchTitle || matchDetail || matchLocation || matchDate;
+  }, [filter, searchKeyword]);
+
   const closedCount = useMemo(() => {
-    return activePosts.filter((p) => Boolean(p.isClosed || isBoardPostExpired(p))).length;
-  }, [activePosts]);
+    // นับเฉพาะประกาศที่จะแสดงจริงเมื่อกดปุ่ม: ตัด offer ที่ไม่เคยโชว์ และต้องผ่านฟิลเตอร์/คำค้นปัจจุบัน
+    return activePosts.filter(
+      (p) => p.type !== 'offer' && Boolean(p.isClosed || isBoardPostExpired(p)) && postMatchesQuery(p)
+    ).length;
+  }, [activePosts, postMatchesQuery]);
 
-  const basePosts = showClosedPosts ? activePosts : openPosts;
+  const basePool = useMemo(() => {
+    const pool = showClosedPosts ? activePosts : openPosts;
+    // ตัวอย่างเด่นเป็น mock: แสดงเฉพาะโหมด demo กันข้อมูลตัวอย่างหลุดไป production
+    const featuredSample = isDemo ? BOARD_POSTS.filter((p) => p.id === 'b-khaoyai' || p.id === 'b-inthanon') : [];
+    const sampleIds = new Set(featuredSample.map((p) => p.id));
+    const others = pool.filter((p) => !sampleIds.has(p.id));
+    return [...featuredSample, ...others].filter((p) => p.type !== 'offer');
+  }, [showClosedPosts, activePosts, openPosts, isDemo]);
 
-  // Counts for tabs (memoized based on basePosts)
+  // Counts for tabs
   const { totalCount, requestCount, shareCount, corporateCount } = useMemo(() => ({
-    totalCount: basePosts.length,
-    requestCount: basePosts.filter((p) => p.type === 'request').length,
-    shareCount: basePosts.filter((p) => p.type === 'share').length,
-    corporateCount: basePosts.filter((p) => p.category === 'corporate').length,
-  }), [basePosts]);
+    totalCount: basePool.length,
+    requestCount: basePool.filter((p) => p.type === 'request').length,
+    shareCount: basePool.filter((p) => p.type === 'share').length,
+    corporateCount: basePool.filter((p) => p.category === 'corporate').length,
+  }), [basePool]);
 
-  const visiblePosts = useMemo(() => {
-    const query = searchKeyword.trim().toLowerCase();
-    return basePosts.filter((p) => {
-      // Demand-only board: hide legacy driver "offer" posts from the public feed
-      if (p.type === 'offer') return false;
-      if (filter === 'request' && p.type !== 'request') return false;
-      if (filter === 'share' && p.type !== 'share') return false;
-      if (filter === 'corporate' && p.category !== 'corporate') return false;
-
-      if (query !== '') {
-        const matchTitle = p.title.toLowerCase().includes(query);
-        const matchDetail = p.detail ? p.detail.toLowerCase().includes(query) : false;
-        const matchAuthor = p.authorName.toLowerCase().includes(query);
-        const matchVehicle = p.vehicleLabel ? p.vehicleLabel.toLowerCase().includes(query) : false;
-        const matchPriceNote = p.priceNote ? p.priceNote.toLowerCase().includes(query) : false;
-        if (!matchTitle && !matchDetail && !matchAuthor && !matchVehicle && !matchPriceNote) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [basePosts, filter, searchKeyword]);
-
-  // If user searched or filtered specific keywords, or clicked expand, show all; otherwise show top 8
+  // Filtered displayed posts
   const displayedPosts = useMemo(() => {
-    if (showAllPosts || searchKeyword.trim() !== '') return visiblePosts;
-    return visiblePosts.slice(0, 8);
-  }, [visiblePosts, showAllPosts, searchKeyword]);
-
+    return basePool.filter(postMatchesQuery);
+  }, [basePool, postMatchesQuery]);
   const set = (patch: Partial<PostFormState>) => setForm((prev) => ({ ...prev, ...patch }));
 
   const applyAutofill = useCallback((profile: UserProfile) => {
@@ -303,7 +282,7 @@ export const TripBoard: React.FC = () => {
       days,
       seats,
       price,
-      priceNote: isNegotiable ? (form.priceNote.trim() || 'รอคนขับเสนอราคา') : (form.priceNote.trim() || undefined),
+      priceNote: isNegotiable ? (form.priceNote.trim() || t('board.priceNoteAwaiting')) : (form.priceNote.trim() || undefined),
       authorName: form.authorName.trim(),
       authorPhone: form.authorPhone.trim(),
       authorLine: form.authorLine.trim(),
@@ -312,7 +291,7 @@ export const TripBoard: React.FC = () => {
       vehicleLabel: form.type === 'offer' && form.vehicleLabel.trim() ? form.vehicleLabel.trim() : undefined,
       detail: form.detail.trim(),
       pin: form.pin.trim() || undefined,
-      postedAt: 'เมื่อสักครู่',
+      postedAt: t('board.postedJustNow'),
       isNegotiable,
       maxQuotes: 3,
       quoteCount: 0,
@@ -380,7 +359,7 @@ export const TripBoard: React.FC = () => {
         setCloseError(data.error || t('board.errPin'));
         return;
       }
-      setCloseSuccess('ปิดประกาศเรียบร้อยแล้ว');
+      setCloseSuccess(t('board.closeSuccess'));
       setPosts((prev) => prev.filter((p) => p.id !== closingPost.id));
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
       setTimeout(() => {
@@ -406,7 +385,7 @@ export const TripBoard: React.FC = () => {
       driverWhatsApp: '',
       vehicleModel: '',
       price: '',
-      priceNote: 'รวมน้ำมันแล้ว',
+      priceNote: t('board.priceNoteIncluded'),
       message: '',
     });
   };
@@ -437,10 +416,10 @@ export const TripBoard: React.FC = () => {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setQuoteSubmitError(data.error || 'เกิดข้อผิดพลาดในการส่งใบเสนอราคา');
+        setQuoteSubmitError(data.error || t('board.errQuoteSubmit'));
         return;
       }
-      setQuoteSubmitSuccess(data.message || 'ส่งใบเสนอราคาเรียบร้อยแล้ว!');
+      setQuoteSubmitSuccess(data.message || t('board.quoteSent'));
       setPosts((prev) =>
         prev.map((p) =>
           p.id === quoteDriverPost.id
@@ -473,7 +452,7 @@ export const TripBoard: React.FC = () => {
         );
         const data = await res.json();
         if (!res.ok || !data.success) {
-          setQuotesFetchError(data.error || 'รหัส PIN หรือลิงก์การเข้าถึงไม่ถูกต้อง');
+          setQuotesFetchError(data.error || t('board.errPin'));
           return;
         }
         setFetchedQuotes(data.quotes || []);
@@ -548,7 +527,7 @@ export const TripBoard: React.FC = () => {
         alert(data.error || t('board.errSelectOffer'));
         return;
       }
-      setAcceptSuccessMessage(`คุณได้เลือกข้อเสนอของ ${quote.driverName} เรียบร้อยแล้ว! ปิดรับงานในบอร์ดอัตโนมัติ`);
+      setAcceptSuccessMessage(t('board.acceptedMsg', { name: quote.driverName }));
       setPosts((prev) => prev.filter((p) => p.id !== viewQuotesPost.id));
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
     } catch {
@@ -559,48 +538,25 @@ export const TripBoard: React.FC = () => {
   };
 
   return (
-    <section id="tripboard" aria-label={t('board.aria')} className="w-full py-8 sm:py-12 bg-slate-900 text-white border border-slate-800 rounded-none transition-colors scroll-mt-20 sm:scroll-mt-24">
-      {/* 1. Dynamic Notification Bar / Stats Strip */}
-      <div className="w-full bg-slate-950/70 py-2.5 px-4 sm:px-6 border-b border-slate-800 mb-6">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-slate-200">
-            <span className="w-2 h-2 bg-emerald-400 rounded-none animate-pulse" />
-            <span className="font-bold text-white uppercase text-[11px] tracking-wider">TripBoard Real-time:</span>
-            <span className="text-slate-300">
-              {t('board.liveStats', { done: 48, open: 19 })}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-slate-400">
-            <a
-              href={OFFICIAL_LINE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-[#06C755]/15 text-[#06C755] border border-[#06C755]/30 text-xs font-bold hover:bg-[#06C755] hover:text-white transition-all rounded-none"
-            >
-              <span>🔔 รับแจ้งเตือนงานทาง LINE</span>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        {/* 2. Hero Header & Quick Action Triggers */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-4 pb-5 border-b border-slate-800 mb-6">
-          <div className="space-y-1.5 max-w-3xl">
-            <div className="inline-flex items-center gap-1.5 border border-emerald-500/40 bg-emerald-950/60 text-emerald-400 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider mb-1 rounded-none">
+    <section id="tripboard" aria-label={t('board.aria')} className="max-w-7xl mx-auto px-4 sm:px-6 mb-12 sm:mb-14 scroll-mt-20 sm:scroll-mt-24">
+      <div className="bg-slate-900 text-white border border-slate-800 p-6 md:p-8 rounded-none">
+        {/* Hero Header & Quick Action Triggers */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-5 border-b border-slate-800 mb-6">
+          <div>
+            <div className="inline-flex items-center gap-1.5 border border-emerald-500/40 bg-emerald-950/60 text-emerald-400 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider mb-2 rounded-none">
               <span className="w-1.5 h-1.5 bg-emerald-400"></span>
               <span>TripBoard Real-time Activity</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              {t('board.title')} (TripBoard)
+            <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+              {t('board.title')}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-2xl font-light">
+            <p className="text-xs md:text-sm text-slate-400 mt-1 max-w-2xl font-light">
               {t('board.caption')}
             </p>
           </div>
 
           {/* Call To Action Dual Triggers (Bauhaus Sharp) */}
-          <div className="flex items-center gap-2 flex-wrap w-full lg:w-auto">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               id="open-post-modal-btn"
               type="button"
@@ -621,135 +577,17 @@ export const TripBoard: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. Quick Category Metric Pills (4 Cards Grid) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-space-sm mb-space-xl">
-          <div className="bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 rounded-xl p-space-md flex items-center justify-between shadow-xs">
-            <div>
-              <div className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400">
-                {t('board.statOpen')}
-              </div>
-              <div className="font-price-headline text-price-headline text-navy-deep dark:text-white">
-                {posts.length}{' '}
-                <span className="text-body-subtext font-body-base text-ink-secondary dark:text-slate-400 font-normal">
-                  {t('board.unitItems')}
-                </span>
-              </div>
-            </div>
-            <span className="material-symbols-outlined text-secondary text-[26px]">grid_view</span>
-          </div>
-
-          <div className="bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 rounded-xl p-space-md flex items-center justify-between shadow-xs">
-            <div>
-              <div className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400">
-                {t('board.statRequests')}
-              </div>
-              <div className="font-price-headline text-price-headline text-blue-action">
-                {requestCount}{' '}
-                <span className="text-body-subtext font-body-base text-ink-secondary dark:text-slate-400 font-normal">
-                  {t('board.unitTrips')}
-                </span>
-              </div>
-            </div>
-            <span className="material-symbols-outlined text-blue-action text-[26px]">
-              person_pin_circle
-            </span>
-          </div>
-
-          <div className="bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 rounded-xl p-space-md flex items-center justify-between shadow-xs">
-            <div>
-              <div className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400">
-                {t('board.statShares')}
-              </div>
-              <div className="font-price-headline text-price-headline text-line-green">
-                {shareCount}{' '}
-                <span className="text-body-subtext font-body-base text-ink-secondary dark:text-slate-400 font-normal">
-                  {t('board.unitVans')}
-                </span>
-              </div>
-            </div>
-            <span className="material-symbols-outlined text-line-green text-[26px]">group_add</span>
-          </div>
-
-          <div className="bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 rounded-xl p-space-md flex items-center justify-between shadow-xs">
-            <div>
-              <div className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400">
-                {t('board.statCorp')}
-              </div>
-              <div className="font-price-headline text-price-headline text-amber-accent">
-                {corporateCount}{' '}
-                <span className="text-body-subtext font-body-base text-ink-secondary dark:text-slate-400 font-normal">
-                  {t('board.unitGroups')}
-                </span>
-              </div>
-            </div>
-            <span className="material-symbols-outlined text-amber-accent text-[26px]">domain</span>
-          </div>
-        </div>
-
-        {/* 3.5 Driver & Traveler Partner Benefit Strip */}
-        {(() => {
-          const rawGasSponsor = SPONSORS.find((s) => s.category === 'fuel' || s.category === 'auto_service');
-          if (!rawGasSponsor) return null;
-          const gasSponsor = getLocalizedSponsor(rawGasSponsor, locale);
-          return (
-            <div className="mb-space-lg rounded-2xl bg-gradient-to-r from-emerald-500/10 via-amber-500/10 to-blue-500/10 dark:from-emerald-950/30 dark:via-amber-950/20 dark:to-slate-900 border border-emerald-300/50 dark:border-emerald-800/40 p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
-                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <span className="material-symbols-outlined text-[22px]">local_gas_station</span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
-                      {t('spn.partnerPerk')}
-                    </span>
-                    <span className="font-bold text-xs sm:text-sm text-navy-deep dark:text-white truncate">
-                      {gasSponsor.title}
-                    </span>
-                  </div>
-                  <p className="text-xs text-ink-muted dark:text-slate-400 truncate mt-0.5">
-                    {gasSponsor.tagline}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
-                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 hidden md:inline">
-                  {gasSponsor.discountText}
-                </span>
-                <a
-                  href={gasSponsor.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => {
-                    trackSponsor({
-                      sponsorId: gasSponsor.id,
-                      sponsorTitle: gasSponsor.title,
-                      category: gasSponsor.category,
-                      variant: 'strip',
-                      targetUrl: gasSponsor.link,
-                    });
-                  }}
-                  className="w-full sm:w-auto h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 transition-all shadow-xs"
-                >
-                  <span>{t('sponsor.cta')}</span>
-                  <span className="material-symbols-outlined text-[15px]">open_in_new</span>
-                </a>
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* 4. Filter Console (Segment Tabs & Search) */}
-        <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-md border border-border-subtle dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-space-md mb-space-lg">
-          {/* Main Segment Tabs */}
-          <div className="flex items-center gap-space-2xs overflow-x-auto pb-1 md:pb-0 no-scrollbar">
+        {/* Filter Console (Image #1 Row 2 - Bauhaus Sharp & Clutter-Free) */}
+        <div className="bg-slate-800/60 border border-slate-700/80 p-2 sm:p-2.5 mb-6 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 rounded-none">
+          {/* Main Segment Filter Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 no-scrollbar">
             <button
               type="button"
               onClick={() => setFilter('all')}
-              className={`whitespace-nowrap px-space-md py-space-xs rounded-lg font-body-medium text-body-medium transition-all ${
+              className={`px-3 py-1.5 text-xs font-bold transition-all rounded-none cursor-pointer whitespace-nowrap ${
                 filter === 'all'
-                  ? 'bg-navy-deep text-surface shadow-sm font-bold'
-                  : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
+                  ? 'bg-amber-500 text-slate-950 shadow-xs'
+                  : 'bg-transparent text-slate-300 hover:text-white hover:bg-slate-700/60'
               }`}
             >
               {t('board.filterAll')} ({totalCount})
@@ -757,52 +595,54 @@ export const TripBoard: React.FC = () => {
             <button
               type="button"
               onClick={() => setFilter('request')}
-              className={`whitespace-nowrap px-space-md py-space-xs rounded-lg font-body-medium text-body-medium transition-all ${
+              className={`px-3 py-1.5 text-xs font-bold transition-all rounded-none cursor-pointer whitespace-nowrap flex items-center gap-1 ${
                 filter === 'request'
-                  ? 'bg-navy-deep text-surface shadow-sm font-bold'
-                  : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
+                  ? 'bg-amber-500 text-slate-950 shadow-xs'
+                  : 'bg-transparent text-slate-300 hover:text-white hover:bg-slate-700/60'
               }`}
             >
-              🙋‍♂️ {t('board.filterRequest')} ({requestCount})
+              <span>🙋‍♂️</span>
+              <span>{t('board.filterRequest')} ({requestCount})</span>
             </button>
             <button
               type="button"
               onClick={() => setFilter('share')}
-              className={`whitespace-nowrap px-space-md py-space-xs rounded-lg font-body-medium text-body-medium transition-all ${
+              className={`px-3 py-1.5 text-xs font-bold transition-all rounded-none cursor-pointer whitespace-nowrap flex items-center gap-1 ${
                 filter === 'share'
-                  ? 'bg-navy-deep text-surface shadow-sm font-bold'
-                  : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
+                  ? 'bg-amber-500 text-slate-950 shadow-xs'
+                  : 'bg-transparent text-slate-300 hover:text-white hover:bg-slate-700/60'
               }`}
             >
-              🤝 {t('board.filterShare')} ({shareCount})
+              <span>🤝</span>
+              <span>{t('board.filterShare')} ({shareCount})</span>
             </button>
             <button
               type="button"
               onClick={() => setFilter('corporate')}
-              className={`whitespace-nowrap px-space-md py-space-xs rounded-lg font-body-medium text-body-medium transition-all ${
+              className={`px-3 py-1.5 text-xs font-bold transition-all rounded-none cursor-pointer whitespace-nowrap flex items-center gap-1 ${
                 filter === 'corporate'
-                  ? 'bg-navy-deep text-surface shadow-sm font-bold'
-                  : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:text-navy-deep'
+                  ? 'bg-amber-500 text-slate-950 shadow-xs'
+                  : 'bg-transparent text-slate-300 hover:text-white hover:bg-slate-700/60'
               }`}
             >
-              🏢 {t('board.filterCorp')} ({corporateCount})
+              <span>🏢</span>
+              <span>{t('board.filterCorp')} ({corporateCount})</span>
             </button>
           </div>
 
-          {/* Controls: Search + Toggle Closed/Expired Posts */}
+          {/* Controls: Expired Toggle + Search Input */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             {closedCount > 0 && (
               <button
                 type="button"
                 onClick={() => setShowClosedPosts(!showClosedPosts)}
-                className={`whitespace-nowrap px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 border shadow-xs ${
+                className={`px-4 py-2 text-xs font-bold transition-all flex items-center justify-center gap-1.5 rounded-none border cursor-pointer whitespace-nowrap ${
                   showClosedPosts
-                    ? 'bg-slate-800 text-white border-slate-700 shadow-sm'
-                    : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-muted dark:text-slate-400 border-border-subtle/50 dark:border-slate-700 hover:text-navy-deep dark:hover:text-white'
+                    ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600'
+                    : 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-600'
                 }`}
-                title={showClosedPosts ? t('board.hideExpiredToggle') : t('board.showExpiredToggle', { n: closedCount })}
               >
-                <Lock className="w-3.5 h-3.5" />
+                <span className="material-symbols-outlined text-[16px]">visibility</span>
                 <span>
                   {showClosedPosts
                     ? t('board.hideExpiredToggle')
@@ -811,9 +651,9 @@ export const TripBoard: React.FC = () => {
               </button>
             )}
 
-            {/* Search Input Box */}
-            <div className="relative md:w-72">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-[18px]">
+            {/* Search Box */}
+            <div className="relative w-full sm:w-64">
+              <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">
                 search
               </span>
               <input
@@ -821,348 +661,159 @@ export const TripBoard: React.FC = () => {
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 placeholder={t('board.searchPh')}
-                className="w-full h-10 pl-9 pr-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-lg text-body-subtext font-body-subtext focus:outline-none focus:ring-2 focus:ring-blue-action border border-transparent focus:border-blue-action transition-all"
+                className="w-full h-8.5 pl-8.5 pr-7 bg-slate-950 text-white text-xs placeholder:text-slate-500 border border-slate-700 focus:border-amber-500 focus:outline-none transition-colors rounded-none"
               />
+              {searchKeyword && (
+                <button
+                  type="button"
+                  onClick={() => setSearchKeyword('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* 5. Request & Offer Cards Feed */}
-        <div className="flex items-center justify-between mb-2 md:hidden">
-          <span className="text-xs font-bold text-ink-muted dark:text-slate-400">
-            โพสต์ล่าสุด ({displayedPosts.length}/{totalCount})
-          </span>
-          <span className="text-xs font-semibold text-blue-action dark:text-blue-400 flex items-center gap-1">
-            <span>ปัดซ้าย-ขวาเพื่อดูโพสต์</span>
-            <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
-          </span>
-        </div>
+        {/* Minimalist Structured Cards (3-Column Grid matching Image 2 / Stitch Design) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {displayedPosts.map((post) => {
+            const isRequest = post.type === 'request';
+            const isShare = post.type === 'share';
+            const zoneObj = ZONE_RATE_CARDS.find((z) => z.id === post.zoneId);
+            const isExpired = isBoardPostExpired(post);
+            const isPostClosed = Boolean(post.isClosed || isExpired);
+            const isPostNegotiable = Boolean(post.isNegotiable || (isRequest && post.price <= 0));
 
-        {/* Swipe Carousel on Mobile (< md), Vertical Stack on Desktop (md+) */}
-        <div className="flex md:flex-col gap-3 md:gap-space-md overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-3 -mx-margin px-margin md:mx-0 md:px-0 scrollbar-none items-stretch">
-          {visiblePosts.length === 0 ? (
-            <div className="w-full bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-2xl text-center border border-border-subtle dark:border-slate-800 space-y-space-sm">
-              <span className="material-symbols-outlined text-[48px] text-ink-muted">inbox</span>
-              <h3 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
-                {t('board.emptyTitle')}
-              </h3>
-              <p className="font-body-base text-body-base text-ink-secondary dark:text-slate-400 max-w-md mx-auto">
-                {t('board.emptyDesc')}
+            return (
+              <div
+                key={post.id}
+                className={`border p-5 flex flex-col justify-between transition-all rounded-none ${
+                  isPostClosed
+                    ? 'bg-red-950/30 border-red-800/70 hover:border-red-700'
+                    : 'bg-slate-800/80 border-slate-700 hover:border-slate-500'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-700/80 text-[11px]">
+                    {isRequest ? (
+                      <span className={`font-bold flex items-center gap-1 ${isPostClosed ? 'text-red-400' : 'text-emerald-400'}`}>
+                        <span className={`w-1.5 h-1.5 ${isPostClosed ? 'bg-red-400' : 'bg-emerald-400'}`}></span>
+                        <span>{isPostClosed ? t('board.expiredBadge') : t('board.openBadge')}</span>
+                      </span>
+                    ) : isShare ? (
+                      <span className={`font-bold flex items-center gap-1 ${isPostClosed ? 'text-red-400' : 'text-amber-400'}`}>
+                        <span className="material-symbols-outlined text-[13px]">group</span>
+                        <span>{isPostClosed ? t('board.expiredBadge') : t('board.needFriends', { n: post.seats || 2 })}</span>
+                      </span>
+                    ) : (
+                      <span className="font-bold text-amber-300 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[13px]">business_center</span>
+                        <span>{t('board.badgeCorp')}</span>
+                      </span>
+                    )}
+                    <span className="text-slate-400 font-mono text-[11px]">
+                      {post.postedAt || t('board.ago15')}
+                    </span>
+                  </div>
+
+                  <h3 className="text-sm font-bold text-white mb-1 line-clamp-1">
+                    {post.title}
+                  </h3>
+                  <p className="text-xs text-slate-300 leading-relaxed font-light line-clamp-2">
+                    {post.detail || t('board.noDetail')}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5 mt-3 text-[11px] text-slate-300 font-mono">
+                    <span className="bg-slate-900 border border-slate-700 px-2 py-0.5">
+                      📅 {post.date}
+                    </span>
+                    <span className="bg-slate-900 border border-slate-700 px-2 py-0.5">
+                      📍 {post.pickupLocation || zoneObj?.shortLabel || t('board.pickupTbd')}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-3 border-t border-slate-700 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">
+                      {isShare ? t('board.avgCost') : t('board.budgetOffer')}
+                    </span>
+                    <span className={`text-sm font-black font-mono ${isShare ? 'text-white' : 'text-amber-400'}`}>
+                      {isPostNegotiable
+                        ? t('board.negotiableShort')
+                        : isShare
+                        ? t('board.perPerson', { price: `฿${post.price.toLocaleString()}` })
+                        : `฿${post.price.toLocaleString()} ${post.priceNote || t('board.fuelPlain')}`}
+                    </span>
+                  </div>
+
+                  {isPostClosed ? (
+                    <span className="text-xs text-slate-500 font-mono">{t('board.closedBadge')}</span>
+                  ) : isRequest ? (
+                    <div className="flex items-center gap-1.5">
+                      {isPostNegotiable && (post.maxQuotes || 3) > (post.quoteCount || 0) && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenDriverQuote(post)}
+                          className="bg-transparent hover:bg-amber-500/15 text-amber-400 font-bold text-xs px-3 py-1.5 transition-colors cursor-pointer rounded-none inline-flex items-center gap-1 border border-amber-500/60"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">rate_review</span>
+                          <span>{t('board.submitQuote', { left: (post.maxQuotes || 3) - (post.quoteCount || 0) })}</span>
+                        </button>
+                      )}
+                      <a
+                        href={`tel:${post.authorPhone}`}
+                        onClick={() =>
+                          trackCall({
+                            targetType: 'trip_board',
+                            targetId: post.id,
+                            targetTitle: post.title,
+                            phoneNumber: post.authorPhone,
+                            driverName: post.authorName,
+                          })
+                        }
+                        className="bg-white hover:bg-amber-400 hover:text-slate-950 text-slate-950 font-bold text-xs px-3.5 py-1.5 transition-colors cursor-pointer rounded-none inline-flex items-center gap-1"
+                      >
+                        <span>{t('board.takeJob')}</span>
+                      </a>
+                    </div>
+                  ) : (
+                    <a
+                      href={post.authorLine || `tel:${post.authorPhone}`}
+                      target={post.authorLine ? '_blank' : undefined}
+                      rel="noopener noreferrer"
+                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3.5 py-1.5 transition-colors cursor-pointer rounded-none inline-flex items-center gap-1"
+                    >
+                      <span>{t('board.joinTrip')}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Callout card: only show if fewer than 3 posts */}
+          {displayedPosts.length < 3 && (
+            <div className="bg-slate-950/60 border border-dashed border-slate-700 p-5 flex flex-col items-center justify-center text-center rounded-none">
+              <div className="w-10 h-10 border border-amber-400/40 bg-amber-400/10 text-amber-400 flex items-center justify-center mb-2 rounded-none">
+                <span className="material-symbols-outlined text-[22px]">add_task</span>
+              </div>
+              <h3 className="text-sm font-bold text-white mb-1">{t('board.calloutTitle')}</h3>
+              <p className="text-xs text-slate-400 max-w-xs mb-4 font-light leading-relaxed">
+                {t('board.calloutDesc')}
               </p>
               <button
                 type="button"
                 onClick={() => openNewPost('request')}
-                className="inline-flex items-center gap-2 bg-blue-action hover:bg-blue-action-hover text-on-primary font-body-medium text-body-medium px-space-lg py-space-xs rounded-xl transition-all"
+                className="w-full bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs py-2 border border-white transition-colors cursor-pointer rounded-none"
               >
-                <Plus className="w-4 h-4" />
-                <span>{t('board.submit')}</span>
+                {t('board.postFree')}
               </button>
             </div>
-          ) : (
-            displayedPosts.map((post) => {
-              const isRequest = post.type === 'request';
-              const isShare = post.type === 'share';
-              const zoneObj = ZONE_RATE_CARDS.find((z) => z.id === post.zoneId);
-              const isExpired = isBoardPostExpired(post);
-              const isPostClosed = Boolean(post.isClosed || isExpired);
-
-              return (
-                <div
-                  key={post.id}
-                  className={`w-[85vw] sm:w-[480px] md:w-full shrink-0 md:shrink snap-start bg-paper-elevated dark:bg-slate-900 rounded-2xl p-space-md sm:p-space-lg shadow-sm hover:shadow-md border ${
-                    isPostClosed
-                      ? 'border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/60'
-                      : 'border-border-subtle dark:border-slate-800'
-                  } transition-all flex flex-col justify-between lg:flex-row lg:items-center gap-space-md`}
-                >
-                  {/* Left Content Area */}
-                  <div className="space-y-space-xs max-w-3xl">
-                    <div className="flex flex-wrap items-center gap-space-xs text-label-badge font-label-badge">
-                      {isPostClosed && (
-                        <span className="px-space-xs py-space-2xs rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold flex items-center gap-1 border border-slate-300 dark:border-slate-700">
-                          <Lock className="w-3 h-3 text-slate-500" />
-                          <span>{t('board.expiredBadge')}</span>
-                        </span>
-                      )}
-
-                      {isShare ? (
-                        <span className="px-space-xs py-space-2xs rounded bg-verified-emerald-soft text-verified-emerald font-bold">
-                          {t('board.badgeShare')}
-                        </span>
-                      ) : isRequest ? (
-                        <span className="px-space-xs py-space-2xs rounded bg-blue-subtle text-blue-action font-bold">
-                          {t('board.badgeRequest')}
-                        </span>
-                      ) : (
-                        <span className="px-space-xs py-space-2xs rounded bg-verified-emerald-soft text-verified-emerald font-bold">
-                          {t('board.badgeOffer')}
-                        </span>
-                      )}
-
-                      {isClient && isMyBoardPost(post.id) && (
-                        <span className="px-space-xs py-space-2xs rounded bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-bold flex items-center gap-1">
-                          <span>{t('board.myPostBadge')}</span>
-                        </span>
-                      )}
-
-                      {post.category === 'corporate' && (
-                        <span className="px-space-xs py-space-2xs rounded bg-amber-accent/20 text-amber-accent font-bold">
-                          🏢 {t('board.badgeCorp')}
-                        </span>
-                      )}
-
-                      {(post.authorWhatsApp || post.authorWeChat) && (
-                        <span className="px-space-xs py-space-2xs rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                          <span>🌏</span>
-                          <span>{post.authorWhatsApp ? 'WhatsApp' : ''}{post.authorWhatsApp && post.authorWeChat ? ' / ' : ''}{post.authorWeChat ? 'WeChat' : ''}</span>
-                        </span>
-                      )}
-
-                      <span className="text-ink-muted dark:text-slate-400 font-body-subtext">
-                        {post.postedAt}
-                      </span>
-
-                      {zoneObj && (
-                        <span className="px-space-xs py-space-2xs rounded bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300">
-                          {t('board.metaZone', { no: zoneObj.zoneNo, label: zoneObj.shortLabel })}
-                        </span>
-                      )}
-
-                      <span className="px-space-xs py-space-2xs rounded bg-surface-container dark:bg-slate-800 text-navy-deep dark:text-blue-300 font-bold">
-                        {t('board.metaDate', { date: post.date, days: post.days })}
-                      </span>
-
-                      <span className="px-space-xs py-space-2xs rounded bg-surface-container dark:bg-slate-800 text-navy-deep dark:text-blue-300 font-bold">
-                        {isShare
-                          ? t('board.metaSeatsShare', { n: post.seats })
-                          : isRequest
-                          ? t('board.metaSeatsReq', { n: post.seats })
-                          : t('board.metaSeatsOffer', { n: post.seats })}
-                      </span>
-                    </div>
-
-                    <h3 className="font-title-card text-title-card text-navy-deep dark:text-white leading-snug">
-                      {post.title}
-                    </h3>
-
-                    <p className="font-body-base text-body-base text-ink-secondary dark:text-slate-300 leading-relaxed">
-                      {post.detail || <span className="text-ink-muted dark:text-slate-500 italic">{t('board.noDetail')}</span>}
-                    </p>
-
-                    <div className="flex flex-wrap items-center gap-space-md text-body-subtext font-body-subtext text-ink-muted dark:text-slate-400 pt-0.5">
-                      <div>
-                        {t('board.author')}{' '}
-                        <strong className="text-navy-deep dark:text-white">
-                          {post.authorName}
-                        </strong>
-                        {post.vehicleLabel && ` • ${post.vehicleLabel}`}
-                      </div>
-
-                      {post.pin && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setClosingPost(post);
-                            setClosePin('');
-                            setCloseError('');
-                          }}
-                          className="inline-flex items-center gap-1 text-ink-muted hover:text-rose-500 transition-colors"
-                        >
-                          <Lock className="w-3 h-3" />
-                          <span>{t('board.closePost')}</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Right Pricing & Direct Contact Area */}
-                  {(() => {
-                    // Share posts always carry a fixed split amount; only requests can be negotiable
-                    const isPostNegotiable = Boolean(post.isNegotiable || (isRequest && post.price <= 0));
-                    const maxQuotes = post.maxQuotes || 3;
-                    const quoteCount = post.quoteCount || 0;
-                    const isQuotaFull = quoteCount >= maxQuotes;
-
-                    if (isPostNegotiable) {
-                      return (
-                        <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-space-sm min-w-[240px] pt-space-xs lg:pt-0 border-t sm:border-t-0 border-border-subtle/70 dark:border-slate-800">
-                          <div className="lg:text-right">
-                            <span className="text-body-subtext text-ink-muted dark:text-slate-400 block">
-                              {t('board.priceStatus')}
-                            </span>
-                            <div className="font-price-headline text-lg sm:text-xl text-amber-600 dark:text-amber-400 font-bold flex items-center lg:justify-end gap-1">
-                              <span className="material-symbols-outlined text-[18px]">request_quote</span>
-                              <span>{t('board.priceNegotiable')}</span>
-                            </div>
-                            <div className="inline-flex items-center gap-1.5 mt-0.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-                              <span>{t('board.quoteCount', { q: quoteCount, m: maxQuotes })}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-space-xs w-full sm:w-auto">
-                            {isPostClosed ? (
-                              <div className="px-space-md py-space-xs bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl font-body-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 select-none">
-                                <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                <span>{t('board.autoClosedNotice')}</span>
-                              </div>
-                            ) : isQuotaFull ? (
-                              <button
-                                type="button"
-                                disabled
-                                className="px-space-md py-space-xs bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 cursor-not-allowed text-xs sm:text-sm whitespace-nowrap"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">lock</span>
-                                <span>{t('board.quotaFull', { m: post.maxQuotes || 3 })}</span>
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleOpenDriverQuote(post)}
-                                className="px-space-md py-space-xs bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98] text-xs sm:text-sm whitespace-nowrap font-bold"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">rate_review</span>
-                                <span>{t('board.submitQuote', { left: maxQuotes - quoteCount })}</span>
-                              </button>
-                            )}
-
-                            <button
-                              type="button"
-                              onClick={() => handleOpenCustomerQuotes(post)}
-                              className={`px-space-sm py-space-xs ${
-                                isClient && isMyBoardPost(post.id)
-                                  ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 font-bold'
-                                  : 'bg-paper-surface hover:bg-paper-surface-muted text-navy-deep dark:text-white border-border-subtle dark:border-slate-700'
-                              } border rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-xs transition-all text-xs whitespace-nowrap`}
-                              title={t('board.viewQuotesTip')}
-                            >
-                              <span className="material-symbols-outlined text-[15px] text-blue-action">visibility</span>
-                              <span>{t('board.viewQuotes', { n: quoteCount })}</span>
-                            </button>
-                          </div>
-
-                          <div className="text-[11px] text-ink-muted dark:text-slate-400 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[13px] text-emerald-600">verified_user</span>
-                            <span>{t('board.privacyShield')}</span>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-space-sm min-w-[220px] pt-space-xs lg:pt-0 border-t sm:border-t-0 border-border-subtle/70 dark:border-slate-800">
-                        <div className="lg:text-right">
-                          <span className="text-body-subtext text-ink-muted dark:text-slate-400 block">
-                            {isShare
-                              ? t('board.priceShare')
-                              : isRequest
-                              ? t('board.priceReq')
-                              : t('board.priceOffer')}
-                          </span>
-                          <div className="font-price-headline text-price-headline text-navy-deep dark:text-white">
-                            ฿{post.price.toLocaleString()}
-                          </div>
-                          <span className="text-body-subtext text-emerald-700 dark:text-emerald-400 block font-bold">
-                            {post.priceNote || (isShare || isRequest ? t('board.fuelIncl') : t('board.fuelExcl'))}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-space-xs w-full sm:w-auto">
-                          {isPostClosed ? (
-                            <div className="px-space-md py-space-xs bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl font-body-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 select-none">
-                              <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <span>{t('board.autoClosedNotice')}</span>
-                            </div>
-                          ) : (
-                            <>
-                              <a
-                                href={`tel:${post.authorPhone}`}
-                                onClick={() =>
-                                  trackCall({
-                                    targetType: 'trip_board',
-                                    targetId: post.id,
-                                    targetTitle: post.title,
-                                    phoneNumber: post.authorPhone,
-                                    driverName: post.authorName,
-                                  })
-                                }
-                                className="flex-1 sm:flex-initial px-space-md py-space-xs bg-navy-deep hover:bg-navy-surface text-on-primary rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">call</span>
-                                <span>
-                                  {isShare
-                                    ? t('board.joinShare')
-                                    : isRequest
-                                    ? t('board.acceptJob')
-                                    : t('board.bookNow')}{' '}
-                                  ({maskPhoneNumber(post.authorPhone)})
-                                </span>
-                              </a>
-                              <a
-                                href={post.authorLine || 'https://line.me'}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-space-md py-space-xs bg-line-green hover:bg-line-green-hover text-on-primary rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98]"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">chat</span>
-                                <span>{t('board.lineChat')}</span>
-                              </a>
-                              {post.authorWhatsApp && (
-                                <a
-                                  href={formatWhatsAppLink(post.authorWhatsApp, `Hello ${post.authorName}, I saw your trip request "${post.title}" on TripDee.`)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-space-md py-space-xs bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
-                                  title="Chat on WhatsApp"
-                                >
-                                  <span className="material-symbols-outlined text-[16px]">forum</span>
-                                  <span>{t('board.chatWhatsApp')}</span>
-                                </a>
-                              )}
-                              {post.authorWeChat && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopyWeChat(post.authorWeChat!)}
-                                  className="px-space-sm py-space-xs bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-body-medium text-xs sm:text-sm flex items-center justify-center gap-1 shadow-sm transition-all active:scale-[0.98] whitespace-nowrap"
-                                  title={post.authorWeChat}
-                                >
-                                  <span className="material-symbols-outlined text-[15px]">chat_bubble</span>
-                                  <span>
-                                    {copiedWeChatId === post.authorWeChat
-                                      ? t('board.copiedWeChat')
-                                      : `WeChat: ${post.authorWeChat}`}
-                                  </span>
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              );
-            })
           )}
         </div>
-
-        {visiblePosts.length > 8 && searchKeyword.trim() === '' && (
-          <div className="pt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setShowAllPosts((prev) => !prev)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-paper-elevated dark:bg-slate-900 border border-blue-500/30 text-blue-action dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 cursor-pointer"
-            >
-              <span>
-                {showAllPosts
-                  ? 'ย่อบอร์ดแสดงเฉพาะ 8 รายการล่าสุด'
-                  : `ดูโพสต์ทั้งหมดใน TripBoard (${visiblePosts.length} รายการ)`}
-              </span>
-              <span className="material-symbols-outlined text-[18px]">
-                {showAllPosts ? 'expand_less' : 'expand_more'}
-              </span>
-            </button>
-          </div>
-        )}
       </div>
 
       {/* 6. POST CREATION MODAL (Stitch Responsive Sheet/Dialog) */}
@@ -1243,7 +894,7 @@ export const TripBoard: React.FC = () => {
                   }}
                   className="shrink-0 inline-flex items-center justify-center rounded-pill bg-leaf text-white px-3 py-1.5 text-xs font-extrabold hover:bg-leaf-deep transition-all active:scale-95 cursor-pointer shadow-2xs"
                 >
-                  <span>{autofilled ? (t('board.autofillButtonDone') || 'เติมข้อมูลแล้ว ✓') : t('board.autofillButton')}</span>
+                  <span>{autofilled ? t('board.autofillButtonDone') : t('board.autofillButton')}</span>
                 </button>
               </div>
             ) : (
@@ -1453,7 +1104,7 @@ export const TripBoard: React.FC = () => {
                     required={!form.isNegotiable}
                     value={form.isNegotiable ? '' : form.price}
                     onChange={(e) => set({ price: e.target.value })}
-                    placeholder={form.isNegotiable ? 'เปิดรับข้อเสนอ' : '4500'}
+                    placeholder={form.isNegotiable ? t('board.priceOpenPh') : '4500'}
                     className={`w-full h-11 px-3 rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action transition-all ${
                       form.isNegotiable
                         ? 'bg-slate-100 dark:bg-slate-800/50 text-ink-muted cursor-not-allowed border border-dashed border-border-subtle'
@@ -1471,7 +1122,11 @@ export const TripBoard: React.FC = () => {
                     <span>
                       {(() => {
                         const zc = ZONE_RATE_CARDS.find((z) => z.id === form.zoneId);
-                        return `โซน ${zc?.shortLabel || 'ทั่วไป'} เฉลี่ย ฿${zc?.baseRateRange[0].toLocaleString()} - ฿${zc?.baseRateRange[1].toLocaleString()} / วัน`;
+                        return t('board.zoneRate', {
+                          zone: zc?.shortLabel || t('board.zoneAny'),
+                          min: zc?.baseRateRange[0].toLocaleString() ?? '',
+                          max: zc?.baseRateRange[1].toLocaleString() ?? '',
+                        });
                       })()}
                     </span>
                   </div>
@@ -1793,13 +1448,13 @@ export const TripBoard: React.FC = () => {
 
                 <div>
                   <label className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
-                    WhatsApp (ถ้ามี)
+                    {t('board.qWhatsApp')}
                   </label>
                   <input
                     type="tel"
                     value={driverQuoteForm.driverWhatsApp}
                     onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, driverWhatsApp: e.target.value }))}
-                    placeholder="เช่น 081-xxx-xxxx"
+                    placeholder={t('board.phonePh')}
                     className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>

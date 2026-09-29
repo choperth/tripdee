@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Vehicle, ZoneId } from '@/data/mockData';
 import { ALL_VEHICLE_MODELS } from '@/data/vehicleModels';
 import { CarFront, Plus, Pencil, Trash2, Search, Star } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
 interface AdminVehicleTabProps {
@@ -12,6 +13,7 @@ interface AdminVehicleTabProps {
 }
 
 export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRefresh }) => {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -126,7 +128,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-ink-2" />
           <input
             type="text"
-            placeholder="ค้นหารถ ชื่อคนขับ เบอร์โทร..."
+            placeholder={t('padm.vehicleSearchPh')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-card border border-rule text-xs focus:outline-accent"
@@ -141,14 +143,14 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
           className="flex items-center gap-1.5 rounded-pill bg-accent px-4 py-1.5 text-xs font-extrabold text-white hover:bg-accent-deep transition-transform active:scale-95"
         >
           <Plus className="h-4 w-4" />
-          <span>เพิ่มรถใหม่</span>
+          <span>{t('padm.addVehicle')}</span>
         </button>
       </div>
 
       {/* Vehicle List */}
       {filtered.length === 0 ? (
         <p className="text-xs text-ink-2 italic p-6 text-center rounded-2xl bg-paper">
-          ไม่พบข้อมูลรถในระบบ
+          {t('padm.vehicleEmpty')}
         </p>
       ) : (
         <div className="space-y-3">
@@ -172,31 +174,31 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                     )}
                   </div>
                   <p className="text-xs text-ink-2 mt-1">
-                    คนขับ: <span className="font-bold text-ink">{v.driverName} ({v.driverNickname})</span> • {v.seats} ที่นั่ง • โซน: {v.location}
+                    {t('padm.vehicleMeta', { name: v.driverName, nick: v.driverNickname, seats: v.seats, loc: v.location })}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={() => handleToggleVerified(v)}
-                    title={v.isVerified ? 'คลิกเพื่อปิดสถานะรถแนะนำ' : 'คลิกเพื่อตั้งเป็นรถแนะนำ'}
+                    title={v.isVerified ? t('padm.featuredOff') : t('padm.featuredOn')}
                     className={`rounded-pill px-2.5 py-1 text-[11px] font-extrabold transition-colors ${
                       v.isVerified ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/50 hover:bg-amber-500/30' : 'bg-rule text-ink-2 hover:bg-rule-2'
                     }`}
                   >
-                    {v.isVerified ? '⭐ รถแนะนำ' : '+ ดันแนะนำ'}
+                    {v.isVerified ? t('padm.featuredBadge') : `+ ${t('padm.promote')}`}
                   </button>
                   <button
                     onClick={() => setEditingVehicle(v)}
                     className="grid h-7 w-7 place-items-center rounded-lg bg-card hover:bg-paper-2 text-ink border border-rule transition-transform active:scale-95"
-                    title="แก้ไขข้อมูลรถ"
+                    title={t('padm.editVehicleTitle')}
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => setDeletingVehicle(v)}
                     className="grid h-7 w-7 place-items-center rounded-lg bg-berry-soft hover:bg-berry/20 text-berry transition-transform active:scale-95"
-                    title="ลบรถออกจากระบบ"
+                    title={t('padm.deleteVehicleTitle')}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -205,7 +207,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
 
               <div className="rounded-xl bg-card p-2.5 border border-rule text-xs grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
                 <div>
-                  <span className="text-ink-2 block">เบอร์โทร:</span>
+                  <span className="text-ink-2 block">{t('padm.phoneColon')}</span>
                   <span className="font-mono font-bold text-ink">{v.driverPhone}</span>
                 </div>
                 <div>
@@ -213,8 +215,8 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   <span className="font-mono text-accent-deep truncate block">{v.driverLine || '-'}</span>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-ink-2 block">อัตราค่าบริการเริ่มต้น:</span>
-                  <span className="font-bold text-accent">{v.zoneRates?.city?.toLocaleString() || '-'} บ./วัน</span>
+                  <span className="text-ink-2 block">{t('padm.rateStart')}</span>
+                  <span className="font-bold text-accent">{(v.zoneRates?.city?.toLocaleString() || '-')} {t('padm.perDay')}</span>
                 </div>
               </div>
             </div>
@@ -227,18 +229,18 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-ink/70 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-xl rounded-2xl bg-card p-6 shadow-2xl border border-rule text-ink my-8 max-h-[90vh] overflow-y-auto">
             <h3 className="font-display font-extrabold text-lg mb-4 text-ink">
-              {editingVehicle ? '✏️ แก้ไขข้อมูลยานพาหนะ' : '➕ เพิ่มรถใหม่เข้าสู่แคตตาล็อก'}
+              {editingVehicle ? t('padm.editVehicleForm') : t('padm.addVehicleForm')}
             </h3>
 
             <form onSubmit={handleSaveVehicle} className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-ink block mb-1">ชื่อรถ / สเปกพาดหัว *</label>
+                <label className="font-bold text-ink block mb-1">{t('padm.fVehicleTitle')}</label>
                 <input
                   name="title"
                   defaultValue={editingVehicle?.title || ''}
                   required
                   list="admin-vehicle-models"
-                  placeholder="เช่น Toyota Commuter VIP 9 ที่นั่ง หรือเลือกจากรายการรุ่นรถยอดนิยม"
+                  placeholder={t('padm.fVehicleTitlePh')}
                   className="w-full p-2 rounded-xl bg-paper border border-rule text-ink focus:outline-accent"
                 />
                 <datalist id="admin-vehicle-models">
@@ -250,19 +252,19 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ประเภทรถ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fVehicleType')}</label>
                   <select
                     name="type"
                     defaultValue={editingVehicle?.type || 'van'}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
-                    <option value="van">รถตู้ (Van)</option>
-                    <option value="suv">SUV 7 ที่นั่ง</option>
-                    <option value="car">รถเก๋ง / รถรับส่ง</option>
+                    <option value="van">{t('padm.vtVan')}</option>
+                    <option value="suv">{t('padm.vtSuv')}</option>
+                    <option value="car">{t('padm.vtCar')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">จำนวนที่นั่ง *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fSeatsReq')}</label>
                   <input
                     name="seats"
                     type="number"
@@ -275,32 +277,32 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">รูปแบบบริการ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fRentalType')}</label>
                   <select
                     name="rentalType"
                     defaultValue={editingVehicle?.rentalType || (editingVehicle?.type === 'van' ? 'with_driver' : 'self_drive')}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
-                    <option value="with_driver">🚐 รถตู้พร้อมคนขับ</option>
-                    <option value="self_drive">🚗 รถเช่าขับเอง</option>
+                    <option value="with_driver">{t('padm.rtWithDriver')}</option>
+                    <option value="self_drive">{t('padm.rtSelfDrive')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">ระบบเกียร์ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fGear')}</label>
                   <select
                     name="transmission"
                     defaultValue={editingVehicle?.transmission || 'auto'}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
-                    <option value="auto">⚙️ เกียร์อัตโนมัติ (Auto)</option>
-                    <option value="manual">🕹️ เกียร์ธรรมดา (Manual)</option>
+                    <option value="auto">{t('padm.gearAuto')}</option>
+                    <option value="manual">{t('padm.gearManual')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ชื่อคนขับ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fDriverName')}</label>
                   <input
                     name="driverName"
                     defaultValue={editingVehicle?.driverName || ''}
@@ -309,7 +311,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">ชื่อเล่นคนขับ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fDriverNick')}</label>
                   <input
                     name="driverNickname"
                     defaultValue={editingVehicle?.driverNickname || ''}
@@ -321,7 +323,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">เบอร์โทรศัพท์ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPhone')}</label>
                   <input
                     name="driverPhone"
                     defaultValue={editingVehicle?.driverPhone || ''}
@@ -330,7 +332,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">LINE ลิงก์ / ID</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fLineId')}</label>
                   <input
                     name="driverLine"
                     defaultValue={editingVehicle?.driverLine || ''}
@@ -339,7 +341,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">WhatsApp ลิงก์</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fWhatsApp')}</label>
                   <input
                     name="driverWhatsapp"
                     defaultValue={editingVehicle?.driverWhatsapp || ''}
@@ -352,7 +354,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   <input
                     name="driverWechat"
                     defaultValue={editingVehicle?.driverWechat || ''}
-                    placeholder="เช่น chaicnx_van"
+                    placeholder={t('padm.fLinePh')}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink font-mono"
                   />
                 </div>
@@ -361,7 +363,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   <input
                     name="driverKakao"
                     defaultValue={editingVehicle?.driverKakao || ''}
-                    placeholder="เช่น chaivan_cnx"
+                    placeholder={t('padm.fWhatsAppPh')}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink font-mono"
                   />
                 </div>
@@ -369,24 +371,24 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ภูมิภาคหลัก *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fRegion')}</label>
                   <select
                     name="region"
                     defaultValue={editingVehicle?.region || 'north'}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
-                    <option value="north">ภาคเหนือ</option>
-                    <option value="central">ภาคกลาง / กทม.</option>
-                    <option value="south">ภาคใต้</option>
-                    <option value="east">ภาคตะวันออก</option>
-                    <option value="isan">ภาคอีสาน</option>
+                    <option value="north">{t('padm.rgNorth')}</option>
+                    <option value="central">{t('padm.rgCentral')}</option>
+                    <option value="south">{t('padm.rgSouth')}</option>
+                    <option value="east">{t('padm.rgEast')}</option>
+                    <option value="isan">{t('padm.rgIsan')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">พื้นที่ให้บริการ / เส้นทาง</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fServiceArea')}</label>
                   <input
                     name="location"
-                    defaultValue={editingVehicle?.location || 'เชียงใหม่ / ม่อนแจ่ม / ดอยอินทนนท์'}
+                    defaultValue={editingVehicle?.location || t('padm.fServiceAreaDefault')}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   />
                 </div>
@@ -395,52 +397,52 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
               {/* License Plate & Corporate Tax Metadata */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-xl bg-paper border border-rule">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ประเภทป้ายทะเบียน</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPlateType')}</label>
                   <select
                     name="plateType"
                     defaultValue={editingVehicle?.plateType || 'yellow'}
                     className="w-full p-2 rounded-xl bg-card border border-rule text-ink text-xs font-bold"
                   >
-                    <option value="yellow">🟡 ป้ายเหลือง 30 (ขนส่งสาธารณะ)</option>
-                    <option value="blue">🔵 ป้ายฟ้า (รถตู้ส่วนบุคคล/VIP)</option>
+                    <option value="yellow">{t('padm.ptYellow')}</option>
+                    <option value="blue">{t('padm.ptBlue')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">เลขทะเบียนรถ</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPlateNumber')}</label>
                   <input
                     name="plateNumber"
                     defaultValue={editingVehicle?.plateNumber || ''}
-                    placeholder="เช่น 30-1425 ชม."
+                    placeholder={t('padm.fPlateNumberPh')}
                     className="w-full p-2 rounded-xl bg-card border border-rule text-ink font-mono text-xs font-bold"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">ออกใบกำกับภาษี</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fTaxInvoice')}</label>
                   <select
                     name="canIssueTaxInvoice"
                     defaultValue={editingVehicle?.canIssueTaxInvoice ? 'true' : 'false'}
                     className="w-full p-2 rounded-xl bg-card border border-rule text-ink text-xs font-bold"
                   >
-                    <option value="true">✓ ออกใบกำกับภาษีได้ (หัก 3%)</option>
-                    <option value="false">บุคคลธรรมดา (ไม่ออกภาษี)</option>
+                    <option value="true">{t('padm.taxYes')}</option>
+                    <option value="false">{t('padm.taxNo')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">สถานะรับงาน</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fJobStatus')}</label>
                   <select
                     name="isAvailable"
                     defaultValue={editingVehicle?.isAvailable !== false ? 'true' : 'false'}
                     className="w-full p-2 rounded-xl bg-card border border-rule text-ink text-xs font-bold"
                   >
-                    <option value="true">พร้อมรับงาน (Available)</option>
-                    <option value="false">คิวเต็มชั่วคราว (Busy)</option>
+                    <option value="true">{t('padm.available')}</option>
+                    <option value="false">{t('padm.busy')}</option>
                   </select>
                 </div>
               </div>
 
               {/* Rates */}
               <div className="p-3 rounded-xl bg-paper border border-rule space-y-1">
-                <label className="font-bold text-ink block">อัตราค่าบริการเริ่มต้นต่อวัน (บาท/วัน) *</label>
+                <label className="font-bold text-ink block">{t('padm.fRateCity')}</label>
                 <input
                   name="rate_city"
                   type="number"
@@ -454,7 +456,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">เรตติ้งคะแนน (1.0 - 5.0)</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fRating')}</label>
                   <input
                     name="rating"
                     type="number"
@@ -464,20 +466,20 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">สถานะรถแนะนำ (Featured Listing)</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fFeatured')}</label>
                   <select
                     name="isVerified"
                     defaultValue={editingVehicle?.isVerified ? 'true' : 'false'}
                     className="w-full p-2 rounded-xl bg-paper border border-rule text-ink"
                   >
-                    <option value="true">⭐ เปิดสถานะรถแนะนำ (Featured)</option>
-                    <option value="false">รถทั่วไป (Standard Listing)</option>
+                    <option value="true">{t('padm.featuredYes')}</option>
+                    <option value="false">{t('padm.featuredNo')}</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-ink block mb-1">คำอธิบายรายละเอียด</label>
+                <label className="font-bold text-ink block mb-1">{t('padm.fDescription')}</label>
                 <textarea
                   name="description"
                   rows={3}
@@ -495,14 +497,14 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   }}
                   className="rounded-pill px-4 py-2 text-xs font-bold text-ink-2 hover:bg-paper"
                 >
-                  ยกเลิก
+                  {t('padm.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="rounded-pill bg-accent px-5 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-accent-deep transition-transform active:scale-95 disabled:opacity-50"
                 >
-                  {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+                  {isSubmitting ? t('padm.saving') : t('padm.save')}
                 </button>
               </div>
             </form>
@@ -513,7 +515,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
       {/* Delete Confirmation Modal */}
       <AdminDeleteModal
         isOpen={Boolean(deletingVehicle)}
-        title="ยืนยันการลบรถออกจากระบบ"
+        title={t('padm.delVehicleTitle')}
         itemTitle={deletingVehicle?.title || ''}
         isDeleting={isSubmitting}
         onClose={() => setDeletingVehicle(null)}

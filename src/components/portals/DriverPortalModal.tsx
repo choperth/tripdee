@@ -82,51 +82,56 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
       role="dialog"
       aria-modal="true"
       aria-labelledby="driver-portal-title"
-      className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-400 flex items-center justify-center overflow-y-auto bg-navy-deep/75 backdrop-blur-md p-3 sm:p-4 animate-fade-in"
+      onClick={onClose}
     >
-      <div className="td-elev-lift relative w-full max-w-2xl rounded-modal bg-card p-6 sm:p-8 text-ink my-6 max-h-[92vh] overflow-y-auto">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          aria-label={t('pdrv.close')}
-          className="absolute top-5 right-5 grid h-9 w-9 place-items-center rounded-full bg-paper-2 text-ink transition-transform"
-        >
-          <X className="h-4.5 w-4.5" strokeWidth={2.5} />
-        </button>
-
-        {/* Portal Header */}
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-6 pr-8">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-accent text-accent-ink font-extrabold">
-                <CarFront className="h-5 w-5" strokeWidth={2.5} />
-              </span>
-              <div>
-                <h2 id="driver-portal-title" className="font-display text-2xl font-extrabold text-ink">
-                  {t('pdrv.title')}
-                </h2>
-                <p className="text-xs font-bold text-ink-2">
-                  {user.name} ({user.driverNickname || t('pdrv.noNick')})
-                </p>
-              </div>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative flex flex-col w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 shadow-2xl text-ink-primary dark:text-slate-100"
+      >
+        {/* Sticky Header Bar */}
+        <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 px-5 sm:px-7 py-4 sm:py-5 bg-paper-elevated/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-border-subtle dark:border-slate-800">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-navy-deep text-white dark:bg-slate-800 dark:text-blue-400 border border-navy-deep/20 dark:border-slate-700 shadow-xs">
+              <CarFront className="h-5 w-5" strokeWidth={2.5} />
+            </span>
+            <div className="min-w-0">
+              <h2 id="driver-portal-title" className="font-headline-md text-base sm:text-lg font-bold text-navy-deep dark:text-white leading-tight truncate">
+                {t('pdrv.title')}
+              </h2>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                {user.name} ({user.driverNickname || t('pdrv.noNick')})
+              </p>
             </div>
           </div>
 
-          {/* Availability Toggle Button */}
-          <button
-            type="button"
-            onClick={toggleDriverAvailability}
-            className={`td-btn td-pop inline-flex items-center gap-2 rounded-pill px-4 py-2 text-xs font-extrabold transition-colors ${
-              user.isAvailable
-                ? 'bg-leaf text-white'
-                : 'bg-paper-2 text-ink-2'
-            }`}
-          >
-            <span className={`h-2.5 w-2.5 rounded-full ${user.isAvailable ? 'bg-white animate-pulse' : 'bg-ink-2'}`} />
-            <span>{user.isAvailable ? t('pdrv.availOn') : t('pdrv.availOff')}</span>
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Availability Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleDriverAvailability}
+              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                user.isAvailable
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-paper-surface-muted hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              <span className={`h-2.5 w-2.5 rounded-full ${user.isAvailable ? 'bg-white animate-pulse' : 'bg-slate-400'}`} />
+              <span>{user.isAvailable ? t('pdrv.availOn') : t('pdrv.availOff')}</span>
+            </button>
+
+            <button
+              onClick={onClose}
+              aria-label={t('pdrv.close')}
+              className="w-9 h-9 rounded-full bg-paper-surface-muted hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 grid place-items-center transition-colors cursor-pointer"
+            >
+              <X className="h-4 w-4" strokeWidth={2.5} />
+            </button>
+          </div>
         </div>
 
+        {/* Main Content Area */}
+        <div className="p-5 sm:p-7 space-y-6">
         {/* Verification Status Banner */}
         <div
           className={`mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4 ${
@@ -136,7 +141,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
           }`}
         >
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-card text-ink">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white dark:bg-slate-800 text-ink-primary dark:text-white shadow-2xs">
               {isVerified ? (
                 <Star className="h-5 w-5 fill-amber-500 text-amber-500" />
               ) : (
@@ -155,34 +160,40 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
 
           <button
             onClick={() => setActiveTab('verification')}
-            className="td-btn rounded-pill bg-card px-3.5 py-1.5 text-xs font-extrabold text-ink hover:bg-paper-2 shadow-xs"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-white dark:bg-slate-800 px-3.5 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs transition-colors cursor-pointer"
           >
             {isVerified ? t('pdrv.viewDocs') : t('pdrv.uploadDocs')}
           </button>
         </div>
 
-        {/* Sub-tabs */}
-        <div className="mb-6 flex gap-2 border-b-2 border-rule pb-2">
+        {/* Sub-tabs Segmented Control */}
+        <div className="flex p-1.5 rounded-2xl bg-paper-surface-muted dark:bg-slate-800/80 border border-border-subtle dark:border-slate-800">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`rounded-pill px-4 py-1.5 text-xs font-extrabold transition-colors ${
-              activeTab === 'profile' ? 'bg-ink text-paper' : 'text-ink-2 hover:text-ink'
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'profile'
+                ? 'bg-white dark:bg-slate-900 text-navy-deep dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             {t('pdrv.tabProfile')}
           </button>
           <button
             onClick={() => setActiveTab('verification')}
-            className={`rounded-pill px-4 py-1.5 text-xs font-extrabold transition-colors ${
-              activeTab === 'verification' ? 'bg-ink text-paper' : 'text-ink-2 hover:text-ink'
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'verification'
+                ? 'bg-white dark:bg-slate-900 text-navy-deep dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             {t('pdrv.tabVerif')}
           </button>
           <button
             onClick={() => setActiveTab('jobs')}
-            className={`rounded-pill px-4 py-1.5 text-xs font-extrabold transition-colors ${
-              activeTab === 'jobs' ? 'bg-ink text-paper' : 'text-ink-2 hover:text-ink'
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'jobs'
+                ? 'bg-white dark:bg-slate-900 text-navy-deep dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             {t('pdrv.tabJobs')}
@@ -201,7 +212,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="drv-nick" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-nick" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
                   {t('pdrv.fNick')}
                 </label>
                 <input
@@ -210,12 +221,12 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
                   placeholder={t('pdrv.fNickPh')}
-                  className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
+                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label htmlFor="drv-phone" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-phone" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
                   {t('pdrv.fPhone')}
                 </label>
                 <input
@@ -224,12 +235,12 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="08x-xxx-xxxx"
-                  className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
+                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label htmlFor="drv-line" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-line" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
                   {t('pdrv.fLine')}
                 </label>
                 <input
@@ -238,12 +249,12 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                   value={lineId}
                   onChange={(e) => setLineId(e.target.value)}
                   placeholder={t('pdrv.fLinePh')}
-                  className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
+                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label htmlFor="drv-whatsapp" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-whatsapp" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
                   {t('pdrv.fWhatsapp')}
                 </label>
                 <input
@@ -252,12 +263,12 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                   value={whatsapp}
                   onChange={(e) => setWhatsapp(e.target.value)}
                   placeholder={t('pdrv.fWhatsappPh')}
-                  className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
+                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label htmlFor="drv-wechat" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-wechat" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
                   {t('pdrv.fWechat')}
                 </label>
                 <input
@@ -266,12 +277,12 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                   value={wechat}
                   onChange={(e) => setWechat(e.target.value)}
                   placeholder={t('pdrv.fWechatPh')}
-                  className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
+                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label htmlFor="drv-kakao" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-kakao" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
                   {t('pdrv.fKakao')}
                 </label>
                 <input
@@ -280,12 +291,12 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                   value={kakao}
                   onChange={(e) => setKakao(e.target.value)}
                   placeholder={t('pdrv.fKakaoPh')}
-                  className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
+                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label htmlFor="drv-plate" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-plate" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
                   {t('pdrv.fPlate')}
                 </label>
                 <input
@@ -294,12 +305,12 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                   value={vehiclePlate}
                   onChange={(e) => setVehiclePlate(e.target.value)}
                   placeholder={t('pdrv.fPlatePh')}
-                  className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
+                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label htmlFor="drv-vehicle" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-vehicle" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
                   {t('pdrv.fVehicle')}
                 </label>
                 <input
@@ -308,19 +319,19 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                   value={vehicleTitle}
                   onChange={(e) => setVehicleTitle(e.target.value)}
                   placeholder={t('pdrv.fVehiclePh')}
-                  className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
+                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label htmlFor="drv-seats" className="mb-1 block text-xs font-extrabold uppercase text-ink-2">
+                <label htmlFor="drv-seats" className="mb-1.5 block text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
                   {t('pdrv.fSeats')}
                 </label>
                 <select
                   id="drv-seats"
                   value={seats}
                   onChange={(e) => setSeats(Number(e.target.value))}
-                  className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent"
+                  className="w-full h-11 rounded-xl border border-border-subtle dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value={7}>{t('pdrv.seats7')}</option>
                   <option value={9}>{t('pdrv.seats9')}</option>
@@ -348,7 +359,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
             <div className="flex items-center justify-between pt-2">
               <button
                 type="submit"
-                className="td-btn td-pop rounded-pill bg-sun px-6 py-2.5 text-sm font-extrabold text-sun-ink"
+                className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-blue-action hover:bg-blue-action-hover active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer"
               >
                 {t('pdrv.saveBtn')}
               </button>
@@ -359,7 +370,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                   logout();
                   onClose();
                 }}
-                className="flex items-center gap-1.5 text-xs font-bold text-berry hover:underline"
+                className="flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 transition-colors cursor-pointer hover:underline"
               >
                 <LogOut className="h-4 w-4" />
                 <span>{t('pdrv.logout')}</span>
@@ -428,21 +439,21 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
               {t('pdrv.jobsIntro')}
             </p>
 
-            <div className="rounded-2xl bg-paper p-4">
+            <div className="rounded-2xl border border-border-subtle dark:border-slate-800 bg-white dark:bg-slate-800/80 p-4 sm:p-5 shadow-xs">
               <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="rounded-pill bg-sky-soft px-2.5 py-0.5 text-xs font-extrabold text-sky">
+                <span className="rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2.5 py-0.5 text-xs font-bold text-blue-700 dark:text-blue-300">
                   {t('pdrv.jobCorp')}
                 </span>
-                <span className="text-xs font-bold text-ink-2">{t('pdrv.jobDate1')}</span>
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{t('pdrv.jobDate1')}</span>
               </div>
-              <h4 className="font-bold text-sm text-ink mb-1">
+              <h4 className="font-bold text-sm text-navy-deep dark:text-white mb-1">
                 {t('pdrv.jobTitle1')}
               </h4>
-              <p className="text-xs text-ink-2 mb-3">
+              <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
                 {t('pdrv.jobDesc1')}
               </p>
-              <div className="flex items-center justify-between pt-2 border-t border-rule">
-                <span className="font-extrabold text-sm text-accent-deep">{t('pdrv.jobBudget1')}</span>
+              <div className="flex items-center justify-between pt-2.5 border-t border-border-subtle dark:border-slate-700/60">
+                <span className="font-extrabold text-sm text-blue-action dark:text-blue-400">{t('pdrv.jobBudget1')}</span>
                 <a
                   href="tel:0812345678"
                   onClick={() => {
@@ -453,28 +464,28 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                       phoneNumber: '0812345678',
                     });
                   }}
-                  className="td-btn rounded-pill bg-sun px-3.5 py-1 text-xs font-extrabold text-sun-ink"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-action hover:bg-blue-action-hover active:scale-[0.98] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
                 >
                   {t('pdrv.jobAccept')}
                 </a>
               </div>
             </div>
 
-            <div className="rounded-2xl bg-paper p-4">
+            <div className="rounded-2xl border border-border-subtle dark:border-slate-800 bg-white dark:bg-slate-800/80 p-4 sm:p-5 shadow-xs">
               <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="rounded-pill bg-leaf-soft px-2.5 py-0.5 text-xs font-extrabold text-leaf">
+                <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
                   {t('pdrv.jobFamily')}
                 </span>
-                <span className="text-xs font-bold text-ink-2">{t('pdrv.jobDate2')}</span>
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{t('pdrv.jobDate2')}</span>
               </div>
-              <h4 className="font-bold text-sm text-ink mb-1">
+              <h4 className="font-bold text-sm text-navy-deep dark:text-white mb-1">
                 {t('pdrv.jobTitle2')}
               </h4>
-              <p className="text-xs text-ink-2 mb-3">
+              <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
                 {t('pdrv.jobDesc2')}
               </p>
-              <div className="flex items-center justify-between pt-2 border-t border-rule">
-                <span className="font-extrabold text-sm text-accent-deep">{t('pdrv.jobBudget2')}</span>
+              <div className="flex items-center justify-between pt-2.5 border-t border-border-subtle dark:border-slate-700/60">
+                <span className="font-extrabold text-sm text-blue-action dark:text-blue-400">{t('pdrv.jobBudget2')}</span>
                 <a
                   href="tel:0812345678"
                   onClick={() => {
@@ -485,7 +496,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
                       phoneNumber: '0812345678',
                     });
                   }}
-                  className="td-btn rounded-pill bg-sun px-3.5 py-1 text-xs font-extrabold text-sun-ink"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-action hover:bg-blue-action-hover active:scale-[0.98] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
                 >
                   {t('pdrv.jobAccept')}
                 </a>
@@ -509,5 +520,6 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({ isOpen, on
         </div>
       </div>
     </div>
+  </div>
   );
 };

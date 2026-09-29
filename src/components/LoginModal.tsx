@@ -96,7 +96,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const renderOAuthButtons = () => (
     <div className="space-y-2.5">
       {oauthError && (
-        <div className="rounded-xl bg-flame-soft p-3 text-xs font-semibold text-flame flex items-center gap-1.5">
+        <div className="border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-3 text-xs font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-2">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{oauthError}</span>
         </div>
@@ -105,7 +105,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         type="button"
         disabled={!!oauthLoading}
         onClick={() => handleOAuthLogin('line')}
-        className="flex w-full items-center justify-center gap-2 rounded-input bg-[#06C755] py-2.5 px-4 font-extrabold text-white transition-colors hover:bg-[#05b34c] disabled:opacity-60 shadow-xs cursor-pointer"
+        className="flex w-full h-12 items-center justify-center gap-2 bg-[#06C755] px-4 text-sm font-black text-white transition-all hover:bg-[#05B04B] active:scale-[0.99] disabled:opacity-60 cursor-pointer"
       >
         {oauthLoading === 'line' ? (
           <>
@@ -124,7 +124,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         type="button"
         disabled={!!oauthLoading}
         onClick={() => handleOAuthLogin('google')}
-        className="flex w-full items-center justify-center gap-2 rounded-input bg-card py-2.5 px-4 font-extrabold text-ink transition-colors hover:bg-paper-2 border border-rule disabled:opacity-60 shadow-xs cursor-pointer"
+        className="flex w-full h-12 items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 text-sm font-bold text-slate-800 dark:text-slate-200 transition-all hover:border-slate-950 dark:hover:border-white active:scale-[0.99] disabled:opacity-60 cursor-pointer"
       >
         {oauthLoading === 'google' ? (
           <>
@@ -270,61 +270,77 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     }
   };
 
+  const roleTabClass = (role: UserRole) =>
+    `flex flex-1 flex-col items-center gap-1 px-2 py-3 text-xs transition-all cursor-pointer border-r border-slate-200 dark:border-slate-800 last:border-r-0 ${
+      selectedRole === role
+        ? 'bg-white dark:bg-slate-900 text-slate-950 dark:text-white border-t-2 border-t-slate-950 dark:border-t-white font-bold'
+        : 'font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60'
+    }`;
+
+  const inputClass =
+    'w-full h-12 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 text-sm font-semibold text-slate-950 dark:text-white placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-slate-950 dark:focus:border-white focus:ring-2 focus:ring-amber-500/40';
+
+  const labelClass =
+    'block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5';
+
+  const primaryCtaClass =
+    'w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-black flex items-center justify-center gap-2 border border-amber-600 transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer';
+
   return (
     <div
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="login-modal-title"
-      className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-400 flex items-center justify-center overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-3 sm:p-4 animate-fade-in"
+      onClick={onClose}
     >
-      <div className="td-elev-lift relative w-full max-w-lg rounded-modal bg-card p-6 sm:p-8 text-ink">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative flex flex-col w-full max-w-lg max-h-[92vh] overflow-y-auto bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-xl text-slate-950 dark:text-white p-5 sm:p-6 td-modal-enter"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
           aria-label={t('auth.close')}
-          className="absolute top-5 right-5 grid h-9 w-9 place-items-center rounded-full bg-paper-2 text-ink hover:bg-paper transition-transform"
+          className="absolute top-4 right-4 w-9 h-9 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 grid place-items-center transition-colors cursor-pointer"
         >
-          <X className="h-4.5 w-4.5" strokeWidth={2.5} />
+          <X className="h-4 w-4" strokeWidth={2.5} />
         </button>
 
         {/* Modal Header */}
-        <div className="mb-6 pr-8">
+        <div className="mb-5 pr-8">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-pill bg-sun-soft px-3 py-1 text-xs font-extrabold text-ink">
-              <ShieldCheck className="h-4 w-4 text-leaf" strokeWidth={2.5} />
+            <span className="inline-flex items-center gap-1.5 border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
+              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
               {t('auth.badge')}
             </span>
             {!isDemo && (
-              <span className="inline-flex items-center gap-1 rounded-pill bg-leaf-soft px-2.5 py-0.5 text-[11px] font-extrabold text-leaf-deep">
+              <span className="inline-flex items-center gap-1 border border-sky-300 dark:border-sky-700 bg-sky-50 dark:bg-sky-950/60 px-2 py-0.5 text-[11px] font-bold text-sky-800 dark:text-sky-300">
                 <Lock className="h-3 w-3" />
                 {t('auth.realModeNote')}
               </span>
             )}
           </div>
-          <h2 id="login-modal-title" className="font-display mt-2 text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
+          <h2 id="login-modal-title" className="mt-3 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
             {t('auth.title')}
           </h2>
-          <p className="mt-1 text-sm font-medium text-ink-2">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {t('auth.desc')}
           </p>
         </div>
 
-        {/* Role Switcher Tabs */}
-        <div className="mb-6 grid grid-cols-3 gap-2 rounded-2xl bg-paper p-1.5">
+        {/* Role Switcher Tabs (Sharp stretched tabs matching Hero search tabs) */}
+        <div className="mb-5 flex items-stretch border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/50">
           <button
             type="button"
             onClick={() => {
               setSelectedRole('driver');
               setOauthError('');
             }}
-            className={`flex flex-col items-center gap-1 rounded-xl py-2 px-1 text-xs font-extrabold transition-colors ${
-              selectedRole === 'driver'
-                ? 'bg-accent text-accent-ink shadow-xs'
-                : 'text-ink-2 hover:text-ink'
-            }`}
+            className={roleTabClass('driver')}
           >
-            <CarFront className="h-4 w-4" strokeWidth={2.5} />
+            <CarFront className={`h-4 w-4 ${selectedRole === 'driver' ? 'text-amber-500' : ''}`} strokeWidth={2.5} />
             <span>{t('auth.roleDriver')}</span>
           </button>
 
@@ -334,13 +350,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               setSelectedRole('customer');
               setOauthError('');
             }}
-            className={`flex flex-col items-center gap-1 rounded-xl py-2 px-1 text-xs font-extrabold transition-colors ${
-              selectedRole === 'customer'
-                ? 'bg-grape text-white shadow-xs'
-                : 'text-ink-2 hover:text-ink'
-            }`}
+            className={roleTabClass('customer')}
           >
-            <Briefcase className="h-4 w-4" strokeWidth={2.5} />
+            <Briefcase className={`h-4 w-4 ${selectedRole === 'customer' ? 'text-amber-500' : ''}`} strokeWidth={2.5} />
             <span>{t('auth.roleCustomer')}</span>
           </button>
 
@@ -350,13 +362,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               setSelectedRole('admin');
               setOauthError('');
             }}
-            className={`flex flex-col items-center gap-1 rounded-xl py-2 px-1 text-xs font-extrabold transition-colors ${
-              selectedRole === 'admin'
-                ? 'bg-sun text-sun-ink shadow-xs'
-                : 'text-ink-2 hover:text-ink'
-            }`}
+            className={roleTabClass('admin')}
           >
-            <Crown className="h-4 w-4" strokeWidth={2.5} />
+            <Crown className={`h-4 w-4 ${selectedRole === 'admin' ? 'text-amber-500' : ''}`} strokeWidth={2.5} />
             <span>{t('auth.roleAdmin')}</span>
           </button>
         </div>
@@ -367,12 +375,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         {isDemo ? (
           <div>
             {/* Fast 1-Click Demo Section */}
-            <div className="mb-5 rounded-2xl border-2 border-dashed border-rule bg-paper-2/60 p-4">
-              <div className="mb-2.5 flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-ink-2">
+            <div className="mb-5 border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/40 p-4 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {t('auth.demoTitle')}
                 </span>
-                <span className="rounded-pill bg-leaf-soft px-2 py-0.5 text-[11px] font-extrabold text-leaf-deep">
+                <span className="border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
                   {t('auth.demoNote')}
                 </span>
               </div>
@@ -380,28 +388,28 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <button
                 type="button"
                 onClick={() => handleDemoLogin(selectedRole)}
-                className="td-btn td-pop flex w-full items-center justify-between rounded-input bg-card p-3 text-left font-extrabold text-ink transition-transform shadow-xs"
+                className="flex w-full items-center justify-between bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-3.5 text-left font-bold shadow-sm hover:border-slate-950 dark:hover:border-white transition-all cursor-pointer group"
               >
                 <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sun text-sun-ink">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center bg-slate-900 text-white dark:bg-white dark:text-slate-950">
                     {selectedRole === 'driver' && <CarFront className="h-5 w-5" strokeWidth={2.5} />}
                     {selectedRole === 'customer' && <Briefcase className="h-5 w-5" strokeWidth={2.5} />}
                     {selectedRole === 'admin' && <Crown className="h-5 w-5" strokeWidth={2.5} />}
                   </span>
                   <div>
-                    <p className="text-sm font-extrabold text-ink">
+                    <p className="text-sm font-bold text-slate-950 dark:text-white">
                       {selectedRole === 'driver' && t('auth.demoDriverName')}
                       {selectedRole === 'customer' && t('auth.demoCustName')}
                       {selectedRole === 'admin' && t('auth.demoAdminName')}
                     </p>
-                    <p className="text-xs font-medium text-ink-2">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       {selectedRole === 'driver' && t('auth.demoDriverDesc')}
                       {selectedRole === 'customer' && t('auth.demoCustDesc')}
                       {selectedRole === 'admin' && t('auth.demoAdminDesc')}
                     </p>
                   </div>
                 </div>
-                <ArrowRight className="h-5 w-5 text-accent-deep" strokeWidth={2.5} />
+                <ArrowRight className="h-5 w-5 text-amber-500 group-hover:translate-x-0.5 transition-transform" strokeWidth={2.5} />
               </button>
             </div>
 
@@ -409,19 +417,19 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             {renderOAuthButtons()}
 
             {/* Direct Phone/Email Toggle */}
-            <div className="mt-4 pt-3 border-t-2 border-dashed border-rule text-center">
+            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-center">
               {demoLoginMethod === 'demo' ? (
                 <button
                   type="button"
                   onClick={() => setDemoLoginMethod('direct')}
-                  className="text-xs font-extrabold text-ink-2 hover:text-accent-deep underline decoration-2"
+                  className="text-xs font-bold text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white underline cursor-pointer"
                 >
                   {t('auth.orPhone')}
                 </button>
               ) : (
                 <form onSubmit={handleDemoDirectSubmit} className="space-y-3 pt-2 text-left">
                   <div>
-                    <label htmlFor="demo-login-name" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
+                    <label htmlFor="demo-login-name" className={labelClass}>
                       {t('auth.fName')}
                     </label>
                     <input
@@ -431,12 +439,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       placeholder={t('auth.fNamePh')}
                       value={directName}
                       onChange={(e) => setDirectName(e.target.value)}
-                      className="w-full rounded-input bg-paper px-3 py-2 text-sm font-bold text-ink focus:border-accent"
+                      className={inputClass}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="demo-login-phone" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
+                    <label htmlFor="demo-login-phone" className={labelClass}>
                       {t('auth.fPhone')}
                     </label>
                     <input
@@ -446,21 +454,21 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       placeholder={t('auth.fPhonePh')}
                       value={directPhone}
                       onChange={(e) => setDirectPhone(e.target.value)}
-                      className="w-full rounded-input bg-paper px-3 py-2 text-sm font-bold text-ink focus:border-accent"
+                      className={`${inputClass} tabular-nums`}
                     />
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 pt-1">
                     <button
                       type="submit"
-                      className="td-btn flex-1 rounded-pill bg-accent py-2 px-4 text-xs font-extrabold text-accent-ink"
+                      className="flex-1 h-12 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black border border-amber-600 transition-all active:scale-[0.99] cursor-pointer"
                     >
                       {t('auth.submit')}
                     </button>
                     <button
                       type="button"
                       onClick={() => setDemoLoginMethod('demo')}
-                      className="rounded-pill border border-rule py-2 px-3 text-xs font-bold text-ink-2 hover:border-ink-2/50"
+                      className="h-12 px-4 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-300 hover:border-slate-950 dark:hover:border-white transition-all cursor-pointer"
                     >
                       {t('auth.cancel')}
                     </button>
@@ -481,20 +489,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
                 <div className="relative my-3 text-center">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-rule" />
+                    <div className="w-full border-t border-slate-200 dark:border-slate-800" />
                   </div>
-                  <span className="relative bg-card px-3 text-[11px] font-extrabold uppercase text-ink-2">
+                  <span className="relative bg-white dark:bg-slate-900 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     {t('auth.orDivider')}
                   </span>
                 </div>
 
                 <form onSubmit={handleDriverLogin} className="space-y-4">
                   <div>
-                    <label htmlFor="driver-phone-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1.5">
+                    <label htmlFor="driver-phone-input" className={labelClass}>
                       {t('auth.driverPhoneLabel')}
                     </label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-2" />
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       <input
                         id="driver-phone-input"
                         type="tel"
@@ -502,13 +510,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                         value={driverPhone}
                         onChange={(e) => setDriverPhone(e.target.value)}
                         placeholder={t('auth.driverPhonePh')}
-                        className="w-full rounded-input bg-paper pl-9 pr-3 py-2.5 text-sm font-bold text-ink focus:border-accent border border-rule"
+                        className={`${inputClass} tabular-nums pl-10 pr-3.5`}
                       />
                     </div>
                   </div>
 
                   {driverError && (
-                    <div className="rounded-xl bg-flame-soft p-3 text-xs font-semibold text-flame flex flex-col gap-2">
+                    <div className="border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-3 text-xs font-semibold text-rose-700 dark:text-rose-300 flex flex-col gap-2">
                       <div className="flex items-center gap-1.5">
                         <AlertCircle className="h-4 w-4 shrink-0" />
                         <span>{driverError}</span>
@@ -520,7 +528,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                             onClose();
                             onOpenRegisterModal();
                           }}
-                          className="inline-flex items-center gap-1.5 text-xs font-extrabold text-navy-deep underline hover:text-accent-deep pt-1"
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-950 dark:text-white underline pt-1 cursor-pointer"
                         >
                           <UserPlus className="h-3.5 w-3.5" />
                           <span>{t('auth.driverRegisterLink')}</span>
@@ -532,7 +540,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   <button
                     type="submit"
                     disabled={isCheckingDriver}
-                    className="td-btn w-full rounded-input bg-accent py-3 px-4 text-sm font-extrabold text-accent-ink flex items-center justify-center gap-2 hover:bg-accent/90 transition-colors disabled:opacity-50"
+                    className={primaryCtaClass}
                   >
                     {isCheckingDriver ? (
                       <>
@@ -555,7 +563,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                           onClose();
                           onOpenRegisterModal();
                         }}
-                        className="text-xs font-bold text-ink-2 hover:text-accent-deep transition-colors"
+                        className="text-xs font-bold text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white underline transition-colors cursor-pointer"
                       >
                         {t('auth.driverRegisterLink')}
                       </button>
@@ -572,16 +580,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
                 <div className="relative my-3 text-center">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-rule" />
+                    <div className="w-full border-t border-slate-200 dark:border-slate-800" />
                   </div>
-                  <span className="relative bg-card px-3 text-[11px] font-extrabold uppercase text-ink-2">
+                  <span className="relative bg-white dark:bg-slate-900 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     {t('auth.orDivider')}
                   </span>
                 </div>
 
                 <form onSubmit={handleCustomerLogin} className="space-y-3.5">
                   <div>
-                    <label htmlFor="customer-name-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
+                    <label htmlFor="customer-name-input" className={labelClass}>
                       {t('auth.customerCompanyLabel')}
                     </label>
                     <input
@@ -591,12 +599,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder={t('auth.customerCompanyPh')}
-                      className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent border border-rule"
+                      className={inputClass}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="customer-contact-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
+                    <label htmlFor="customer-contact-input" className={labelClass}>
                       {t('auth.fPhone')}
                     </label>
                     <input
@@ -606,12 +614,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       value={customerContact}
                       onChange={(e) => setCustomerContact(e.target.value)}
                       placeholder={t('auth.fPhonePh')}
-                      className="w-full rounded-input bg-paper px-3 py-2.5 text-sm font-bold text-ink focus:border-accent border border-rule"
+                      className={`${inputClass} tabular-nums`}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="customer-tax-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1">
+                    <label htmlFor="customer-tax-input" className={labelClass}>
                       {t('auth.customerTaxLabel')}
                     </label>
                     <input
@@ -620,13 +628,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       value={customerTaxId}
                       onChange={(e) => setCustomerTaxId(e.target.value)}
                       placeholder={t('auth.customerTaxPh')}
-                      className="w-full rounded-input bg-paper px-3 py-2 text-sm font-bold text-ink focus:border-accent border border-rule"
+                      className={`${inputClass} tabular-nums`}
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="td-btn w-full rounded-input bg-grape py-3 px-4 text-sm font-extrabold text-white flex items-center justify-center gap-2 hover:bg-grape/90 transition-colors mt-2"
+                    className={`${primaryCtaClass} mt-2`}
                   >
                     <Briefcase className="h-4 w-4" />
                     <span>{t('auth.submit')}</span>
@@ -639,11 +647,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             {selectedRole === 'admin' && (
               <form onSubmit={handleAdminLogin} className="space-y-4">
                 <div>
-                  <label htmlFor="admin-password-input" className="block text-xs font-extrabold uppercase text-ink-2 mb-1.5">
+                  <label htmlFor="admin-password-input" className={labelClass}>
                     {t('auth.adminPassLabel')}
                   </label>
                   <div className="relative">
-                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-2" />
+                    <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <input
                       id="admin-password-input"
                       type="password"
@@ -651,14 +659,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
                       placeholder={t('auth.adminPassPh')}
-                      className="w-full rounded-input bg-paper pl-9 pr-3 py-2.5 text-sm font-bold text-ink focus:border-accent border border-rule"
+                      className={`${inputClass} pl-10 pr-3.5`}
                       autoComplete="current-password"
                     />
                   </div>
                 </div>
 
                 {adminError && (
-                  <div className="rounded-xl bg-flame-soft p-3 text-xs font-semibold text-flame flex items-center gap-2">
+                  <div className="border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-3 text-xs font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 shrink-0" />
                     <span>{adminError}</span>
                   </div>
@@ -666,7 +674,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
                 <button
                   type="submit"
-                  className="td-btn w-full rounded-input bg-sun py-3 px-4 text-sm font-extrabold text-sun-ink flex items-center justify-center gap-2 hover:bg-sun/90 transition-colors shadow-xs"
+                  className="w-full h-12 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-950 text-white text-sm font-bold flex items-center justify-center gap-2 border border-slate-900 dark:border-white transition-all active:scale-[0.99] cursor-pointer"
                 >
                   <Lock className="h-4 w-4" />
                   <span>{t('auth.submit')}</span>

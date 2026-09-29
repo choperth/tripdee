@@ -34,6 +34,7 @@ export interface UserProfile {
   };
 
   // Corporate / Customer fields
+  customerType?: 'individual' | 'corporate';
   companyName?: string;
   taxId?: string;
   companyAddress?: string;
@@ -65,6 +66,7 @@ interface AuthContextType {
   toggleDriverAvailability: () => void;
   updateDriverProfile: (data: Partial<UserProfile>) => void;
   updateCorporateProfile: (data: Partial<UserProfile>) => void;
+  updateCustomerProfile: (data: Partial<UserProfile>) => void;
   submitVerificationDocs: (docs: { driverLicense: string; vehicleRegistration: string; idCard: string }) => void;
   approveDriverVerification: (driverId: string) => void;
   quotations: QuotationRecord[];
@@ -108,6 +110,7 @@ const DEMO_ACCOUNTS: Record<UserRole, UserProfile> = {
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
     companyName: 'บริษัท สยาม อินโนเวชั่น จำกัด (มหาชน)',
     taxId: '0105559088123',
+    customerType: 'corporate',
     companyAddress: '88/9 อาคารสยามทาวเวอร์ ชั้น 14 ถนนสุขุมวิท คลองเตย กทม. 10110',
     branch: 'สำนักงานใหญ่',
   },
@@ -369,6 +372,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveUser({ ...user, ...data });
   };
 
+  const updateCustomerProfile = (data: Partial<UserProfile>) => {
+    if (!user) return;
+    saveUser({ ...user, ...data });
+  };
+
   const submitVerificationDocs = (docs: { driverLicense: string; vehicleRegistration: string; idCard: string }) => {
     if (!user || user.role !== 'driver') return;
     const updated: UserProfile = {
@@ -442,6 +450,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toggleDriverAvailability,
         updateDriverProfile,
         updateCorporateProfile,
+        updateCustomerProfile,
         submitVerificationDocs,
         approveDriverVerification,
         quotations,

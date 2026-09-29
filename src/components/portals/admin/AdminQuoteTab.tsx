@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { QuotationLead } from '@/lib/leadsStore';
 import { Pencil, Trash2, PhoneCall, Search, Copy, Check } from 'lucide-react';
 import { useAnalytics } from '@/context/AnalyticsContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
 import type { LeadFeeStatus, OrgType, VehicleTier } from '@/lib/b2b';
 import {
@@ -31,6 +32,7 @@ const inputClass =
 
 export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh }) => {
   const { trackCall } = useAnalytics();
+  const { t, locale } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [editingQuote, setEditingQuote] = useState<QuotationLead | null>(null);
   const [deletingQuote, setDeletingQuote] = useState<QuotationLead | null>(null);
@@ -135,13 +137,13 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
   const statusBadge = (st: QuotationLead['status']) => {
     switch (st) {
       case 'confirmed':
-        return <span className="rounded-pill bg-leaf-soft px-2.5 py-0.5 text-[10px] font-extrabold text-leaf">คอนเฟิร์มแล้ว</span>;
+        return <span className="rounded-pill bg-leaf-soft px-2.5 py-0.5 text-[10px] font-extrabold text-leaf">{t('padm.qStatusConfirmed')}</span>;
       case 'quoted':
-        return <span className="rounded-pill bg-accent/10 px-2.5 py-0.5 text-[10px] font-extrabold text-accent">ส่งราคาแล้ว</span>;
+        return <span className="rounded-pill bg-accent/10 px-2.5 py-0.5 text-[10px] font-extrabold text-accent">{t('padm.qStatusQuoted')}</span>;
       case 'cancelled':
-        return <span className="rounded-pill bg-berry-soft px-2.5 py-0.5 text-[10px] font-extrabold text-berry">ลูกค้ายกเลิก</span>;
+        return <span className="rounded-pill bg-berry-soft px-2.5 py-0.5 text-[10px] font-extrabold text-berry">{t('padm.qStatusCancelled')}</span>;
       default:
-        return <span className="rounded-pill bg-sun-soft px-2.5 py-0.5 text-[10px] font-extrabold text-sun-ink">รอติดต่อกลับ</span>;
+        return <span className="rounded-pill bg-sun-soft px-2.5 py-0.5 text-[10px] font-extrabold text-sun-ink">{t('padm.qStatusPending')}</span>;
     }
   };
 
@@ -179,20 +181,20 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-ink-2" />
           <input
             type="text"
-            placeholder="ค้นหาชื่อบริษัท ผู้ติดต่อ เส้นทาง พาร์ตเนอร์..."
+            placeholder={t('padm.quoteSearchPh')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-card border border-rule text-xs focus:outline-accent"
           />
         </div>
         <span className="text-xs font-extrabold text-ink-2">
-          คำขอทั้งหมด: {filtered.length} รายการ
+          {t('padm.quoteTotal', { n: filtered.length })}
         </span>
       </div>
 
       {filtered.length === 0 ? (
         <p className="text-xs text-ink-2 italic p-6 text-center rounded-2xl bg-paper">
-          ไม่มีรายการคำขอใบเสนอราคา
+          {t('padm.quoteEmpty')}
         </p>
       ) : (
         <div className="space-y-3">
@@ -210,7 +212,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                   <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                     {tierBadge(q.vehicleTier)}
                     <span className="rounded-pill bg-card px-2.5 py-0.5 text-[10px] font-extrabold text-ink border border-rule">
-                      {q.carCount} คัน
+                      {t('padm.carUnit', { n: q.carCount })}
                     </span>
                     <span className="rounded-pill bg-paper-2 px-2.5 py-0.5 text-[10px] font-bold text-ink-2">
                       {ORG_TYPE_META[q.orgType]}
@@ -218,7 +220,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                     {leadFeeBadge(q)}
                   </div>
                   <p className="text-xs text-ink-2 mt-1.5">
-                    ผู้ติดต่อ: <span className="font-bold text-ink">{q.contactName || 'ไม่ระบุชื่อ'}</span> • วันที่เดินทาง: {q.travelDate}
+                    {t('padm.quoteContact', { name: q.contactName || '-', date: q.travelDate })}
                   </p>
                 </div>
 
@@ -228,22 +230,22 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                     onChange={(e) => handleStatusChange(q, e.target.value as QuotationLead['status'])}
                     className="rounded-lg bg-card border border-rule px-2 py-1 text-[11px] font-bold text-ink"
                   >
-                    <option value="pending">รอติดต่อ</option>
-                    <option value="quoted">ส่งราคาแล้ว</option>
-                    <option value="confirmed">คอนเฟิร์มแล้ว</option>
-                    <option value="cancelled">ยกเลิก</option>
+                    <option value="pending">{t('padm.qsPending')}</option>
+                    <option value="quoted">{t('padm.qsQuoted')}</option>
+                    <option value="confirmed">{t('padm.qsConfirmed')}</option>
+                    <option value="cancelled">{t('padm.qsCancelled')}</option>
                   </select>
                   <button
                     onClick={() => setEditingQuote(q)}
                     className="grid h-7 w-7 place-items-center rounded-lg bg-card hover:bg-paper-2 text-ink border border-rule transition-transform active:scale-95"
-                    title="แก้ไขใบเสนอราคา"
+                    title={t('padm.editQuoteTitle')}
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => setDeletingQuote(q)}
                     className="grid h-7 w-7 place-items-center rounded-lg bg-berry-soft hover:bg-berry/20 text-berry transition-transform active:scale-95"
-                    title="ลบคำขอนี้"
+                    title={t('padm.deleteQuoteTitle')}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -252,43 +254,43 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
 
               <div className="my-3 space-y-1 rounded-xl border border-rule bg-card p-3 text-xs">
                 <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">เส้นทางที่ต้องการ:</span>
+                  <span className="text-ink-2">{t('padm.qRoute')}</span>
                   <span className="font-bold text-ink text-right">{q.route}</span>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">จำนวนผู้โดยสาร / รถ:</span>
+                  <span className="text-ink-2">{t('padm.qPaxCar')}</span>
                   <span className="font-bold text-ink text-right">{q.passengers}</span>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">ระดับมาตรฐานรถ:</span>
+                  <span className="text-ink-2">{t('padm.qTier')}</span>
                   <span className="font-bold text-ink text-right">
-                    {VEHICLE_TIER_META[q.vehicleTier].label} ({q.carCount} คัน)
+                    {t('padm.qTierVal', { tier: VEHICLE_TIER_META[q.vehicleTier].label, n: q.carCount })}
                   </span>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">ประกันอุบัติเหตุกลุ่ม:</span>
+                  <span className="text-ink-2">{t('padm.qInsurance')}</span>
                   <span className="font-bold text-ink">
-                    {q.includeInsurance ? 'คุ้มครอง 1,000,000 บาท/ท่าน' : 'ไม่เพิ่ม'}
+                    {q.includeInsurance ? t('padm.qInsCover') : t('padm.qInsNone')}
                   </span>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">ราคาประเมินเบื้องต้น:</span>
+                  <span className="text-ink-2">{t('padm.qEstPrice')}</span>
                   <span className="font-mono font-extrabold text-accent">฿{formatBaht(q.estimatedPrice)}</span>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">ขอใบกำกับภาษี:</span>
-                  <span className="font-bold text-ink">{q.needsTaxInvoice ? 'ต้องการ (หัก 3%)' : 'ไม่ต้องการ'}</span>
+                  <span className="text-ink-2">{t('padm.qNeedTax')}</span>
+                  <span className="font-bold text-ink">{q.needsTaxInvoice ? t('padm.qTaxYes') : t('padm.qTaxNo')}</span>
                 </div>
                 <div className="flex justify-between gap-3 border-t border-rule pt-1.5 mt-1.5">
                   <span className="text-ink-2">
-                    ค่าแนะนำพาร์ตเนอร์ ({q.carCount} คัน x ฿{LEAD_FEE_PER_CAR}):
+                    {t('padm.qLeadFee', { cars: q.carCount, per: LEAD_FEE_PER_CAR })}
                   </span>
                   <span className="font-mono font-extrabold text-sun-ink">฿{formatBaht(leadFee)}</span>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <span className="text-ink-2">กองรถที่รับงาน:</span>
+                  <span className="text-ink-2">{t('padm.qPartner')}</span>
                   <span className="font-bold text-ink">
-                    {q.assignedPartner ? q.assignedPartner : <span className="italic text-ink-3">ยังไม่มอบหมาย</span>}
+                    {q.assignedPartner ? q.assignedPartner : <span className="italic text-ink-3">{t('padm.qUnassigned')}</span>}
                   </span>
                 </div>
               </div>
@@ -301,17 +303,17 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                       trackCall({
                         targetType: 'corporate_quote',
                         targetId: q.id,
-                        targetTitle: `โทรหาลูกค้าองค์กร: ${q.companyName}`,
+                        targetTitle: t('padm.callCorpTitle', { name: q.companyName }),
                         phoneNumber: q.phone,
                       });
                     }}
                     className="text-xs font-bold text-accent-deep hover:underline inline-flex items-center gap-1 font-mono"
                   >
                     <PhoneCall className="h-3.5 w-3.5" />
-                    โทร {q.phone}
+                    {t('padm.phonePrefix', { phone: q.phone })}
                   </a>
                   <span className="text-[10px] text-ink-2">
-                    ส่งเมื่อ: {new Date(q.submittedAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    {t('padm.submittedAt', { date: new Date(q.submittedAt).toLocaleDateString(locale === 'en' ? 'en-GB' : locale === 'zh' ? 'zh-CN' : 'th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) })}
                   </span>
                 </div>
 
@@ -329,14 +331,14 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                   {copyState?.id === q.id && copyState.ok ? (
                     <>
                       <Check className="h-3.5 w-3.5" />
-                      <span>คัดลอกข้อความ LINE แล้ว</span>
+                      <span>{t('padm.copiedLine')}</span>
                     </>
                   ) : copyState?.id === q.id && !copyState.ok ? (
-                    <span>คัดลอกไม่สำเร็จ กรุณาลองใหม่</span>
+                    <span>{t('padm.copyFailed')}</span>
                   ) : (
                     <>
                       <Copy className="h-3.5 w-3.5" />
-                      <span>คัดลอกสรุปงานส่ง LINE พาร์ตเนอร์</span>
+                      <span>{t('padm.copySummary')}</span>
                     </>
                   )}
                 </button>
@@ -352,13 +354,13 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-ink/70 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-lg rounded-2xl bg-card p-6 shadow-2xl border border-rule text-ink my-8">
             <h3 className="font-display font-extrabold text-lg mb-4 text-ink">
-              ✏️ แก้ไขข้อมูลใบเสนอราคาองค์กร
+              {t('padm.editQuoteForm')}
             </h3>
 
             <form onSubmit={handleSaveQuote} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ชื่อองค์กร / บริษัท *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fOrgName')}</label>
                   <input
                     name="companyName"
                     defaultValue={editingQuote.companyName}
@@ -367,7 +369,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">ชื่อผู้ติดต่อ</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fContactName')}</label>
                   <input
                     name="contactName"
                     defaultValue={editingQuote.contactName || ''}
@@ -378,7 +380,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">เบอร์โทรศัพท์ *</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPhone')}</label>
                   <input
                     name="phone"
                     defaultValue={editingQuote.phone}
@@ -387,7 +389,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">วันที่เดินทาง</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fTravelDate')}</label>
                   <input
                     name="travelDate"
                     defaultValue={editingQuote.travelDate}
@@ -397,7 +399,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
               </div>
 
               <div>
-                <label className="font-bold text-ink block mb-1">เส้นทาง / แผนการเดินทาง</label>
+                <label className="font-bold text-ink block mb-1">{t('padm.fRoutePlan')}</label>
                 <input
                   name="route"
                   defaultValue={editingQuote.route}
@@ -407,7 +409,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">จำนวนผู้โดยสาร / คันรถ</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPaxCar')}</label>
                   <input
                     name="passengers"
                     defaultValue={editingQuote.passengers}
@@ -415,7 +417,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">ราคาเสนอ (บาท)</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fPriceOffer')}</label>
                   <input
                     name="estimatedPrice"
                     type="number"
@@ -427,27 +429,27 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-ink block mb-1">ใบกำกับภาษี</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fTaxInvoiceShort')}</label>
                   <select
                     name="needsTaxInvoice"
                     defaultValue={editingQuote.needsTaxInvoice ? 'true' : 'false'}
                     className={inputClass}
                   >
-                    <option value="true">ต้องการใบกำกับภาษี</option>
-                    <option value="false">ไม่ต้องการ</option>
+                    <option value="true">{t('padm.taxNeed')}</option>
+                    <option value="false">{t('padm.taxNotNeed')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-ink block mb-1">สถานะ</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fStatus')}</label>
                   <select
                     name="status"
                     defaultValue={editingQuote.status}
                     className={`${inputClass} font-bold`}
                   >
-                    <option value="pending">รอการติดต่อ (Pending)</option>
-                    <option value="quoted">ส่งราคาแล้ว (Quoted)</option>
-                    <option value="confirmed">คอนเฟิร์มแล้ว (Confirmed)</option>
-                    <option value="cancelled">ลูกค้ายกเลิก (Cancelled)</option>
+                    <option value="pending">{t('padm.qsPendingLong')}</option>
+                    <option value="quoted">{t('padm.qsQuotedLong')}</option>
+                    <option value="confirmed">{t('padm.qsConfirmedLong')}</option>
+                    <option value="cancelled">{t('padm.qsCancelledLong')}</option>
                   </select>
                 </div>
               </div>
@@ -457,13 +459,13 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                 <div className="flex items-center justify-between">
                   <span className="font-extrabold text-ink">🚐 B2B Fleet Matching & Lead Fee</span>
                   <span className="text-[10px] font-bold text-ink-2">
-                    ค่าแนะนำ = จำนวนคัน x ฿{LEAD_FEE_PER_CAR}
+                    {t('padm.leadFeeFormula', { per: LEAD_FEE_PER_CAR })}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="font-bold text-ink block mb-1">จำนวนคันรถ</label>
+                    <label className="font-bold text-ink block mb-1">{t('padm.fCarCount')}</label>
                     <input
                       name="carCount"
                       type="number"
@@ -474,7 +476,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-ink block mb-1">ระดับมาตรฐานรถ</label>
+                    <label className="font-bold text-ink block mb-1">{t('padm.fTier')}</label>
                     <select
                       name="vehicleTier"
                       defaultValue={editingQuote.vehicleTier}
@@ -491,7 +493,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="font-bold text-ink block mb-1">ประเภทองค์กร</label>
+                    <label className="font-bold text-ink block mb-1">{t('padm.fOrgType')}</label>
                     <select
                       name="orgType"
                       defaultValue={editingQuote.orgType}
@@ -505,31 +507,31 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                     </select>
                   </div>
                   <div>
-                    <label className="font-bold text-ink block mb-1">ประกันอุบัติเหตุกลุ่ม</label>
+                    <label className="font-bold text-ink block mb-1">{t('padm.fInsuranceLabel')}</label>
                     <select
                       name="includeInsurance"
                       defaultValue={editingQuote.includeInsurance ? 'true' : 'false'}
                       className={inputClass}
                     >
-                      <option value="true">คุ้มครอง 1,000,000 บาท/ท่าน</option>
-                      <option value="false">ไม่เพิ่มประกัน</option>
+                      <option value="true">{t('padm.insCoverOpt')}</option>
+                      <option value="false">{t('padm.insNoneOpt')}</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="font-bold text-ink block mb-1">พาร์ตเนอร์กองรถที่รับงาน (assigned partner)</label>
+                  <label className="font-bold text-ink block mb-1">{t('padm.fAssignedPartner')}</label>
                   <input
                     name="assignedPartner"
                     defaultValue={editingQuote.assignedPartner || ''}
-                    placeholder="เช่น ล้านนาคาราวาน / Chiang Mai Fleet"
+                    placeholder={t('padm.fAssignedPartnerPh')}
                     className={inputClass}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="font-bold text-ink block mb-1">สถานะค่าแนะนำ (Lead Fee)</label>
+                    <label className="font-bold text-ink block mb-1">{t('padm.fLeadFeeStatus')}</label>
                     <select
                       name="leadFeeStatus"
                       defaultValue={editingQuote.leadFeeStatus}
@@ -543,7 +545,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                     </select>
                   </div>
                   <div>
-                    <label className="font-bold text-ink block mb-1">ยอดค่าแนะนำที่เรียกเก็บ</label>
+                    <label className="font-bold text-ink block mb-1">{t('padm.fLeadFeeAmount')}</label>
                     <div className="p-2 rounded-xl bg-card border border-rule font-mono font-extrabold text-sun-ink">
                       ฿{formatBaht(calcLeadFee(editingQuote.carCount))}
                     </div>
@@ -557,14 +559,14 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                   onClick={() => setEditingQuote(null)}
                   className="rounded-pill px-4 py-2 text-xs font-bold text-ink-2 hover:bg-paper"
                 >
-                  ยกเลิก
+                  {t('padm.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="rounded-pill bg-accent px-5 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-accent-deep transition-transform active:scale-95 disabled:opacity-50"
                 >
-                  {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+                  {isSubmitting ? t('padm.saving') : t('padm.save')}
                 </button>
               </div>
             </form>
@@ -575,7 +577,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
       {/* Delete Confirmation Modal */}
       <AdminDeleteModal
         isOpen={Boolean(deletingQuote)}
-        title="ยืนยันการลบใบเสนอราคา"
+        title={t('padm.delQuoteTitle')}
         itemTitle={`${deletingQuote?.companyName} (${deletingQuote?.route})`}
         isDeleting={isSubmitting}
         onClose={() => setDeletingQuote(null)}

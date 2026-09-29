@@ -33,9 +33,9 @@ export const Footer: React.FC<FooterProps> = ({
   };
 
   return (
-    <footer className="w-full bg-white dark:bg-slate-950 border-t border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300 py-12 transition-colors">
+    <footer className="w-full bg-white dark:bg-slate-950 border-t border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300 py-8 sm:py-10 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-8 border-b border-slate-200 dark:border-slate-800">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pb-6 border-b border-slate-200 dark:border-slate-800">
           {/* Col 1: Brand Info */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
@@ -55,14 +55,14 @@ export const Footer: React.FC<FooterProps> = ({
               />
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-light">
-              แพลตฟอร์มเช่าเหมารถตู้ VIP และยานพาหนะพร้อมคนขับอันดับ 1 ของไทย คอนเนกต์ลูกค้าและเจ้าของรถโดยตรง โปร่งใส ไร้ค่าหัวคิว
+              {t('foot.brandDesc')}
             </p>
             <div className="flex items-center gap-2 pt-1 font-mono text-[10px]">
               <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 font-bold border border-emerald-300 dark:border-emerald-700 rounded-none">
-                <span className="material-symbols-outlined text-[12px]">verified</span> ดีลตรง 100%
+                <span className="material-symbols-outlined text-[12px]">verified</span> {t('foot.badgeDirect')}
               </span>
               <span className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 px-2 py-0.5 font-bold border border-amber-300 dark:border-amber-700 rounded-none">
-                <span className="material-symbols-outlined text-[12px]">security</span> พ.ร.บ. คุ้มครอง
+                <span className="material-symbols-outlined text-[12px]">security</span> {t('foot.badgePa')}
               </span>
             </div>
           </div>
@@ -70,7 +70,7 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 2: Services */}
           <div className="flex flex-col gap-2.5">
             <h4 className="text-xs font-bold text-slate-950 dark:text-white uppercase tracking-wider">
-              {t('foot.vehTitle')}
+              {t('foot.services')}
             </h4>
             <ul className="flex flex-col gap-1.5 text-xs text-slate-600 dark:text-slate-400">
               <li>
@@ -79,7 +79,7 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={() => handleSelectTab('van')}
                   className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
                 >
-                  {t('foot.veh1')}
+                  {t('foot.sVanVip')}
                 </button>
               </li>
               <li>
@@ -88,7 +88,7 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={() => handleSelectTab('van')}
                   className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
                 >
-                  Toyota Majesty / Alphard รับรอง VIP
+                  {t('foot.sMajesty')}
                 </button>
               </li>
               <li>
@@ -97,7 +97,7 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={() => handleSelectTab('car')}
                   className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
                 >
-                  เช่ารถเก๋ง / SUV ขับเองทั่วไทย
+                  {t('foot.sSelfDrive')}
                 </button>
               </li>
               <li>
@@ -106,7 +106,7 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={() => scrollTo('tripboard')}
                   className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
                 >
-                  TripBoard กระดานหารถ & แชร์ทริป
+                  {t('foot.sBoard')}
                 </button>
               </li>
               <li>
@@ -115,7 +115,7 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={() => handleSelectTab('corporate')}
                   className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
                 >
-                  บริการเหมารถคาราวานสัมมนา B2B
+                  {t('foot.sB2b')}
                 </button>
               </li>
             </ul>
@@ -124,31 +124,19 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 3: Service Zones */}
           <div className="flex flex-col gap-2.5">
             <h4 className="text-xs font-bold text-slate-950 dark:text-white uppercase tracking-wider">
-              พื้นที่ให้บริการ
+              {t('foot.routes')}
             </h4>
             <ul className="flex flex-col gap-1.5 text-xs text-slate-600 dark:text-slate-400">
               <li>
                 <button
                   type="button"
                   onClick={() => {
-                    if (onSelectZone) onSelectZone('north');
+                    if (onSelectZone) onSelectZone('isan');
                     scrollTo('results');
                   }}
                   className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
                 >
-                  เช่ารถตู้ เชียงใหม่ & ภาคเหนือ
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onSelectZone) onSelectZone('bkk');
-                    scrollTo('results');
-                  }}
-                  className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
-                >
-                  เช่ารถตู้ กรุงเทพฯ & ปริมณฑล
+                  {t('foot.rKhaoyai')}
                 </button>
               </li>
               <li>
@@ -160,31 +148,43 @@ export const Footer: React.FC<FooterProps> = ({
                   }}
                   className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
                 >
-                  เช่ารถตู้ พัทยา & ชลบุรี - สัตหีบ
+                  {t('foot.rPattaya')}
                 </button>
               </li>
               <li>
                 <button
                   type="button"
                   onClick={() => {
-                    if (onSelectZone) onSelectZone('south');
+                    if (onSelectZone) onSelectZone('north');
                     scrollTo('results');
                   }}
                   className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
                 >
-                  เช่ารถตู้ ภูเก็ต & พังงา - กระบี่
+                  {t('foot.rMonjam')}
                 </button>
               </li>
               <li>
                 <button
                   type="button"
                   onClick={() => {
-                    if (onSelectZone) onSelectZone('isan');
+                    if (onSelectZone) onSelectZone('bkk');
                     scrollTo('results');
                   }}
                   className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
                 >
-                  เช่ารถตู้ เขาใหญ่ - ปากช่อง - โคราช
+                  {t('foot.rHuahin')}
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onSelectZone) onSelectZone('bkk');
+                    scrollTo('results');
+                  }}
+                  className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
+                >
+                  {t('foot.rAirport')}
                 </button>
               </li>
             </ul>
@@ -193,7 +193,7 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 4: Contact & Socials */}
           <div className="flex flex-col gap-2.5">
             <h4 className="text-xs font-bold text-slate-950 dark:text-white uppercase tracking-wider">
-              ติดต่อและช่วยเหลือ
+              {t('foot.contact')}
             </h4>
             <ul className="flex flex-col gap-1.5 text-xs text-slate-600 dark:text-slate-400">
               <li>
@@ -202,7 +202,7 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={onOpenRegisterModal}
                   className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left font-semibold text-emerald-700 dark:text-emerald-400"
                 >
-                  สมัครเข้าร่วมเป็นคนขับ (0% Fee)
+                  {t('foot.driverJoin')}
                 </button>
               </li>
               {onOpenDriverSelfService && (
@@ -216,6 +216,9 @@ export const Footer: React.FC<FooterProps> = ({
                   </button>
                 </li>
               )}
+              <li className="text-slate-600 dark:text-slate-400">
+                {t('foot.support247')}
+              </li>
               <li>
                 <a
                   className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold hover:underline"
@@ -246,13 +249,13 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom DBD note */}
         <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 dark:text-slate-400">
-          <p>© 2025 TripDee Co., Ltd. สงวนลิขสิทธิ์ทุกประการ. ทะเบียนพาณิชย์อิเล็กทรอนิกส์ DBD Registered.</p>
+          <p>{t('foot.copyNote')}</p>
           <div className="flex items-center gap-4">
-            <span className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">นโยบายความเป็นส่วนตัว</span>
+            <span className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">{t('foot.privacyLink')}</span>
             <span>/</span>
-            <span className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">ข้อกำหนดการให้บริการ</span>
+            <span className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">{t('foot.termsLink')}</span>
             <span>/</span>
-            <span className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">มาตรฐานความปลอดภัยคนขับ</span>
+            <span className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">{t('foot.safety')}</span>
           </div>
         </div>
       </div>

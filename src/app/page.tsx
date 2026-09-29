@@ -72,8 +72,9 @@ function SectionHead({
   caption: string;
   action?: React.ReactNode;
 }) {
+  const { t } = useLanguage();
   return (
-    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-slate-300 dark:border-slate-800 mb-6">
+    <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 pb-3 border-b border-slate-300 dark:border-slate-800 mb-4 sm:mb-5">
       <div>
         <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-1 flex items-center gap-1">
           <span className="material-symbols-outlined text-[15px]">verified</span>
@@ -90,7 +91,7 @@ function SectionHead({
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 px-3 py-1.5 flex items-center gap-1.5 rounded-none">
           <span className="material-symbols-outlined text-[16px] text-emerald-600">shield_check</span>
-          <span>คุ้มครอง พ.ร.บ. ชั้น 1 ตลอดการเดินทาง</span>
+          <span>{t('home.insuranceBadge')}</span>
         </span>
         {action}
       </div>
@@ -102,8 +103,8 @@ export default function HomePage() {
   const { user } = useAuth();
   const { t, locale } = useLanguage();
   const [activeTab, setActiveTab] = useState<string>('van');
-  const [selectedZone, setSelectedZone] = useState<string>('all');
-  const [selectedSeats, setSelectedSeats] = useState<string>('all');
+  const [selectedZone, setSelectedZone] = useState<string>('north');
+  const [selectedSeats, setSelectedSeats] = useState<string>('9');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const isClient = useSyncExternalStore(
     () => () => {},
@@ -212,6 +213,8 @@ export default function HomePage() {
       const matchesSeats =
         selectedSeats === 'all'
           ? true
+          : selectedSeats === '4-7'
+          ? vehicle.seats >= 4 && vehicle.seats <= 7
           : selectedSeats === '4-5' || selectedSeats === '4'
           ? vehicle.seats <= 5
           : selectedSeats === '7'
@@ -424,33 +427,22 @@ export default function HomePage() {
       )}
 
       {(activeTab === 'van' || activeTab === 'suv_driver' || activeTab === 'car') && (
-        <>
-          <Hero
-            selectedZone={selectedZone}
-            setSelectedZone={setSelectedZone}
-            selectedSeats={selectedSeats}
-            setSelectedSeats={setSelectedSeats}
-            searchKeyword={searchKeyword}
-            setSearchKeyword={setSearchKeyword}
-            resultCount={filteredVehicles.length}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            plateFilter={plateFilter}
-            setPlateFilter={setPlateFilter}
-            totalVanCount={totalVanCount}
-            totalSuvDriverCount={totalSuvDriverCount}
-            totalCarCount={totalCarCount}
-          />
-          <MemberPerksSection
-            onSelectCorporate={() => navigateToSection('corporate', 'corporate')}
-            onOpenTripBoardPost={() => {
-              const trigger = document.getElementById('open-post-modal-btn');
-              const el = document.getElementById('tripboard');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-              if (trigger) trigger.click();
-            }}
-          />
-        </>
+        <Hero
+          selectedZone={selectedZone}
+          setSelectedZone={setSelectedZone}
+          selectedSeats={selectedSeats}
+          setSelectedSeats={setSelectedSeats}
+          searchKeyword={searchKeyword}
+          setSearchKeyword={setSearchKeyword}
+          resultCount={filteredVehicles.length}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          plateFilter={plateFilter}
+          setPlateFilter={setPlateFilter}
+          totalVanCount={totalVanCount}
+          totalSuvDriverCount={totalSuvDriverCount}
+          totalCarCount={totalCarCount}
+        />
       )}
       <main id="main-content" className="mx-auto w-full max-w-7xl flex-1 px-margin lg:px-gutter pb-20 md:pb-8">
         {activeTab === 'hotel' ? (
@@ -474,9 +466,22 @@ export default function HomePage() {
             <CorporateSection vehicles={vehicles} />
           </div>
         ) : (
-          <div key={activeTab} className="td-panel-enter pb-6 sm:pb-16">
+          <div key={activeTab} className="td-panel-enter pb-4 sm:pb-8">
+            {/* TripBoard section — full-bleed dark band per reference design */}
+            <div className="w-[100vw] max-w-none relative left-1/2 -translate-x-1/2">
+              <TripBoard />
+            </div>
+
+            {/* B2B Corporate Caravan Quotation Engine — full-bleed dark band per reference design */}
+            <div className="w-[100vw] max-w-none relative left-1/2 -translate-x-1/2">
+              <CorporateSection vehicles={vehicles} />
+            </div>
+
+            {/* Trusted Community Partners (4 Grid Hairline Cards) */}
+            <TrustedPartnersSection />
+
             {/* Primary Vehicle Catalog & Filter Rail */}
-            <section id="results" aria-label={t('home.resultsAria')} className="mt-3 sm:mt-8 scroll-mt-20 sm:scroll-mt-28">
+            <section id="results" aria-label={t('home.resultsAria')} className="mt-2 sm:mt-4 scroll-mt-20 sm:scroll-mt-24">
               <SectionHead
                 title={
                   activeTab === 'van'
@@ -668,7 +673,6 @@ export default function HomePage() {
                       (index === 2 && filteredVehicles.length >= 3) ||
                       ((index + 1) % 6 === 0 && index < filteredVehicles.length - 1);
                     const sponsorIndex = (index === 2 ? 0 : Math.floor(index / 6) + 1) % SPONSORS.length;
-                    const currentSponsor = getLocalizedSponsor(SPONSORS[sponsorIndex], locale);
 
                     return (
                       <React.Fragment key={vehicle.id}>
@@ -678,9 +682,9 @@ export default function HomePage() {
                           onSelectDetail={handleSelectDetail}
                           onViewFleet={handleViewFleet}
                         />
-                        {showInFeedAd && currentSponsor && (
+                        {showInFeedAd && (
                           <div className="col-span-1 md:col-span-2 lg:col-span-3 my-1">
-                            <InFeedSponsorCard sponsor={currentSponsor} />
+                            <InFeedSponsorCard sponsors={SPONSORS} initialIndex={sponsorIndex} />
                           </div>
                         )}
                       </React.Fragment>
@@ -751,18 +755,16 @@ export default function HomePage() {
               )}
             </section>
 
-            {/* TripBoard section (Bauhaus Dark Architectural Grid) */}
-            <div className="mt-10 sm:mt-14">
-              <TripBoard />
-            </div>
-
-            {/* Trusted Community Partners (4 Grid Hairline Cards) */}
-            <TrustedPartnersSection />
-
-            {/* B2B Corporate Caravan Quotation Engine */}
-            <div className="mt-10 sm:mt-14">
-              <CorporateSection vehicles={vehicles} />
-            </div>
+            {/* Member perks — placed after fleet catalog per reference design flow */}
+            <MemberPerksSection
+              onSelectCorporate={() => navigateToSection('corporate', 'corporate')}
+              onOpenTripBoardPost={() => {
+                const trigger = document.getElementById('open-post-modal-btn');
+                const el = document.getElementById('tripboard');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                if (trigger) trigger.click();
+              }}
+            />
 
             {/* Driver Partner Enrollment Banner */}
             <DriverEnrollmentBanner onOpenRegister={() => setIsRegisterModalOpen(true)} />

@@ -50,7 +50,7 @@ export const DangerZone: React.FC<DangerZoneProps> = ({
       await onDelete();
       setIsOpen(false);
     } catch (err) {
-      setErrorMsg((err as Error).message || 'เกิดข้อผิดพลาดในการลบข้อมูล กรุณาลองใหม่อีกครั้ง');
+      setErrorMsg((err as Error).message || t('danger.deleteErrorFallback'));
       setIsDeleting(false);
     }
   };
@@ -59,51 +59,50 @@ export const DangerZone: React.FC<DangerZoneProps> = ({
     <>
       {/* Danger Zone Container */}
       <div
-        className={`rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/20 p-space-md sm:p-space-lg text-left space-y-space-sm ${className}`}
+        className={`rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/40 dark:bg-rose-950/20 p-4 sm:p-5 text-left space-y-3 ${className}`}
       >
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+          <div className="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
             <ShieldAlert className="w-5 h-5" />
           </div>
-          <div className="space-y-1 flex-1">
-            <div className="flex items-center gap-2">
-              <h4 className="font-headline-md text-headline-md text-rose-900 dark:text-rose-200 font-bold">
+          <div className="space-y-1 flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="text-sm sm:text-base text-rose-900 dark:text-rose-200 font-bold">
                 {title || t('danger.title')}
               </h4>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-200/70 dark:bg-rose-900/70 text-rose-800 dark:text-rose-300">
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
                 PDPA / Privacy
               </span>
             </div>
-            <p className="font-body-subtext text-body-subtext text-rose-700/90 dark:text-rose-300/80 leading-relaxed">
+            <p className="text-xs text-rose-700/90 dark:text-rose-300/80 leading-relaxed">
               {description || t('danger.defaultDesc')}
             </p>
           </div>
         </div>
 
-        <div className="pt-2 flex justify-end">
+        <div className="pt-1 flex justify-end">
           <button
             type="button"
             onClick={handleOpen}
-            className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-sm transition-all flex items-center gap-2"
+            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
             <span>{buttonLabel || t('danger.deleteBtn')}</span>
           </button>
         </div>
       </div>
-
       {/* Double Confirmation Modal (2-Step Verification) */}
       {isOpen && (
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby="danger-modal-title"
-          className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-navy-deep/80 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-500 flex items-center justify-center p-4 bg-navy-deep/75 backdrop-blur-md animate-fade-in"
           onClick={() => !isDeleting && setIsOpen(false)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg rounded-3xl bg-paper-elevated dark:bg-slate-900 border border-rose-300 dark:border-rose-900/80 p-6 sm:p-8 shadow-2xl space-y-5 text-left text-ink-primary dark:text-slate-100 animate-in zoom-in-95 duration-150"
+            className="relative w-full max-w-lg rounded-3xl bg-paper-elevated dark:bg-slate-900 border border-rose-200 dark:border-rose-900/80 p-6 sm:p-7 shadow-2xl space-y-5 text-left text-ink-primary dark:text-slate-100 animate-in zoom-in-95 duration-150"
           >
             {/* Close Button */}
             <button
@@ -134,7 +133,7 @@ export const DangerZone: React.FC<DangerZoneProps> = ({
             {targetName && (
               <div className="p-3 rounded-xl bg-paper-surface-muted dark:bg-slate-800 border border-border-subtle text-xs font-bold text-navy-deep dark:text-white flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-rose-500" />
-                <span>เป้าหมายที่ต้องการลบ: <strong className="text-rose-600 dark:text-rose-400">{targetName}</strong></span>
+                <span>{t('danger.targetLabel')} <strong className="text-rose-600 dark:text-rose-400">{targetName}</strong></span>
               </div>
             )}
 

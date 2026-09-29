@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface MemberPerksSectionProps {
   onSelectCorporate?: () => void;
@@ -11,8 +12,11 @@ export const MemberPerksSection: React.FC<MemberPerksSectionProps> = ({
   onSelectCorporate,
   onOpenTripBoardPost,
 }) => {
+  const { t } = useLanguage();
   const [claimed, setClaimed] = useState<{ [key: string]: boolean }>({});
 
+  // ซ่อน "สิทธิพิเศษสำหรับสมาชิกใหม่ & ผู้เดินทาง" ตามคำขอ
+  if (true as boolean) return null;
   const handleClaim = (id: string, action?: () => void) => {
     setClaimed((prev) => ({ ...prev, [id]: true }));
     if (action) {
@@ -21,7 +25,7 @@ export const MemberPerksSection: React.FC<MemberPerksSectionProps> = ({
   };
 
   return (
-    <section aria-label="สิทธิพิเศษสำหรับสมาชิก" className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <section aria-label={t('perk.aria')} className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-none shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 sm:pb-5 border-b border-slate-200 dark:border-slate-800 mb-5 sm:mb-6">
           <div className="flex items-center gap-3">
@@ -30,10 +34,10 @@ export const MemberPerksSection: React.FC<MemberPerksSectionProps> = ({
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
-                สิทธิพิเศษสำหรับสมาชิกใหม่ & ผู้เดินทาง
+                {t('perk.title')}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
-                กดรับคูปองและสิทธิ์ส่วนลดพิเศษ ใช้ร่วมกับพาร์ทเนอร์ TripDee ได้ทันที
+                {t('perk.subtitle')}
               </p>
             </div>
           </div>
@@ -45,7 +49,7 @@ export const MemberPerksSection: React.FC<MemberPerksSectionProps> = ({
               document.getElementById('partners')?.scrollIntoView({ behavior: 'smooth' });
             }}
           >
-            <span>ดูพาร์ทเนอร์และสิทธิ์ทั้งหมด (4 สิทธิ์)</span>
+            <span>{t('perk.allCoupons', { n: 4 })}</span>
             <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
           </a>
         </div>
@@ -57,17 +61,17 @@ export const MemberPerksSection: React.FC<MemberPerksSectionProps> = ({
             <div>
               <div className="flex items-center justify-between pb-2 mb-2 border-b border-amber-200 dark:border-amber-900/50">
                 <span className="text-[10px] bg-amber-600 text-white font-bold px-1.5 py-0.5 uppercase tracking-wider">
-                  ที่พักพันธมิตร
+                  {t('perk.v1tag')}
                 </span>
                 <span className="text-xs font-extrabold text-amber-900 dark:text-amber-300">
-                  ลดทันที 10%
+                  {t('perk.v1off')}
                 </span>
               </div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                ส่วนลด 10% ที่พักพาร์ทเนอร์
+                {t('perk.v1title')}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                ใช้ลดโรงแรม & รีสอร์ตที่ร่วมรายการ เช่น The Connect Chiang Mai
+                {t('perk.v1desc')}
               </p>
             </div>
             <button
@@ -79,7 +83,7 @@ export const MemberPerksSection: React.FC<MemberPerksSectionProps> = ({
               className="mt-4 w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs border border-amber-600 transition-all rounded-none cursor-pointer"
               type="button"
             >
-              {claimed['v1'] ? '✓ รับสิทธิ์แล้ว (ดูพิกัด)' : 'กดรับสิทธิ์'}
+              {claimed['v1'] ? t('perk.claimed1') : t('perk.claim')}
             </button>
           </div>
 
@@ -91,14 +95,14 @@ export const MemberPerksSection: React.FC<MemberPerksSectionProps> = ({
                   Welcome Drink
                 </span>
                 <span className="text-xs font-extrabold text-emerald-900 dark:text-emerald-300">
-                  ฟรี กาแฟสด
+                  {t('perk.v2off')}
                 </span>
               </div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                ฟรี กาแฟ & เครื่องดื่มคณะเดินทาง
+                {t('perk.v2title')}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                รับเครื่องดื่มฟรีเมื่อแวะจุดพักรถและคาเฟ่ในเครือข่าย TripDee
+                {t('perk.v2desc')}
               </p>
             </div>
             <button
@@ -106,7 +110,7 @@ export const MemberPerksSection: React.FC<MemberPerksSectionProps> = ({
               className="mt-4 w-full py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs border border-emerald-800 transition-all rounded-none cursor-pointer"
               type="button"
             >
-              {claimed['v2'] ? '✓ รับสิทธิ์แล้ว (แจ้งคนขับ)' : 'กดรับสิทธิ์'}
+              {claimed['v2'] ? t('perk.claimed2') : t('perk.claim')}
             </button>
           </div>
 
@@ -115,17 +119,17 @@ export const MemberPerksSection: React.FC<MemberPerksSectionProps> = ({
             <div>
               <div className="flex items-center justify-between pb-2 mb-2 border-b border-sky-200 dark:border-sky-900/50">
                 <span className="text-[10px] bg-sky-700 text-white font-bold px-1.5 py-0.5 uppercase tracking-wider">
-                  สำหรับนิติบุคคล
+                  {t('perk.v3tag')}
                 </span>
                 <span className="text-xs font-extrabold text-sky-900 dark:text-sky-300">
-                  หัก 3% ได้
+                  {t('perk.v3off')}
                 </span>
               </div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                สิทธิ์ออกใบกำกับภาษีทันที
+                {t('perk.v3title')}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                บริการเอกสารวางบิล นิติบุคคลเบิกงบสัมมนาบริษัทได้ 100%
+                {t('perk.v3desc')}
               </p>
             </div>
             <button
@@ -139,7 +143,7 @@ export const MemberPerksSection: React.FC<MemberPerksSectionProps> = ({
               className="mt-4 w-full py-2 bg-sky-700 hover:bg-sky-600 text-white font-bold text-xs border border-sky-800 transition-all rounded-none cursor-pointer"
               type="button"
             >
-              ขอรับใบกำกับภาษี
+              {t('perk.v3cta')}
             </button>
           </div>
 
@@ -151,14 +155,14 @@ export const MemberPerksSection: React.FC<MemberPerksSectionProps> = ({
                   TripBoard Free
                 </span>
                 <span className="text-xs font-extrabold text-purple-900 dark:text-purple-300">
-                  ฟรี 100%
+                  {t('perk.v4off')}
                 </span>
               </div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                โพสต์ประกาศหารถ & แชร์ทริป
+                {t('perk.v4title')}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                ตั้งงบที่คุณต้องการ หรือหาเพื่อนหารค่ารถ ไม่มีค่าธรรมเนียมแพลตฟอร์ม
+                {t('perk.v4desc')}
               </p>
             </div>
             <button
@@ -175,7 +179,7 @@ export const MemberPerksSection: React.FC<MemberPerksSectionProps> = ({
               className="mt-4 w-full py-2 bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs border border-purple-800 transition-all rounded-none cursor-pointer"
               type="button"
             >
-              ลงประกาศฟรี
+              {t('perk.v4cta')}
             </button>
           </div>
         </div>

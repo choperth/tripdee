@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Activity, CheckCircle2, RotateCcw, Zap } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface ShiftEntry extends PerformanceEntry {
   hadRecentInput?: boolean;
@@ -9,6 +10,7 @@ interface ShiftEntry extends PerformanceEntry {
 }
 
 export const ScrollQualityMonitor: React.FC = () => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [fps, setFps] = useState<number>(60);
   const [cls, setCls] = useState<number>(0);
@@ -122,8 +124,8 @@ export const ScrollQualityMonitor: React.FC = () => {
 
     setBenchmarkResult(
       isPassing
-        ? `ผ่านการทดสอบ 100% (CLS = ${clsDelta.toFixed(3)}, Jitter = 0, 60fps ลื่นไหลสมบูรณ์)`
-        : `ตรวจพบการขยับ: CLS=${clsDelta.toFixed(3)}, Jitter=${maxJitter}`
+        ? t('sqm.benchPass', { cls: clsDelta.toFixed(3) })
+        : t('sqm.benchFail', { cls: clsDelta.toFixed(3), jitter: maxJitter })
     );
     setIsBenchmarking(false);
   };
@@ -139,7 +141,7 @@ export const ScrollQualityMonitor: React.FC = () => {
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
-          title="คลิกเพื่อเปิดเครื่องมือวัดความลื่นไหลของหน้าจอ (Scroll Profiler)"
+          title={t('sqm.openTitle')}
           className="flex items-center gap-2 rounded-full bg-ink/90 backdrop-blur-md px-3.5 py-2 text-xs font-bold text-paper shadow-lg hover:bg-ink transition-transform active:scale-95 border border-rule/30"
         >
           <Activity className="h-4 w-4 text-leaf animate-pulse" />
@@ -155,21 +157,21 @@ export const ScrollQualityMonitor: React.FC = () => {
               </span>
               <div>
                 <p className="text-xs font-extrabold text-ink">Scroll Quality Monitor</p>
-                <p className="text-[10px] text-ink-2">มอนิเตอร์ความลื่นไหล & Layout Shift</p>
+                <p className="text-[10px] text-ink-2">{t('sqm.subtitle')}</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
               <button
                 onClick={resetMetrics}
-                title="รีเซ็ตสถิติ"
-                aria-label="รีเซ็ตสถิติตัววัดคุณภาพการเลื่อน"
+                title={t('sqm.resetTitle')}
+                aria-label={t('sqm.resetAria')}
                 className="grid h-6 w-6 place-items-center rounded-md hover:bg-paper text-ink-2"
               >
                 <RotateCcw className="h-3 w-3" />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                aria-label="ปิดเครื่องมือวัดคุณภาพการเลื่อน"
+                aria-label={t('sqm.closeAria')}
                 className="grid h-6 w-6 place-items-center rounded-md hover:bg-paper text-ink-2 font-bold text-xs"
               >
                 ✕
@@ -180,7 +182,7 @@ export const ScrollQualityMonitor: React.FC = () => {
           {/* Metrics Grid */}
           <div className="grid grid-cols-2 gap-2 text-xs mb-3">
             <div className="rounded-xl bg-paper p-2.5 border border-rule/60">
-              <span className="text-[10px] text-ink-2 font-semibold block">ความลื่นไหล (FPS)</span>
+              <span className="text-[10px] text-ink-2 font-semibold block">{t('sqm.fpsLabel')}</span>
               <span className={`text-lg font-mono font-extrabold ${fps >= 55 ? 'text-leaf' : fps >= 30 ? 'text-sun-ink' : 'text-berry'}`}>
                 {fps} <span className="text-[10px] font-normal text-ink-2">fps</span>
               </span>
@@ -194,16 +196,16 @@ export const ScrollQualityMonitor: React.FC = () => {
             </div>
 
             <div className="rounded-xl bg-paper p-2.5 border border-rule/60">
-              <span className="text-[10px] text-ink-2 font-semibold block">อาการกระตุก (Jitter)</span>
+              <span className="text-[10px] text-ink-2 font-semibold block">{t('sqm.jitterLabel')}</span>
               <span className={`text-lg font-mono font-extrabold ${jitterCount === 0 ? 'text-leaf' : 'text-berry'}`}>
-                {jitterCount} <span className="text-[10px] font-normal text-ink-2">ครั้ง</span>
+                {jitterCount} <span className="text-[10px] font-normal text-ink-2">{t('sqm.jitterUnit')}</span>
               </span>
             </div>
 
             <div className="rounded-xl bg-paper p-2.5 border border-rule/60">
               <span className="text-[10px] text-ink-2 font-semibold block">Top Spacer Height</span>
               <span className="text-lg font-mono font-extrabold text-ink">
-                {spacerHeight} <span className="text-[10px] font-normal text-ink-2">px (คงที่)</span>
+                {spacerHeight} <span className="text-[10px] font-normal text-ink-2">{t('sqm.pxSuffix')}</span>
               </span>
             </div>
           </div>
@@ -216,7 +218,7 @@ export const ScrollQualityMonitor: React.FC = () => {
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-accent px-3 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-accent-deep transition-transform active:scale-98 disabled:opacity-50"
             >
               <Zap className="h-3.5 w-3.5" />
-              <span>{isBenchmarking ? 'กำลังทดสอบเลื่อนหน้าจออัตโนมัติ...' : '⚡ ทดสอบ Scroll อัตโนมัติ (Benchmark)'}</span>
+              <span>{isBenchmarking ? t('sqm.benchRunning') : t('sqm.benchCta')}</span>
             </button>
 
             {benchmarkResult && (
@@ -228,7 +230,7 @@ export const ScrollQualityMonitor: React.FC = () => {
           </div>
 
           <p className="mt-3 text-[10px] text-ink-2 text-center leading-relaxed">
-            *แก้ไขอาการภาพกระตุกแล้ว: ล็อกความสูง Spacer ด้านบนคงที่ (104px) ไม่หดตัวขณะเลื่อนหน้าจอ
+            {t('sqm.footnote')}
           </p>
         </div>
       )}

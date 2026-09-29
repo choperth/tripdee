@@ -4,6 +4,8 @@
  * ค่าคงที่ทั้งหมดต้องตรงกับ supabase/04_b2b_corporate_upgrade.sql
  */
 
+import type { Locale } from '@/i18n/dictionaries';
+
 export type VehicleTier = 'standard_vip' | 'strict_compliance_30';
 export type OrgType = 'corporate' | 'government' | 'state_enterprise' | 'sme';
 export type LeadFeeStatus = 'pending' | 'collected' | 'waived';
@@ -82,6 +84,105 @@ export const ORG_TYPE_META: Record<OrgType, string> = {
 };
 
 export const ORG_TYPE_OPTIONS: OrgType[] = ['corporate', 'government', 'state_enterprise', 'sme'];
+
+/* ------------------------------------------------------------------
+ * Locale-aware labels (Thai values above stay the source of truth and
+ * are used for any non-UI payload such as LINE notifications).
+ * ------------------------------------------------------------------ */
+type NonThaiLocale = Exclude<Locale, 'th'>;
+
+type TierText = Pick<VehicleTierMeta, 'tagline' | 'specLine' | 'plateLabel' | 'highlights'>;
+
+export const VEHICLE_TIER_TEXT: Record<NonThaiLocale, Record<VehicleTier, TierText>> = {
+  en: {
+    standard_vip: {
+      tagline: 'Corporate standard grade',
+      specLine: 'Standard VIP (new-shape van)',
+      plateLabel: 'Blue plate',
+      highlights: [
+        'New-shape van (New Commuter / Majesty) with VIP seats',
+        'Budget friendly for seminars, study visits and field trips',
+        'Full corporate invoicing for reimbursement',
+        'Starting rate 2,200 - 2,500 THB/day/van',
+      ],
+    },
+    strict_compliance_30: {
+      tagline: 'Government & OAG grade',
+      specLine: 'Strict Compliance 30 (yellow-plate van)',
+      plateLabel: 'Yellow plate 30',
+      highlights: [
+        'Yellow-plate 30 vans with Department of Land Transport GPS',
+        'Fully compliant with TOR / procurement, 100% auditable',
+        'Por.Kor.5 documents, tax invoice, 3% withholding',
+        'Starting rate 3,200 - 3,500 THB/day/van',
+      ],
+    },
+  },
+  zh: {
+    standard_vip: {
+      tagline: '企业标准车型',
+      specLine: 'Standard VIP（新款面包车）',
+      plateLabel: '蓝牌',
+      highlights: [
+        '新款面包车（New Commuter / Majesty）VIP 座椅',
+        '预算友好，适合会议、考察与研学出行',
+        '可开企业发票，报销无忧',
+        '参考价 2,200 - 2,500 泰铢/天/辆',
+      ],
+    },
+    strict_compliance_30: {
+      tagline: '政府及审计级',
+      specLine: 'Strict Compliance 30（黄牌30面包车）',
+      plateLabel: '黄牌30',
+      highlights: [
+        '黄牌30面包车，装泰国陆运厅 GPS',
+        '100% 符合 TOR / 采购规范，可核查',
+        '提供 ป.ค.5 文件、增值税发票与 3% 代扣',
+        '参考价 3,200 - 3,500 泰铢/天/辆',
+      ],
+    },
+  },
+};
+
+export const ORG_TYPE_TEXT: Record<NonThaiLocale, Record<OrgType, string>> = {
+  en: {
+    corporate: 'Private company',
+    government: 'Government agency',
+    state_enterprise: 'State enterprise',
+    sme: 'General org / SME',
+  },
+  zh: {
+    corporate: '私营企业',
+    government: '政府机关',
+    state_enterprise: '国有企业',
+    sme: '一般机构 / 中小企业',
+  },
+};
+
+export const LEAD_FEE_STATUS_TEXT: Record<NonThaiLocale, Record<LeadFeeStatus, string>> = {
+  en: { pending: 'Fee pending', collected: 'Collected', waived: 'Waived' },
+  zh: { pending: '待收取', collected: '已收取', waived: '已豁免' },
+};
+
+/** Locale-aware vehicle tier metadata for UI rendering. */
+export function tierMetaFor(tier: VehicleTier, locale: Locale): VehicleTierMeta {
+  const base = VEHICLE_TIER_META[tier] ?? VEHICLE_TIER_META.standard_vip;
+  if (locale === 'th') return base;
+  const text = VEHICLE_TIER_TEXT[locale][base.key];
+  return { ...base, ...text };
+}
+
+/** Locale-aware organisation type label. */
+export function orgTypeLabel(type: OrgType, locale: Locale): string {
+  if (locale === 'th') return ORG_TYPE_META[type] ?? ORG_TYPE_META.corporate;
+  return ORG_TYPE_TEXT[locale][type] ?? ORG_TYPE_META[type];
+}
+
+/** Locale-aware lead-fee status label. */
+export function leadFeeStatusLabel(status: LeadFeeStatus, locale: Locale): string {
+  if (locale === 'th') return LEAD_FEE_STATUS_META[status] ?? LEAD_FEE_STATUS_META.pending;
+  return LEAD_FEE_STATUS_TEXT[locale][status] ?? LEAD_FEE_STATUS_META[status];
+}
 
 export const LEAD_FEE_STATUS_META: Record<LeadFeeStatus, string> = {
   pending: 'รอเก็บเงิน',

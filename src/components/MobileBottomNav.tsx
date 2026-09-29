@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { OFFICIAL_LINE_URL } from '@/lib/constants';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface MobileBottomNavProps {
   activeTab?: string;
@@ -14,6 +15,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onSelectTab,
   onNavigate,
 }) => {
+  const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState<'results' | 'tripboard' | 'corporate' | 'hotel'>(() => {
     if (activeTab === 'corporate') return 'corporate';
     if (activeTab === 'hotel') return 'hotel';
@@ -116,7 +118,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         <button
           type="button"
           onClick={() => handleNavigate('results', 'van')}
-          aria-label="ค้นหารถ"
+          aria-label={t('mnav.search')}
           className={`flex flex-col items-center justify-center gap-0.5 h-full w-full py-1 cursor-pointer transition-all active:scale-95 touch-manipulation rounded-none ${
             isResultsActive
               ? 'text-slate-950 dark:text-white font-black'
@@ -129,7 +131,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           >
             airport_shuttle
           </span>
-          <span className="text-[10px] tracking-tight">ค้นหารถ</span>
+          <span className="text-[10px] tracking-tight">{t('mnav.search')}</span>
           {isResultsActive && (
             <span className="w-3 h-0.5 bg-amber-500 rounded-none -mt-0.5" />
           )}
@@ -162,7 +164,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         <button
           type="button"
           onClick={() => handleNavigate('corporate', 'corporate')}
-          aria-label="บริการองค์กร"
+          aria-label={t('mnav.corpAria')}
           className={`flex flex-col items-center justify-center gap-0.5 h-full w-full py-1 cursor-pointer transition-all active:scale-95 touch-manipulation rounded-none ${
             isCorporateActive
               ? 'text-slate-950 dark:text-white font-black'
@@ -175,7 +177,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           >
             corporate_fare
           </span>
-          <span className="text-[10px] tracking-tight">องค์กร</span>
+          <span className="text-[10px] tracking-tight">{t('mnav.corp')}</span>
           {isCorporateActive && (
             <span className="w-3 h-0.5 bg-amber-500 rounded-none -mt-0.5" />
           )}
@@ -186,14 +188,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           href={OFFICIAL_LINE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="ติดต่อ LINE TripDee"
+          aria-label={t('mnav.lineAria')}
           className="flex flex-col items-center justify-center gap-0.5 h-full w-full py-1 text-[#06C755] hover:text-[#05b04b] active:scale-95 transition-all cursor-pointer touch-manipulation rounded-none"
         >
           <div className="relative">
             <span className="material-symbols-outlined text-[20px]">chat</span>
             <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[#06C755] ring-1 ring-white dark:ring-slate-950" />
           </div>
-          <span className="text-[10px] font-extrabold tracking-tight">ทัก LINE</span>
+          <span className="text-[10px] font-extrabold tracking-tight">{t('mnav.line')}</span>
         </a>
       </div>
     </nav>

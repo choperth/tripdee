@@ -91,7 +91,7 @@ export const ALL_VEHICLE_MODELS: string[] = VEHICLE_CATEGORY_GROUPS.flatMap((g) 
 
 export const SEAT_CAPACITY_OPTIONS = [
   { value: 'all', label: 'ทุกขนาดที่นั่ง (4 - 24 ที่นั่ง)' },
-  { value: '4-5', label: '4 - 5 ที่นั่ง (Sedan / Eco Car / Compact SUV)' },
+  { value: '4-7', label: '4 - 7 ที่นั่ง (Sedan / Eco Car / SUV)' },
   { value: '7', label: '7 ที่นั่ง (VIP MPV / SUV 7 ที่นั่ง)' },
   { value: '9', label: '9 ที่นั่ง (VIP Van เบาะใหญ่ยอดนิยม)' },
   { value: '10', label: '10 ที่นั่ง (VIP Commuter / Staria)' },
