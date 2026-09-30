@@ -170,6 +170,11 @@ export const TripBoard: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'request' | 'share' | 'corporate'>('all');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [showClosedPosts, setShowClosedPosts] = useState<boolean>(false);
+  const [postsExpanded, setPostsExpanded] = useState<boolean>(false);
+
+  // Collapse the post grid back to the first 3 whenever the visible pool changes.
+  // (Called inline from the filter/search/toggle handlers below — no effect needed.)
+  const collapsePostsView = () => setPostsExpanded(false);
 
   // Open vs Closed/Expired posts
   const openPosts = useMemo(() => {
@@ -217,6 +222,9 @@ export const TripBoard: React.FC = () => {
   const displayedPosts = useMemo(() => {
     return basePool.filter(postMatchesQuery);
   }, [basePool, postMatchesQuery]);
+
+  // Show only the first 3 posts until the user expands the section
+  const visiblePosts = postsExpanded ? displayedPosts : displayedPosts.slice(0, 3);
   const set = (patch: Partial<PostFormState>) => setForm((prev) => ({ ...prev, ...patch }));
 
   const applyAutofill = useCallback((profile: UserProfile) => {
@@ -583,7 +591,7 @@ export const TripBoard: React.FC = () => {
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 no-scrollbar">
             <button
               type="button"
-              onClick={() => setFilter('all')}
+              onClick={() => { setFilter('all'); collapsePostsView(); }}
               className={`px-3 py-1.5 text-xs font-bold transition-all rounded-none cursor-pointer whitespace-nowrap ${
                 filter === 'all'
                   ? 'bg-amber-500 text-slate-950 shadow-xs'
@@ -594,7 +602,7 @@ export const TripBoard: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => setFilter('request')}
+              onClick={() => { setFilter('request'); collapsePostsView(); }}
               className={`px-3 py-1.5 text-xs font-bold transition-all rounded-none cursor-pointer whitespace-nowrap flex items-center gap-1 ${
                 filter === 'request'
                   ? 'bg-amber-500 text-slate-950 shadow-xs'
@@ -606,7 +614,7 @@ export const TripBoard: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => setFilter('share')}
+              onClick={() => { setFilter('share'); collapsePostsView(); }}
               className={`px-3 py-1.5 text-xs font-bold transition-all rounded-none cursor-pointer whitespace-nowrap flex items-center gap-1 ${
                 filter === 'share'
                   ? 'bg-amber-500 text-slate-950 shadow-xs'
@@ -618,7 +626,7 @@ export const TripBoard: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => setFilter('corporate')}
+              onClick={() => { setFilter('corporate'); collapsePostsView(); }}
               className={`px-3 py-1.5 text-xs font-bold transition-all rounded-none cursor-pointer whitespace-nowrap flex items-center gap-1 ${
                 filter === 'corporate'
                   ? 'bg-amber-500 text-slate-950 shadow-xs'
@@ -635,7 +643,7 @@ export const TripBoard: React.FC = () => {
             {closedCount > 0 && (
               <button
                 type="button"
-                onClick={() => setShowClosedPosts(!showClosedPosts)}
+                onClick={() => { setShowClosedPosts(!showClosedPosts); collapsePostsView(); }}
                 className={`px-4 py-2 text-xs font-bold transition-all flex items-center justify-center gap-1.5 rounded-none border cursor-pointer whitespace-nowrap ${
                   showClosedPosts
                     ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600'
@@ -659,14 +667,14 @@ export const TripBoard: React.FC = () => {
               <input
                 type="text"
                 value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
+                onChange={(e) => { setSearchKeyword(e.target.value); collapsePostsView(); }}
                 placeholder={t('board.searchPh')}
                 className="w-full h-8.5 pl-8.5 pr-7 bg-slate-950 text-white text-xs placeholder:text-slate-500 border border-slate-700 focus:border-amber-500 focus:outline-none transition-colors rounded-none"
               />
               {searchKeyword && (
                 <button
                   type="button"
-                  onClick={() => setSearchKeyword('')}
+                  onClick={() => { setSearchKeyword(''); collapsePostsView(); }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer"
                 >
                   ✕
@@ -678,7 +686,7 @@ export const TripBoard: React.FC = () => {
 
         {/* Minimalist Structured Cards (3-Column Grid matching Image 2 / Stitch Design) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {displayedPosts.map((post) => {
+          {visiblePosts.map((post) => {
             const isRequest = post.type === 'request';
             const isShare = post.type === 'share';
             const zoneObj = ZONE_RATE_CARDS.find((z) => z.id === post.zoneId);
@@ -815,6 +823,31 @@ export const TripBoard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Expand/collapse: only show when more than 3 posts match */}
+      {displayedPosts.length > 3 && (
+        <div className="mt-4 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setPostsExpanded(!postsExpanded)}
+            aria-expanded={postsExpanded}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold border transition-colors cursor-pointer rounded-none ${
+              postsExpanded
+                ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600'
+                : 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-600'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">
+              {postsExpanded ? 'expand_less' : 'expand_more'}
+            </span>
+            <span>
+              {postsExpanded
+                ? t('board.collapsePosts')
+                : t('board.expandPosts', { n: displayedPosts.length - 3 })}
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* 6. POST CREATION MODAL (Stitch Responsive Sheet/Dialog) */}
       {formOpen && (

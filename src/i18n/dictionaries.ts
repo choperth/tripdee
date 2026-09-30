@@ -2038,6 +2038,9 @@ const th = {
   'pcus.sessionSecure': '● เซสชันปลอดภัย (256-bit Encrypted Session)',
   'pcus.refreshSession': 'รีเฟรชเซสชัน (Refresh Security Token)',
   'pcus.sessionRefreshed': 'ต่ออายุโทเค็นความปลอดภัยแล้ว',
+  // ---- trip board expand/collapse ----
+  'board.expandPosts': 'ดูโพสต์เพิ่มเติม ({n} โพสต์)',
+  'board.collapsePosts': 'ย่อกลับ',
 } as const;
 
 export type DictKey = keyof typeof th;
@@ -3895,6 +3898,10 @@ const en: Record<DictKey, string> = {
   'padm.fPriceNote': 'Price note',
   'padm.fPriceNotePh': 'e.g. fuel already included',
   'padm.fPostDetail': 'Post details',
+
+  // ---- trip board expand/collapse ----
+  'board.expandPosts': 'Show {n} more posts',
+  'board.collapsePosts': 'Show less',
 
   // ---- sponsor report backlog ----
   'srep.lineMessage': '📊 TripDee Chiang Mai ad report\n🏨 Partner: {title}\n📍 Zone: {location}\n🏷️ Perk: {discount}\n--------------------------------\n🎯 Unique clicks (24h): {unique} (total {total})\n👁️ Est. impressions: {impressions}\n📈 True CTR (unique): {ctr}%\n🛡️ Transparency: IP & device fingerprinting blocks click fraud (24h).\n📅 Report date: {date}\n--------------------------------\nThanks for partnering with TripDee — great trips start together 🙏\nWebsite: https://tripdee.co',
@@ -5919,6 +5926,10 @@ const zh: Record<DictKey, string> = {
   'padm.fPriceNote': '价格备注',
   'padm.fPriceNotePh': '如 价格已含油费',
   'padm.fPostDetail': '帖子详情',
+
+  // ---- trip board expand/collapse ----
+  'board.expandPosts': '查看其余 {n} 条帖子',
+  'board.collapsePosts': '收起',
 
   // ---- sponsor report backlog ----
   'srep.lineMessage': '📊 TripDee 清迈广告数据\n🏨 合作方：{title}\n📍 区域：{location}\n🏷️ 优惠：{discount}\n--------------------------------\n🎯 去重点击（24小时）：{unique} 次（总计 {total} 次）\n👁️ 预估曝光：{impressions} 次\n📈 真实点击率（去重 CTR）：{ctr}%\n🛡️ 透明标准：IP & 设备指纹 24 小时防刷量。\n📅 报告日期：{date}\n--------------------------------\n感谢与 TripDee 合作，开启美好旅程 🙏\n网站：https://tripdee.co',

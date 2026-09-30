@@ -211,11 +211,12 @@ export default function AdminConsolePage() {
       <div className="lg:pl-64 flex flex-col min-h-screen flex-1">
         {/* TOP COMMAND HEADER */}
         <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-          <div className="h-16 px-4 sm:px-6 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                <span className="material-symbols-outlined text-[16px] text-[#06c755]">lock</span>
-                <span>ระบบแอดมิน - ปลอดภัยสูง SSL 256-bit</span>
+          <div className="min-h-16 h-auto py-3 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-none">
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                <span className="material-symbols-outlined text-[14px] sm:text-[16px] text-[#06c755]">lock</span>
+                <span className="hidden sm:inline">ระบบแอดมิน - ปลอดภัยสูง SSL 256-bit</span>
+                <span className="sm:hidden">SSL 256-bit</span>
               </div>
               <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
               <div className="hidden xl:flex items-center gap-2 px-2.5 py-1 bg-[#fef3c7] dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-xs font-semibold text-[#d97706] dark:text-amber-300">
@@ -292,49 +293,53 @@ export default function AdminConsolePage() {
               {/* Mission Control Header */}
               <section className="w-full bg-white dark:bg-slate-900 px-4 sm:px-6 py-6 border-b border-slate-200 dark:border-slate-800">
                 <div className="max-w-[1400px] mx-auto flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-[#0d1c32] text-white text-[11px] uppercase tracking-wider font-semibold">
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      <span className="px-2 py-0.5 bg-[#0d1c32] text-white text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">
                         Mission Control
                       </span>
-                      <span className="text-xs text-slate-400 font-mono">Node ID: BKK-CORE-ALPHA-01</span>
+                      <span className="text-[10px] sm:text-xs text-slate-400 font-mono truncate">Node ID: BKK-CORE-ALPHA-01</span>
                     </div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-slate-950 dark:text-white tracking-tight">
+                    <h1 className="text-base sm:text-xl md:text-2xl font-bold text-slate-950 dark:text-white tracking-tight leading-tight">
                       แผงควบคุมระบบบริหารจัดการส่วนกลาง
                     </h1>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      TripDee Admin Central Management & Real-time Operations Console • ดำเนินการระดับ Super-Privilege
+                    <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-snug">
+                      <span className="hidden sm:inline">TripDee Admin Central Management & Real-time Operations Console • ดำเนินการระดับ Super-Privilege</span>
+                      <span className="sm:hidden">ศูนย์ควบคุมระบบแอดมิน • Super-Privilege</span>
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5">
                     <button
                       type="button"
                       onClick={refreshAll}
-                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer"
+                      className="px-2.5 sm:px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-[11px] sm:text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer"
                     >
-                      <span className={`material-symbols-outlined text-[18px] ${isRefreshing ? 'animate-spin' : ''}`}>
+                      <span className={`material-symbols-outlined text-[16px] sm:text-[18px] ${isRefreshing ? 'animate-spin' : ''}`}>
                         sync
                       </span>
-                      <span>รีเฟรชข้อมูลสด</span>
+                      <span className="hidden sm:inline">รีเฟรชข้อมูลสด</span>
+                      <span className="sm:hidden">รีเฟรช</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={handleExportCSV}
-                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer"
+                      className="px-2.5 sm:px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-[11px] sm:text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[18px]">file_download</span>
-                      <span>ส่งออกรายงานรายวัน (CSV)</span>
+                      <span className="material-symbols-outlined text-[16px] sm:text-[18px]">file_download</span>
+                      <span className="hidden sm:inline">ส่งออกรายงานรายวัน (CSV)</span>
+                      <span className="sm:hidden">CSV</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setActiveView('security')}
-                      className="px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer"
+                      className="px-2.5 sm:px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-[11px] sm:text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[18px] text-[#d97706]">warning</span>
-                      <span>ตั้งค่าระบบฉุกเฉิน</span>
+                      <span className="material-symbols-outlined text-[16px] sm:text-[18px] text-[#d97706]">warning</span>
+                      <span className="hidden sm:inline">ตั้งค่าระบบฉุกเฉิน</span>
+                      <span className="sm:hidden">ฉุกเฉิน</span>
                     </button>
                   </div>
                 </div>
@@ -1117,15 +1122,15 @@ export default function AdminConsolePage() {
         {/* FOOTER */}
         {/* ============================================================== */}
         <footer className="w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-3.5 px-4 sm:px-6">
-          <div className="w-full flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <span>© 2025 TripDee Co., Ltd. ระบบศูนย์กลางการบริหารพาหนะส่วนกลาง</span>
+          <div className="w-full flex flex-col md:flex-row items-center justify-between gap-3 text-[11px] sm:text-xs text-slate-500">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-1.5 sm:gap-3 w-full md:w-auto">
+              <span>© 2025 TripDee Co., Ltd. <span className="hidden sm:inline">ระบบศูนย์กลางการบริหารพาหนะส่วนกลาง</span><span className="sm:hidden">ศูนย์บริหารพาหนะ</span></span>
               <span className="hidden md:inline text-slate-300">•</span>
-              <span>ทะเบียนพาณิชย์อิเล็กทรอนิกส์ DBD Registered เลขที่ 0105566023812</span>
+              <span>ทะเบียนพาณิชย์อิเล็กทรอนิกส์ DBD เลขที่ 0105566023812</span>
               <span className="hidden md:inline text-slate-300">•</span>
               <span className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">policy</span>
-                ระบบบันทึก Audit Trail มาตรฐาน ISO/IEC 27001
+                Audit Trail ISO/IEC 27001
               </span>
             </div>
             <div className="flex items-center gap-2 font-mono text-[11px]">
