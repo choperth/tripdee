@@ -6,21 +6,11 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import type { DictKey } from '@/i18n/dictionaries';
 import {
-  X,
   ShieldCheck,
-  CreditCard,
-  SlidersHorizontal,
-  Handshake,
   PartyPopper,
   CarFront,
   Loader2,
-  ArrowRight,
   ArrowLeft,
-  Phone,
-  User,
-  MessageSquare,
-  MapPin,
-  Clock,
   Receipt,
   Upload,
   Sparkles,
@@ -73,6 +63,16 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
 
   const [isCustomModel, setIsCustomModel] = useState(false);
   const [customModelText, setCustomModelText] = useState('');
+  const [showSpecRef, setShowSpecRef] = useState(false);
+
+  // Shared step-1 field + required-label styling (matches reference)
+  const fieldCls =
+    'h-11 px-3.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-950 dark:text-white text-sm placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none rounded-none transition-colors w-full font-medium';
+  const reqLabel = (text: string) => (
+    <>
+      {text.replace(/\s*\*$/, '')} <span className="text-[#ba1a1a]">*</span>
+    </>
+  );
 
   // Honeypot anti-spam fields
   const [hpWebsite, setHpWebsite] = useState('');
@@ -199,194 +199,177 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
         aria-modal="true"
         aria-label={t('reg.aria')}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-5xl bg-card rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto transition-all border border-rule/80"
+        className="w-full max-w-6xl bg-white dark:bg-slate-900 rounded-none shadow-2xl overflow-hidden flex flex-col my-auto transition-all border border-slate-300 dark:border-slate-700"
       >
         {/* Top Bar / Live Status */}
         <div className="bg-slate-900 px-5 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 text-white border-b border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              🟢 เปิดรับสมัครทั่วประเทศ: เชียงใหม่ ภูเก็ต กทม. พัทยา สมุย
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="flex h-2 w-2 relative shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full bg-emerald-500 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="text-xs text-slate-200 truncate">
+              เปิดรับสมัครพันธมิตรคนขับทั่วประเทศ: เชียงใหม่ ภูเก็ต กทม. พัทยา สมุย
+            </span>
+            <span className="hidden md:inline-flex bg-amber-500 text-slate-950 text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider shrink-0">
+              0% คอมมิชชั่นตลอดชีพ
             </span>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label={t('auth.close')}
-            className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+            className="text-slate-400 hover:text-white transition-colors p-1 flex items-center justify-center"
           >
-            <X className="h-5 w-5 block" />
+            <span className="material-symbols-outlined text-[22px]">close</span>
           </button>
         </div>
 
         {/* Main Modal Shell: Asymmetric Grid with Left Perks Bar */}
         <div className="grid grid-cols-1 lg:grid-cols-12 w-full">
           {/* Left Side: Trust & Operator Perks Briefing */}
-          <div className="lg:col-span-4 bg-paper-2 p-6 sm:p-8 flex flex-col justify-between space-y-6 border-b lg:border-b-0 lg:border-r border-rule/70">
+          <div className="lg:col-span-5 bg-[#F8FAFC] dark:bg-slate-900 p-6 sm:p-8 flex flex-col justify-between space-y-6 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800">
             <div className="space-y-6">
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] uppercase tracking-wider text-amber-700 dark:text-amber-400 font-bold">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-2 py-1 bg-slate-900 text-white dark:bg-white dark:text-slate-950 text-[10px] tracking-wider font-bold">
                     TripDee Partner Club
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[11px] font-bold border border-amber-500/20">
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800 text-[10px] font-bold">
                     {t('show.badgeZero')}
                   </span>
                 </div>
-                <h2 className="font-display text-xl sm:text-2xl font-extrabold text-ink mt-1.5">
-                  {t('reg.heroTitle')}
+                <h2 className="font-display text-[30px] leading-[1.2] font-bold tracking-tight text-slate-950 dark:text-white mt-3">
+                  {t('reg.heroTitleA')}
+                  <br />
+                  <span className="text-[#fea619] bg-slate-900 dark:bg-amber-500 dark:text-slate-950 px-2 py-0.5 inline-block mt-1">
+                    {t('reg.heroTitleB')}
+                  </span>
                 </h2>
-                <p className="text-xs font-medium text-ink-2 mt-2 leading-relaxed">
+                <p className="text-sm font-normal text-slate-600 dark:text-slate-400 mt-3 leading-relaxed">
                   {t('reg.heroDesc')}
                 </p>
               </div>
 
               {/* Perk List */}
               <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-card shadow-2xs border border-rule/60">
-                  <div className="p-2 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 mt-0.5">
-                    <CreditCard className="h-5 w-5 block" />
+                <div className="flex items-start gap-3.5 p-3.5 rounded-none bg-white dark:bg-slate-900 shadow-2xs border border-slate-200 dark:border-slate-800 hover:border-slate-400 transition-colors">
+                  <div className="h-9 w-9 bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-900">
+                    <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-[13px] font-bold text-ink">{t('reg.perk1Title')}</p>
-                    <p className="text-[11px] font-medium text-ink-2">{t('reg.perk1Desc')}</p>
+                    <p className="text-sm font-bold text-slate-950 dark:text-white">{t('reg.perk1Title')}</p>
+                    <p className="text-xs font-normal text-slate-600 dark:text-slate-400 mt-0.5">{t('reg.perk1Desc')}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-card shadow-2xs border border-rule/60">
-                  <div className="p-2 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 mt-0.5">
-                    <SlidersHorizontal className="h-5 w-5 block" />
+                <div className="flex items-start gap-3.5 p-3.5 rounded-none bg-white dark:bg-slate-900 shadow-2xs border border-slate-200 dark:border-slate-800 hover:border-slate-400 transition-colors">
+                  <div className="h-9 w-9 bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0 text-[#D97706] dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-900">
+                    <span className="material-symbols-outlined text-[20px]">tune</span>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-[13px] font-bold text-ink">{t('reg.perk2Title')}</p>
-                    <p className="text-[11px] font-medium text-ink-2">{t('reg.perk2Desc')}</p>
+                    <p className="text-sm font-bold text-slate-950 dark:text-white">{t('reg.perk2Title')}</p>
+                    <p className="text-xs font-normal text-slate-600 dark:text-slate-400 mt-0.5">{t('reg.perk2Desc')}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-card shadow-2xs border border-rule/60">
-                  <div className="p-2 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 mt-0.5">
-                    <ShieldCheck className="h-5 w-5 block" />
+                <div className="flex items-start gap-3.5 p-3.5 rounded-none bg-white dark:bg-slate-900 shadow-2xs border border-slate-200 dark:border-slate-800 hover:border-slate-400 transition-colors">
+                  <div className="h-9 w-9 bg-blue-50 border border-blue-200 flex items-center justify-center shrink-0 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-900">
+                    <span className="material-symbols-outlined text-[20px]">receipt_long</span>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-[13px] font-bold text-ink">{t('reg.perk3Title')}</p>
-                    <p className="text-[11px] font-medium text-ink-2">{t('reg.perk3Desc')}</p>
+                    <p className="text-sm font-bold text-slate-950 dark:text-white">{t('reg.perk3Title')}</p>
+                    <p className="text-xs font-normal text-slate-600 dark:text-slate-400 mt-0.5">{t('reg.perk3Desc')}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Social Proof Metric */}
-              <div className="p-4 rounded-xl bg-slate-900 text-white flex items-center gap-3.5 shadow-sm border border-slate-800">
-                <div className="flex -space-x-2 overflow-hidden shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-amber-500 text-amber-950 flex items-center justify-center text-[11px] font-extrabold shadow">
-                    CNX
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[11px] font-extrabold shadow">
-                    BKK
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px] font-extrabold shadow">
-                    HKT
-                  </div>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs sm:text-[13px] font-bold text-white">{t('reg.proofCount')}</p>
-                  <p className="text-[11px] text-slate-300 truncate">{t('reg.proofNetwork')}</p>
-                </div>
+              {/* Guarantee Notice */}
+              <div className="bg-[#FEF3C7] dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 p-3 flex items-center gap-2.5 rounded-none">
+                <span className="material-symbols-outlined text-[#D97706] dark:text-amber-400 text-[20px] shrink-0">verified_user</span>
+                <span className="text-xs text-slate-800 dark:text-amber-200 font-medium">
+                  {t('reg.noLockNote')}
+                </span>
               </div>
             </div>
 
-            {/* Direct Deal Guarantee Note */}
-            <div className="rounded-xl p-3 bg-amber-500/10 text-amber-900 dark:text-amber-200 flex items-start gap-2.5 border border-amber-500/20 text-xs">
-              <Handshake className="h-4 w-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
-              <p className="text-[11px] font-medium leading-snug">
-                {t('reg.noLockNote')}
-              </p>
+            {/* Bottom Trust Metric Box */}
+            <div className="mt-6 bg-slate-900 text-white p-4 border border-slate-950 rounded-none">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] text-slate-300 font-bold uppercase tracking-wider">พันธมิตรคนขับ</span>
+                <span className="bg-emerald-500/20 text-emerald-300 text-[11px] px-2 py-0.5 border border-emerald-500/30 font-bold">
+                  {t('reg.proofCount')}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-800 text-[11px] font-mono text-slate-400">
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-[#06C755]" />CNX เชียงใหม่</span>
+                <span>•</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-[#06C755]" />BKK กรุงเทพฯ</span>
+                <span>•</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-[#06C755]" />HKT ภูเก็ต</span>
+              </div>
             </div>
           </div>
 
           {/* Right Side: Progressive 3-Step Wizard Form */}
-          <div className="lg:col-span-8 p-6 sm:p-8 flex flex-col justify-between space-y-6 overflow-y-auto max-h-[85vh]">
+          <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-6 overflow-y-auto max-h-[85vh]">
             {/* Header & Step Tabs */}
             <div>
-              <div className="mb-4">
-                <h1 className="font-display text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
-                  {t('reg.title')}
-                </h1>
-                <p className="text-xs sm:text-sm font-medium text-ink-2 mt-1">
-                  {t('reg.subtitle')}
+              <div className="border-b border-slate-200 dark:border-slate-800 pb-5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <h1 className="text-[22px] font-bold tracking-tight text-slate-950 dark:text-white">
+                    {t('reg.title')}
+                  </h1>
+                  <span className="text-xs text-slate-400 whitespace-nowrap">
+                    {t('reg.stepCount', { n: submitted ? 3 : currentStep })}
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium mt-1 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                  <span>{t('reg.subtitle')} • {t('reg.twoMin')}</span>
                 </p>
-              </div>
-
-              {/* Step Pill Tabs Indicator */}
-              <div className="grid grid-cols-3 gap-2 p-1 bg-paper-2 rounded-xl border border-rule/60">
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(1)}
-                  className={`py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
-                    currentStep === 1
-                      ? 'bg-card text-ink shadow-2xs border border-rule/80'
-                      : 'text-ink-2 hover:text-ink'
-                  }`}
-                >
-                  <span
-                    className={`w-5 h-5 rounded-full text-[11px] flex items-center justify-center font-bold ${
+                {/* Step Progress Indicators */}
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(1)}
+                    className={`px-3 py-2 text-center border text-xs transition-all ${
                       currentStep === 1
-                        ? 'bg-slate-900 text-white'
-                        : 'bg-paper text-ink-2'
+                        ? 'bg-slate-950 text-white border-slate-950 dark:bg-white dark:text-slate-950 dark:border-white font-bold'
+                        : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-700 font-medium hover:border-slate-400'
                     }`}
                   >
-                    1
-                  </span>
-                  <span className="hidden sm:inline">{t('reg.step1Title')}</span>
-                  <span className="sm:hidden">{t('reg.step1Short')}</span>
-                </button>
+                    <span className="block truncate">{t('reg.step1Title')}</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (formData.driverName && formData.phone) setCurrentStep(2);
-                  }}
-                  className={`py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
-                    currentStep === 2
-                      ? 'bg-card text-ink shadow-2xs border border-rule/80'
-                      : 'text-ink-2 hover:text-ink'
-                  }`}
-                >
-                  <span
-                    className={`w-5 h-5 rounded-full text-[11px] flex items-center justify-center font-bold ${
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (formData.driverName && formData.phone) setCurrentStep(2);
+                    }}
+                    className={`px-3 py-2 text-center border text-xs transition-all ${
                       currentStep === 2
-                        ? 'bg-slate-900 text-white'
-                        : 'bg-paper text-ink-2'
+                        ? 'bg-slate-950 text-white border-slate-950 dark:bg-white dark:text-slate-950 dark:border-white font-bold'
+                        : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-700 font-medium hover:border-slate-400'
                     }`}
                   >
-                    2
-                  </span>
-                  <span className="hidden sm:inline">{t('reg.step2Title')}</span>
-                  <span className="sm:hidden">{t('reg.step2Short')}</span>
-                </button>
+                    <span className="block truncate">{t('reg.step2Title')}</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (formData.driverName && formData.phone) setCurrentStep(3);
-                  }}
-                  className={`py-2 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
-                    currentStep === 3
-                      ? 'bg-card text-ink shadow-2xs border border-rule/80'
-                      : 'text-ink-2 hover:text-ink'
-                  }`}
-                >
-                  <span
-                    className={`w-5 h-5 rounded-full text-[11px] flex items-center justify-center font-bold ${
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (formData.driverName && formData.phone) setCurrentStep(3);
+                    }}
+                    className={`px-3 py-2 text-center border text-xs transition-all ${
                       currentStep === 3
-                        ? 'bg-slate-900 text-white'
-                        : 'bg-paper text-ink-2'
+                        ? 'bg-slate-950 text-white border-slate-950 dark:bg-white dark:text-slate-950 dark:border-white font-bold'
+                        : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-700 font-medium hover:border-slate-400'
                     }`}
                   >
-                    3
-                  </span>
-                  <span className="hidden sm:inline">{t('reg.step3Title')}</span>
-                  <span className="sm:hidden">{t('reg.step3Short')}</span>
-                </button>
+                    <span className="block truncate">{t('reg.step3Title')}</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -456,9 +439,8 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                   <div className="space-y-4 animate-fade-in">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-ink flex items-center gap-1.5">
-                          <User className="h-3.5 w-3.5 text-amber-500" />
-                          {t('reg.fContactName')}
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                          {reqLabel(t('reg.fContactName'))}
                         </label>
                         <input
                           type="text"
@@ -472,14 +454,13 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                               nickname: e.target.value,
                             })
                           }
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
+                          className={fieldCls}
                         />
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-ink flex items-center gap-1.5">
-                          <Phone className="h-3.5 w-3.5 text-amber-500" />
-                          {t('reg.fMobile')}
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                          {reqLabel(t('reg.fMobile'))}
                         </label>
                         <input
                           type="tel"
@@ -487,120 +468,127 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                           placeholder={t('reg.fMobilePh')}
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
+                          className={`${fieldCls} font-mono`}
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-ink flex items-center gap-1.5">
-                          <MessageSquare className="h-3.5 w-3.5 text-amber-500" />
-                          {t('reg.fLineId')}
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                          {reqLabel(t('reg.fLineId'))}
                         </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder={t('reg.fLineIdPh')}
-                          value={formData.lineId}
-                          onChange={(e) => setFormData({ ...formData, lineId: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
-                        />
+                        <div className="relative flex items-center">
+                          <span className="absolute left-3 text-emerald-600 font-bold text-xs flex items-center pointer-events-none">
+                            <span className="material-symbols-outlined text-[16px]">chat</span>
+                          </span>
+                          <input
+                            type="text"
+                            required
+                            placeholder={t('reg.fLineIdPh')}
+                            value={formData.lineId}
+                            onChange={(e) => setFormData({ ...formData, lineId: e.target.value })}
+                            className={`${fieldCls} pl-9 font-mono`}
+                          />
+                        </div>
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-ink flex items-center gap-1.5">
-                          <MapPin className="h-3.5 w-3.5 text-amber-500" />
-                          {t('reg.fHub')}
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                          {reqLabel(t('reg.fHub'))}
                         </label>
-                        <select
-                          value={formData.serviceHub}
-                          onChange={(e) => setFormData({ ...formData, serviceHub: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-rule text-ink text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
-                          required
-                        >
-                          <option value="CHIANG_MAI">{t('reg.hubCnx')}</option>
-                          <option value="BKK_SUVARNABHUMI">{t('reg.hubBkk')}</option>
-                          <option value="PHUKET">{t('reg.hubHkt')}</option>
-                          <option value="PATTAYA">{t('reg.hubUty')}</option>
-                          <option value="SAMUI">{t('reg.hubUsd')}</option>
-                          <option value="KRABI">{t('reg.hubKbi')}</option>
-                          <option value="OTHER">{t('reg.hubOther')}</option>
-                        </select>
+                        <div className="relative">
+                          <select
+                            value={formData.serviceHub}
+                            onChange={(e) => setFormData({ ...formData, serviceHub: e.target.value })}
+                            className={`${fieldCls} appearance-none pr-9 cursor-pointer`}
+                            required
+                          >
+                            <option value="CHIANG_MAI">{t('reg.hubCnx')}</option>
+                            <option value="BKK_SUVARNABHUMI">{t('reg.hubBkk')}</option>
+                            <option value="PHUKET">{t('reg.hubHkt')}</option>
+                            <option value="PATTAYA">{t('reg.hubUty')}</option>
+                            <option value="SAMUI">{t('reg.hubUsd')}</option>
+                            <option value="KRABI">{t('reg.hubKbi')}</option>
+                            <option value="OTHER">{t('reg.hubOther')}</option>
+                          </select>
+                          <span className="material-symbols-outlined text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[20px]">
+                            expand_more
+                          </span>
+                        </div>
                       </div>
                     </div>
 
                     {/* International Messaging Channels (Optional) */}
-                    <div className="pt-3 border-t border-rule/60 space-y-2.5">
+                    <div className="mt-2 pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2.5">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-extrabold uppercase tracking-wide text-ink">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-slate-950 dark:text-white">
                             {t('reg.intlTitle')}
                           </span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                          <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800 whitespace-nowrap">
                             {t('reg.intlRecommended')}
                           </span>
                         </div>
-                        <p className="text-[11px] text-ink-2 mt-0.5">
+                        <p className="text-xs text-slate-400 mt-1">
                           {t('reg.intlDesc')}
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                         {/* WhatsApp */}
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-ink flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-[#25D366]" />
-                            <span>WhatsApp</span>
-                            <span className="text-[10px] text-ink-3 font-normal">({t('reg.intlWhatsappHint')})</span>
+                          <label className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-[#06C755]" />
+                            <span>WhatsApp (เบอร์โทร)</span>
                           </label>
                           <input
                             type="tel"
                             placeholder={t('reg.intlWhatsappPh')}
                             value={formData.whatsapp}
                             onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                            className="w-full px-3 py-2 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-2xs"
+                            className="h-9 px-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-950 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900 outline-none rounded-none placeholder:text-slate-400 font-mono w-full"
                           />
                         </div>
 
                         {/* WeChat */}
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-ink flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-[#07C160]" />
+                          <label className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-emerald-600" />
                             <span>{t('reg.intlWechat')}</span>
-                            <span className="text-[10px] text-ink-3 font-normal">({t('reg.intlWechatHint')})</span>
+                            <span className="text-[10px] text-slate-400 font-normal">({t('reg.intlWechatHint')})</span>
                           </label>
                           <input
                             type="text"
                             placeholder={t('reg.intlIdPh')}
                             value={formData.wechat}
                             onChange={(e) => setFormData({ ...formData, wechat: e.target.value })}
-                            className="w-full px-3 py-2 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-2xs"
+                            className="h-9 px-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-950 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900 outline-none rounded-none placeholder:text-slate-400 font-mono w-full"
                           />
                         </div>
 
                         {/* KakaoTalk */}
                         <div className="space-y-1">
-                          <label className="text-xs font-bold text-ink flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-[#FEE500]" />
+                          <label className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-amber-500" />
                             <span>KakaoTalk ID</span>
-                            <span className="text-[10px] text-ink-3 font-normal">({t('reg.intlKakaoHint')})</span>
+                            <span className="text-[10px] text-slate-400 font-normal">({t('reg.intlKakaoHint')})</span>
                           </label>
                           <input
                             type="text"
                             placeholder={t('reg.intlIdPh')}
                             value={formData.kakao}
                             onChange={(e) => setFormData({ ...formData, kakao: e.target.value })}
-                            className="w-full px-3 py-2 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
+                            className="h-9 px-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-950 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:border-slate-900 outline-none rounded-none placeholder:text-slate-400 font-mono w-full"
                           />
                         </div>
                       </div>
                     </div>
 
-                    {/* Quick Feature Tag */}
-                    <div className="p-3.5 rounded-xl bg-paper-2 flex items-center gap-3 border border-rule/60">
-                      <Clock className="h-5 w-5 text-amber-500 shrink-0" />
-                      <p className="text-xs font-medium text-ink-2 leading-relaxed">
+                    {/* Real-time Availability System Notice */}
+                    <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-3 mt-1 flex items-start gap-2.5 rounded-none">
+                      <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 text-[20px] mt-0.5 shrink-0">schedule</span>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug">
                         {t('reg.availNote')}
                       </p>
                     </div>
@@ -943,35 +931,40 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                 )}
 
                 {/* Bottom Wizard Navigation */}
-                <div className="pt-3 border-t border-rule/60 flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div>
-                    {currentStep > 1 && (
+                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                  <div className="flex items-center">
+                    {currentStep > 1 ? (
                       <button
                         type="button"
                         onClick={handlePrev}
-                        className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-paper-2 hover:bg-card border border-rule text-ink text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                        className="w-full sm:w-auto px-4 py-2.5 rounded-none bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
                       >
                         <ArrowLeft className="h-4 w-4" />
                         {t('reg.prev')}
                       </button>
+                    ) : (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2 leading-tight max-w-md">
+                        <Lock className="h-4 w-4 text-slate-400 shrink-0" />
+                        {t('reg.pdpa')}
+                      </p>
                     )}
                   </div>
 
-                  <div className="w-full sm:w-auto flex items-center gap-3">
+                  <div className="shrink-0">
                     {currentStep < 3 ? (
                       <button
                         type="button"
                         onClick={handleNext}
-                        className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition-all"
+                        className="w-full sm:w-auto min-w-[140px] h-12 bg-slate-950 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-950 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors border border-slate-950"
                       >
                         <span>{t('reg.next')}</span>
-                        <ArrowRight className="h-4 w-4" />
+                        <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                       </button>
                     ) : (
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full sm:w-auto px-7 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all disabled:opacity-60"
+                        className="w-full sm:w-auto min-w-[140px] h-12 bg-amber-500 hover:bg-amber-600 text-amber-950 text-sm font-extrabold flex items-center justify-center gap-2 transition-all disabled:opacity-60"
                       >
                         {isSubmitting ? (
                           <>
@@ -989,15 +982,49 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                 </div>
 
                 {/* Trust Footnote */}
-                <div className="text-center pt-1">
-                  <p className="text-[11px] text-ink-3 flex items-center justify-center gap-1.5">
-                    <Lock className="h-3.5 w-3.5 text-slate-400" />
-                    {t('reg.pdpa')}
-                  </p>
-                </div>
+                {currentStep > 1 && (
+                  <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                    <Lock className="h-4 w-4 shrink-0" />
+                    <span className="text-[11px] leading-tight">
+                      {t('reg.pdpa')}
+                    </span>
+                  </div>
+                )}
               </form>
             )}
           </div>
+        </div>
+
+        {/* Vehicle spec & photo reference strip */}
+        <div className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 text-xs">
+          <button
+            type="button"
+            onClick={() => setShowSpecRef((v) => !v)}
+            aria-expanded={showSpecRef}
+            className="w-full px-6 py-2.5 cursor-pointer font-semibold flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors select-none"
+          >
+            <span className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-slate-500">visibility</span>
+              <span>{t('reg.specRef')}</span>
+            </span>
+            <span className={`font-mono text-[11px] text-slate-400 transition-transform ${showSpecRef ? 'rotate-180' : ''}`}>▼</span>
+          </button>
+          {showSpecRef && (
+            <div className="px-5 sm:px-6 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              {VEHICLE_CATEGORY_GROUPS.map((group) => (
+                <div key={group.category} className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3">
+                  <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200">{group.label}</p>
+                  <ul className="mt-1.5 space-y-1">
+                    {group.models.map((model) => (
+                      <li key={model} className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                        • {model}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

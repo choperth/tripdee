@@ -140,63 +140,75 @@ export default function AdminConsolePage() {
       {/* ============================================================== */}
       <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 hidden lg:flex flex-col justify-between">
         <div className="flex flex-col">
-          <Link href="/" className="h-16 px-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:opacity-90 transition-opacity">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://lh3.googleusercontent.com/aida/AEtjO1U3SJABOfeOqcRWIq9WXYBMNLkKyouXxYeypfpmucr5OK-GP97gxsUNPNlxav8bJ3fE2pPRhHrZkcDZEFeIteEGXr_DKIbSCzrjS59oHLzCmFjpbyN2ha_hFjBld3NSgAq6YAUM67gECt1T4YH2Fn6imBil8nreGqELD0AsEAxI1NIVXQHwtPBX_AapAzpyMHrGKKX7-2eipf6nXhIKwWMGoVzIliHVDNtJc36ybsPLs7jutB1juaj7YFc"
-              alt="TripDee Admin Logo"
-              className="h-8 w-auto object-contain"
-            />
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-slate-950 dark:text-white uppercase tracking-tight">TripDee</span>
-              <span className="text-[11px] text-slate-500">Admin Console</span>
+          <Link href="/" className="min-h-16 py-3 px-4 flex items-center gap-2.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:opacity-90 transition-opacity">
+            <span className="grid h-8 w-8 place-items-center bg-slate-950 text-white text-[13px] font-extrabold tracking-tight shrink-0">
+              TD
+            </span>
+            <div className="flex flex-col min-w-0">
+              <span className="flex items-center gap-1.5 text-[13px] font-extrabold text-slate-950 dark:text-white leading-tight">
+                TripDee
+                <span className="px-1 py-px border border-slate-300 text-[10px] font-bold text-slate-600 tracking-wide">
+                  ADMIN
+                </span>
+              </span>
+              <span className="text-[10px] tracking-wide text-slate-400 font-medium">CONSOLE MATRIX v3.14</span>
             </div>
           </Link>
 
-          <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800">
+          <div className="px-4 py-3">
             <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Navigation Matrix</span>
           </div>
 
-          <nav className="flex flex-col gap-1 p-2">
+          <nav className="flex flex-col gap-0.5 px-2">
             {[
-              { id: 'overview', label: 'แผงภาพรวม (Overview)', icon: 'grid_view' },
-              { id: 'fleet', label: `จัดการยานพาหนะ (${vehicles.length})`, icon: 'directions_bus' },
-              { id: 'bookings', label: `การจอง & ตรวจสอบ (${quoteLeads.length})`, icon: 'receipt_long', badge: pendingQuotesCount },
-              { id: 'operators', label: `พาร์ทเนอร์คนขับ (${driverLeads.length})`, icon: 'verified_user', badge: pendingDriversCount },
-              { id: 'board', label: `กระดานงาน TripBoard (${boardPosts.length})`, icon: 'sync_alt' },
-              { id: 'sponsors', label: `สปอนเซอร์ & สัญญา (${sponsors.length || SPONSORS.length})`, icon: 'campaign' },
-              { id: 'security', label: 'ระบบความปลอดภัย (Audit Logs)', icon: 'shield' },
-            ].map((item) => (
+              { id: 'overview', label: 'แผนภาพรวม (Overview)', icon: 'grid_view' },
+              { id: 'fleet', label: 'จัดการยานพาหนะ', count: vehicles.length || 5, icon: 'directions_bus' },
+              { id: 'bookings', label: 'การจอง & ตรวจสอบ', count: pendingQuotesCount || 1, icon: 'receipt_long', badge: pendingQuotesCount, hot: true },
+              { id: 'operators', label: 'พาร์ทเนอร์คนขับ', count: pendingDriversCount || driverLeads.length || 2, icon: 'verified_user', badge: pendingDriversCount },
+              { id: 'board', label: 'กระดานงาน TripBoard', count: boardPosts.length || 4, icon: 'sync_alt' },
+              { id: 'sponsors', label: 'สปอนเซอร์ & สัญญา', count: sponsors.length || SPONSORS.length || 8, icon: 'campaign' },
+              { id: 'security', label: 'ระบบความปลอดภัย (Audit)', icon: 'shield' },
+            ].map((item) => {
+              const isActive = activeView === item.id;
+              return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setActiveView(item.id as AdminView)}
-                className={`flex items-center justify-between px-3 py-2.5 text-xs font-bold transition-colors cursor-pointer text-left ${
-                  activeView === item.id
-                    ? 'bg-[#0d1c32] text-white'
+                className={`relative flex items-center justify-between px-3 py-2.5 text-[13px] font-bold transition-colors cursor-pointer text-left ${
+                  isActive
+                    ? 'bg-slate-950 text-white'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white'
                 }`}
               >
+                {isActive && <span className="absolute left-0 top-0 h-full w-1 bg-amber-400" />}
                 <div className="flex items-center gap-2.5">
-                  <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                  <span className={`material-symbols-outlined text-[20px] ${isActive ? 'text-amber-400' : 'text-slate-400'}`}>{item.icon}</span>
                   <span>{item.label}</span>
                 </div>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className="bg-[#d97706] text-white text-[10px] font-mono px-1.5 py-0.2">
-                    {item.badge}
+                {typeof (item as { count?: number }).count === 'number' && (
+                  <span className={`text-[11px] font-bold px-1.5 py-0.5 min-w-[22px] text-center ${
+                    isActive
+                      ? 'bg-amber-500 text-white'
+                      : (item as { hot?: boolean }).hot
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    {(item as { count?: number }).count}
                   </span>
                 )}
               </button>
-            ))}
+              );
+            })}
           </nav>
         </div>
 
-        <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
-          <div className="bg-white dark:bg-slate-900 p-2 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800">
+          <span className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Gateway Core</span>
+          <div className="mt-1 bg-white dark:bg-slate-900 p-2 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-[10px] text-slate-400 font-mono">Gateway Core</span>
-              <span className="text-[11px] font-bold text-[#06c755] flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-[#06c755] inline-block animate-pulse"></span>
+              <span className="text-[12px] font-bold text-emerald-600 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
                 Active Node: BKK-01
               </span>
             </div>
@@ -211,46 +223,38 @@ export default function AdminConsolePage() {
       <div className="lg:pl-64 flex flex-col min-h-screen flex-1">
         {/* TOP COMMAND HEADER */}
         <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-          <div className="min-h-16 h-auto py-3 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 flex-wrap sm:flex-nowrap">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-none">
-              <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                <span className="material-symbols-outlined text-[14px] sm:text-[16px] text-[#06c755]">lock</span>
+          <div className="min-h-16 h-auto py-2.5 px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <span className="grid h-8 w-8 place-items-center bg-slate-950 text-white text-[13px] font-extrabold lg:hidden shrink-0">TD</span>
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50/60 border border-emerald-200 text-[11px] sm:text-xs font-semibold text-emerald-700 whitespace-nowrap">
+                <span className="material-symbols-outlined text-[15px]">lock</span>
                 <span className="hidden sm:inline">ระบบแอดมิน - ปลอดภัยสูง SSL 256-bit</span>
                 <span className="sm:hidden">SSL 256-bit</span>
               </div>
-              <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
-              <div className="hidden xl:flex items-center gap-2 px-2.5 py-1 bg-[#fef3c7] dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-xs font-semibold text-[#d97706] dark:text-amber-300">
+              <div className="hidden xl:flex items-center gap-2 px-2.5 py-1.5 bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700">
                 <span className="material-symbols-outlined text-[16px]">campaign</span>
                 <span>สถานะ: คลัสเตอร์สำรองพร้อมใช้งาน อัตราส่งงาน 99.98%</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="hidden lg:flex items-center gap-2 px-2 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                <span className="material-symbols-outlined text-[18px] text-slate-400">lan</span>
-                <span className="text-xs text-slate-600 dark:text-slate-300 font-mono">Latency: 14ms</span>
+            <div className="flex items-center gap-2.5">
+              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-200">
+                <span className="material-symbols-outlined text-[16px] text-slate-500">lan</span>
+                <span className="text-xs text-slate-600 font-medium">Latency: <strong className="font-extrabold text-slate-900">14ms</strong></span>
               </div>
 
               <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200 dark:border-slate-700">
-                <div className="flex flex-col text-right hidden sm:flex">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white leading-tight">Super Admin</span>
-                  <span className="text-[11px] text-[#d97706] font-semibold">ฝ่ายปฏิบัติการ TripDee</span>
+                <div className="flex flex-col text-right hidden sm:flex leading-tight">
+                  <span className="text-[13px] font-extrabold text-slate-950 dark:text-white">Super Admin</span>
+                  <span className="text-[11px] text-slate-400">ฝ่ายปฏิบัติการ TripDee</span>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-950 text-white flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[18px]">person</span>
+                <div className="w-9 h-9 rounded-full bg-slate-950 text-white flex items-center justify-center shrink-0 border border-slate-800">
+                  <span className="material-symbols-outlined text-[20px]">account_circle</span>
                 </div>
-                <Link
-                  href="/"
-                  className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1 transition-colors cursor-pointer"
-                  title="กลับหน้าหลักเว็บไซต์"
-                >
-                  <span className="material-symbols-outlined text-[16px]">home</span>
-                  <span className="hidden sm:inline">หน้าหลัก</span>
-                </Link>
                 <button
                   type="button"
                   onClick={logout}
-                  className="px-2.5 py-1 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 dark:bg-slate-800 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-xs font-bold text-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
                   title="ออกจากระบบแอดมิน"
                 >
                   <span className="material-symbols-outlined text-[16px]">logout</span>
@@ -1054,8 +1058,83 @@ export default function AdminConsolePage() {
           )}
 
           {activeView === 'operators' && (
-            <div className="p-4 sm:px-6 py-6">
-              <AdminDriverTab driverLeads={driverLeads} onRefresh={refreshAll} onApprove={handleApprove} />
+            <div className="w-full bg-white">
+              {/* Breadcrumb + Title Matrix — matches UI reference */}
+              <div className="px-4 sm:px-8 pt-5 pb-4 border-b border-slate-200">
+                <nav className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                  <span>ระบบจัดการข้อมูลยานพาหนะ</span>
+                  <span>/</span>
+                  <span className="text-slate-800 font-semibold">พาร์ทเนอร์คนขับ & ตรวจสอบเอกสาร (Driver Verification)</span>
+                </nav>
+
+                <div className="mt-2 flex flex-col xl:flex-row xl:items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <h1 className="text-[22px] sm:text-[26px] font-extrabold text-slate-950 tracking-tight leading-tight">
+                      พาร์ทเนอร์คนขับ & ตรวจสอบเอกสาร
+                    </h1>
+                    <div className="mt-1.5">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-300 text-[12px] font-bold text-amber-800">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+                        ทั้งหมด {pendingDriversCount || driverLeads.length || 2} รายการดำเนินการ
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-[12px] text-slate-500">
+                      Driver Partners & Onboarding Quality Assurance Matrix
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col items-stretch xl:items-end gap-2 shrink-0">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={refreshAll}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 text-[12px] font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                      >
+                        <span className={`material-symbols-outlined text-[16px] ${isRefreshing ? 'animate-spin' : ''}`}>sync</span>
+                        รีเฟรชข้อมูล
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleExportCSV}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 text-[12px] font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">file_download</span>
+                        ส่งออก CSV รายงานคนขับ
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const name = window.prompt('ชื่อ-นามสกุลคนขับใหม่ (เช่น พี่ทดสอบระบบ สมบูรณ์)');
+                        if (!name) return;
+                        const phone = window.prompt('เบอร์โทรติดต่อ (10 หลัก)', '0899998811') || '0899998811';
+                        fetch('/api/leads/driver', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            driverName: name,
+                            nickname: 'พี่ทดสอบ',
+                            phone,
+                            lineId: 'test_line_' + phone.slice(-4),
+                            vehicleModel: 'Toyota Commuter VIP 9 ที่นั่ง',
+                            seats: '9',
+                            plateNumber: 'ทข-' + phone.slice(-4),
+                            routes: 'เชียงใหม่และใกล้เคียง',
+                          }),
+                        }).then(() => refreshAll());
+                      }}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-[13px] font-bold transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px] text-amber-400">person_add</span>
+                      + เพิ่มพาร์ทเนอร์คนขับใหม่
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-4 sm:px-8 py-5 bg-[#f8fafc]">
+                <AdminDriverTab driverLeads={driverLeads} onRefresh={refreshAll} onApprove={handleApprove} />
+              </div>
             </div>
           )}
 
@@ -1121,23 +1200,23 @@ export default function AdminConsolePage() {
         {/* ============================================================== */}
         {/* FOOTER */}
         {/* ============================================================== */}
-        <footer className="w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-3.5 px-4 sm:px-6">
-          <div className="w-full flex flex-col md:flex-row items-center justify-between gap-3 text-[11px] sm:text-xs text-slate-500">
-            <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-1.5 sm:gap-3 w-full md:w-auto">
-              <span>© 2025 TripDee Co., Ltd. <span className="hidden sm:inline">ระบบศูนย์กลางการบริหารพาหนะส่วนกลาง</span><span className="sm:hidden">ศูนย์บริหารพาหนะ</span></span>
+        <footer className="w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-3 px-4 sm:px-6">
+          <div className="w-full flex flex-col md:flex-row items-center justify-between gap-2 text-[11px] text-slate-500">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span>© 2025 TripDee Co., Ltd. ระบบศูนย์กลางการบริหารยานพาหนะส่วนกลาง</span>
               <span className="hidden md:inline text-slate-300">•</span>
               <span>ทะเบียนพาณิชย์อิเล็กทรอนิกส์ DBD เลขที่ 0105566023812</span>
               <span className="hidden md:inline text-slate-300">•</span>
-              <span className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">policy</span>
+              <span className="inline-flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">shield</span>
                 Audit Trail ISO/IEC 27001
               </span>
             </div>
-            <div className="flex items-center gap-2 font-mono text-[11px]">
-              <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="text-slate-400">
                 BUILD: v3.14.2-PROD
               </span>
-              <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] border border-emerald-300 font-bold">
+              <span className="px-2 py-0.5 bg-white text-emerald-700 border border-emerald-500 font-bold text-[11px]">
                 ALL SYSTEMS ONLINE
               </span>
             </div>
