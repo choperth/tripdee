@@ -1333,6 +1333,7 @@ export interface BoardPost {
   /** ช่องทางติดต่อสำหรับนักท่องเที่ยวต่างชาติ */
   authorWhatsApp?: string;
   authorWeChat?: string;
+  authorKakaoTalk?: string;
   vehicleLabel?: string;
   detail: string;
   pickupLocation?: string;

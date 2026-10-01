@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <meta content="web_standard" name="shell-type">
+  <title>TripDee - ลงประกาศหาคนขับฟรี | กระดานงาน TripBoard</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <style>
+    @layer base {
+      html, body { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', sans-serif; }
+      body { overscroll-behavior: none; }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
+    }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#0A192F",
+            "on-primary": "#ffffff",
+            "primary-container": "#0d1c32",
+            "on-primary-container": "#76849f",
+            "secondary": "#855300",
+            "on-secondary": "#ffffff",
+            "secondary-container": "#fea619",
+            "on-secondary-container": "#684000",
+            "tertiary": "#000000",
+            "surface": "#f8f9ff",
+            "on-surface": "#0b1c30",
+            "surface-canvas": "#f8fafc",
+            "surface-card": "#ffffff",
+            "surface-subtle": "#f1f5f9",
+            "surface-container-low": "#eff4ff",
+            "border-hairline": "#e2e8f0",
+            "border-strong": "#cbd5e1",
+            "text-primary": "#0f172a",
+            "text-secondary": "#475569",
+            "text-muted": "#94a3b8",
+            "amber-soft": "#fef3c7",
+            "amber-deep": "#d97706",
+            "line-green": "#06c755",
+            "line-green-soft": "#e8f9ee",
+            "error": "#ba1a1a"
+          },
+          borderRadius: {
+            "DEFAULT": "0px",
+            "none": "0px",
+            "pill": "9999px",
+            "full": "9999px"
+          },
+          spacing: {
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2rem",
+            "space-2xl": "3rem",
+            "margin": "2rem",
+            "margin-mobile": "1rem",
+            "gutter": "1.5rem"
+          },
+          fontFamily: {
+            "display-lg": ["Plus Jakarta Sans", "Noto Sans Thai", "sans-serif"],
+            "headline-xl": ["Plus Jakarta Sans", "Noto Sans Thai", "sans-serif"],
+            "headline-md": ["Plus Jakarta Sans", "Noto Sans Thai", "sans-serif"],
+            "title-lg": ["Plus Jakarta Sans", "Noto Sans Thai", "sans-serif"],
+            "body-lg": ["Plus Jakarta Sans", "Noto Sans Thai", "sans-serif"],
+            "body-md": ["Plus Jakarta Sans", "Noto Sans Thai", "sans-serif"],
+            "label-md": ["Plus Jakarta Sans", "Noto Sans Thai", "sans-serif"],
+            "label-sm": ["Plus Jakarta Sans", "Noto Sans Thai", "sans-serif"],
+            "caption": ["Plus Jakarta Sans", "Noto Sans Thai", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-surface-canvas text-on-surface antialiased font-body-md min-h-screen flex flex-col">
+
+  <!-- Fixed Header -->
+  <header class="fixed top-0 left-0 right-0 w-full z-50 bg-surface-card/95 backdrop-blur-md border-b border-border-hairline shadow-sm">
+    <div class="h-16 max-w-7xl mx-auto px-margin-mobile sm:px-margin flex items-center justify-between gap-space-lg">
+      <div class="flex items-center gap-space-xl">
+        <a href="/" class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-primary text-on-primary flex items-center justify-center font-black text-base tracking-tighter">TD</div>
+          <span class="font-headline-md text-lg text-on-surface tracking-tight font-extrabold">Trip<span class="text-secondary-container">Dee</span></span>
+        </a>
+        <nav class="hidden lg:flex items-center gap-space-xs">
+          <a href="#" class="px-space-md py-space-sm font-label-md text-label-md text-text-secondary hover:text-on-surface hover:bg-surface-subtle transition-colors">รถตู้พร้อมคนขับ</a>
+          <a href="#" class="px-space-md py-space-sm font-label-md text-label-md text-text-secondary hover:text-on-surface hover:bg-surface-subtle transition-colors">รถเก๋ง/SUV</a>
+          <a href="#" class="px-space-md py-space-sm font-label-md text-label-md text-text-secondary hover:text-on-surface hover:bg-surface-subtle transition-colors">เช่าขับเอง</a>
+          <a href="#" aria-current="page" class="px-space-md py-space-sm font-label-md text-label-md text-on-surface bg-surface-subtle font-bold">TripBoard กระดานงาน</a>
+          <a href="#" class="px-space-md py-space-sm font-label-md text-label-md text-text-secondary hover:text-on-surface hover:bg-surface-subtle transition-colors">องค์กร B2B</a>
+        </nav>
+      </div>
+      <div class="flex items-center gap-space-md">
+        <div class="hidden sm:flex items-center bg-surface-subtle border border-border-hairline p-0.5">
+          <button type="button" class="px-space-sm py-1 font-label-sm text-label-sm bg-surface-card text-on-surface font-bold">TH</button>
+          <button type="button" class="px-space-sm py-1 font-label-sm text-label-sm text-text-secondary hover:text-on-surface transition-colors">EN</button>
+        </div>
+        <a href="#driver-register" class="hidden md:inline-flex items-center justify-center px-4 py-2 font-label-md text-label-md bg-primary text-on-primary hover:bg-slate-800 transition-colors font-bold">
+          สมัครร่วมเป็นคนขับ
+        </a>
+        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-on-primary text-[18px]">person</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Canvas / Modal Backdrop -->
+  <main class="w-full pt-16 flex-1 flex items-center justify-center bg-surface-canvas relative py-8 px-4 sm:px-6">
+    <!-- Subtle architectural background grid accent -->
+    <div class="absolute inset-0 pointer-events-none opacity-40 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px]"></div>
+
+    <!-- Main Modal Enclosure (Bauhaus Sharp Geometric Silhouette: 0px Radius) -->
+    <div class="w-full max-w-3xl bg-surface-card border border-border-hairline shadow-2xl relative z-10 flex flex-col my-auto max-h-[90vh] overflow-hidden transition-all animate-fade-in" id="modal-container">
+      
+      <!-- Top Monolithic Accent Gradient Bar -->
+      <div class="h-1.5 w-full bg-gradient-to-r from-primary via-slate-800 to-secondary-container shrink-0"></div>
+
+      <!-- Modal Header -->
+      <div class="p-5 sm:p-6 pb-4 flex items-start justify-between border-b border-border-hairline bg-surface-card shrink-0">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 bg-surface-subtle border border-border-hairline flex items-center justify-center shrink-0 mt-0.5">
+            <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">post_add</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="font-headline-xl text-xl sm:text-2xl text-on-surface tracking-tight font-extrabold" id="modal-main-title">ลงประกาศหาคนขับฟรี</h2>
+              <span class="px-2 py-0.5 bg-amber-soft text-amber-deep font-label-sm text-xs font-bold uppercase tracking-wider rounded-none border border-amber-soft/80">ฟรี 0% คอมมิชชั่น</span>
+            </div>
+            <p class="font-caption text-xs sm:text-sm text-text-secondary mt-1">กระจายงานสู่เครือข่ายคนขับมืออาชีพที่ผ่านการตรวจสอบกว่า 2,400+ คันทั่วไทย</p>
+          </div>
+        </div>
+        <button type="button" aria-label="Close dialog" class="w-8 h-8 flex items-center justify-center text-text-muted hover:text-on-surface hover:bg-surface-subtle transition-colors cursor-pointer" onclick="alert('กดปิดหน้าต่าง');">
+          <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+      </div>
+
+      <!-- Form Container (Flex Col with scrollable body & pinned action bar) -->
+      <form class="flex-1 min-h-0 flex flex-col overflow-hidden" id="post-trip-form" onsubmit="event.preventDefault(); handleMockSubmit();">
+        <!-- Scrollable Fields Body -->
+        <div class="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-5">
+        <!-- Segmented Mode Switcher (Bauhaus Pill / Tab Grid) -->
+        <div class="grid grid-cols-2 gap-1 p-1 bg-surface-subtle border border-border-hairline">
+          <button type="button" id="tab-find-driver" class="flex items-center justify-center gap-2 py-2.5 px-4 font-label-md text-sm bg-surface-card text-on-surface shadow-xs font-bold border border-border-hairline transition-all cursor-pointer">
+            <span>🙋‍♂️</span>
+            <span>ลูกค้าหาคนขับ</span>
+          </button>
+          <button type="button" id="tab-find-tripmate" class="flex items-center justify-center gap-2 py-2.5 px-4 font-label-md text-sm text-text-secondary hover:text-on-surface border border-transparent transition-all cursor-pointer">
+            <span>🤝</span>
+            <span>หาเพื่อนร่วมทริป (หารค่ารถ)</span>
+          </button>
+        </div>
+
+        <!-- Quick 1-Click Autofill Profile Banner -->
+        <div class="p-4 bg-line-green-soft border border-line-green/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-line-green text-on-primary flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-xl">verified</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-label-md text-sm text-on-surface font-bold">ดึงข้อมูลจากบัญชีของคุณ</span>
+                <span class="px-1.5 py-0.2 bg-white text-line-green font-label-sm text-[11px] font-bold border border-line-green/30">ยืนยันแล้ว</span>
+              </div>
+              <p class="font-caption text-xs text-text-secondary mt-0.5" id="autofill-preview-text">สมาชิกคนขับ/ผู้โดยสาร • 081-234-5678 (พี่ชัย รถตู้เชียงใหม่)</p>
+            </div>
+          </div>
+          <button type="button" id="btn-autofill" class="inline-flex items-center justify-center px-4 py-2 font-label-sm text-xs font-bold bg-line-green text-on-primary hover:opacity-95 transition-opacity whitespace-nowrap shadow-xs cursor-pointer">
+            <span class="material-symbols-outlined text-sm mr-1">bolt</span>
+            <span>เติมข้อมูลอัตโนมัติ</span>
+          </button>
+        </div>
+
+        <!-- Field 1: หัวข้อประกาศ -->
+        <div class="space-y-1.5">
+          <label for="post-title" class="flex items-center justify-between font-label-sm text-xs text-text-secondary font-bold">
+            <span>หัวข้อประกาศ <span class="text-error">*</span></span>
+            <span class="font-caption text-text-muted">เช่น ประเภทรถ + เส้นทางหลัก</span>
+          </label>
+          <div class="relative">
+            <input type="text" id="post-title" required value="หารถตู้ 9 ที่นั่ง ไปม่อนแจ่ม 2 วัน 1 คืน" placeholder="ระบุหัวข้อให้กระชับชัดเจน..." class="w-full h-12 px-4 bg-surface-subtle focus:bg-surface-card text-on-surface text-sm border border-border-hairline focus:border-primary focus:outline-none transition-all">
+          </div>
+        </div>
+
+        <!-- Field 2: วันที่เดินทาง -->
+        <div class="space-y-1.5">
+          <label for="travel-date" class="font-label-sm text-xs text-text-secondary font-bold block">
+            วันที่เดินทาง <span class="text-error">*</span>
+          </label>
+          <div class="relative flex items-center bg-surface-subtle hover:bg-slate-100 border border-border-hairline transition-colors cursor-pointer">
+            <div class="pl-4 flex items-center pointer-events-none text-text-secondary">
+              <span class="material-symbols-outlined text-lg">calendar_month</span>
+            </div>
+            <input type="text" id="travel-date" readonly value="24 พ.ย. 2024 - 25 พ.ย. 2024 (2 วัน 1 คืน)" class="w-full h-12 px-3 bg-transparent text-on-surface text-sm cursor-pointer focus:outline-none font-medium">
+            <div class="pr-4 flex items-center pointer-events-none text-text-secondary">
+              <span class="material-symbols-outlined text-lg">keyboard_arrow_down</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Field 3 & 4 (Grid 2 cols: โซนปลายทาง & จำนวนวัน) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label for="destination-zone" class="font-label-sm text-xs text-text-secondary font-bold block">
+              โซนปลายทาง <span class="text-error">*</span>
+            </label>
+            <div class="relative">
+              <select id="destination-zone" class="w-full h-12 px-4 bg-surface-subtle focus:bg-surface-card text-on-surface text-sm border border-border-hairline focus:border-primary focus:outline-none appearance-none cursor-pointer">
+                <option value="zone1">โซน 1 · ในเมือง / รอบคูเมือง (เริ่มต้น 1,800 - 2,200 บ.)</option>
+                <option value="zone2" selected>โซน 2 · แม่ริม / ม่อนแจ่ม / สะเมิง (เริ่มต้น 2,200 - 2,500 บ.)</option>
+                <option value="zone3">โซน 3 · จอมทอง / ดอยอินทนนท์ (เริ่มต้น 2,500 - 3,000 บ.)</option>
+                <option value="zone4">โซน 4 · ฝาง / ดอยอ่างขาง (เริ่มต้น 3,000 - 3,500 บ.)</option>
+                <option value="zone5">ข้ามจังหวัด (เชียงใหม่ - เชียงราย / ลำพูน / ลำปาง)</option>
+              </select>
+              <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">
+                <span class="material-symbols-outlined text-lg">unfold_more</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="duration-days" class="font-label-sm text-xs text-text-secondary font-bold block">
+              จำนวนวัน <span class="text-error">*</span>
+            </label>
+            <div class="relative flex items-center bg-surface-subtle border border-border-hairline focus-within:border-primary focus-within:bg-surface-card">
+              <input type="number" id="duration-days" min="1" max="30" value="2" required class="w-full h-12 px-4 bg-transparent text-on-surface text-sm focus:outline-none">
+              <span class="pr-4 font-label-md text-sm text-text-secondary pointer-events-none">วัน</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Field 5 & 6 (Grid 2 cols: จำนวนผู้โดยสาร & งบประมาณ) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label for="passenger-count" class="font-label-sm text-xs text-text-secondary font-bold block" id="label-passengers">
+              จำนวนผู้โดยสาร <span class="text-error">*</span>
+            </label>
+            <div class="relative flex items-center bg-surface-subtle border border-border-hairline focus-within:border-primary focus-within:bg-surface-card">
+              <input type="number" id="passenger-count" min="1" max="50" value="9" required class="w-full h-12 px-4 bg-transparent text-on-surface text-sm focus:outline-none">
+              <span class="pr-4 font-label-md text-sm text-text-secondary pointer-events-none">คน</span>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label for="budget-input" class="font-label-sm text-xs text-text-secondary font-bold" id="label-budget">
+                งบที่พร้อมจ่าย (บาท รวมทั้งทริป) <span class="text-error">*</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer text-text-secondary hover:text-on-surface select-none">
+                <input type="checkbox" id="negotiable-toggle" class="w-4 h-4 rounded-none accent-primary cursor-pointer">
+                <span class="font-caption text-xs font-bold text-amber-deep">ราคาตามตกลง</span>
+              </label>
+            </div>
+            <div class="relative flex items-center bg-surface-subtle border border-border-hairline focus-within:border-primary focus-within:bg-surface-card">
+              <span class="pl-4 font-headline-md text-base text-text-secondary pointer-events-none font-bold">฿</span>
+              <input type="text" id="budget-input" value="4500" class="w-full h-12 pl-2 pr-4 bg-transparent text-on-surface font-headline-md text-lg font-extrabold focus:outline-none tabular-nums">
+              <span class="pr-4 font-caption text-xs text-text-secondary uppercase" id="budget-currency-suffix">THB NET</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fair Price Guide Banner (Dynamic) -->
+        <div class="p-3.5 bg-blue-50 border border-blue-200 text-xs text-slate-800 space-y-1" id="zone-rate-guide">
+          <div class="flex items-center gap-1.5 font-bold text-blue-800">
+            <span class="material-symbols-outlined text-base text-blue-600">lightbulb</span>
+            <span>คำแนะนำราคากลางสำหรับโซนนี้:</span>
+            <span class="text-blue-900 font-extrabold" id="zone-rate-estimate">฿2,200 - ฿2,500 / วัน</span>
+          </div>
+          <p class="text-[11px] text-slate-600">ตั้งงบที่สมเหตุสมผลช่วยให้คนขับแย่งรับงานไวขึ้นเฉลี่ยภายใน 8 นาที</p>
+        </div>
+
+        <!-- Field 7: หมายเหตุราคา -->
+        <div class="space-y-1.5">
+          <label for="price-notes" class="flex items-center justify-between font-label-sm text-xs text-text-secondary font-bold">
+            <span>หมายเหตุราคา / เงื่อนไขน้ำมัน</span>
+            <span class="font-caption text-text-muted">ความโปร่งใสช่วยให้คนขับรับงานไวขึ้น</span>
+          </label>
+          <input type="text" id="price-notes" value="ราคารวมน้ำมันแล้ว / ไม่รวมค่าทางด่วนและที่จอดรถ" placeholder="เช่น รวมน้ำมันแล้ว / เติมคืนตามจริง / ไม่รวมที่พักคนขับ" class="w-full h-12 px-4 bg-surface-subtle focus:bg-surface-card text-on-surface text-sm border border-border-hairline focus:border-primary focus:outline-none transition-all">
+        </div>
+
+        <!-- Field 8: รายละเอียดทริป (ไม่บังคับ) -->
+        <div class="space-y-1.5">
+          <label for="trip-details" class="flex items-center justify-between font-label-sm text-xs text-text-secondary font-bold">
+            <span>รายละเอียดทริปและแผนการเดินทาง (ไม่บังคับ)</span>
+            <span class="font-caption text-text-secondary font-medium">แนะนำให้ระบุจุดรับ-ส่ง</span>
+          </label>
+          <textarea id="trip-details" rows="3" placeholder="จุดรับ แผนเที่ยว จุดส่ง เงื่อนไขกระเป๋าหรือสัมภาระที่อยากระบุ (เว้นว่างได้)..." class="w-full p-4 bg-surface-subtle focus:bg-surface-card text-on-surface text-sm border border-border-hairline focus:border-primary focus:outline-none resize-none transition-all leading-relaxed">วันที่ 1: รับจากสนามบินเชียงใหม่ 08:30 น. แวะคาเฟ่โซนแม่ริม ขึ้นม่อนแจ่ม พัก 1 คืน
+วันที่ 2: ลงจากม่อนแจ่ม แวะสวนดอกไม้ ส่งกลับสนามบินก่อน 18:00 น. กระเป๋าเดินทางขนาด 20 นิ้ว 5 ใบ</textarea>
+        </div>
+
+        <!-- Field 9 & 10: ข้อมูลผู้ติดต่อสำหรับคนขับ -->
+        <div class="p-5 bg-surface-subtle border border-border-hairline space-y-4">
+          <div class="flex items-center gap-2 pb-1">
+            <span class="material-symbols-outlined text-primary text-xl">contact_phone</span>
+            <h3 class="font-title-lg text-base text-on-surface font-bold tracking-tight">ข้อมูลผู้ติดต่อสำหรับคนขับ</h3>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label for="contact-name" class="font-label-sm text-xs text-text-secondary font-bold block">
+                ชื่อผู้ประกาศ <span class="text-error">*</span>
+              </label>
+              <input type="text" id="contact-name" required value="พี่ชัย รถตู้เชียงใหม่" class="w-full h-12 px-4 bg-surface-card text-on-surface text-sm border border-border-hairline focus:border-primary focus:outline-none transition-all">
+            </div>
+            <div class="space-y-1.5">
+              <label for="contact-phone" class="font-label-sm text-xs text-text-secondary font-bold block">
+                เบอร์โทรติดต่อ <span class="text-error">*</span>
+              </label>
+              <input type="tel" id="contact-phone" required value="081-234-5678" class="w-full h-12 px-4 bg-surface-card text-on-surface text-sm font-semibold border border-border-hairline focus:border-primary focus:outline-none tabular-nums transition-all">
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: นักท่องเที่ยวต่างชาติ WhatsApp / WeChat / KakaoTalk Card -->
+        <div class="p-5 bg-surface-container-low border border-border-hairline space-y-4">
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 bg-surface-card border border-border-hairline flex items-center justify-center shrink-0 text-amber-deep">
+              <span class="material-symbols-outlined text-xl">public</span>
+            </div>
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h4 class="font-label-md text-sm text-on-surface font-bold">ช่องทางติดต่อออนไลน์ / นักท่องเที่ยวต่างชาติ (WhatsApp, LINE, WeChat, KakaoTalk)</h4>
+                <span class="px-2 py-0.5 bg-line-green-soft text-line-green font-label-sm text-[11px] font-bold border border-line-green/30">แนะนำ</span>
+              </div>
+              <p class="font-caption text-xs text-text-secondary">
+                หากคุณเดินทางมาจากต่างประเทศ หรือประสานงานให้แขกต่างชาติ ระบุ WhatsApp, WeChat หรือ KakaoTalk ID เพื่อให้คนขับติดต่อง่ายผ่านอินเทอร์เน็ต
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            <!-- WhatsApp Field -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-label-sm text-xs text-text-secondary font-bold tracking-wider uppercase">WHATSAPP</span>
+                <button type="button" id="copy-phone-wa" class="font-caption text-xs text-primary hover:underline font-bold flex items-center gap-1 cursor-pointer">
+                  <span>ใช้เบอร์เดียวกับเบอร์โทร</span>
+                </button>
+              </div>
+              <div class="relative flex items-center bg-surface-card border border-border-hairline focus-within:border-primary">
+                <span class="pl-4 text-line-green font-label-md text-sm font-bold">+66</span>
+                <input type="tel" id="wa-input" value="81 234 5678" placeholder="81 234 5678" class="w-full h-11 px-2.5 bg-transparent text-on-surface text-sm focus:outline-none">
+              </div>
+            </div>
+
+            <!-- LINE ID Field -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-label-sm text-xs text-text-secondary font-bold tracking-wider uppercase">LINE ID</span>
+                <span class="font-caption text-[11px] text-text-muted">ยอดนิยมในไทย</span>
+              </div>
+              <div class="relative bg-surface-card border border-border-hairline focus-within:border-primary">
+                <input type="text" id="line-input" placeholder="เช่น kitti_line หรือ @id" class="w-full h-11 px-4 bg-transparent text-on-surface text-sm focus:outline-none">
+              </div>
+            </div>
+
+            <!-- WeChat ID Field -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-label-sm text-xs text-text-secondary font-bold tracking-wider uppercase">WECHAT ID</span>
+                <span class="font-caption text-[11px] text-text-muted">สำหรับนักท่องเที่ยวจีน</span>
+              </div>
+              <div class="relative bg-surface-card border border-border-hairline focus-within:border-primary">
+                <input type="text" id="wechat-input" placeholder="เช่น trip_driver_cnx" class="w-full h-11 px-4 bg-transparent text-on-surface text-sm focus:outline-none">
+              </div>
+            </div>
+
+            <!-- KakaoTalk ID Field -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-label-sm text-xs text-text-secondary font-bold tracking-wider uppercase">KAKAOTALK ID</span>
+                <span class="font-caption text-[11px] text-text-muted">สำหรับนักท่องเที่ยวเกาหลี</span>
+              </div>
+              <div class="relative bg-surface-card border border-border-hairline focus-within:border-primary">
+                <input type="text" id="kakaotalk-input" placeholder="เช่น kitti_kakao" class="w-full h-11 px-4 bg-transparent text-on-surface text-sm focus:outline-none">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PIN 4 Digits for Self-Service Cancellation -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label for="post-pin" class="font-label-sm text-xs text-text-secondary font-bold block">
+              PIN 4 หลัก (สำหรับปิดประกาศเองเมื่อได้รถแล้ว)
+            </label>
+            <input type="password" id="post-pin" maxlength="4" placeholder="1234" value="1234" class="w-full h-11 px-4 bg-surface-subtle focus:bg-surface-card text-on-surface text-sm border border-border-hairline focus:border-primary focus:outline-none">
+          </div>
+          <div class="flex items-center text-xs text-text-muted pt-2 sm:pt-6">
+            <span>* ระบบจะจำลอง Magic Link ให้คุณเปิดดูใบเสนอราคาได้ทันทีหลังโพสต์</span>
+          </div>
+        </div>
+
+        <!-- Dispatch Stats / Trust Proof Bar -->
+        <div class="grid grid-cols-3 gap-2 py-3 px-4 bg-surface-subtle border border-border-hairline text-center">
+          <div>
+            <div class="font-headline-md text-base sm:text-lg font-extrabold text-on-surface tabular-nums">~8 นาที</div>
+            <div class="font-caption text-[11px] text-text-secondary">เวลาคนขับเสนอราคาเฉลี่ย</div>
+          </div>
+          <div class="border-l border-r border-border-hairline">
+            <div class="font-headline-md text-base sm:text-lg font-extrabold text-line-green tabular-nums">ฟรี 100%</div>
+            <div class="font-caption text-[11px] text-text-secondary">ไม่หักค่าหัวคิวใดๆ</div>
+          </div>
+          <div>
+            <div class="font-headline-md text-base sm:text-lg font-extrabold text-on-surface tabular-nums">2,400+</div>
+            <div class="font-caption text-[11px] text-text-secondary">คนขับพร้อมรับงาน</div>
+          </div>
+        </div>
+
+        <!-- Modal Bottom Actions & Compliance Strip (Pinned at Bottom) -->
+        <div class="shrink-0 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border-hairline bg-surface-card">
+          <div class="flex items-center gap-2 text-text-secondary">
+            <span class="material-symbols-outlined text-lg text-line-green">verified_user</span>
+            <span class="font-caption text-xs">ข้อมูลปลอดภัยตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล (PDPA)</span>
+          </div>
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <button type="button" class="w-full sm:w-auto px-6 py-2.5 font-label-md text-sm text-text-secondary hover:text-on-surface hover:bg-surface-subtle transition-colors border border-border-hairline cursor-pointer" onclick="alert('ยกเลิกการลงประกาศ');">
+              ยกเลิก
+            </button>
+            <button type="submit" id="btn-submit" class="w-full sm:w-auto px-8 py-2.5 font-label-md text-sm bg-primary text-on-primary hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm font-bold group cursor-pointer">
+              <span>ลงประกาศเลย</span>
+              <span class="px-1.5 py-0.5 bg-amber-soft text-amber-deep text-[11px] font-extrabold">ฟรี</span>
+              <span class="material-symbols-outlined text-base group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </main>
+
+  <!-- Interactive Script -->
+  <script>
+    (function initPostTripModal() {
+      // 1. Negotiable checkbox toggle handler
+      const negotiableToggle = document.getElementById('negotiable-toggle');
+      const budgetInput = document.getElementById('budget-input');
+      const budgetSuffix = document.getElementById('budget-currency-suffix');
+      
+      if (negotiableToggle && budgetInput) {
+        negotiableToggle.addEventListener('change', function() {
+          if (this.checked) {
+            budgetInput.disabled = true;
+            budgetInput.dataset.previousValue = budgetInput.value;
+            budgetInput.value = 'ตามตกลง';
+            budgetInput.classList.add('opacity-60', 'italic', 'text-amber-deep');
+            if (budgetSuffix) budgetSuffix.textContent = 'OPEN QUOTE';
+          } else {
+            budgetInput.disabled = false;
+            budgetInput.value = budgetInput.dataset.previousValue || '4500';
+            budgetInput.classList.remove('opacity-60', 'italic', 'text-amber-deep');
+            if (budgetSuffix) budgetSuffix.textContent = 'THB NET';
+          }
+        });
+      }
+
+      // 2. Copy phone to WhatsApp trigger
+      const copyPhoneWaBtn = document.getElementById('copy-phone-wa');
+      const contactPhone = document.getElementById('contact-phone');
+      const waInput = document.getElementById('wa-input');
+
+      if (copyPhoneWaBtn && contactPhone && waInput) {
+        copyPhoneWaBtn.addEventListener('click', function() {
+          const raw = contactPhone.value.replace(/[^0-9]/g, '');
+          if (raw.startsWith('0')) {
+            waInput.value = raw.substring(1).replace(/(\d{2})(\d{3})(\d{4})/, '$1 $2 $3');
+          } else {
+            waInput.value = raw;
+          }
+          waInput.classList.add('bg-line-green-soft');
+          setTimeout(() => waInput.classList.remove('bg-line-green-soft'), 600);
+        });
+      }
+
+      // 3. Segmented Mode Switcher (ลูกค้าหารถ vs หาเพื่อนร่วมทริป)
+      const tabDriver = document.getElementById('tab-find-driver');
+      const tabTripmate = document.getElementById('tab-find-tripmate');
+      const mainTitle = document.getElementById('modal-main-title');
+      const labelPassengers = document.getElementById('label-passengers');
+      const labelBudget = document.getElementById('label-budget');
+
+      if (tabDriver && tabTripmate) {
+        tabDriver.addEventListener('click', () => {
+          tabDriver.className = 'flex items-center justify-center gap-2 py-2.5 px-4 font-label-md text-sm bg-surface-card text-on-surface shadow-xs font-bold border border-border-hairline transition-all cursor-pointer';
+          tabTripmate.className = 'flex items-center justify-center gap-2 py-2.5 px-4 font-label-md text-sm text-text-secondary hover:text-on-surface border border-transparent transition-all cursor-pointer';
+          if (mainTitle) mainTitle.textContent = 'ลงประกาศหาคนขับฟรี';
+          if (labelPassengers) labelPassengers.innerHTML = 'จำนวนผู้โดยสาร <span class="text-error">*</span>';
+          if (labelBudget) labelBudget.innerHTML = 'งบที่พร้อมจ่าย (บาท รวมทั้งทริป) <span class="text-error">*</span>';
+        });
+
+        tabTripmate.addEventListener('click', () => {
+          tabTripmate.className = 'flex items-center justify-center gap-2 py-2.5 px-4 font-label-md text-sm bg-surface-card text-on-surface shadow-xs font-bold border border-border-hairline transition-all cursor-pointer';
+          tabDriver.className = 'flex items-center justify-center gap-2 py-2.5 px-4 font-label-md text-sm text-text-secondary hover:text-on-surface border border-transparent transition-all cursor-pointer';
+          if (mainTitle) mainTitle.textContent = 'โพสต์หาเพื่อนร่วมทริปฟรี (หารค่ารถ)';
+          if (labelPassengers) labelPassengers.innerHTML = 'จำนวนที่นั่งที่เปิดรับร่วม <span class="text-error">*</span>';
+          if (labelBudget) labelBudget.innerHTML = 'เงินที่ต้องหารร่วมกัน (บาท ต่อคน) <span class="text-error">*</span>';
+        });
+      }
+
+      // 4. Quick Autofill Interaction
+      const autofillBtn = document.getElementById('btn-autofill');
+      if (autofillBtn) {
+        autofillBtn.addEventListener('click', () => {
+          document.getElementById('contact-name').value = 'พี่ชัย รถตู้เชียงใหม่';
+          document.getElementById('contact-phone').value = '081-234-5678';
+          document.getElementById('wa-input').value = '81 234 5678';
+          document.getElementById('line-input').value = 'chai_cnx_vip';
+          document.getElementById('wechat-input').value = 'chai_van_th';
+          document.getElementById('kakaotalk-input').value = 'chai_cnx';
+          
+          autofillBtn.innerHTML = '<span class="material-symbols-outlined text-sm mr-1">check</span> ดึงข้อมูลเรียบร้อย';
+          autofillBtn.classList.replace('bg-line-green', 'bg-emerald-700');
+          setTimeout(() => {
+            autofillBtn.innerHTML = '<span class="material-symbols-outlined text-sm mr-1">bolt</span> เติมข้อมูลอัตโนมัติ';
+            autofillBtn.classList.replace('bg-emerald-700', 'bg-line-green');
+          }, 2000);
+        });
+      }
+
+      // 5. Destination zone rate calculation helper
+      const destZoneSelect = document.getElementById('destination-zone');
+      const zoneRateEstimate = document.getElementById('zone-rate-estimate');
+      const zoneRates = {
+        zone1: '฿1,800 - ฿2,200 / วัน',
+        zone2: '฿2,200 - ฿2,500 / วัน',
+        zone3: '฿2,500 - ฿3,000 / วัน',
+        zone4: '฿3,000 - ฿3,500 / วัน',
+        zone5: '฿3,500 - ฿4,500 / วัน'
+      };
+      if (destZoneSelect && zoneRateEstimate) {
+        destZoneSelect.addEventListener('change', (e) => {
+          zoneRateEstimate.textContent = zoneRates[e.target.value] || '฿2,000 - ฿3,000 / วัน';
+        });
+      }
+
+      // 6. Mock submission feedback
+      window.handleMockSubmit = function() {
+        const btn = document.getElementById('btn-submit');
+        if (!btn) return;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin mr-1">progress_activity</span> กำลังลงประกาศ...';
+        setTimeout(() => {
+          alert('✅ ลงประกาศสำเร็จ! กระจายงานสู่ระบบ TripBoard เรียบร้อยแล้ว');
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }, 1000);
+      };
+    })();
+  </script>
+</body>
+</html>

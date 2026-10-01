@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import {
@@ -46,6 +47,7 @@ interface PostFormState {
   authorLine: string;
   authorWhatsApp: string;
   authorWeChat: string;
+  authorKakaoTalk: string;
   vehicleLabel: string;
   detail: string;
   pin: string;
@@ -67,6 +69,7 @@ const EMPTY_FORM: PostFormState = {
   authorLine: '',
   authorWhatsApp: '',
   authorWeChat: '',
+  authorKakaoTalk: '',
   vehicleLabel: '',
   detail: '',
   pin: '',
@@ -84,6 +87,13 @@ export const TripBoard: React.FC = () => {
     () => () => {},
     () => true,
     () => false
+  );
+  const renderPortal = useCallback(
+    (content: React.ReactNode) => {
+      if (!isClient || typeof document === 'undefined') return null;
+      return createPortal(content, document.body);
+    },
+    [isClient]
   );
   const isDemo = isClient ? isMockDataEnabled() : isMockEnvEnabled();
   const [posts, setPosts] = useState<BoardPost[]>(() => (isMockEnvEnabled() ? BOARD_POSTS : []));
@@ -238,6 +248,7 @@ export const TripBoard: React.FC = () => {
       authorLine: profile.lineId || prev.authorLine,
       authorWhatsApp: profile.whatsapp || prev.authorWhatsApp,
       authorWeChat: profile.wechat || prev.authorWeChat,
+      authorKakaoTalk: prev.authorKakaoTalk,
     }));
   }, []);
 
@@ -296,8 +307,9 @@ export const TripBoard: React.FC = () => {
       authorLine: form.authorLine.trim(),
       authorWhatsApp: form.authorWhatsApp.trim() || undefined,
       authorWeChat: form.authorWeChat.trim() || undefined,
+      authorKakaoTalk: form.authorKakaoTalk.trim() || undefined,
       vehicleLabel: form.type === 'offer' && form.vehicleLabel.trim() ? form.vehicleLabel.trim() : undefined,
-      detail: form.detail.trim(),
+      detail: (form.detail.trim() + (form.authorKakaoTalk.trim() ? ` [KakaoTalk: ${form.authorKakaoTalk.trim()}]` : '')).trim(),
       pin: form.pin.trim() || undefined,
       postedAt: t('board.postedJustNow'),
       isNegotiable,
@@ -850,155 +862,52 @@ export const TripBoard: React.FC = () => {
       )}
 
       {/* 6. POST CREATION MODAL (Stitch Responsive Sheet/Dialog) */}
-      {formOpen && (
-        <div className="fixed inset-0 z-400 flex items-center justify-center p-4 bg-navy-deep/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-paper-elevated dark:bg-slate-900 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-space-lg shadow-2xl border border-border-subtle dark:border-slate-800 space-y-space-md">
+      {formOpen && renderPortal(
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-2 sm:p-4 bg-navy-deep/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-paper-elevated dark:bg-slate-900 rounded-none max-w-3xl w-full max-h-[92vh] sm:max-h-[90vh] shadow-2xl border border-border-subtle dark:border-slate-800 my-auto flex flex-col overflow-hidden">
+            {/* Top Monolithic Accent Line */}
+            <div className="h-1.5 w-full bg-gradient-to-r from-navy via-slate-800 to-amber-500 shrink-0" />
+
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-border-subtle dark:border-slate-800 pb-space-sm">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-blue-action text-[24px]">
-                  post_add
-                </span>
-                <h3 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
-                  {form.type === 'share'
-                    ? t('board.formTitleShare')
-                    : form.type === 'request'
-                    ? t('board.formTitleReq')
-                    : t('board.formTitleOffer')}
-                </h3>
+            <div className="p-4 sm:p-6 pb-3 sm:pb-4 flex items-start justify-between border-b border-border-subtle dark:border-slate-800 bg-surface-card dark:bg-slate-900 shrink-0">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 bg-paper-surface-muted dark:bg-slate-800 border border-border-subtle dark:border-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="material-symbols-outlined text-navy-deep dark:text-blue-400 text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    post_add
+                  </span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-headline-xl text-lg sm:text-xl font-extrabold text-navy-deep dark:text-white tracking-tight">
+                      {form.type === 'share'
+                        ? t('board.formTitleShare')
+                        : form.type === 'request'
+                        ? t('board.formTitleReq')
+                        : t('board.formTitleOffer')}
+                    </h3>
+                    <span className="px-2 py-0.5 bg-amber-soft text-amber-deep text-xs font-bold uppercase tracking-wider border border-amber-soft/80">
+                      {t('board.freeCommission')}
+                    </span>
+                  </div>
+                  <p className="font-caption text-xs sm:text-sm text-ink-secondary dark:text-slate-400 mt-0.5">
+                    {t('board.formSubCaption')}
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setFormOpen(false)}
-                className="p-1 rounded-full text-ink-muted hover:text-ink-primary hover:bg-paper-surface-muted transition-colors"
+                className="w-8 h-8 flex items-center justify-center text-ink-muted hover:text-ink-primary hover:bg-paper-surface-muted dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                aria-label="Close dialog"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Type selector toggle */}
-            <div className="grid grid-cols-2 gap-space-xs bg-paper-surface-muted dark:bg-slate-800 p-1 rounded-xl">
-              <button
-                type="button"
-                onClick={() => set({ type: 'request' })}
-                className={`py-2 rounded-lg font-body-medium text-body-medium transition-all ${
-                  form.type === 'request'
-                    ? 'bg-paper-elevated dark:bg-slate-900 text-blue-action font-bold shadow-xs'
-                    : 'text-ink-secondary dark:text-slate-400'
-                }`}
-              >
-                🙋‍♂️ {t('board.tabReq')}
-              </button>
-              <button
-                type="button"
-                onClick={() => set({ type: 'share' })}
-                className={`py-2 rounded-lg font-body-medium text-body-medium transition-all ${
-                  form.type === 'share'
-                    ? 'bg-paper-elevated dark:bg-slate-900 text-navy-deep dark:text-white font-bold shadow-xs'
-                    : 'text-ink-secondary dark:text-slate-400'
-                }`}
-              >
-                🤝 {t('board.tabShare')}
-              </button>
-            </div>
-
-            {/* Approach 1: Hybrid Autofill Banner (Optional 1-Click contact fill) */}
-            {user ? (
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-leaf-soft/60 dark:bg-emerald-950/40 border border-leaf-soft dark:border-emerald-800/50">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-leaf text-white font-bold text-xs">
-                    <UserCheck className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-extrabold text-ink dark:text-white leading-tight">
-                      {t('board.autofillLoggedIn')}
-                    </p>
-                    <p className="text-[11px] font-medium text-ink-2 dark:text-slate-300 truncate">
-                      {user.role === 'driver' ? t('auth.roleDriver') : t('auth.roleCustomer')} • {user.emailOrPhone}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    applyAutofill(user);
-                    setAutofilled(true);
-                    setTimeout(() => setAutofilled(false), 2500);
-                  }}
-                  className="shrink-0 inline-flex items-center justify-center rounded-pill bg-leaf text-white px-3 py-1.5 text-xs font-extrabold hover:bg-leaf-deep transition-all active:scale-95 cursor-pointer shadow-2xs"
-                >
-                  <span>{autofilled ? t('board.autofillButtonDone') : t('board.autofillButton')}</span>
-                </button>
-              </div>
-            ) : (
-              <div className="p-3.5 rounded-2xl bg-paper-surface-muted/80 dark:bg-slate-800/70 border border-border-subtle dark:border-slate-700/60 space-y-2.5">
-                <div className="text-xs font-extrabold text-ink dark:text-white">
-                  <span>{t('board.autofillBanner')}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    disabled={!!oauthLoading}
-                    onClick={() => handleOAuthAutofill('line')}
-                    className="flex items-center justify-center gap-1.5 rounded-xl bg-[#06C755] py-2 px-2.5 text-xs font-extrabold text-white hover:bg-[#05b34c] transition-colors disabled:opacity-60 cursor-pointer shadow-2xs"
-                  >
-                    {oauthLoading === 'line' ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        <span>{t('auth.connecting')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <MessageCircle className="h-3.5 w-3.5 fill-white" />
-                        <span>{t('board.autofillLine')}</span>
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={!!oauthLoading}
-                    onClick={() => handleOAuthAutofill('google')}
-                    className="flex items-center justify-center gap-1.5 rounded-xl bg-card dark:bg-slate-900 border border-rule dark:border-slate-700 py-2 px-2.5 text-xs font-extrabold text-ink dark:text-white hover:bg-paper-2 dark:hover:bg-slate-800 transition-colors disabled:opacity-60 cursor-pointer shadow-2xs"
-                  >
-                    {oauthLoading === 'google' ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        <span>{t('auth.connecting')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24">
-                          <path
-                            fill="#4285F4"
-                            d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-                          />
-                          <path
-                            fill="#34A853"
-                            d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
-                          />
-                          <path
-                            fill="#FBBC05"
-                            d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
-                          />
-                          <path
-                            fill="#EA4335"
-                            d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-                          />
-                        </svg>
-                        <span>{t('board.autofillGoogle')}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                <p className="text-[11px] text-ink-muted dark:text-slate-400 text-center">
-                  {t('board.autofillGuestHint')}
-                </p>
-              </div>
-            )}
-
-            {/* Form Fields */}
-            <form onSubmit={handleSubmit} className="space-y-space-sm">
+            {/* Form Container (Flex Col with scrollable body & pinned action bar) */}
+            <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+              {/* Scrollable Fields Body */}
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
               {/* Honeypot hidden input */}
               <input
                 type="text"
@@ -1011,9 +920,143 @@ export const TripBoard: React.FC = () => {
                 aria-hidden="true"
               />
 
-              <div>
-                <label htmlFor="post-title" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
-                  {t('board.fTitle')}
+              {/* Segmented Mode Switcher (Bauhaus Tab Grid) */}
+              <div className="grid grid-cols-2 gap-1 p-1 bg-paper-surface-muted dark:bg-slate-800 border border-border-subtle dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => set({ type: 'request' })}
+                  className={`flex items-center justify-center gap-2 py-2.5 px-3 font-label-md text-xs sm:text-sm transition-all cursor-pointer ${
+                    form.type === 'request'
+                      ? 'bg-paper-elevated dark:bg-slate-900 text-blue-action dark:text-blue-400 font-bold shadow-xs border border-border-subtle dark:border-slate-700'
+                      : 'text-ink-secondary dark:text-slate-400 hover:text-ink-primary border border-transparent'
+                  }`}
+                >
+                  <span>🙋‍♂️</span>
+                  <span>{t('board.tabReq')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => set({ type: 'share' })}
+                  className={`flex items-center justify-center gap-2 py-2.5 px-3 font-label-md text-xs sm:text-sm transition-all cursor-pointer ${
+                    form.type === 'share'
+                      ? 'bg-paper-elevated dark:bg-slate-900 text-navy-deep dark:text-white font-bold shadow-xs border border-border-subtle dark:border-slate-700'
+                      : 'text-ink-secondary dark:text-slate-400 hover:text-ink-primary border border-transparent'
+                  }`}
+                >
+                  <span>🤝</span>
+                  <span>{t('board.tabShare')}</span>
+                </button>
+              </div>
+
+              {/* Autofill Profile Banner */}
+              {user ? (
+                <div className="p-3.5 bg-line-green-soft/70 dark:bg-emerald-950/40 border border-line-green/30 dark:border-emerald-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-line-green text-white flex items-center justify-center shrink-0">
+                      <UserCheck className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-label-md text-xs sm:text-sm text-ink-primary dark:text-white font-bold">
+                          {t('board.autofillLoggedIn')}
+                        </span>
+                        <span className="px-1.5 py-0.2 bg-white dark:bg-slate-800 text-line-green font-label-sm text-[10px] font-bold border border-line-green/30">
+                          {t('auth.verifiedRole')}
+                        </span>
+                      </div>
+                      <p className="font-caption text-[11px] sm:text-xs text-ink-secondary dark:text-slate-300 truncate">
+                        {user.role === 'driver' ? t('auth.roleDriver') : t('auth.roleCustomer')} • {user.emailOrPhone}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      applyAutofill(user);
+                      setAutofilled(true);
+                      setTimeout(() => setAutofilled(false), 2500);
+                    }}
+                    className="inline-flex items-center justify-center px-3.5 py-1.5 font-label-sm text-xs font-bold bg-line-green text-white hover:bg-line-green-hover transition-all whitespace-nowrap shadow-xs cursor-pointer active:scale-95"
+                  >
+                    <span className="material-symbols-outlined text-sm mr-1">bolt</span>
+                    <span>{autofilled ? t('board.autofillButtonDone') : t('board.autofillButton')}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="p-3.5 bg-paper-surface-muted/80 dark:bg-slate-800/70 border border-border-subtle dark:border-slate-700/60 space-y-2.5">
+                  <div className="text-xs font-extrabold text-ink-primary dark:text-white flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-base text-blue-action">bolt</span>
+                    <span>{t('board.autofillBanner')}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      disabled={!!oauthLoading}
+                      onClick={() => handleOAuthAutofill('line')}
+                      className="flex items-center justify-center gap-1.5 bg-[#06C755] py-2 px-2.5 text-xs font-extrabold text-white hover:bg-[#05b34c] transition-colors disabled:opacity-60 cursor-pointer shadow-2xs border border-transparent"
+                    >
+                      {oauthLoading === 'line' ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>{t('auth.connecting')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <MessageCircle className="h-3.5 w-3.5 fill-white" />
+                          <span>{t('board.autofillLine')}</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={!!oauthLoading}
+                      onClick={() => handleOAuthAutofill('google')}
+                      className="flex items-center justify-center gap-1.5 bg-card dark:bg-slate-900 border border-border-subtle dark:border-slate-700 py-2 px-2.5 text-xs font-extrabold text-ink-primary dark:text-white hover:bg-paper-2 dark:hover:bg-slate-800 transition-colors disabled:opacity-60 cursor-pointer shadow-2xs"
+                    >
+                      {oauthLoading === 'google' ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>{t('auth.connecting')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24">
+                            <path
+                              fill="#4285F4"
+                              d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                            />
+                            <path
+                              fill="#34A853"
+                              d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+                            />
+                            <path
+                              fill="#FBBC05"
+                              d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+                            />
+                            <path
+                              fill="#EA4335"
+                              d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                            />
+                          </svg>
+                          <span>{t('board.autofillGoogle')}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-ink-muted dark:text-slate-400 text-center">
+                    {t('board.autofillGuestHint')}
+                  </p>
+                </div>
+              )}
+
+              {/* Field 1: หัวข้อประกาศ */}
+              <div className="space-y-1.5">
+                <label htmlFor="post-title" className="flex items-center justify-between font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider">
+                  <span>{t('board.fTitle')}</span>
+                  <span className="font-caption normal-case text-ink-muted dark:text-slate-500">
+                    {form.type === 'share' ? t('board.fSeatsShare') : 'เช่น ประเภทรถ + เส้นทางหลัก'}
+                  </span>
                 </label>
                 <input
                   id="post-title"
@@ -1028,13 +1071,13 @@ export const TripBoard: React.FC = () => {
                       ? t('board.fTitlePhReq')
                       : t('board.fTitlePhOffer')
                   }
-                  className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action"
+                  className="w-full h-11 px-3.5 bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-white border border-border-subtle dark:border-slate-700 text-sm focus:outline-none focus:border-navy-deep dark:focus:border-blue-400 transition-all"
                 />
               </div>
 
-              {/* 1. Travel Date with Interactive Day/Month/Year Calendar Picker */}
-              <div>
-                <label htmlFor="post-date" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+              {/* Field 2: วันที่เดินทาง */}
+              <div className="space-y-1.5">
+                <label htmlFor="post-date" className="block font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider">
                   {t('board.fDate')}
                 </label>
                 <TravelDatePicker
@@ -1048,68 +1091,84 @@ export const TripBoard: React.FC = () => {
                 />
               </div>
 
-              {/* 2. Destination Zone & Total Days */}
-              <div className="grid grid-cols-2 gap-space-sm">
-                <div>
-                  <label htmlFor="post-zone" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+              {/* Field 3 & 4 (Grid 2 cols: โซนปลายทาง & จำนวนวัน) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="post-zone" className="block font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider">
                     {t('board.fZone')}
                   </label>
-                  <select
-                    id="post-zone"
-                    value={form.zoneId}
-                    onChange={(e) => set({ zoneId: e.target.value as ZoneId })}
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action cursor-pointer"
-                  >
-                    {ZONE_RATE_CARDS.map((z) => (
-                      <option key={z.id} value={z.id}>
-                        {t('board.zoneOption', { no: z.zoneNo, label: z.shortLabel })}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="post-zone"
+                      value={form.zoneId}
+                      onChange={(e) => set({ zoneId: e.target.value as ZoneId })}
+                      className="w-full h-11 px-3.5 bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-white border border-border-subtle dark:border-slate-700 text-sm focus:outline-none focus:border-navy-deep dark:focus:border-blue-400 appearance-none cursor-pointer"
+                    >
+                      {ZONE_RATE_CARDS.map((z) => (
+                        <option key={z.id} value={z.id}>
+                          {t('board.zoneOption', { no: z.zoneNo, label: z.shortLabel })}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-ink-muted">
+                      <span className="material-symbols-outlined text-lg">unfold_more</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label htmlFor="post-days" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+                <div className="space-y-1.5">
+                  <label htmlFor="post-days" className="block font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider">
                     {t('board.fDays')}
                   </label>
-                  <input
-                    id="post-days"
-                    type="number"
-                    min={1}
-                    required
-                    value={form.days}
-                    onChange={(e) => set({ days: e.target.value })}
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action"
-                  />
+                  <div className="relative flex items-center bg-paper-surface-muted dark:bg-slate-800 border border-border-subtle dark:border-slate-700 focus-within:border-navy-deep dark:focus-within:border-blue-400">
+                    <input
+                      id="post-days"
+                      type="number"
+                      min={1}
+                      max={30}
+                      required
+                      value={form.days}
+                      onChange={(e) => set({ days: e.target.value })}
+                      className="w-full h-11 px-3.5 bg-transparent text-ink-primary dark:text-white text-sm focus:outline-none"
+                    />
+                    <span className="pr-3.5 font-label-md text-xs sm:text-sm text-ink-secondary dark:text-slate-400 pointer-events-none">
+                      {t('board.unitDays')}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* 3. Passengers & Pricing */}
-              <div className="grid grid-cols-2 gap-space-sm">
-                <div>
-                  <label htmlFor="post-seats" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+              {/* Field 5 & 6 (Grid 2 cols: จำนวนผู้โดยสาร & งบประมาณ) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="post-seats" className="block font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider">
                     {form.type === 'share'
                       ? t('board.fSeatsShare')
                       : form.type === 'request'
                       ? t('board.fSeatsReq')
                       : t('board.fSeatsOffer')}
                   </label>
-                  <input
-                    id="post-seats"
-                    type="number"
-                    min={1}
-                    max={30}
-                    required
-                    value={form.seats}
-                    onChange={(e) => set({ seats: e.target.value })}
-                    placeholder="9"
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action"
-                  />
+                  <div className="relative flex items-center bg-paper-surface-muted dark:bg-slate-800 border border-border-subtle dark:border-slate-700 focus-within:border-navy-deep dark:focus-within:border-blue-400">
+                    <input
+                      id="post-seats"
+                      type="number"
+                      min={1}
+                      max={50}
+                      required
+                      value={form.seats}
+                      onChange={(e) => set({ seats: e.target.value })}
+                      placeholder="9"
+                      className="w-full h-11 px-3.5 bg-transparent text-ink-primary dark:text-white text-sm focus:outline-none"
+                    />
+                    <span className="pr-3.5 font-label-md text-xs sm:text-sm text-ink-secondary dark:text-slate-400 pointer-events-none">
+                      {t('board.unitSeats')}
+                    </span>
+                  </div>
                 </div>
 
-                <div>
-                  <div className="flex flex-wrap items-center justify-between mb-1 gap-1">
-                    <label htmlFor="post-price" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="post-price" className="block font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider">
                       {form.type === 'share'
                         ? t('board.fPriceShare')
                         : form.type === 'request'
@@ -1117,62 +1176,71 @@ export const TripBoard: React.FC = () => {
                         : t('board.fPriceOffer')}
                     </label>
                     {form.type === 'request' && (
-                      <label className="inline-flex items-center gap-1.5 text-xs text-blue-action font-semibold cursor-pointer select-none">
+                      <label className="inline-flex items-center gap-1.5 text-xs text-blue-action dark:text-blue-400 font-semibold cursor-pointer select-none">
                         <input
                           type="checkbox"
                           checked={form.isNegotiable}
                           onChange={(e) => set({ isNegotiable: e.target.checked, price: e.target.checked ? '' : form.price })}
-                          className="rounded text-blue-action focus:ring-blue-action"
+                          className="rounded-none text-blue-action focus:ring-blue-action"
                         />
-                        <span>{t('board.negotiable')}</span>
+                        <span className="font-caption font-bold text-amber-deep">{t('board.negotiable')}</span>
                       </label>
                     )}
                   </div>
-                  <input
-                    id="post-price"
-                    type="number"
-                    min={500}
-                    step={100}
-                    disabled={form.isNegotiable}
-                    required={!form.isNegotiable}
-                    value={form.isNegotiable ? '' : form.price}
-                    onChange={(e) => set({ price: e.target.value })}
-                    placeholder={form.isNegotiable ? t('board.priceOpenPh') : '4500'}
-                    className={`w-full h-11 px-3 rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action transition-all ${
-                      form.isNegotiable
-                        ? 'bg-slate-100 dark:bg-slate-800/50 text-ink-muted cursor-not-allowed border border-dashed border-border-subtle'
-                        : 'bg-paper-surface-muted dark:bg-slate-800 dark:text-white'
-                    }`}
-                  />
+                  <div className="relative flex items-center bg-paper-surface-muted dark:bg-slate-800 border border-border-subtle dark:border-slate-700 focus-within:border-navy-deep dark:focus-within:border-blue-400">
+                    <span className="pl-3.5 font-headline-md text-base text-ink-secondary dark:text-slate-400 pointer-events-none font-bold">฿</span>
+                    <input
+                      id="post-price"
+                      type={form.isNegotiable ? 'text' : 'number'}
+                      min={500}
+                      step={100}
+                      disabled={form.isNegotiable}
+                      required={!form.isNegotiable}
+                      value={form.isNegotiable ? t('board.negotiableShort') : form.price}
+                      onChange={(e) => set({ price: e.target.value })}
+                      placeholder={form.isNegotiable ? t('board.priceOpenPh') : '4500'}
+                      className={`w-full h-11 pl-2 pr-3.5 bg-transparent font-headline-md text-base sm:text-lg font-extrabold focus:outline-none tabular-nums transition-all ${
+                        form.isNegotiable
+                          ? 'opacity-60 italic text-amber-deep cursor-not-allowed'
+                          : 'text-ink-primary dark:text-white'
+                      }`}
+                    />
+                    <span className="pr-3.5 font-caption text-xs text-ink-secondary dark:text-slate-400 uppercase">
+                      {form.isNegotiable ? 'OPEN' : 'THB NET'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {form.isNegotiable && (
-                <div className="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-xs text-blue-950 dark:text-blue-200 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-blue-700 dark:text-blue-300">
-                    <span className="material-symbols-outlined text-[16px]">lightbulb</span>
-                    <span>{t('board.fairPrice')}</span>
-                    <span>
-                      {(() => {
-                        const zc = ZONE_RATE_CARDS.find((z) => z.id === form.zoneId);
-                        return t('board.zoneRate', {
-                          zone: zc?.shortLabel || t('board.zoneAny'),
-                          min: zc?.baseRateRange[0].toLocaleString() ?? '',
-                          max: zc?.baseRateRange[1].toLocaleString() ?? '',
-                        });
-                      })()}
-                    </span>
-                  </div>
-                  <div className="text-ink-secondary dark:text-slate-300 text-[11px] leading-relaxed flex items-start gap-1">
-                    <span className="material-symbols-outlined text-[14px] text-emerald-600 mt-0.5 shrink-0">verified_user</span>
-                    <span>{t('board.privacyNote')}</span>
-                  </div>
+              {/* Dynamic Fair Price Guide Banner */}
+              <div className="p-3 bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-xs text-blue-950 dark:text-blue-200 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-blue-700 dark:text-blue-300">
+                  <span className="material-symbols-outlined text-[16px]">lightbulb</span>
+                  <span>{t('board.fairPrice')}</span>
+                  <span className="font-extrabold">
+                    {(() => {
+                      const zc = ZONE_RATE_CARDS.find((z) => z.id === form.zoneId);
+                      return t('board.zoneRate', {
+                        zone: zc?.shortLabel || t('board.zoneAny'),
+                        min: zc?.baseRateRange[0].toLocaleString() ?? '',
+                        max: zc?.baseRateRange[1].toLocaleString() ?? '',
+                      });
+                    })()}
+                  </span>
                 </div>
-              )}
+                <div className="text-ink-secondary dark:text-slate-300 text-[11px] leading-relaxed flex items-start gap-1">
+                  <span className="material-symbols-outlined text-[14px] text-emerald-600 mt-0.5 shrink-0">verified_user</span>
+                  <span>{t('board.privacyNote')}</span>
+                </div>
+              </div>
 
-              <div>
-                <label htmlFor="post-price-note" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
-                  {t('board.fPriceNote')}
+              {/* Field 7: หมายเหตุราคา */}
+              <div className="space-y-1.5">
+                <label htmlFor="post-price-note" className="flex items-center justify-between font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider">
+                  <span>{t('board.fPriceNote')}</span>
+                  <span className="font-caption normal-case text-ink-muted dark:text-slate-500">
+                    ความโปร่งใสช่วยให้คนขับรับงานไวขึ้น
+                  </span>
                 </label>
                 <input
                   id="post-price-note"
@@ -1180,13 +1248,17 @@ export const TripBoard: React.FC = () => {
                   value={form.priceNote}
                   onChange={(e) => set({ priceNote: e.target.value })}
                   placeholder={t('board.fPriceNotePh')}
-                  className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action"
+                  className="w-full h-11 px-3.5 bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-white border border-border-subtle dark:border-slate-700 text-sm focus:outline-none focus:border-navy-deep dark:focus:border-blue-400 transition-all"
                 />
               </div>
 
-              <div>
-                <label htmlFor="post-detail" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
-                  {t('board.fDetail')}
+              {/* Field 8: รายละเอียดทริป */}
+              <div className="space-y-1.5">
+                <label htmlFor="post-detail" className="flex items-center justify-between font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider">
+                  <span>{t('board.fDetail')}</span>
+                  <span className="font-caption normal-case text-ink-secondary dark:text-slate-400 font-medium">
+                    แนะนำให้ระบุจุดรับ-ส่ง
+                  </span>
                 </label>
                 <textarea
                   id="post-detail"
@@ -1194,113 +1266,171 @@ export const TripBoard: React.FC = () => {
                   value={form.detail}
                   onChange={(e) => set({ detail: e.target.value })}
                   placeholder={t('board.fDetailPh')}
-                  className="w-full p-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action resize-none"
+                  className="w-full p-3.5 bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-white border border-border-subtle dark:border-slate-700 text-sm focus:outline-none focus:border-navy-deep dark:focus:border-blue-400 resize-none leading-relaxed transition-all"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-space-sm">
-                <div>
-                  <label htmlFor="post-author-name" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
-                    {t('board.fName')}
-                  </label>
-                  <input
-                    id="post-author-name"
-                    type="text"
-                    required
-                    value={form.authorName}
-                    onChange={(e) => set({ authorName: e.target.value })}
-                    placeholder={t('board.fNamePh')}
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action"
-                  />
+              {/* Field 9 & 10: ข้อมูลผู้ติดต่อสำหรับคนขับ */}
+              <div className="p-4 bg-paper-surface-muted/70 dark:bg-slate-800/60 border border-border-subtle dark:border-slate-700/60 space-y-3.5">
+                <div className="flex items-center gap-2 pb-0.5">
+                  <span className="material-symbols-outlined text-navy-deep dark:text-blue-400 text-xl">contact_phone</span>
+                  <h4 className="font-title-lg text-sm sm:text-base text-navy-deep dark:text-white font-bold tracking-tight">
+                    {t('board.fContactHeader')}
+                  </h4>
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label htmlFor="post-author-name" className="block font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider">
+                      {t('board.fName')}
+                    </label>
+                    <input
+                       id="post-author-name"
+                       type="text"
+                       required
+                       value={form.authorName}
+                       onChange={(e) => set({ authorName: e.target.value })}
+                       placeholder={t('board.fNamePh')}
+                      className="w-full h-11 px-3.5 bg-paper-elevated dark:bg-slate-900 text-ink-primary dark:text-white border border-border-subtle dark:border-slate-700 text-sm focus:outline-none focus:border-navy-deep dark:focus:border-blue-400 transition-all"
+                    />
+                  </div>
 
-                <div>
-                  <label htmlFor="post-author-phone" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
-                    {t('board.fPhone')}
-                  </label>
-                  <input
-                    id="post-author-phone"
-                    type="tel"
-                    required
-                    value={form.authorPhone}
-                    onChange={(e) => set({ authorPhone: e.target.value })}
-                    placeholder="08x-xxx-xxxx"
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action"
-                  />
+                  <div className="space-y-1.5">
+                    <label htmlFor="post-author-phone" className="block font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider">
+                      {t('board.fPhone')}
+                    </label>
+                    <input
+                      id="post-author-phone"
+                      type="tel"
+                      required
+                      value={form.authorPhone}
+                      onChange={(e) => set({ authorPhone: e.target.value })}
+                      placeholder="08x-xxx-xxxx"
+                      className="w-full h-11 px-3.5 bg-paper-elevated dark:bg-slate-900 text-ink-primary dark:text-white border border-border-subtle dark:border-slate-700 text-sm font-semibold focus:outline-none focus:border-navy-deep dark:focus:border-blue-400 tabular-nums transition-all"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* International Contact Section (WhatsApp & WeChat) */}
-              <div className="p-3.5 bg-paper-surface-muted/60 dark:bg-slate-800/60 rounded-2xl border border-border-subtle dark:border-slate-700/60 space-y-3">
-                <div>
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-navy-deep dark:text-blue-300">
-                    <span className="material-symbols-outlined text-[16px] text-emerald-600">public</span>
-                    <span>{t('board.intlContact')}</span>
+              {/* Section: นักท่องเที่ยวต่างชาติ WhatsApp / WeChat / KakaoTalk Card */}
+              <div className="p-4 bg-paper-surface-muted/40 dark:bg-slate-800/40 border border-border-subtle dark:border-slate-700/60 space-y-3.5">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-700 flex items-center justify-center shrink-0 text-amber-deep">
+                    <span className="material-symbols-outlined text-lg">public</span>
                   </div>
-                  <p className="text-[11px] text-ink-muted dark:text-slate-400 mt-0.5">
-                    {t('board.intlContactDesc')}
-                  </p>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="font-label-md text-xs sm:text-sm text-navy-deep dark:text-white font-bold">
+                        {t('board.intlCardTitle')}
+                      </h4>
+                      <span className="px-1.5 py-0.2 bg-line-green-soft text-line-green font-label-sm text-[10px] font-bold border border-line-green/30">
+                        {t('board.recommended')}
+                      </span>
+                    </div>
+                    <p className="font-caption text-xs text-ink-secondary dark:text-slate-400">
+                      {t('board.intlContactDesc')}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label htmlFor="post-author-whatsapp" className="font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider">
-                        WhatsApp
-                      </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  {/* WhatsApp */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider font-bold">
+                        WHATSAPP
+                      </span>
                       {form.authorPhone && form.authorWhatsApp !== form.authorPhone && (
                         <button
                           type="button"
-                          onClick={() => set({ authorWhatsApp: form.authorPhone })}
-                          className="text-[10px] text-blue-action hover:underline font-medium"
+                          onClick={() => {
+                            const raw = form.authorPhone.replace(/[^0-9]/g, '');
+                            const wa = raw.startsWith('0') ? `+66${raw.substring(1)}` : raw.startsWith('+') ? raw : `+66${raw}`;
+                            set({ authorWhatsApp: wa });
+                          }}
+                          className="font-caption text-xs text-blue-action hover:underline font-bold"
                         >
                           {t('board.sameAsPhone')}
                         </button>
                       )}
                     </div>
-                    <input
-                      id="post-author-whatsapp"
-                      type="tel"
-                      value={form.authorWhatsApp}
-                      onChange={(e) => set({ authorWhatsApp: e.target.value })}
-                      placeholder={t('board.fWhatsAppPh')}
-                      className="w-full h-11 px-3 bg-paper-surface dark:bg-slate-900 dark:text-white rounded-xl text-body-base font-body-base border border-border-subtle/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
+                    <div className="relative flex items-center bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-700 focus-within:border-navy-deep dark:focus-within:border-blue-400">
+                      <input
+                        id="post-author-whatsapp"
+                        type="tel"
+                        value={form.authorWhatsApp}
+                        onChange={(e) => set({ authorWhatsApp: e.target.value })}
+                        placeholder={t('board.fWhatsAppPh')}
+                        className="w-full h-11 px-3.5 bg-transparent text-ink-primary dark:text-white text-sm focus:outline-none"
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label htmlFor="post-author-wechat" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
-                      WeChat ID
-                    </label>
-                    <input
-                      id="post-author-wechat"
-                      type="text"
-                      value={form.authorWeChat}
-                      onChange={(e) => set({ authorWeChat: e.target.value })}
-                      placeholder={t('board.fWeChatPh')}
-                      className="w-full h-11 px-3 bg-paper-surface dark:bg-slate-900 dark:text-white rounded-xl text-body-base font-body-base border border-border-subtle/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
+                  {/* LINE ID */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider font-bold">
+                        LINE ID
+                      </span>
+                      <span className="font-caption text-[11px] text-ink-muted dark:text-slate-500">ยอดนิยมในไทย</span>
+                    </div>
+                    <div className="relative bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-700 focus-within:border-navy-deep dark:focus-within:border-blue-400">
+                      <input
+                        id="post-author-line"
+                        type="text"
+                        value={form.authorLine}
+                        onChange={(e) => set({ authorLine: e.target.value })}
+                        placeholder={t('board.fLinePh')}
+                        className="w-full h-11 px-3.5 bg-transparent text-ink-primary dark:text-white text-sm focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* WeChat ID */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider font-bold">
+                        WECHAT ID
+                      </span>
+                      <span className="font-caption text-[11px] text-ink-muted dark:text-slate-500">สำหรับนักท่องเที่ยวจีน</span>
+                    </div>
+                    <div className="relative bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-700 focus-within:border-navy-deep dark:focus-within:border-blue-400">
+                      <input
+                        id="post-author-wechat"
+                        type="text"
+                        value={form.authorWeChat}
+                        onChange={(e) => set({ authorWeChat: e.target.value })}
+                        placeholder={t('board.fWeChatPh')}
+                        className="w-full h-11 px-3.5 bg-transparent text-ink-primary dark:text-white text-sm focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* KakaoTalk ID */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider font-bold">
+                        KAKAOTALK ID
+                      </span>
+                      <span className="font-caption text-[11px] text-ink-muted dark:text-slate-500">สำหรับนักท่องเที่ยวเกาหลี</span>
+                    </div>
+                    <div className="relative bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-700 focus-within:border-navy-deep dark:focus-within:border-blue-400">
+                      <input
+                        id="post-author-kakaotalk"
+                        type="text"
+                        value={form.authorKakaoTalk}
+                        onChange={(e) => set({ authorKakaoTalk: e.target.value })}
+                        placeholder={t('board.fKakaoTalkPh')}
+                        className="w-full h-11 px-3.5 bg-transparent text-ink-primary dark:text-white text-sm focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-space-sm">
-                <div>
-                  <label htmlFor="post-author-line" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
-                    {t('board.fLine')}
-                  </label>
-                  <input
-                    id="post-author-line"
-                    type="text"
-                    value={form.authorLine}
-                    onChange={(e) => set({ authorLine: e.target.value })}
-                    placeholder={t('board.fLinePh')}
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="post-pin" className="block font-label-badge text-label-badge text-ink-muted dark:text-slate-400 uppercase tracking-wider mb-1">
+              {/* Field 11: PIN 4 Digits for Self-Service Cancellation */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="post-pin" className="block font-label-badge text-xs text-ink-secondary dark:text-slate-400 uppercase tracking-wider">
                     {t('board.fPin')}
                   </label>
                   <input
@@ -1310,37 +1440,89 @@ export const TripBoard: React.FC = () => {
                     value={form.pin}
                     onChange={(e) => set({ pin: e.target.value })}
                     placeholder="1234"
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-blue-action"
+                    className="w-full h-11 px-3.5 bg-paper-surface-muted dark:bg-slate-800 text-ink-primary dark:text-white border border-border-subtle dark:border-slate-700 text-sm focus:outline-none focus:border-navy-deep dark:focus:border-blue-400"
                   />
+                </div>
+                <div className="flex items-center text-xs text-ink-muted dark:text-slate-400 pt-1 sm:pt-6">
+                  <span>* {t('board.closeDesc')}</span>
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full h-12 bg-blue-action hover:bg-blue-action-hover text-on-primary font-title-card text-title-card rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-space-sm"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>{t('board.submitting')}</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-5 h-5" />
-                    <span>{t('board.submitConfirm')}</span>
-                  </>
-                )}
-              </button>
+              {/* Dispatch Stats / Trust Proof Bar */}
+              <div className="grid grid-cols-3 gap-2 py-3 px-4 bg-paper-surface-muted/60 dark:bg-slate-800/60 border border-border-subtle dark:border-slate-700 text-center">
+                <div>
+                  <div className="font-headline-md text-base sm:text-lg font-extrabold text-navy-deep dark:text-white tabular-nums">
+                    {t('board.statAvgQuote')}
+                  </div>
+                  <div className="font-caption text-[11px] text-ink-secondary dark:text-slate-400">
+                    {t('board.statAvgQuoteDesc')}
+                  </div>
+                </div>
+                <div className="border-l border-r border-border-subtle dark:border-slate-700">
+                  <div className="font-headline-md text-base sm:text-lg font-extrabold text-line-green tabular-nums">
+                    {t('board.statZeroCut')}
+                  </div>
+                  <div className="font-caption text-[11px] text-ink-secondary dark:text-slate-400">
+                    {t('board.statZeroCutDesc')}
+                  </div>
+                </div>
+                <div>
+                  <div className="font-headline-md text-base sm:text-lg font-extrabold text-navy-deep dark:text-white tabular-nums">
+                    {t('board.statDriverCount')}
+                  </div>
+                  <div className="font-caption text-[11px] text-ink-secondary dark:text-slate-400">
+                    {t('board.statDriverCountDesc')}
+                  </div>
+                </div>
+              </div>
+              </div>
+
+              {/* Modal Bottom Actions & Compliance Strip (Pinned at Bottom) */}
+              <div className="shrink-0 p-3.5 sm:p-4 border-t border-border-subtle dark:border-slate-800 bg-surface-card dark:bg-slate-900 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-ink-secondary dark:text-slate-400">
+                  <span className="material-symbols-outlined text-lg text-line-green">verified_user</span>
+                  <span className="font-caption text-xs">{t('board.pdpaSafe')}</span>
+                </div>
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setFormOpen(false)}
+                    className="w-full sm:w-auto px-6 py-2.5 font-label-md text-sm text-ink-secondary dark:text-slate-400 hover:text-ink-primary hover:bg-paper-surface-muted dark:hover:bg-slate-800 transition-colors border border-border-subtle dark:border-slate-700 cursor-pointer"
+                  >
+                    {t('board.cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full sm:w-auto px-8 py-2.5 font-label-md text-sm bg-navy-deep hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white transition-all flex items-center justify-center gap-2 shadow-sm font-bold group cursor-pointer disabled:opacity-60"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>{t('board.submitting')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{t('board.submit')}</span>
+                        <span className="px-1.5 py-0.5 bg-amber-soft text-amber-deep text-[11px] font-extrabold">
+                          {t('board.freeTag')}
+                        </span>
+                        <span className="material-symbols-outlined text-base group-hover:translate-x-1 transition-transform">
+                          arrow_forward
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </form>
           </div>
         </div>
       )}
-
       {/* 7. PIN Close Post Dialog */}
-      {closingPost && (
-        <div className="fixed inset-0 z-400 flex items-center justify-center p-4 bg-navy-deep/60 backdrop-blur-sm">
-          <div className="bg-paper-elevated dark:bg-slate-900 rounded-2xl max-w-sm w-full p-space-lg shadow-2xl border border-border-subtle dark:border-slate-800 space-y-space-sm text-center">
+      {closingPost && renderPortal(
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-navy-deep/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-paper-elevated dark:bg-slate-900 rounded-none max-w-sm w-full p-space-lg shadow-2xl border border-border-subtle dark:border-slate-800 space-y-space-sm text-center">
             <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-500 mx-auto flex items-center justify-center">
               <Lock className="w-6 h-6" />
             </div>
@@ -1395,9 +1577,9 @@ export const TripBoard: React.FC = () => {
       )}
 
       {/* 8. Driver Submit Quote Modal */}
-      {quoteDriverPost && (
-        <div className="fixed inset-0 z-400 flex items-center justify-center p-4 bg-navy-deep/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-paper-elevated dark:bg-slate-900 rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-space-lg shadow-2xl border border-border-subtle dark:border-slate-800 space-y-space-md">
+      {quoteDriverPost && renderPortal(
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-navy-deep/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-paper-elevated dark:bg-slate-900 rounded-none max-w-lg w-full max-h-[90vh] overflow-y-auto p-space-lg shadow-2xl border border-border-subtle dark:border-slate-800 space-y-space-md">
             <div className="flex items-start justify-between border-b border-border-subtle dark:border-slate-800 pb-space-sm">
               <div>
                 <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 mb-1">
@@ -1578,9 +1760,9 @@ export const TripBoard: React.FC = () => {
       )}
 
       {/* 9. Customer View & Accept Quotes Modal */}
-      {viewQuotesPost && (
-        <div className="fixed inset-0 z-400 flex items-center justify-center p-4 bg-navy-deep/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-paper-elevated dark:bg-slate-900 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-space-lg shadow-2xl border border-border-subtle dark:border-slate-800 space-y-space-md">
+      {viewQuotesPost && renderPortal(
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-navy-deep/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-paper-elevated dark:bg-slate-900 rounded-none max-w-2xl w-full max-h-[90vh] overflow-y-auto p-space-lg shadow-2xl border border-border-subtle dark:border-slate-800 space-y-space-md">
             <div className="flex items-start justify-between border-b border-border-subtle dark:border-slate-800 pb-space-sm">
               <div>
                 <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 mb-1">
@@ -1816,9 +1998,9 @@ export const TripBoard: React.FC = () => {
       )}
 
       {/* 8. POST CREATED / MAGIC LINK SUCCESS MODAL */}
-      {createdMagicLinkPost && (
-        <div className="fixed inset-0 z-500 flex items-center justify-center p-4 bg-navy-deep/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-paper-elevated dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-border-subtle dark:border-slate-800 space-y-4 text-center">
+      {createdMagicLinkPost && renderPortal(
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-navy-deep/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-paper-elevated dark:bg-slate-900 rounded-none max-w-md w-full p-6 shadow-2xl border border-border-subtle dark:border-slate-800 space-y-4 text-center">
             <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center shadow-xs">
               <CheckCircle2 className="w-8 h-8" />
             </div>
