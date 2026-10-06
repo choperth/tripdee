@@ -299,7 +299,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-xs font-bold">3. พาร์ทเนอร์คนขับ (Driver)</span>
-                <span className="block text-[11px] text-slate-500 dark:text-slate-400">รับงานตรง 0% ค่าหัวคิว</span>
+                <span className="block text-[11px] text-slate-500 dark:text-slate-400">รับงานตรง ไม่ผ่านคนกลาง</span>
               </span>
               <span className="text-[10px] font-black px-2 py-0.5 shrink-0 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                 คิวว่าง

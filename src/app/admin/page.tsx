@@ -451,7 +451,7 @@ export default function AdminConsolePage() {
                     <div className="mt-4 pt-2 border-t border-slate-800 flex flex-col gap-1">
                       <div className="flex items-center gap-1 text-xs text-[#fea619] font-bold">
                         <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                        <span>โมเดลค่าคอมมิชชั่น 0% ตลอดชีพ</span>
+                        <span>โมเดลดีลตรงคนขับ ตลอดชีพ</span>
                       </div>
                       <span className="text-[11px] text-slate-400">รายได้โฆษณา & สปอนเซอร์ ฿148,500</span>
                     </div>

@@ -212,7 +212,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
               เปิดรับสมัครพันธมิตรคนขับทั่วประเทศ: เชียงใหม่ ภูเก็ต กทม. พัทยา สมุย
             </span>
             <span className="hidden md:inline-flex bg-amber-500 text-slate-950 text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider shrink-0">
-              0% คอมมิชชั่นตลอดชีพ
+              ดีลตรงคนขับ ไม่ผ่านคนกลาง
             </span>
           </div>
           <button

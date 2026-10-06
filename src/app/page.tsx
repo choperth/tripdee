@@ -72,7 +72,6 @@ function SectionHead({
   caption: string;
   action?: React.ReactNode;
 }) {
-  const { t } = useLanguage();
   return (
     <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 pb-3 border-b border-slate-300 dark:border-slate-800 mb-4 sm:mb-5">
       <div>
@@ -88,13 +87,11 @@ function SectionHead({
           {caption}
         </p>
       </div>
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 px-3 py-1.5 flex items-center gap-1.5 rounded-none">
-          <span className="material-symbols-outlined text-[16px] text-emerald-600">shield_check</span>
-          <span>{t('home.insuranceBadge')}</span>
-        </span>
-        {action}
-      </div>
+      {action ? (
+        <div className="flex items-center gap-2 flex-wrap">
+          {action}
+        </div>
+      ) : null}
     </div>
   );
 }

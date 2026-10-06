@@ -13,7 +13,7 @@
  */
 
 import { getSupabase } from './client';
-import { Database } from './types';
+import { Database, Booking } from './types';
 import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, SPONSORS, ZoneId, BoardQuote } from '@/data/mockData';
 import { isMockDataEnabled, isExcludedTestVehicle, isExcludedTestDriver } from '@/lib/mockConfig';
 import {
@@ -1666,5 +1666,194 @@ export async function checkSupabaseHealth(): Promise<SupabaseHealthStatus> {
       error: String(err),
     };
   }
+}
+
+// ==============================================================================
+// 8. BOOKINGS & PAYMENTS SERVICE
+// ==============================================================================
+
+type BookingRow = Database['public']['Tables']['bookings']['Row'];
+
+function mapBookingRow(row: BookingRow): Booking {
+  return {
+    id: row.id,
+    vehicleId: row.vehicle_id,
+    driverId: row.driver_id,
+    customerName: row.customer_name,
+    customerPhone: row.customer_phone,
+    customerLine: row.customer_line,
+    route: row.route,
+    travelDate: row.travel_date,
+    totalDays: row.total_days,
+    totalPrice: Number(row.total_price),
+    depositAmount: Number(row.deposit_amount),
+    remainingAmount: Number(row.remaining_amount),
+    paymentStatus: row.payment_status,
+    chillpayTransactionId: row.chillpay_transaction_id,
+    chillpayPaymentUrl: row.chillpay_payment_url,
+    chillpayQrPayload: row.chillpay_qr_payload,
+    isContactUnlocked: row.is_contact_unlocked,
+    createdAt: row.created_at,
+    paidAt: row.paid_at,
+  };
+}
+
+// In-memory fallback bookings store
+const localBookings: Booking[] = [];
+
+export async function createBooking(data: {
+  id?: string;
+  vehicleId?: string | null;
+  driverId?: string | null;
+  customerName: string;
+  customerPhone: string;
+  customerLine?: string | null;
+  route: string;
+  travelDate: string;
+  totalDays?: number;
+  totalPrice: number;
+  depositAmount: number;
+  remainingAmount: number;
+  chillpayTransactionId?: string | null;
+  chillpayPaymentUrl?: string | null;
+  chillpayQrPayload?: string | null;
+}): Promise<Booking> {
+  const bookingId = data.id || `TD-BK-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const nowIso = new Date().toISOString();
+  const newBooking: Booking = {
+    id: bookingId,
+    vehicleId: data.vehicleId || null,
+    driverId: data.driverId || null,
+    customerName: data.customerName,
+    customerPhone: data.customerPhone,
+    customerLine: data.customerLine || null,
+    route: data.route,
+    travelDate: data.travelDate,
+    totalDays: data.totalDays || 1,
+    totalPrice: data.totalPrice,
+    depositAmount: data.depositAmount,
+    remainingAmount: data.remainingAmount,
+    paymentStatus: 'pending',
+    chillpayTransactionId: data.chillpayTransactionId || null,
+    chillpayPaymentUrl: data.chillpayPaymentUrl || null,
+    chillpayQrPayload: data.chillpayQrPayload || null,
+    isContactUnlocked: false,
+    createdAt: nowIso,
+    paidAt: null,
+  };
+
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const { data: inserted, error } = await sb
+        .from('bookings')
+        .insert({
+          id: newBooking.id,
+          vehicle_id: newBooking.vehicleId,
+          driver_id: newBooking.driverId,
+          customer_name: newBooking.customerName,
+          customer_phone: newBooking.customerPhone,
+          customer_line: newBooking.customerLine,
+          route: newBooking.route,
+          travel_date: newBooking.travelDate,
+          total_days: newBooking.totalDays,
+          total_price: newBooking.totalPrice,
+          deposit_amount: newBooking.depositAmount,
+          remaining_amount: newBooking.remainingAmount,
+          payment_status: newBooking.paymentStatus,
+          chillpay_transaction_id: newBooking.chillpayTransactionId,
+          chillpay_payment_url: newBooking.chillpayPaymentUrl,
+          chillpay_qr_payload: newBooking.chillpayQrPayload,
+          is_contact_unlocked: newBooking.isContactUnlocked,
+        })
+        .select()
+        .single();
+
+      if (!error && inserted) {
+        return mapBookingRow(inserted);
+      }
+      console.warn('[Supabase Bookings Insert Fallback]:', error?.message);
+    } catch (err) {
+      console.warn('[Supabase Bookings Insert Exception]:', err);
+    }
+  }
+
+  localBookings.unshift(newBooking);
+  return newBooking;
+}
+
+export async function getBookingById(id: string): Promise<Booking | null> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const { data, error } = await sb
+        .from('bookings')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (!error && data) {
+        return mapBookingRow(data);
+      }
+    } catch (err) {
+      console.warn('[Supabase Bookings Fetch Exception]:', err);
+    }
+  }
+
+  const found = localBookings.find((b) => b.id === id);
+  return found || null;
+}
+
+export async function updateBookingPayment(
+  id: string,
+  updates: {
+    paymentStatus: 'pending' | 'paid' | 'failed' | 'expired';
+    chillpayTransactionId?: string | null;
+    isContactUnlocked?: boolean;
+    paidAt?: string | null;
+  }
+): Promise<Booking | null> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const updatePayload: Database['public']['Tables']['bookings']['Update'] = {
+        payment_status: updates.paymentStatus,
+      };
+      if (updates.chillpayTransactionId !== undefined) {
+        updatePayload.chillpay_transaction_id = updates.chillpayTransactionId;
+      }
+      if (updates.isContactUnlocked !== undefined) {
+        updatePayload.is_contact_unlocked = updates.isContactUnlocked;
+      }
+      if (updates.paidAt !== undefined) {
+        updatePayload.paid_at = updates.paidAt;
+      }
+      const { data, error } = await sb
+        .from('bookings')
+        .update(updatePayload)
+        .eq('id', id)
+        .select()
+        .maybeSingle();
+
+      if (!error && data) {
+        return mapBookingRow(data);
+      }
+    } catch (err) {
+      console.warn('[Supabase Bookings Update Exception]:', err);
+    }
+  }
+
+  const idx = localBookings.findIndex((b) => b.id === id);
+  if (idx !== -1) {
+    localBookings[idx] = {
+      ...localBookings[idx],
+      paymentStatus: updates.paymentStatus,
+      ...(updates.chillpayTransactionId !== undefined ? { chillpayTransactionId: updates.chillpayTransactionId } : {}),
+      ...(updates.isContactUnlocked !== undefined ? { isContactUnlocked: updates.isContactUnlocked } : {}),
+      ...(updates.paidAt !== undefined ? { paidAt: updates.paidAt } : {}),
+    };
+    return localBookings[idx];
+  }
+  return null;
 }
 

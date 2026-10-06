@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ใบสรุปการจองมาตรฐาน (TripDee Booking Sheet) | ทริปดี</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              DEFAULT: "#0A192F",
+              surface: "#112240",
+              deep: "#020C1B",
+            },
+            accent: {
+              DEFAULT: "#2563EB",
+              hover: "#1D4ED8",
+              soft: "#EFF6FF",
+            },
+            amber: {
+              accent: "#F59E0B",
+              deep: "#D97706",
+              soft: "#FEF3C7",
+            },
+            line: {
+              green: "#06C755",
+              hover: "#05B04B",
+              soft: "#E8F9EE",
+            },
+            emerald: {
+              verified: "#10B981",
+              soft: "#ECFDF5",
+            },
+            paper: "#F8FAFC",
+            card: "#FFFFFF",
+            border: {
+              hairline: "#E2E8F0",
+              strong: "#CBD5E1",
+            },
+            ink: {
+              primary: "#0F172A",
+              secondary: "#475569",
+              muted: "#94A3B8",
+            }
+          },
+          fontFamily: {
+            display: ["'Plus Jakarta Sans'", "'Prompt'", "'Noto Sans Thai'", "sans-serif"],
+            sans: ["'Prompt'", "'Plus Jakarta Sans'", "'Noto Sans Thai'", "sans-serif"],
+            mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    /* Material Symbols Configuration */
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .material-symbols-filled {
+      font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+
+    /* Tabular figures for alignment of financial and phone data */
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Standard A4 Print Stylesheet */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 10mm 12mm;
+      }
+      *, *::before, *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-container {
+        box-shadow: none !important;
+        border: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .print-break-avoid {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-paper min-h-screen text-ink-primary font-sans antialiased p-0 sm:p-4 md:p-6 lg:p-8 flex flex-col items-center">
+
+  <!-- ============================================================== -->
+  <!-- Screen-Only Control Toolbar (Bauhaus Architectural Navy)       -->
+  <!-- ============================================================== -->
+  <header class="no-print w-full max-w-4xl bg-navy/95 backdrop-blur-md border border-slate-700/80 text-white rounded-t-xl px-4 py-3 sm:px-6 flex flex-wrap items-center justify-between gap-3 shadow-xl">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white shadow-sm font-display font-extrabold text-xs">
+        TD
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <h1 class="text-xs sm:text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+          <span>ใบสรุปการจองมาตรฐาน</span>
+          <span class="text-slate-400 font-normal hidden sm:inline">(TripDee Booking Sheet)</span>
+        </h1>
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-verified/20 text-emerald-300 border border-emerald-500/40">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          A4 Print-Ready
+        </span>
+      </div>
+    </div>
+
+    <!-- Toolbar Buttons -->
+    <div class="flex items-center gap-2 ml-auto flex-wrap">
+      <!-- Edit Mode Toggle -->
+      <button id="toggleEditBtn" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded transition-colors shadow-xs cursor-pointer" type="button">
+        <span class="material-symbols-outlined text-sm text-blue-400">edit_note</span>
+        <span id="editBtnText">แก้ไขข้อมูล</span>
+      </button>
+
+      <!-- Copy LINE Summary Button -->
+      <button id="copyLineBtn" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-line-green hover:bg-line-hover rounded transition-colors shadow-xs cursor-pointer" type="button">
+        <span class="material-symbols-outlined text-sm">content_copy</span>
+        <span id="copyBtnText">คัดลอกสรุปส่ง LINE</span>
+      </button>
+
+      <!-- Print / PDF Button -->
+      <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-accent hover:bg-accent-hover rounded transition-colors shadow-xs cursor-pointer" type="button">
+        <span class="material-symbols-outlined text-sm">print</span>
+        <span>พิมพ์ / เซฟ PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================================== -->
+  <!-- Screen-Only Live Edit Drawer (Collapsible)                    -->
+  <!-- ============================================================== -->
+  <section id="editDrawer" class="no-print hidden w-full max-w-4xl bg-slate-900 border-x border-b border-slate-700 p-5 text-white text-xs space-y-4 shadow-xl">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-700">
+      <div class="flex items-center gap-2 text-blue-400 font-bold">
+        <span class="material-symbols-outlined text-base">tune</span>
+        <span>ปรับแต่งข้อมูลใบสรุปการจอง (การแก้ไขจะอัปเดตเอกสารทันทีแบบ Real-Time)</span>
+      </div>
+      <span class="text-[11px] text-slate-400">กรอกข้อมูลที่ต้องการ แล้วกด "พิมพ์/เซฟ PDF" หรือ "คัดลอกส่ง LINE"</span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div>
+        <label class="block text-slate-300 font-medium mb-1">ชื่อผู้ว่าจ้าง / คณะ:</label>
+        <input id="inputCustName" type="text" value="คุณศิริพร บุญเสริมสุข (ทริปครอบครัว)" class="w-full bg-slate-800 border border-slate-600 rounded px-2.5 py-1.5 text-white text-xs focus:border-blue-400 focus:outline-none" />
+      </div>
+      <div>
+        <label class="block text-slate-300 font-medium mb-1">เบอร์โทรติดต่อ:</label>
+        <input id="inputCustPhone" type="text" value="089-123-4567" class="w-full bg-slate-800 border border-slate-600 rounded px-2.5 py-1.5 text-white text-xs focus:border-blue-400 focus:outline-none" />
+      </div>
+      <div>
+        <label class="block text-slate-300 font-medium mb-1">จำนวนผู้โดยสาร:</label>
+        <input id="inputPax" type="text" value="8 ท่าน (ผู้ใหญ่ 6 / เด็ก 2)" class="w-full bg-slate-800 border border-slate-600 rounded px-2.5 py-1.5 text-white text-xs focus:border-blue-400 focus:outline-none" />
+      </div>
+      <div>
+        <label class="block text-slate-300 font-medium mb-1">วันที่เดินทาง:</label>
+        <input id="inputTravelDates" type="text" value="18 - 20 พ.ย. 2569" class="w-full bg-slate-800 border border-slate-600 rounded px-2.5 py-1.5 text-white text-xs focus:border-blue-400 focus:outline-none" />
+      </div>
+      <div>
+        <label class="block text-slate-300 font-medium mb-1">จำนวนวัน (วัน):</label>
+        <input id="inputDays" type="number" min="1" value="3" class="w-full bg-slate-800 border border-slate-600 rounded px-2.5 py-1.5 text-white text-xs focus:border-blue-400 focus:outline-none" />
+      </div>
+      <div>
+        <label class="block text-slate-300 font-medium mb-1">อัตราค่าบริการต่อวัน (บาท):</label>
+        <input id="inputDailyRate" type="number" min="0" step="100" value="2200" class="w-full bg-slate-800 border border-slate-600 rounded px-2.5 py-1.5 text-white text-xs focus:border-blue-400 focus:outline-none" />
+      </div>
+      <div>
+        <label class="block text-slate-300 font-medium mb-1">จุดนัดรับ:</label>
+        <input id="inputPickupLoc" type="text" value="ท่าอากาศยานเชียงใหม่ (CNX) ประตู 2" class="w-full bg-slate-800 border border-slate-600 rounded px-2.5 py-1.5 text-white text-xs focus:border-blue-400 focus:outline-none" />
+      </div>
+      <div>
+        <label class="block text-slate-300 font-medium mb-1">เวลานัดหมาย:</label>
+        <input id="inputPickupTime" type="text" value="08:30 น." class="w-full bg-slate-800 border border-slate-600 rounded px-2.5 py-1.5 text-white text-xs focus:border-blue-400 focus:outline-none" />
+      </div>
+      <div>
+        <label class="block text-slate-300 font-medium mb-1">ยอดเงินมัดจำ (บาท):</label>
+        <input id="inputDeposit" type="number" min="0" step="100" value="1500" class="w-full bg-slate-800 border border-slate-600 rounded px-2.5 py-1.5 text-white text-xs focus:border-blue-400 focus:outline-none" />
+      </div>
+      <div class="sm:col-span-3">
+        <label class="block text-slate-300 font-medium mb-1">แผนการเดินทาง / เส้นทางท่องเที่ยว:</label>
+        <input id="inputRoute" type="text" value="วัน 1: รับสนามบิน - ม่อนแจ่ม - ปางช้างแม่สา | วัน 2: ดอยอินทนนท์ - กิ่วแม่ปาน | วัน 3: วัดพระธาตุดอยสุเทพ - ส่งสนามบิน" class="w-full bg-slate-800 border border-slate-600 rounded px-2.5 py-1.5 text-white text-xs focus:border-blue-400 focus:outline-none" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- MAIN A4 PRINTABLE BOOKING CONFIRMATION SHEET                   -->
+  <!-- ============================================================== -->
+  <main class="print-container w-full max-w-4xl bg-card border border-border-hairline shadow-md p-6 sm:p-10 text-ink-primary rounded-b-xl print:rounded-none">
+    
+    <!-- Top Header: Platform Identity & Document Reference -->
+    <header class="print-break-avoid flex flex-col sm:flex-row sm:items-start justify-between gap-5 pb-6 border-b border-border-hairline">
+      <!-- Brand & Document Title -->
+      <div class="space-y-1.5">
+        <div class="flex items-center gap-3">
+          <!-- Bauhaus Architectural Brand Anchor -->
+          <div class="w-11 h-11 bg-navy text-white flex items-center justify-center font-display font-extrabold text-xl tracking-tight shadow-xs border border-navy/20">
+            TD
+          </div>
+          <div>
+            <div class="flex items-baseline gap-2">
+              <span class="font-display text-2xl font-extrabold tracking-tight text-navy">TripDee</span>
+              <span class="font-sans text-xl font-bold text-accent">ทริปดี</span>
+              <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 bg-paper text-ink-secondary border border-border-hairline rounded font-semibold">
+                Official Platform
+              </span>
+            </div>
+            <p class="text-[11px] text-ink-secondary font-medium tracking-wide">
+              แพลตฟอร์มรวมรถตู้พร้อมคนขับ VERIFIED &amp; ท่องเที่ยวทั่วไทย (ไม่ผ่านนายหน้า)
+            </p>
+          </div>
+        </div>
+
+        <div class="pt-3">
+          <h2 class="font-display text-xl sm:text-2xl font-extrabold tracking-tight text-navy">
+            ใบสรุปการยืนยันการจองรถและมัดจำ
+          </h2>
+          <p class="text-[11px] tracking-wider font-bold text-ink-secondary uppercase mt-0.5 font-display">
+            BOOKING CONFIRMATION &amp; ITINERARY SUMMARY SHEET
+          </p>
+        </div>
+      </div>
+
+      <!-- Reference ID & Confirmed Status Tag -->
+      <div class="flex flex-col sm:items-end gap-2 text-left sm:text-right shrink-0">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-soft text-emerald-800 border border-emerald-300 shadow-2xs">
+          <span class="material-symbols-filled text-emerald-600 text-sm">check_circle</span>
+          <span>ยืนยันคิวรถเรียบร้อย (CONFIRMED)</span>
+        </span>
+        <div class="text-xs text-ink-secondary space-y-0.5 pt-0.5">
+          <p>
+            <span class="font-medium text-ink-muted">เลขที่อ้างอิง:</span>
+            <span id="dispBookingId" class="font-mono font-bold text-navy bg-paper px-1.5 py-0.5 rounded border border-border-hairline">
+              TD-BK-20261004-1689
+            </span>
+          </p>
+          <p>
+            <span class="font-medium text-ink-muted">วันที่ออกเอกสาร:</span>
+            <span id="dispIssueDate" class="font-medium text-ink-primary">4 ต.ค. 2569</span>
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Document Body Content -->
+    <div class="pt-6 space-y-5">
+
+      <!-- ============================================================ -->
+      <!-- SECTION 1 & 2: 2-Column Grid (Customer & Driver/Vehicle)     -->
+      <!-- ============================================================ -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 print-break-avoid">
+        
+        <!-- SECTION 1: Customer Information -->
+        <section class="bg-paper border border-border-hairline rounded-lg p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-4 pb-2 border-b border-border-hairline">
+              <span class="material-symbols-outlined text-accent text-lg">group</span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-navy font-display">
+                1. ข้อมูลผู้ว่าจ้าง / ผู้เดินทาง
+              </h3>
+            </div>
+            <dl class="space-y-2.5 text-xs sm:text-sm">
+              <div class="flex justify-between items-baseline gap-2">
+                <dt class="text-ink-secondary">ชื่อผู้ว่าจ้าง / คณะ:</dt>
+                <dd id="dispCustName" class="font-bold text-navy text-right">คุณศิริพร บุญเสริมสุข (ทริปครอบครัว)</dd>
+              </div>
+              <div class="flex justify-between items-baseline gap-2">
+                <dt class="text-ink-secondary">เบอร์โทรศัพท์ติดต่อ:</dt>
+                <dd id="dispCustPhone" class="font-bold text-navy font-mono tabular-nums text-right">089-123-4567</dd>
+              </div>
+              <div class="flex justify-between items-baseline gap-2">
+                <dt class="text-ink-secondary">จำนวนผู้โดยสาร:</dt>
+                <dd id="dispPax" class="font-semibold text-navy text-right">8 ท่าน (ผู้ใหญ่ 6 / เด็ก 2)</dd>
+              </div>
+              <div class="flex justify-between items-baseline gap-2 pt-1 border-t border-dashed border-border-hairline">
+                <dt class="text-ink-secondary text-[11px]">เอกสารใบกำกับภาษี:</dt>
+                <dd class="text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[13px]">verified</span>
+                  <span>รองรับหัก ณ ที่จ่าย 3% / E-Tax</span>
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
+        <!-- SECTION 2: Vehicle & Driver Information -->
+        <section class="bg-paper border border-border-hairline rounded-lg p-5">
+          <div class="flex items-center justify-between gap-2 mb-4 pb-2 border-b border-border-hairline">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-accent text-lg">directions_bus</span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-navy font-display">
+                2. ข้อมูลยานพาหนะและคนขับ
+              </h3>
+            </div>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-soft text-amber-deep border border-amber-300">
+              <span class="text-xs">★</span> VERIFIED DRIVER
+            </span>
+          </div>
+          <dl class="space-y-2.5 text-xs sm:text-sm">
+            <div class="flex justify-between items-baseline gap-2">
+              <dt class="text-ink-secondary shrink-0">คนขับผู้ให้บริการ:</dt>
+              <dd id="dispDriverName" class="font-bold text-navy text-right">
+                นายสุรชัย ใจดี <span class="text-ink-secondary font-medium">(พี่ชัย รถตู้เชียงใหม่)</span>
+              </dd>
+            </div>
+            <div class="flex justify-between items-baseline gap-2">
+              <dt class="text-ink-secondary shrink-0">เบอร์โทรติดต่อตรง:</dt>
+              <dd class="text-right">
+                <a id="dispDriverPhone" href="tel:0812345678" class="font-bold text-accent font-mono tabular-nums hover:underline">
+                  081-234-5678
+                </a>
+              </dd>
+            </div>
+            <div class="flex justify-between items-start gap-2">
+              <dt class="text-ink-secondary shrink-0 pt-0.5">ประเภทยานพาหนะ:</dt>
+              <dd id="dispVehicleTitle" class="font-medium text-ink-primary text-right text-xs">
+                Toyota Commuter VIP 9 ที่นั่ง เบาะนวดไฟฟ้า คาราโอเกะจัดเต็ม
+              </dd>
+            </div>
+            <div class="flex justify-between items-center gap-2 pt-1 border-t border-dashed border-border-hairline">
+              <dt class="text-ink-secondary shrink-0">ทะเบียนรถ:</dt>
+              <dd class="flex items-center gap-1.5">
+                <span id="dispPlate" class="font-bold px-2 py-0.5 rounded bg-amber-soft border border-amber-300 font-mono text-amber-deep text-xs">
+                  นข-4521 ชม.
+                </span>
+                <span class="text-[10px] text-ink-secondary font-semibold">
+                  (ป้ายเหลือง 30 สาธารณะ ถูกกฎหมาย 100%)
+                </span>
+              </dd>
+            </div>
+          </dl>
+        </section>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- SECTION 3: Itinerary & Pickup Appointment                    -->
+      <!-- ============================================================ -->
+      <section class="bg-paper border border-border-hairline rounded-lg p-5 print-break-avoid">
+        <div class="flex items-center gap-2 mb-4 pb-2 border-b border-border-hairline">
+          <span class="material-symbols-outlined text-accent text-lg">calendar_month</span>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-navy font-display">
+            3. แผนการเดินทางและกำหนดการนัดหมาย
+          </h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+          <!-- Dates & Pickup Point (5 cols) -->
+          <div class="md:col-span-5 space-y-3 text-xs sm:text-sm">
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-slate-400 text-lg mt-0.5">event</span>
+              <div>
+                <span class="text-ink-secondary block text-[11px] font-medium">วันเวลาเดินทาง:</span>
+                <span id="dispTravelDates" class="font-bold text-navy text-sm sm:text-base font-display">18 - 20 พ.ย. 2569</span>
+                <span id="dispDaysBadge" class="text-ink-secondary text-xs ml-1 font-semibold">(3 วัน)</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-slate-400 text-lg mt-0.5">schedule</span>
+              <div>
+                <span class="text-ink-secondary block text-[11px] font-medium">จุดนัดรับและเวลานัดหมาย:</span>
+                <span id="dispPickupLoc" class="font-semibold text-ink-primary block">ท่าอากาศยานเชียงใหม่ (CNX) ประตู 2</span>
+                <span id="dispPickupTime" class="font-bold text-accent text-xs">เวลานัดรับ: 08:30 น.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Route & Sightseeing Details (7 cols) -->
+          <div class="md:col-span-7 flex flex-col justify-start">
+            <span class="text-ink-secondary text-[11px] font-medium mb-1.5 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">route</span>
+              <span>เส้นทางและสถานที่ท่องเที่ยวตามตกลง:</span>
+            </span>
+            <div id="dispRoute" class="bg-card border border-border-hairline rounded-lg p-3 text-ink-primary text-xs sm:text-sm font-medium leading-relaxed shadow-2xs">
+              วัน 1: รับสนามบิน - ม่อนแจ่ม - ปางช้างแม่สา | วัน 2: ดอยอินทนนท์ - กิ่วแม่ปาน | วัน 3: วัดพระธาตุดอยสุเทพ - ส่งสนามบิน
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- SECTION 4: Financial Breakdown & Payment Schedule            -->
+      <!-- ============================================================ -->
+      <section class="border border-navy rounded-lg overflow-hidden bg-card print-break-avoid shadow-xs">
+        <!-- Monolithic Deep Navy Table Header -->
+        <div class="bg-navy px-5 py-3 flex items-center justify-between flex-wrap gap-2 text-white">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-amber-accent text-lg">payments</span>
+            <h3 class="text-xs sm:text-sm font-bold tracking-tight font-display">
+              4. สรุปค่าบริการและการชำระเงิน (FINANCIAL BREAKDOWN)
+            </h3>
+          </div>
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-semibold bg-amber-accent/20 text-amber-300 border border-amber-400/30">
+            <span class="material-symbols-outlined text-[13px]">handshake</span>
+            ดีลตรงกับคนขับ ไม่ผ่านคนกลาง
+          </span>
+        </div>
+
+        <div class="p-5 space-y-4">
+          <!-- Pricing Line Items -->
+          <div class="space-y-2.5 text-xs sm:text-sm">
+            <!-- Row: Daily Rate x Days -->
+            <div class="flex justify-between items-center py-1">
+              <span class="text-ink-secondary">
+                ค่าบริการรถตู้พร้อมคนขับ <span id="dispRateCalculation" class="text-xs text-ink-muted">(3 วัน @ ฿2,200/วัน)</span>:
+              </span>
+              <span id="dispTotalPrice" class="font-bold text-navy text-base tabular-nums font-display">฿6,600</span>
+            </div>
+
+            <!-- Row: Deposit Paid -->
+            <div class="flex justify-between items-center py-1 border-t border-border-hairline">
+              <span class="flex items-center gap-2 text-emerald-700 font-semibold">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-verified"></span>
+                ยอดเงินมัดจำล็อคคิวรถแล้ว (Deposit Paid):
+              </span>
+              <span id="dispDepositAmount" class="font-bold text-emerald-700 text-base tabular-nums font-display">฿1,500</span>
+            </div>
+
+            <!-- Highlight Banner: Remaining Balance -->
+            <div class="bg-accent-soft border border-accent/20 rounded-lg p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2">
+              <div>
+                <span class="font-bold text-navy block sm:inline font-display">ยอดคงเหลือชำระวันเดินทาง (Remaining Balance):</span>
+                <p class="text-[11px] text-ink-secondary mt-0.5">ชำระให้คนขับโดยตรง ณ จุดนัดรับ หรือวันสิ้นสุดทริปการเดินทาง</p>
+              </div>
+              <span id="dispRemainingAmount" class="text-xl sm:text-2xl font-extrabold text-accent shrink-0 tabular-nums font-display">฿5,100</span>
+            </div>
+          </div>
+
+          <!-- Service Policies & Fuel Terms -->
+          <div class="pt-3 border-t border-border-hairline text-[11px] sm:text-xs text-ink-secondary space-y-1">
+            <p><span class="font-bold text-navy">• เงื่อนไขค่าน้ำมัน &amp; ทางด่วน:</span> ผู้ว่าจ้างรับผิดชอบค่าน้ำมันตามจริง (รับรถน้ำมันเต็มถัง / คืนน้ำมันเต็มถัง) หรือตามตกลงร่วมกัน</p>
+            <p><span class="font-bold text-navy">• อัตราค่าบริการล่วงเวลา (OT):</span> 200 บาท/ชั่วโมง (กรณีใช้งานเกิน 10-12 ชั่วโมง/วัน หรือหลัง 18:00 น.)</p>
+            <p><span class="font-bold text-navy">• เบี้ยเลี้ยงค้างคืนนอกพื้นที่:</span> 500 บาท/คืน (กรณีไม่ได้จัดหาห้องพักมาตรฐานให้คนขับ)</p>
+          </div>
+
+          <!-- Anti-Scam Security Verification Box -->
+          <div class="bg-amber-soft border border-amber-300 rounded-lg p-3.5 text-xs text-amber-deep flex items-start gap-2.5">
+            <span class="material-symbols-filled text-amber-deep text-lg shrink-0 mt-0.5">verified_user</span>
+            <div>
+              <span class="font-bold block text-amber-deep mb-0.5 font-display">
+                ข้อควรระวังเพื่อความปลอดภัยสูงสุดในการโอนเงินมัดจำ:
+              </span>
+              <p class="text-[11px] sm:text-xs leading-relaxed text-amber-deep/90">
+                กรุณาตรวจสอบชื่อบัญชีปลายทางให้ตรงกับชื่อผู้ให้บริการ <strong>(นายสุรชัย ใจดี)</strong> หรือชำระผ่านช่องทาง TripDee Official เท่านั้น 
+                ห้ามโอนเงินเข้าบัญชีบุคคลอื่นที่ไม่ตรงกับเอกสารฉบับนี้โดยเด็ดขาด
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- SECTION 5: TripDee 5 Service Standards Guarantee             -->
+      <!-- ============================================================ -->
+      <section class="bg-paper border border-border-hairline rounded-lg p-4 text-[11px] text-ink-secondary space-y-2 print-break-avoid">
+        <div class="flex items-center gap-1.5 font-bold text-navy font-display text-xs">
+          <span class="material-symbols-outlined text-accent text-base">shield_check</span>
+          <span>มาตรฐานการบริการ 5 ประการจาก TripDee (Platform Standards)</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1">
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-emerald-verified text-sm">check</span>
+            <span>ตรงต่อเวลา ไม่ทิ้งคิวงาน 100%</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-emerald-verified text-sm">check</span>
+            <span>รถตรวจเช็คสภาพ แอร์เย็น สะอาดทุกเบาะ</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-emerald-verified text-sm">check</span>
+            <span>คนขับชำนาญทาง มีใบขับขี่สาธารณะ</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-emerald-verified text-sm">check</span>
+            <span>ราคาสุทธิโปร่งใส ไม่มีค่านายหน้าแอบแฝง</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-emerald-verified text-sm">check</span>
+            <span>มีประวัติบันทึกในระบบศูนย์บริการ</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-emerald-verified text-sm">check</span>
+            <span>มีประกันภัย พ.ร.บ. คุ้มครองผู้โดยสาร</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- SECTION 6: Mutual Confirmation & Signature Block             -->
+      <!-- ============================================================ -->
+      <div class="pt-6 border-t border-border-hairline grid grid-cols-2 gap-8 text-xs text-center print-break-avoid">
+        <div>
+          <div class="h-12 border-b border-dashed border-border-strong mx-auto max-w-[200px]"></div>
+          <p id="dispSigCust" class="font-bold text-navy mt-2">(คุณศิริพร บุญเสริมสุข)</p>
+          <p class="text-[11px] text-ink-muted">ผู้ว่าจ้าง / ตัวแทนผู้เดินทาง</p>
+          <p class="text-[10px] text-ink-muted mt-0.5">วันที่: ____ / ____ / ________</p>
+        </div>
+
+        <div>
+          <div class="h-12 border-b border-dashed border-border-strong mx-auto max-w-[200px]"></div>
+          <p id="dispSigDriver" class="font-bold text-navy mt-2">(นายสุรชัย ใจดี)</p>
+          <p class="text-[11px] text-ink-muted">ผู้ให้บริการ / พนักงานขับรถ</p>
+          <p class="text-[10px] text-ink-muted mt-0.5">วันที่: ____ / ____ / ________</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- Document Footer                                              -->
+    <!-- ============================================================ -->
+    <footer class="mt-8 pt-4 border-t border-border-hairline text-[11px] text-ink-muted flex flex-col sm:flex-row justify-between items-center gap-2 print-break-avoid">
+      <p class="flex items-center gap-1">
+        <span class="material-symbols-outlined text-xs">verified</span>
+        <span>เอกสารยืนยันการจองผ่านระบบ TripDee (ทริปดี) • ระบบบันทึกข้อมูลรถตู้พร้อมคนขับ</span>
+      </p>
+      <p class="font-mono text-slate-400">
+        Generated: <span id="dispTimestamp">2026-10-04 14:30</span> • Page 1 of 1
+      </p>
+    </footer>
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- Toast Notification (Screen Only)                              -->
+  <!-- ============================================================== -->
+  <div id="toast" class="no-print fixed bottom-6 right-6 z-50 bg-navy text-white px-4 py-2.5 rounded-lg shadow-xl border border-slate-700 text-xs font-semibold flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <span class="material-symbols-outlined text-emerald-400 text-base">check_circle</span>
+    <span id="toastMsg">คัดลอกข้อความสำเร็จ!</span>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- Client Interactivity Script                                    -->
+  <!-- ============================================================== -->
+  <script>
+    // State management
+    const state = {
+      bookingId: "TD-BK-20261004-1689",
+      issueDate: "4 ต.ค. 2569",
+      custName: "คุณศิริพร บุญเสริมสุข (ทริปครอบครัว)",
+      custPhone: "089-123-4567",
+      pax: "8 ท่าน (ผู้ใหญ่ 6 / เด็ก 2)",
+      travelDates: "18 - 20 พ.ย. 2569",
+      days: 3,
+      dailyRate: 2200,
+      deposit: 1500,
+      pickupLoc: "ท่าอากาศยานเชียงใหม่ (CNX) ประตู 2",
+      pickupTime: "08:30 น.",
+      route: "วัน 1: รับสนามบิน - ม่อนแจ่ม - ปางช้างแม่สา | วัน 2: ดอยอินทนนท์ - กิ่วแม่ปาน | วัน 3: วัดพระธาตุดอยสุเทพ - ส่งสนามบิน",
+      driverName: "นายสุรชัย ใจดี",
+      driverNick: "พี่ชัย รถตู้เชียงใหม่",
+      driverPhone: "081-234-5678",
+      vehicleTitle: "Toyota Commuter VIP 9 ที่นั่ง เบาะนวดไฟฟ้า คาราโอเกะจัดเต็ม",
+      plateNumber: "นข-4521 ชม.",
+    };
+
+    // Calculate totals
+    function calculate() {
+      state.totalPrice = state.days * state.dailyRate;
+      state.remaining = state.totalPrice - state.deposit;
+    }
+
+    // Render DOM elements
+    function render() {
+      calculate();
+
+      // Customer
+      document.getElementById("dispCustName").textContent = state.custName;
+      document.getElementById("dispCustPhone").textContent = state.custPhone;
+      document.getElementById("dispPax").textContent = state.pax;
+      document.getElementById("dispSigCust").textContent = "(" + state.custName.split(" ")[0] + ")";
+
+      // Schedule & Route
+      document.getElementById("dispTravelDates").textContent = state.travelDates;
+      document.getElementById("dispDaysBadge").textContent = "(" + state.days + " วัน)";
+      document.getElementById("dispPickupLoc").textContent = state.pickupLoc;
+      document.getElementById("dispPickupTime").textContent = "เวลานัดรับ: " + state.pickupTime;
+      document.getElementById("dispRoute").textContent = state.route;
+
+      // Driver
+      document.getElementById("dispDriverName").innerHTML = state.driverName + ' <span class="text-ink-secondary font-medium">(' + state.driverNick + ')</span>';
+      document.getElementById("dispDriverPhone").textContent = state.driverPhone;
+      document.getElementById("dispDriverPhone").href = "tel:" + state.driverPhone.replace(/-/g, "");
+      document.getElementById("dispVehicleTitle").textContent = state.vehicleTitle;
+      document.getElementById("dispPlate").textContent = state.plateNumber;
+      document.getElementById("dispSigDriver").textContent = "(" + state.driverName + ")";
+
+      // Financials
+      document.getElementById("dispRateCalculation").textContent = "(" + state.days + " วัน @ ฿" + state.dailyRate.toLocaleString() + "/วัน)";
+      document.getElementById("dispTotalPrice").textContent = "฿" + state.totalPrice.toLocaleString();
+      document.getElementById("dispDepositAmount").textContent = "฿" + state.deposit.toLocaleString();
+      document.getElementById("dispRemainingAmount").textContent = "฿" + state.remaining.toLocaleString();
+    }
+
+    // Bind inputs to state
+    function bindInputs() {
+      const inputs = [
+        { id: "inputCustName", key: "custName" },
+        { id: "inputCustPhone", key: "custPhone" },
+        { id: "inputPax", key: "pax" },
+        { id: "inputTravelDates", key: "travelDates" },
+        { id: "inputDays", key: "days", type: "number" },
+        { id: "inputDailyRate", key: "dailyRate", type: "number" },
+        { id: "inputDeposit", key: "deposit", type: "number" },
+        { id: "inputPickupLoc", key: "pickupLoc" },
+        { id: "inputPickupTime", key: "pickupTime" },
+        { id: "inputRoute", key: "route" },
+      ];
+
+      inputs.forEach(item => {
+        const el = document.getElementById(item.id);
+        if (el) {
+          el.addEventListener("input", (e) => {
+            state[item.key] = item.type === "number" ? Number(e.target.value) || 0 : e.target.value;
+            render();
+          });
+        }
+      });
+    }
+
+    // Toggle Edit Drawer
+    const toggleEditBtn = document.getElementById("toggleEditBtn");
+    const editDrawer = document.getElementById("editDrawer");
+    const editBtnText = document.getElementById("editBtnText");
+
+    toggleEditBtn.addEventListener("click", () => {
+      const isHidden = editDrawer.classList.contains("hidden");
+      if (isHidden) {
+        editDrawer.classList.remove("hidden");
+        editBtnText.textContent = "ปิดโหมดแก้ไข";
+        toggleEditBtn.classList.add("bg-slate-700", "border-blue-400");
+      } else {
+        editDrawer.classList.add("hidden");
+        editBtnText.textContent = "แก้ไขข้อมูล";
+        toggleEditBtn.classList.remove("bg-slate-700", "border-blue-400");
+      }
+    });
+
+    // Toast helper
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toastMsg").textContent = msg;
+      toast.classList.remove("translate-y-20", "opacity-0", "pointer-events-none");
+      setTimeout(() => {
+        toast.classList.add("translate-y-20", "opacity-0", "pointer-events-none");
+      }, 2500);
+    }
+
+    // Copy formatted summary for LINE
+    document.getElementById("copyLineBtn").addEventListener("click", () => {
+      calculate();
+      const text = [
+        "🚐 ใบสรุปยืนยันการจองรถตู้ TripDee (ทริปดี)",
+        "📋 เลขที่อ้างอิง: " + state.bookingId,
+        "✅ สถานะ: มัดจำล็อคคิวรถแล้ว (CONFIRMED)",
+        "------------------------------------",
+        "👤 ผู้ว่าจ้าง: " + state.custName,
+        "📞 เบอร์ติดต่อ: " + state.custPhone,
+        "👥 จำนวนผู้โดยสาร: " + state.pax,
+        "📅 วันที่เดินทาง: " + state.travelDates + " (" + state.days + " วัน)",
+        "⏰ จุดนัดรับ: " + state.pickupLoc + " (" + state.pickupTime + ")",
+        "🗺️ แผนการเดินทาง: " + state.route,
+        "------------------------------------",
+        "🚗 ยานพาหนะ & คนขับ:",
+        "• คนขับ: " + state.driverName + " (" + state.driverNick + ")",
+        "• โทร: " + state.driverPhone,
+        "• รถ: " + state.vehicleTitle,
+        "• ทะเบียน: " + state.plateNumber + " (ป้ายเหลือง 30 สาธารณะ)",
+        "------------------------------------",
+        "💰 สรุปค่าบริการ:",
+        "• ค่าบริการ: ฿" + state.dailyRate.toLocaleString() + " x " + state.days + " วัน = ฿" + state.totalPrice.toLocaleString(),
+        "• มัดจำแล้ว: ฿" + state.deposit.toLocaleString(),
+        "• ยอดคงเหลือชำระวันเดินทาง: ฿" + state.remaining.toLocaleString(),
+        "• เงื่อนไข: น้ำมันตามจริง / OT 200 บ./ชม. / ค้างคืน 500 บ./คืน",
+        "------------------------------------",
+        "🔒 ปลอดภัยสูงสุด: ตรวจสอบชื่อบัญชีให้ตรงกับ (" + state.driverName + ") เท่านั้น",
+        "🌐 รายละเอียดเพิ่มเติม: https://tripdee.co"
+      ].join("\n");
+
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("คัดลอกสรุปส่ง LINE สำเร็จ!");
+      }).catch(() => {
+        showToast("ไม่สามารถคัดลอกอัตโนมัติได้");
+      });
+    });
+
+    // Initialize
+    bindInputs();
+    render();
+  </script>
+</body>
+</html>

@@ -213,7 +213,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
           <button
             type="button"
             onClick={handleCopySummary}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#06C755] hover:bg-[#05B04B] text-white shadow-xs transition-colors cursor-pointer"
           >
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             <span>{copied ? t('sheet.copied') : t('sheet.copyLine')}</span>
@@ -222,7 +222,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
           <button
             type="button"
             onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-extrabold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-extrabold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs transition-all cursor-pointer"
           >
             <Printer className="h-4 w-4" />
             <span>{t('sheet.print')}</span>
@@ -367,14 +367,22 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
         {/* Header Row */}
         <div className="flex flex-wrap items-start justify-between gap-4 pb-6 border-b-2 border-slate-900">
           <div>
-            <div className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-xl bg-blue-600 grid place-items-center text-white font-black text-lg">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#0A192F] grid place-items-center text-white font-extrabold text-base shadow-xs border border-slate-800">
                 TD
               </div>
               <div>
-                <h1 className="text-2xl font-black tracking-tight text-slate-900">
-                  TripDee <span className="text-blue-600 font-extrabold text-lg">{t('brand.logoAlt')}</span>
-                </h1>
+                <div className="flex items-baseline gap-2">
+                  <h1 className="text-2xl font-black tracking-tight text-[#0A192F]">
+                    TripDee
+                  </h1>
+                  <span className="text-xl font-bold text-[#2563EB]">
+                    {t('brand.logoAlt')}
+                  </span>
+                  <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 bg-slate-100 text-slate-600 border border-slate-200 rounded font-semibold">
+                    Official Platform
+                  </span>
+                </div>
                 <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   {t('sheet.brandTagline')}
                 </p>
@@ -430,6 +438,15 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 <span className="text-slate-500 font-medium">{t('sheet.fPassengers')}:</span>
                 <span className="font-bold text-slate-900">{data.passengers}</span>
               </div>
+              {data.canIssueTaxInvoice && (
+                <div className="flex justify-between items-baseline gap-2 pt-1 border-t border-dashed border-slate-200">
+                  <span className="text-slate-500 font-medium text-[11px]">เอกสารใบกำกับภาษี:</span>
+                  <span className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                    <span>รองรับหัก ณ ที่จ่าย 3% / E-Tax</span>
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -464,11 +481,11 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">{t('sheet.labelPlate')}</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-mono font-bold text-slate-900 bg-white border border-slate-200 px-2 py-0.5 rounded text-[11px]">
+                  <span className="font-mono font-bold text-amber-900 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded text-[11px]">
                     {data.plateNumber}
                   </span>
                   <span className="text-[10px] font-bold text-slate-600">
-                    {data.plateType === 'yellow' ? t('sheet.plateYellow') : t('sheet.plateBlue')}
+                    ({data.plateType === 'yellow' ? t('sheet.plateYellow') : t('sheet.plateBlue')} ถูกกฎหมาย 100%)
                   </span>
                 </div>
               </div>
@@ -515,8 +532,8 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
         </div>
 
         {/* Section 4 */}
-        <div className="mt-5 rounded-xl border-2 border-slate-800 overflow-hidden">
-          <div className="bg-slate-900 text-white px-4 py-2 flex items-center justify-between">
+        <div className="mt-5 rounded-xl border border-[#0A192F] overflow-hidden">
+          <div className="bg-[#0A192F] text-white px-4 py-2.5 flex items-center justify-between">
             <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
               <DollarSign className="h-4 w-4 text-amber-400" />
               <span>{t('sheet.secFinancial')}</span>

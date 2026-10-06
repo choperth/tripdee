@@ -517,7 +517,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       }}
                       className="w-full h-10 border border-emerald-300 dark:border-emerald-800 bg-[#E8F9EE] dark:bg-emerald-950/60 hover:bg-[#d8f5e2] text-emerald-800 dark:text-emerald-200 rounded-none text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                     >
-                      <span className="text-[10px] bg-[#06C755] text-white px-1 font-bold">0%</span>
+                      <span className="text-[10px] bg-[#06C755] text-white px-1 font-bold">ฟรี</span>
                       <span>{t('nav.driverJoin')}</span>
                     </button>
                   )}

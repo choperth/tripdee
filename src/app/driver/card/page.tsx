@@ -133,7 +133,7 @@ END:VCARD`;
               <span>Trip<span className="text-[#fea619]">Dee</span></span>
             </Link>
             <span className="hidden xl:inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#fef3c7] text-[#d97706] text-xs font-semibold">
-              ค่าคอมมิชชั่น 0% ตลอดชีพ
+              ดีลตรงเจ้าของรถ
             </span>
           </div>
 
@@ -266,8 +266,8 @@ END:VCARD`;
                       </div>
 
                       <div className="flex flex-col items-center justify-center p-2 border-l border-slate-200 dark:border-slate-700">
-                        <span className="text-lg font-bold text-[#d97706]">0% GP</span>
-                        <span className="text-[11px] text-slate-500">ดีลตรงไม่ผ่านนายหน้า</span>
+                        <span className="text-lg font-bold text-[#d97706]">ดีลตรง</span>
+                        <span className="text-[11px] text-slate-500">ไม่ผ่านคนกลาง</span>
                       </div>
                     </div>
 
@@ -813,7 +813,7 @@ END:VCARD`;
                       <span className="font-mono font-bold text-slate-950 dark:text-white">{daysCount} วัน</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                      <span>ค่านายหน้า TripDee (0% GP):</span>
+                      <span>ค่าบริการ TripDee:</span>
                       <span className="font-mono font-bold text-[#06c755]">฿0 (ไม่มีบวกเพิ่ม)</span>
                     </div>
                     <div className="border-t border-slate-200 dark:border-slate-700 pt-2 flex items-baseline justify-between">
@@ -850,7 +850,7 @@ END:VCARD`;
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="w-2 h-2 bg-[#06c755]"></span>
-                    <span className="text-xs uppercase tracking-wider text-slate-500 font-bold">TRANSPARENT 0% COMMISSION RATES</span>
+                    <span className="text-xs uppercase tracking-wider text-slate-500 font-bold">TRANSPARENT DIRECT RATES</span>
                   </div>
                   <h3 className="text-lg font-bold text-slate-950 dark:text-white">อัตราค่าบริการมาตรฐานคนขับ</h3>
                 </div>
@@ -984,7 +984,7 @@ END:VCARD`;
                     DLT COMPLIANT
                   </span>
                   <span className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-bold text-[#06c755]">
-                    0% COMMISSION
+                    DIRECT DEALS
                   </span>
                 </div>
               </div>

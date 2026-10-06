@@ -385,16 +385,16 @@ export default function DriverDashboardPage() {
                 {/* KPI 4 */}
                 <div className="bg-[#F8FAFC] dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
                   <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-semibold">
-                    <span>อัตราคอมมิชชั่น</span>
+                    <span>ค่าบริการแพลตฟอร์ม</span>
                     <span className="material-symbols-outlined text-[18px] text-slate-950 dark:text-slate-200">
-                      percent
+                      savings
                     </span>
                   </div>
                   <div className="mt-2 flex items-baseline gap-1.5">
                     <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
-                      0%
+                      ฿0
                     </span>
-                    <span className="text-xs font-bold text-[#06C755]">ตลอดชีพ</span>
+                    <span className="text-xs font-bold text-[#06C755]">ฟรีตลอดชีพ</span>
                   </div>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                     รับเงินสดตรงจากผู้โดยสาร 100%
@@ -1232,7 +1232,7 @@ export default function DriverDashboardPage() {
                       กล่องข้อความและคิวงานใหม่จากผู้โดยสาร
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      งานติดต่อตรงจากลูกค้าที่ค้นหาและเจาะจงเลือกรถของคุณ — ดีลตรง 100% ไม่มีหักค่าหัวคิว
+                      งานติดต่อตรงจากลูกค้าที่ค้นหาและเจาะจงเลือกรถของคุณ — ดีลตรง 100% ไม่ผ่านคนกลาง
                     </p>
                   </div>
                   <span className="font-mono text-xs bg-[#E8F9EE] text-[#06C755] font-bold px-2 py-1 border border-emerald-200">

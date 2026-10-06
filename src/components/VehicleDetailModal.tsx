@@ -30,6 +30,7 @@ import { getUpcomingBusyRanges } from '@/lib/availabilityUtils';
 import { VehicleReviewsSection } from '@/components/reviews/VehicleReviewsSection';
 import { DriverSmartECardModal } from '@/components/cards/DriverSmartECardModal';
 import { formatLineLink, buildVehicleLineMessage } from '@/lib/contactUtils';
+import { DepositPaymentModal } from '@/components/payment/DepositPaymentModal';
 
 interface VehicleDetailModalProps {
   vehicle: Vehicle | null;
@@ -51,6 +52,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
   const { t, locale } = useLanguage();
   const [isPhoneRevealed, setIsPhoneRevealed] = useState<boolean>(false);
   const [showBookingSheet, setShowBookingSheet] = useState<boolean>(false);
+  const [showDepositModal, setShowDepositModal] = useState<boolean>(false);
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [showECardModal, setShowECardModal] = useState<boolean>(false);
   const [sharedToast, setSharedToast] = useState<boolean>(false);
@@ -752,6 +754,16 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                   </div>
 
                   {/* Primary Direct Triggers: Phone & LINE */}
+                  {/* ChillPay Instant Deposit CTA Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowDepositModal(true)}
+                    className="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer border border-amber-500"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">verified</span>
+                    <span>จองและมัดจำ ฿300 (ล็อกคิวทันที)</span>
+                  </button>
+
                   <div className="space-y-2">
                     <a
                       href={`tel:${vehicle.driverPhone}`}
@@ -967,6 +979,15 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
         isOpen={showECardModal}
         onClose={() => setShowECardModal(false)}
       />
+
+      {/* ChillPay Deposit Payment Modal */}
+      {showDepositModal && (
+        <DepositPaymentModal
+          vehicle={vehicle}
+          isOpen={showDepositModal}
+          onClose={() => setShowDepositModal(false)}
+        />
+      )}
     </div>
   );
 };

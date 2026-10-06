@@ -478,7 +478,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
           <div className="min-w-0">
             <h4 className="text-xs font-black">กฎการใช้งานกระดาน TripBoard Community Moderation & Direct Deal Rules</h4>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              ติดต่อตรงไม่ผ่านคนกลาง ดีลตรง 0% คอมมิชชัน ห้ามโอนมัดจำก่อนเห็นรถจริงและตรวจสอบบัตรประชาชน •
+              ติดต่อตรงไม่ผ่านคนกลาง ดีลตรงคนขับ 100% ห้ามโอนมัดจำก่อนเห็นรถจริงและตรวจสอบบัตรประชาชน •
               ระบบตรวจจับข้อความสแปมและการปั่นราคา • โพสต์ที่สิ้นสุดวันเดินทางจะถูกปัดตกกระดานอัตโนมัติ
             </p>
           </div>

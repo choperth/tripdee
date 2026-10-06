@@ -10,6 +10,8 @@ import { useAnalytics } from '@/context/AnalyticsContext';
 import { getUpcomingBusyRanges, toISODateString } from '@/lib/availabilityUtils';
 import { formatLineLink, buildVehicleLineMessage } from '@/lib/contactUtils';
 
+import { DepositPaymentModal } from '@/components/payment/DepositPaymentModal';
+
 interface VehicleCardProps {
   vehicle: Vehicle;
   onSelectDetail: (vehicle: Vehicle) => void;
@@ -22,6 +24,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
   const { trackCall } = useAnalytics();
   const [copiedWechat, setCopiedWechat] = React.useState(false);
 
+  const [showDepositModal, setShowDepositModal] = React.useState(false);
   const todayIso = React.useMemo(() => toISODateString(new Date()), []);
   const isBusyToday = Boolean(vehicle.busyDates && vehicle.busyDates.includes(todayIso));
   const upcomingRanges = React.useMemo(
@@ -245,6 +248,19 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
               </div>
             </div>
 
+            {/* Instant Deposit Booking CTA Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDepositModal(true);
+              }}
+              className="w-full mb-2 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs sm:text-sm py-2 px-3 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border border-amber-500"
+            >
+              <span className="material-symbols-outlined text-[16px] text-slate-950">verified</span>
+              <span>จองและมัดจำ ฿300 (ล็อกคิวทันที)</span>
+            </button>
+
             <div className="grid grid-cols-2 gap-2">
               {/* Call CTA - matching attached image: white bg, border, teal call icon, "โทรตรง" */}
               <a
@@ -291,6 +307,15 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
           </div>
         </div>
       </div>
+
+      {/* ChillPay Deposit Payment Modal */}
+      {showDepositModal && (
+        <DepositPaymentModal
+          vehicle={vehicle}
+          isOpen={showDepositModal}
+          onClose={() => setShowDepositModal(false)}
+        />
+      )}
     </article>
   );
 });

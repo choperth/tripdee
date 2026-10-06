@@ -75,7 +75,7 @@ export function buildJobFlexMessage(post: BoardJobPayload, baseUrl: string) {
             },
             {
               type: 'text',
-              text: '0% คอมมิชชั่น',
+              text: 'ดีลตรงคนขับ',
               size: 'xxs',
               color: '#FCD34D',
               align: 'end',

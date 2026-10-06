@@ -15,6 +15,30 @@ export type Json =
 
 export type QuotationStatus = 'pending' | 'quoted' | 'confirmed' | 'cancelled';
 
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'expired';
+
+export interface Booking {
+  id: string;
+  vehicleId?: string | null;
+  driverId?: string | null;
+  customerName: string;
+  customerPhone: string;
+  customerLine?: string | null;
+  route: string;
+  travelDate: string;
+  totalDays: number;
+  totalPrice: number;
+  depositAmount: number;
+  remainingAmount: number;
+  paymentStatus: PaymentStatus;
+  chillpayTransactionId?: string | null;
+  chillpayPaymentUrl?: string | null;
+  chillpayQrPayload?: string | null;
+  isContactUnlocked: boolean;
+  createdAt: string;
+  paidAt?: string | null;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -477,6 +501,72 @@ export type Database = {
           auth?: string;
           role?: string;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      bookings: {
+        Row: {
+          id: string;
+          vehicle_id: string | null;
+          driver_id: string | null;
+          customer_name: string;
+          customer_phone: string;
+          customer_line: string | null;
+          route: string;
+          travel_date: string;
+          total_days: number;
+          total_price: number;
+          deposit_amount: number;
+          remaining_amount: number;
+          payment_status: PaymentStatus;
+          chillpay_transaction_id: string | null;
+          chillpay_payment_url: string | null;
+          chillpay_qr_payload: string | null;
+          is_contact_unlocked: boolean;
+          created_at: string;
+          paid_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          vehicle_id?: string | null;
+          driver_id?: string | null;
+          customer_name: string;
+          customer_phone: string;
+          customer_line?: string | null;
+          route: string;
+          travel_date: string;
+          total_days?: number;
+          total_price: number;
+          deposit_amount: number;
+          remaining_amount: number;
+          payment_status?: PaymentStatus;
+          chillpay_transaction_id?: string | null;
+          chillpay_payment_url?: string | null;
+          chillpay_qr_payload?: string | null;
+          is_contact_unlocked?: boolean;
+          created_at?: string;
+          paid_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          vehicle_id?: string | null;
+          driver_id?: string | null;
+          customer_name?: string;
+          customer_phone?: string;
+          customer_line?: string | null;
+          route?: string;
+          travel_date?: string;
+          total_days?: number;
+          total_price?: number;
+          deposit_amount?: number;
+          remaining_amount?: number;
+          payment_status?: PaymentStatus;
+          chillpay_transaction_id?: string | null;
+          chillpay_payment_url?: string | null;
+          chillpay_qr_payload?: string | null;
+          is_contact_unlocked?: boolean;
+          created_at?: string;
+          paid_at?: string | null;
         };
         Relationships: [];
       };
