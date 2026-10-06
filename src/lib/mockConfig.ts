@@ -13,15 +13,22 @@
  */
 
 export function isMockDataEnabled(reqUrl?: string): boolean {
+  // If mock data is disabled by environment (e.g. production mode or NEXT_PUBLIC_ENABLE_MOCK_DATA=false),
+  // strictly lock mock data to false: NO query parameter (?demo=1) can override or turn on mock data in production!
+  if (!isMockEnvEnabled()) {
+    return false;
+  }
+
+  // When mock environment is enabled (e.g. local dev, staging, or NEXT_PUBLIC_ENABLE_MOCK_DATA=true):
   // 1. Browser runtime: check URL query parameter
   if (typeof window !== 'undefined') {
     try {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('demo') === '1' || params.get('demo') === 'true' || params.get('preview') === 'demo') {
-        return true;
-      }
       if (params.get('demo') === '0' || params.get('demo') === 'false') {
         return false;
+      }
+      if (params.get('demo') === '1' || params.get('demo') === 'true' || params.get('preview') === 'demo') {
+        return true;
       }
     } catch {
       // ignore
@@ -33,27 +40,17 @@ export function isMockDataEnabled(reqUrl?: string): boolean {
     try {
       const url = new URL(reqUrl, 'http://localhost');
       const demoParam = url.searchParams.get('demo');
-      if (demoParam === '1' || demoParam === 'true' || url.searchParams.get('preview') === 'demo') {
-        return true;
-      }
       if (demoParam === '0' || demoParam === 'false') {
         return false;
+      }
+      if (demoParam === '1' || demoParam === 'true' || url.searchParams.get('preview') === 'demo') {
+        return true;
       }
     } catch {
       // ignore
     }
   }
 
-  // 3. Environment variable check
-  const envVal = process.env.NEXT_PUBLIC_ENABLE_MOCK_DATA || process.env.ENABLE_MOCK_DATA;
-  if (envVal === 'false' || envVal === '0') {
-    return false;
-  }
-  if (envVal === 'true' || envVal === '1') {
-    return true;
-  }
-
-  // Default: true (safe for local development / demo presentations)
   return true;
 }
 
@@ -64,6 +61,14 @@ export function isMockDataEnabled(reqUrl?: string): boolean {
 export function isMockEnvEnabled(): boolean {
   const envVal = process.env.NEXT_PUBLIC_ENABLE_MOCK_DATA || process.env.ENABLE_MOCK_DATA;
   if (envVal === 'false' || envVal === '0') {
+    return false;
+  }
+  if (envVal === 'true' || envVal === '1') {
+    return true;
+  }
+  // In production builds (NODE_ENV === 'production'), strictly default to false for safety
+  // so no mock data leaks to live users even if the env variable was omitted.
+  if (process.env.NODE_ENV === 'production') {
     return false;
   }
   return true;

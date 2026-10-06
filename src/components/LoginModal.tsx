@@ -315,12 +315,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
               {t('auth.badge')}
             </span>
-            {!isDemo && (
-              <span className="inline-flex items-center gap-1 border border-sky-300 dark:border-sky-700 bg-sky-50 dark:bg-sky-950/60 px-2 py-0.5 text-[11px] font-bold text-sky-800 dark:text-sky-300">
-                <Lock className="h-3 w-3" />
-                {t('auth.realModeNote')}
-              </span>
-            )}
           </div>
           <h2 id="login-modal-title" className="mt-3 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
             {t('auth.title')}
