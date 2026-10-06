@@ -303,52 +303,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
     }
 
-    // 2. Google Login via Supabase OAuth
-    const supabase = getSupabase();
-    if (!supabase) {
-      return {
-        success: false,
-        error: 'ระบบเข้าสู่ระบบด้วย Google ต้องเชื่อมต่อกับ Supabase: ไม่พบคีย์ NEXT_PUBLIC_SUPABASE_URL หรือ NEXT_PUBLIC_SUPABASE_ANON_KEY ในระบบ',
-      };
-    }
-
-    try {
+    // 2. Direct Google Login Flow (Uses native Google OAuth directly on tripdeeth.com)
+    if (provider === 'google') {
       if (typeof window !== 'undefined') {
-        localStorage.setItem('td-pending-oauth-role', role);
-      }
-      const redirectTo = `${window.location.origin}/auth/callback?role=${encodeURIComponent(role)}`;
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      });
-
-      if (error) {
-        if (
-          error.message.toLowerCase().includes('not enabled') ||
-          error.message.toLowerCase().includes('unsupported provider')
-        ) {
-          return {
-            success: false,
-            error: `ยังไม่ได้เปิดใช้งาน Provider "${provider.toUpperCase()}" ใน Supabase Dashboard กรุณาใส่ Client ID ใน Dashboard`,
-          };
-        }
-        return { success: false, error: error.message };
-      }
-
-      if (data?.url) {
-        window.location.href = data.url;
+        const currentPath = window.location.pathname + window.location.search;
+        // Full browser navigation required for OAuth 302 redirect
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+        window.location.href = `/api/auth/google/login?role=${encodeURIComponent(role)}&next=${encodeURIComponent(currentPath)}`;
       }
       return { success: true };
-    } catch (err) {
-      return { success: false, error: String(err) };
     }
+
+    return { success: false, error: 'Unsupported provider' };
   };
 
   const logout = async () => {
