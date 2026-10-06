@@ -111,10 +111,10 @@ const PARTNERS: Partner[] = [
     logoAlt: 'Ran-Tong Sanctuary',
     logoBg: '#1e3d2d',
     title: 'Ran-Tong Sanctuary',
-    desc: 'สัมผัสความน่ารักของช้างอย่างมีจริยธรรม No Riding ไม่ขี่ ไม่ล่ามโซ่ ป้อนอาหาร ทำสมุนไพร และอาบน้ำช้างในลำธารธรรมชาติ',
-    perkIcon: 'airport_shuttle',
-    perk: 'มีจุดจอดรถตู้สะดวกสบาย',
-    cta: 'ดูเว็บไซต์พันธมิตร',
+    desc: 'สัมผัสความน่ารักของช้างอย่างมีจริยธรรม No Riding ไม่ขี่ ไม่ล่ามโซ่ ป้อนอาหาร ทำสมุนไพร และอาบน้ำช้างในลำธารธรรมชาติ มีรถตู้ของกิจกรรมบริการรับ-ส่งฟรีจากโรงแรมในเมืองเชียงใหม่',
+    perkIcon: 'redeem',
+    perk: 'สิทธิพิเศษ TripDee: รับส่วนลด 5–10% ทันที',
+    cta: '🎁 รับส่วนลดพิเศษ 10% (มีรถรับส่งฟรี)',
     href: 'https://www.rantongelephantsanctuary.com/',
   },
   {
@@ -124,10 +124,10 @@ const PARTNERS: Partner[] = [
     logoAlt: 'Vespa Adventures Chiang Mai',
     logoBg: '#ffffff',
     title: 'Vespa Adventures Chiang Mai',
-    desc: 'นั่งเวสป้าคลาสสิกเที่ยวเชียงใหม่ 5 เส้นทาง City Highlights, Foodie (MICHELIN), วิถีชนบท และชมพระบิณฑบาตยามเช้า',
-    perkIcon: 'handshake',
-    perk: 'พาร์ทเนอร์ทางการ TripDee',
-    cta: 'ดูเว็บไซต์พันธมิตร',
+    desc: 'นั่งเวสป้าคลาสสิกเที่ยวเชียงใหม่ 5 เส้นทาง City Highlights, Foodie (MICHELIN), วิถีชนบท และชมพระบิณฑบาตยามเช้า มีรถตู้ของกิจกรรมบริการรับ-ส่งฟรีจากโรงแรมในเมืองเชียงใหม่',
+    perkIcon: 'redeem',
+    perk: 'สิทธิพิเศษ TripDee: รับส่วนลด 5–10% ทันที',
+    cta: '🎁 รับส่วนลดพิเศษ 10% (มีรถรับส่งฟรี)',
     href: 'https://vespaadventures.com/destination/thailand',
   },
   {
@@ -137,10 +137,10 @@ const PARTNERS: Partner[] = [
     logoAlt: 'Sukjai Cooking School',
     logoBg: '#2f6cb0',
     title: 'Sukjai Cooking School',
-    desc: 'คอร์สเรียนทำอาหารไทยสไตล์โฮมเมด บรรยากาศอบอุ่นในสวนชนบท พร้อมพาเดินตลาดสดเลือกซื้อวัตถุดิบและบริการรถรับส่งฟรี',
-    perkIcon: 'airport_shuttle',
-    perk: 'รถรับส่งฟรีจากตัวเมือง',
-    cta: 'ติดต่อจองกิจกรรม (Facebook)',
+    desc: 'คอร์สเรียนทำอาหารไทยสไตล์โฮมเมด บรรยากาศอบอุ่นในสวนชนบท พร้อมพาเดินตลาดสดเลือกซื้อวัตถุดิบ มีรถตู้ของกิจกรรมบริการรับ-ส่งฟรีจากโรงแรมในเมืองเชียงใหม่',
+    perkIcon: 'redeem',
+    perk: 'สิทธิพิเศษ TripDee: รับส่วนลด 5–10% ทันที',
+    cta: '🎁 รับส่วนลดพิเศษ 10% (มีรถรับส่งฟรี)',
     href: 'https://www.facebook.com/profile.php?id=61558094176601',
   },
 ];
@@ -227,38 +227,38 @@ const PARTNER_TEXT: Record<string, Partial<Record<Locale, PartnerText>>> = {
   },
   elephant: {
     en: {
-      desc: 'Ethical elephant care with No Riding & No Chains — feed them, prepare herbal medicine and bathe elephants in a natural mountain stream',
-      perk: 'Convenient van parking on site',
-      cta: 'View partner website',
+      desc: 'Ethical elephant care with No Riding & No Chains. Free round-trip hotel transfer by activity van included.',
+      perk: 'TripDee Privilege: Get 5–10% Off instantly',
+      cta: '🎁 Claim 10% Discount (Free Hotel Transfer)',
     },
     zh: {
-      desc: '公益大象保护体验：不骑乘、不锁链，喂食、制作草药并为大象溪流洗澡',
-      perk: '设有大巴停车点',
-      cta: '查看合作方网站',
+      desc: '公益大象保护体验：不骑乘、不锁链。含清迈市区酒店专车免费往返接送。',
+      perk: 'TripDee 特权：立享 5–10% 专属折扣',
+      cta: '🎁 领取 10% 特惠折扣（含免费接送）',
     },
   },
   vespa: {
     en: {
-      desc: 'Tour Chiang Mai by classic Vespa on 5 routes: City Highlights, Foodie (MICHELIN), countryside, and morning alms rounds',
-      perk: 'Official TripDee partner',
-      cta: 'View partner website',
+      desc: 'Tour Chiang Mai by classic Vespa. Free round-trip hotel transfer by activity van included.',
+      perk: 'TripDee Privilege: Get 5–10% Off instantly',
+      cta: '🎁 Claim 10% Discount (Free Hotel Transfer)',
     },
     zh: {
-      desc: '乘坐经典伟士牌游览清迈 5 条路线：城市精华、美食（米其林）、乡村与清晨布施',
-      perk: 'TripDee 官方合作伙伴',
-      cta: '查看合作方网站',
+      desc: '乘坐经典伟士牌游览清迈精华路线。含清迈市区酒店专车免费往返接送。',
+      perk: 'TripDee 特权：立享 5–10% 专属折扣',
+      cta: '🎁 领取 10% 特惠折扣（含免费接送）',
     },
   },
   cooking: {
     en: {
-      desc: 'Home-style Thai cooking class in a warm country garden, with a fresh market tour and free round-trip transfers',
-      perk: 'Free city pickup & drop-off',
-      cta: 'Book on Facebook',
+      desc: 'Home-style Thai cooking class in a country garden. Free round-trip hotel transfer by activity van included.',
+      perk: 'TripDee Privilege: Get 5–10% Off instantly',
+      cta: '🎁 Claim 10% Discount (Free Hotel Transfer)',
     },
     zh: {
-      desc: '乡村花园温馨家常泰料课程，含当地菜市场采买与免费往返接送',
-      perk: '市区免费接送',
-      cta: '通过 Facebook 预订',
+      desc: '温馨乡村花园家常泰料课。含清迈市区酒店专车免费往返接送。',
+      perk: 'TripDee 特权：立享 5–10% 专属折扣',
+      cta: '🎁 领取 10% 特惠折扣（含免费接送）',
     },
   },
 };
@@ -266,9 +266,21 @@ const PARTNER_TEXT: Record<string, Partial<Record<Locale, PartnerText>>> = {
 export const TrustedPartnersSection: React.FC = () => {
   const { t, locale } = useLanguage();
   const [activeCategory, setActiveCategory] = useState<PartnerCategory>('all');
+  const [selectedPromoPartner, setSelectedPromoPartner] = useState<Partner | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+
   const baseList = activeCategory === 'all' ? PARTNERS : PARTNERS.filter((p) => p.category === activeCategory);
   const visible = baseList.map((p) => ({ ...p, ...PARTNER_TEXT[p.id]?.[locale] }));
 
+  const isActivityPartner = (id: string) => ['elephant', 'vespa', 'cooking'].includes(id);
+
+  const handleCopyCode = (code: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(code);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    }
+  };
   return (
     <section id="partners" aria-label={t('tp.aria')} className="max-w-7xl mx-auto px-4 sm:px-6 my-5 sm:my-7 scroll-mt-20">
       {/* Header matching Stitch Redesign */}
@@ -405,19 +417,118 @@ export const TrustedPartnersSection: React.FC = () => {
 
             {/* Card CTA Footer */}
             <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800">
-              <a
-                className="text-xs font-bold text-slate-900 dark:text-slate-200 hover:text-amber-600 flex items-center justify-between transition-colors"
-                href={partner.href}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <span>{partner.cta}</span>
-                <span className="material-symbols-outlined text-[14px]">open_in_new</span>
-              </a>
+              {isActivityPartner(partner.id) ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedPromoPartner(partner);
+                    setCopiedCode(false);
+                  }}
+                  className="w-full text-xs font-bold text-amber-900 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-700 py-2 px-2.5 flex items-center justify-between transition-colors cursor-pointer text-left"
+                >
+                  <span className="line-clamp-1">{partner.cta}</span>
+                  <span className="material-symbols-outlined text-[15px] shrink-0">redeem</span>
+                </button>
+              ) : (
+                <a
+                  className="text-xs font-bold text-slate-900 dark:text-slate-200 hover:text-amber-600 flex items-center justify-between transition-colors"
+                  href={partner.href}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <span>{partner.cta}</span>
+                  <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                </a>
+              )}
             </div>
           </div>
         ))}
       </div>
+      {/* Promotion Discount Code Modal */}
+      {selectedPromoPartner && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setSelectedPromoPartner(null)}
+          role="presentation"
+        >
+          <div
+            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 w-full max-w-md p-5 sm:p-6 shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="promo-partner-title"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 bg-amber-400 text-slate-950 font-black">
+                  <span className="material-symbols-outlined text-[18px]">redeem</span>
+                </span>
+                <h3 id="promo-partner-title" className="text-sm font-black text-slate-950 dark:text-white">
+                  สิทธิพิเศษส่วนลด TripDee 10%
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedPromoPartner(null)}
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 cursor-pointer"
+                aria-label="ปิด"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            <div className="py-4 space-y-3.5">
+              <div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">พาร์ตเนอร์:</p>
+                <p className="font-bold text-sm text-slate-900 dark:text-white">{selectedPromoPartner.title}</p>
+                <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium mt-1">
+                  🚐 บริการพิเศษ: มีรถตู้ของกิจกรรมบริการรับ-ส่งฟรีจากโรงแรมในตัวเมืองเชียงใหม่
+                </p>
+              </div>
+
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700 text-center space-y-1.5">
+                <span className="text-[11px] font-bold text-amber-900 dark:text-amber-200 block">
+                  รหัสโค้ดส่วนลด 10% สำหรับจองกับพาร์ตเนอร์
+                </span>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="font-mono font-black text-xl tracking-wider text-slate-950 dark:text-amber-300 bg-white dark:bg-slate-900 px-3 py-1 border border-amber-400">
+                    TRIPDEE10
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyCode('TRIPDEE10')}
+                    className="px-2.5 py-1.5 bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    {copiedCode ? 'คัดลอกแล้ว!' : 'คัดลอกโค้ด'}
+                  </button>
+                </div>
+                <p className="text-[10px] text-amber-800 dark:text-amber-300">
+                  แจ้งโค้ดนี้เมื่อติดต่อจองเพื่อรับส่วนลดพิเศษ 10% และรับสิทธิ์รถรับส่งฟรีถึงที่พัก
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+              <a
+                href={selectedPromoPartner.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-2.5 bg-slate-950 dark:bg-amber-400 hover:bg-slate-800 dark:hover:bg-amber-500 text-white dark:text-slate-950 font-black text-xs text-center flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <span>ไปยังหน้าติดต่อพาร์ตเนอร์</span>
+                <span className="material-symbols-outlined text-[15px]">open_in_new</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => setSelectedPromoPartner(null)}
+                className="py-2.5 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

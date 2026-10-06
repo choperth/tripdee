@@ -61,6 +61,10 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
     depositTerms: '',
   });
 
+  // 3 Mandatory verification files for direct drivers
+  const [driverLicenseFile, setDriverLicenseFile] = useState<File | null>(null);
+  const [vehicleRegistrationFile, setVehicleRegistrationFile] = useState<File | null>(null);
+  const [driverWithCarFile, setDriverWithCarFile] = useState<File | null>(null);
   const [isCustomModel, setIsCustomModel] = useState(false);
   const [customModelText, setCustomModelText] = useState('');
   const [showSpecRef, setShowSpecRef] = useState(false);
@@ -110,6 +114,10 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
       }
       setCurrentStep(2);
     } else if (currentStep === 2) {
+      if (!driverLicenseFile || !vehicleRegistrationFile || !driverWithCarFile) {
+        alert('กรุณาอัปโหลดเอกสารยืนยันตัวตนให้ครบทั้ง 3 รายการ (ใบขับขี่, เล่มทะเบียนรถ, และภาพถ่ายคู่กับตัวรถ/ป้ายทะเบียน) เพื่อป้องกันคนกลาง');
+        return;
+      }
       setCurrentStep(3);
     }
   };
@@ -705,18 +713,17 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-ink">{t('reg.fSeatsCount')}</label>
+                        <label className="text-xs font-bold text-ink">รูปแบบและขนาดที่นั่ง</label>
                         <select
                           value={formData.seats}
                           onChange={(e) => setFormData({ ...formData, seats: e.target.value })}
                           className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-rule text-ink text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
                         >
-                          <option value="4">{t('reg.seats4')}</option>
-                          <option value="5">{t('reg.seats5')}</option>
-                          <option value="7">{t('reg.seats7Capt')}</option>
-                          <option value="9">{t('reg.seats9High')}</option>
-                          <option value="10">{t('reg.seats10Fam')}</option>
-                          <option value="13">{t('reg.seats13Std')}</option>
+                          <option value="10–13">10–13 ที่นั่ง (มาตรฐานเดิมโรงงาน เน้นจุคนครบทั้งแก๊ง)</option>
+                          <option value="8–9">8–9 ที่นั่ง (VIP เบาะใหญ่ นั่งสบาย)</option>
+                          <option value="7">SUV 7 ที่นั่ง (Fortuner / Everest)</option>
+                          <option value="luxury">รถตู้หรูพรีเมียม (Majesty / Staria / Alphard)</option>
+                          <option value="sedan">รถเก๋งพร้อมคนขับ (Sedan / City Car)</option>
                         </select>
                       </div>
                     </div>
@@ -777,67 +784,112 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                       </div>
                     </div>
 
-                    {/* Photo Showcase & Upload Box */}
-                    <div className="space-y-2">
+                    {/* 3 Mandatory Verification Proofs */}
+                    <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-ink">{t('reg.fPhotos')}</label>
-                        <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                          {t('reg.photosTip')}
-                        </span>
+                        <div>
+                          <label className="text-xs font-bold text-ink flex items-center gap-1.5">
+                            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                            <span>เอกสารยืนยันตัวตนคนขับ (3 Mandatory Proofs เพื่อป้องกันคนกลาง)</span>
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            อัปโหลดหลักฐาน 3 รายการเพื่อรับเครื่องหมายยืนยันตัวตน และเริ่มรับงานตรงกับผู้โดยสาร
+                          </p>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="relative group rounded-xl overflow-hidden bg-paper-2 aspect-video shadow-2xs border border-rule/60">
-                          <Image
-                            src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80"
-                            alt={t('reg.photoExterior')}
-                            fill
-                            sizes="(max-width: 640px) 100vw, 200px"
-                            className="object-cover"
-                          />
-                          <div className="absolute bottom-1.5 left-1.5 bg-slate-900/85 backdrop-blur-md px-2 py-0.5 rounded text-[10px] text-white font-bold z-10">
-                            {t('reg.photoExterior')}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* 1. Driver License */}
+                        <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white">1. รูปถ่ายใบขับขี่</span>
+                            <span className="text-[10px] text-red-500 font-bold">*จำเป็น</span>
                           </div>
+                          <input
+                            type="file"
+                            id="upload-license"
+                            accept="image/*,.pdf"
+                            className="sr-only"
+                            onChange={(e) => {
+                              if (e.target.files?.[0]) setDriverLicenseFile(e.target.files[0]);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById('upload-license')?.click()}
+                            className={`w-full py-2.5 px-3 border border-dashed text-xs font-bold flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer ${
+                              driverLicenseFile
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-700 dark:text-emerald-300'
+                                : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 hover:border-amber-500 text-slate-700 dark:text-slate-300'
+                            }`}
+                          >
+                            <Upload className="w-4 h-4" />
+                            <span className="line-clamp-1">{driverLicenseFile ? driverLicenseFile.name : 'เลือกรูปใบขับขี่'}</span>
+                          </button>
                         </div>
 
-                        <div className="relative group rounded-xl overflow-hidden bg-paper-2 aspect-video shadow-2xs border border-rule/60">
-                          <Image
-                            src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=600&q=80"
-                            alt={t('reg.photoInterior')}
-                            fill
-                            sizes="(max-width: 640px) 100vw, 200px"
-                            className="object-cover"
-                          />
-                          <div className="absolute bottom-1.5 left-1.5 bg-slate-900/85 backdrop-blur-md px-2 py-0.5 rounded text-[10px] text-white font-bold z-10">
-                            {t('reg.photoInterior')}
+                        {/* 2. Vehicle Registration */}
+                        <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white">2. เล่มทะเบียนรถ</span>
+                            <span className="text-[10px] text-red-500 font-bold">*จำเป็น</span>
                           </div>
+                          <input
+                            type="file"
+                            id="upload-registration"
+                            accept="image/*,.pdf"
+                            className="sr-only"
+                            onChange={(e) => {
+                              if (e.target.files?.[0]) setVehicleRegistrationFile(e.target.files[0]);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById('upload-registration')?.click()}
+                            className={`w-full py-2.5 px-3 border border-dashed text-xs font-bold flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer ${
+                              vehicleRegistrationFile
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-700 dark:text-emerald-300'
+                                : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 hover:border-amber-500 text-slate-700 dark:text-slate-300'
+                            }`}
+                          >
+                            <Upload className="w-4 h-4" />
+                            <span className="line-clamp-1">{vehicleRegistrationFile ? vehicleRegistrationFile.name : 'เลือกรูปเล่มทะเบียน'}</span>
+                          </button>
                         </div>
 
-                        <input
-                          type="file"
-                          id="driver-vehicle-photo-upload"
-                          accept="image/*"
-                          className="sr-only"
-                          onChange={(e) => {
-                            if (e.target.files?.[0]) {
-                              alert(t('reg.photoSelected', { name: e.target.files[0].name }));
-                            }
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => document.getElementById('driver-vehicle-photo-upload')?.click()}
-                          aria-label={t('reg.uploadAria')}
-                          className="rounded-xl border-2 border-dashed border-amber-500/40 bg-card p-2 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-amber-500/10 hover:border-amber-500 transition-all shadow-2xs aspect-video group"
-                        >
-                          <Upload className="h-6 w-6 text-amber-500 group-hover:scale-110 transition-transform" />
-                          <span className="text-xs text-ink font-bold mt-1">{t('reg.photoAdd')}</span>
-                          <span className="text-[10px] text-ink-2">JPG, PNG</span>
-                        </button>
+                        {/* 3. Driver with Car & Plate */}
+                        <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white">3. ถ่ายคู่กับตัวรถและป้าย</span>
+                            <span className="text-[10px] text-red-500 font-bold">*จำเป็น</span>
+                          </div>
+                          <input
+                            type="file"
+                            id="upload-driver-car"
+                            accept="image/*,.pdf"
+                            className="sr-only"
+                            onChange={(e) => {
+                              if (e.target.files?.[0]) setDriverWithCarFile(e.target.files[0]);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById('upload-driver-car')?.click()}
+                            className={`w-full py-2.5 px-3 border border-dashed text-xs font-bold flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer ${
+                              driverWithCarFile
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-700 dark:text-emerald-300'
+                                : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 hover:border-amber-500 text-slate-700 dark:text-slate-300'
+                            }`}
+                          >
+                            <Upload className="w-4 h-4" />
+                            <span className="line-clamp-1">{driverWithCarFile ? driverWithCarFile.name : 'เลือกรูปคู่กับรถ'}</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
-
                 {/* STEP 3: Invoicing, Comfort Amenities & Sign-off */}
                 {currentStep === 3 && (
                   <div className="space-y-5 animate-fade-in">

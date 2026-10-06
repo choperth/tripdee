@@ -27,9 +27,9 @@ export async function POST(req: NextRequest) {
     }
 
     const totalPrice = Number(body.totalPrice) || 0;
-    const depositAmount = Number(body.depositAmount) || Math.round(totalPrice * 0.1) || 300;
-    const remainingAmount = Math.max(0, totalPrice - depositAmount);
     const totalDays = Number(body.totalDays) || 1;
+    const depositAmount = Number(body.depositAmount) || totalDays * 100;
+    const remainingAmount = Math.max(0, totalPrice - depositAmount);
 
     // Generate unique order ID TD-BK-YYYYMMDD-XXXX
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');

@@ -37,14 +37,17 @@ create index if not exists idx_bookings_chillpay_tx on public.bookings(chillpay_
 alter table public.bookings enable row level security;
 
 -- Policies for public bookings access with safe boundaries
+drop policy if exists "Allow public insert on bookings" on public.bookings;
 create policy "Allow public insert on bookings"
     on public.bookings for insert
     with check (true);
 
+drop policy if exists "Allow public select on bookings" on public.bookings;
 create policy "Allow public select on bookings"
     on public.bookings for select
     using (true);
 
+drop policy if exists "Allow public update on bookings" on public.bookings;
 create policy "Allow public update on bookings"
     on public.bookings for update
     using (true);

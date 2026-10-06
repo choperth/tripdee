@@ -28,6 +28,7 @@ interface DepositPaymentModalProps {
   onClose: () => void;
   defaultRoute?: string;
   defaultTravelDate?: string;
+  defaultTotalDays?: number;
 }
 
 export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
@@ -36,6 +37,7 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
   onClose,
   defaultRoute = 'เชียงใหม่ - เชียงราย / แม่กำปอง',
   defaultTravelDate,
+  defaultTotalDays = 1,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
@@ -49,13 +51,14 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
   const [travelDate, setTravelDate] = useState(
     defaultTravelDate || new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10)
   );
+  const [totalDays, setTotalDays] = useState<number>(defaultTotalDays);
 
-  // Pricing calculations: default 10% deposit or ฿300
+  // Pricing calculations: ฿100/day system deposit fee
   const dailyRate = vehicle?.zoneRates?.city || 1800;
-  const totalPrice = dailyRate * 1;
-  const depositAmount = 300;
+  const daysCount = Math.max(1, Number(totalDays) || 1);
+  const totalPrice = dailyRate * daysCount;
+  const depositAmount = 100 * daysCount;
   const remainingAmount = Math.max(0, totalPrice - depositAmount);
-
   // Payment flow step: 'form' | 'qr' | 'success'
   const [step, setStep] = useState<'form' | 'qr' | 'success'>('form');
   const [loading, setLoading] = useState(false);
@@ -83,8 +86,9 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
       setTimeLeft(900);
       setShowConfirmationSheet(false);
       setRoute(defaultRoute);
+      setTotalDays(defaultTotalDays);
     }
-  }, [isOpen, defaultRoute]);
+  }, [isOpen, defaultRoute, defaultTotalDays]);
 
   // Handle countdown
   useEffect(() => {
@@ -146,6 +150,7 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
           customerLine: customerLine.trim() || undefined,
           route: route.trim(),
           travelDate,
+          totalDays: daysCount,
           totalPrice,
           depositAmount,
         }),
@@ -207,7 +212,7 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
     customerPhone,
     customerLine,
     travelDates: travelDate,
-    totalDays: 1,
+    totalDays: daysCount,
     routeDetails: route,
     driverName: vehicle?.driverName,
     driverNickname: vehicle?.driverNickname,
@@ -242,7 +247,7 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
               </span>
               <div>
                 <h2 id="deposit-modal-title" className="text-base sm:text-lg font-black tracking-tight">
-                  จองและมัดจำล็อกคิวรถ ฿{depositAmount.toLocaleString()}
+                  ยืนยันการจองและล็อกคิวรถ (ค่าบริการระบบ ฿100/วัน)
                 </h2>
                 <p className="text-[11px] text-slate-300">
                   ChillPay Dynamic PromptPay QR • ปลดล็อกเบอร์คนขับอัตโนมัติ 100%
@@ -271,19 +276,23 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
                       <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">รถที่เลือก</span>
                       <p className="font-bold text-slate-900 dark:text-white text-sm">{vehicleName}</p>
                     </div>
-                    <span className="bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 text-[10px] font-black px-2 py-0.5">
-                      มัดจำเพียง 10%
+                    <span className="bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800 text-[10px] font-black px-2 py-0.5">
+                      ค่าบริการระบบ ฿100/วัน ({daysCount} วัน = ฿{depositAmount.toLocaleString()})
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200 dark:border-slate-700 font-mono text-[11px]">
-                    <div>
-                      <span className="text-slate-500">ยอดรวมโดยประมาณ:</span>
-                      <p className="font-bold text-slate-900 dark:text-white">฿{totalPrice.toLocaleString()}</p>
+                  <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-700 text-[11px]">
+                    <div className="flex justify-between items-center text-slate-600 dark:text-slate-300">
+                      <span>ค่าบริการรถมาตรฐาน ({daysCount} วัน):</span>
+                      <span className="font-bold text-slate-900 dark:text-white font-mono">฿{totalPrice.toLocaleString()}</span>
                     </div>
-                    <div>
-                      <span className="text-slate-500">จ่ายวันเดินทาง:</span>
-                      <p className="font-bold text-slate-900 dark:text-white">฿{remainingAmount.toLocaleString()}</p>
+                    <div className="flex justify-between items-center text-amber-700 dark:text-amber-400 font-semibold">
+                      <span>ค่าบริการระบบ TripDee (ชำระทันทีผ่าน PromptPay เพื่อยืนยันล็อกคิว):</span>
+                      <span className="font-bold font-mono">฿{depositAmount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-1 border-t border-dashed border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold">
+                      <span className="text-emerald-700 dark:text-emerald-400">ยอดคงเหลือที่ต้องชำระ (ชำระตรงกับคนขับในวันเดินทางเมื่อขึ้นรถ):</span>
+                      <span className="font-mono text-sm text-emerald-700 dark:text-emerald-400">฿{remainingAmount.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -335,20 +344,22 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor="route-input" className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        เส้นทาง / จุดหมาย
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-1">
+                      <label htmlFor="total-days-input" className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        จำนวนวันเดินทาง
                       </label>
                       <input
-                        id="route-input"
-                        type="text"
-                        value={route}
-                        onChange={(e) => setRoute(e.target.value)}
+                        id="total-days-input"
+                        type="number"
+                        min="1"
+                        max="30"
+                        value={totalDays}
+                        onChange={(e) => setTotalDays(Math.max(1, parseInt(e.target.value, 10) || 1))}
                         className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
                       />
                     </div>
-                    <div>
+                    <div className="sm:col-span-1">
                       <label htmlFor="travel-date" className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                         วันที่เริ่มเดินทาง
                       </label>
@@ -357,6 +368,18 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
                         type="date"
                         value={travelDate}
                         onChange={(e) => setTravelDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="sm:col-span-1">
+                      <label htmlFor="route-input" className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        เส้นทาง / จุดหมาย
+                      </label>
+                      <input
+                        id="route-input"
+                        type="text"
+                        value={route}
+                        onChange={(e) => setRoute(e.target.value)}
                         className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
                       />
                     </div>
@@ -384,7 +407,7 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
                     ) : (
                       <>
                         <QrCode className="w-4 h-4" />
-                        <span>ชำระมัดจำ ฿{depositAmount.toLocaleString()} ด้วย PromptPay</span>
+                        <span>ชำระค่าบริการระบบ ฿{depositAmount.toLocaleString()} ({daysCount} วัน) ด้วย PromptPay</span>
                       </>
                     )}
                   </button>
@@ -460,6 +483,11 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
                   </span>
                 </div>
 
+                {/* Policy Notice Box */}
+                <div className="p-3 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs rounded-none text-left leading-relaxed">
+                  🌿 เพื่อความพร้อมในการเตรียมรถและการล็อกคิวงานของคนขับ ค่าบริการระบบไม่สามารถขอคืนเป็นเงินสดได้ แต่หากท่านมีความจำเป็นต้องปรับเปลี่ยนแผน สามารถแจ้งขอเลื่อนวันเดินทางได้ฟรี 1 ครั้ง (ภายในระยะเวลา 60 วัน)
+                </div>
+
                 {/* Polling Radar indicator */}
                 <div className="flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                   <span className="relative flex h-2.5 w-2.5">
@@ -468,7 +496,6 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
                   </span>
                   <span>ระบบกำลังรอรับการชำระเงินอัตโนมัติ (ตรวจจับทุก 3 วินาที)</span>
                 </div>
-
                 {/* Manual Check or External Link */}
                 <div className="flex gap-2 pt-2">
                   <button

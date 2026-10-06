@@ -11,6 +11,32 @@ export interface VehicleText {
 }
 
 export const VEHICLE_EN: Record<string, VehicleText> = {
+  'v-std-1': {
+    title: 'Toyota Commuter 10–13 Seats Standard (Full group, great value, cool A/C)',
+    location: 'Chiang Mai / Mae Rim / Mon Jam / Doi Inthanon / San Kamphaeng',
+    popularRoutes: ['Mon Jam', 'Doi Inthanon', 'Mae Kampong', 'Chiang Mai'],
+    amenities: [
+      'Original factory 4 rows (fits 10–13 passengers)',
+      'Microbus A/C reaching every row',
+      'Spacious rear luggage area',
+      'Compulsory passenger insurance',
+      'Polite, non-smoking driver skilled in northern mountain roads',
+    ],
+    description: 'Factory standard van, well maintained and clean. Ideal for large families, friend groups, company seminars traveling together in one van to save budget.',
+  },
+  'v-std-2': {
+    title: 'All New Commuter 10–13 Seats Yellow Plate 30 (Corporate & Family Trips)',
+    location: 'Chiang Mai / Chiang Rai / Mae Hong Son / Lampang',
+    popularRoutes: ['Chiang Mai', 'Chiang Rai', 'Pai', 'Doi Inthanon'],
+    amenities: [
+      '4 rows 11 seats, comfortable and spacious',
+      'Yellow plate 30 compliant with transport regulations',
+      'Real-time GPS tracking system',
+      'Fire extinguisher and emergency safety hammers',
+      'Full corporate tax invoice and government reimbursement documents',
+    ],
+    description: 'Modern high-roof van with legal yellow plate 30 and GPS safety tracking. Suitable for corporate seminars, government agencies, and families needing official documents.',
+  },
   'v-1': {
     title: 'Toyota Commuter VIP 9-Seater Electric Massage Seats Full Karaoke',
     location: 'Chiang Mai / Mon Jam / Doi Inthanon / Northern Thailand',

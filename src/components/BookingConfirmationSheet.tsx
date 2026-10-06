@@ -576,15 +576,15 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               </span>
             </div>
 
-            <div className="pt-2 text-[11px] text-slate-600 space-y-1">
+            <div className="pt-2 text-[11px] text-slate-600 space-y-1.5 border-t border-slate-200">
               <p>
-                <strong>{t('sheet.fuelLabel')}</strong> {data.fuelTerms}
+                <strong>{t('sheet.fuelLabel')}</strong> {data.fuelTerms || 'เติมคืนเต็มถังตามจริงเมื่อจบทริป'}
               </p>
               <p>
-                <strong>{t('sheet.otLabel')}</strong> {data.overtimeRate} {t('sheet.otNote')}
+                <strong>{t('sheet.otLabel')}</strong> เศษชั่วโมงละ {data.overtimeRate || 200} บาท (ชำระตรงกับคนขับ) • เวลาทำงานปกติ 10 ชั่วโมง/วัน (สิ้นสุดไม่เกิน 18:00–19:00 น.)
               </p>
               <p>
-                <strong>{t('sheet.overnightLabel')}</strong> {data.overnightRate} {t('sheet.overnightNote')}
+                <strong>{t('sheet.overnightLabel')}</strong> {data.overnightRate || 500} บาท/คืน (กรณีลูกค้าไม่ได้จัดเตรียมห้องพักให้คนขับ)
               </p>
               {data.canIssueTaxInvoice && (
                 <p className="text-emerald-700 font-semibold">
@@ -602,17 +602,28 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 </p>
               </div>
             </div>
+
+            {/* Travel Safety Verification Notice */}
+            <div className="mt-2.5 rounded-lg bg-emerald-50/90 border border-emerald-300 p-2.5 flex items-start gap-2 text-[11px] text-emerald-950">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+              <p className="font-medium leading-relaxed">
+                🛡️ เพื่อความปลอดภัยและความคุ้มครองตลอดการเดินทาง กรุณาตรวจสอบชื่อคนขับและหมายเลขทะเบียนรถให้ตรงกับใบนัดหมายนี้ ขอให้ท่านและคณะมีความสุขตลอดทริปครับ
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Section 5 */}
-        <div className="mt-4 rounded-xl border border-slate-200 p-3.5 bg-slate-50/50 text-[11px] text-slate-600 space-y-1">
+        {/* Section 5: Standard Trip Terms */}
+        <div className="mt-4 rounded-xl border border-slate-200 p-3.5 bg-slate-50/50 text-[11px] text-slate-600 space-y-1.5">
           <p className="font-black text-slate-800">{t('sheet.standardsTitle')}</p>
-          <ul className="list-disc pl-4 space-y-0.5">
+          <ul className="list-disc pl-4 space-y-1">
+            <li>เวลาทำงานปกติ 10 ชั่วโมง/วัน (สิ้นสุดไม่เกิน 18:00–19:00 น.)</li>
+            <li>ค่าล่วงเวลา (OT): เศษชั่วโมงละ 200 บาท (ชำระตรงกับคนขับ)</li>
+            <li>ค่าที่พักคนขับค้างคืน: 500 บาท/คืน (กรณีลูกค้าไม่ได้จัดเตรียมห้องพักให้)</li>
+            <li>ค่าน้ำมัน: เติมคืนเต็มถังตามจริงเมื่อจบทริป</li>
             <li>{t('sheet.std1')}</li>
             <li>{t('sheet.std2')}</li>
             <li>{t('sheet.std3')}</li>
-            <li>{t('sheet.std4')}</li>
           </ul>
         </div>
 
