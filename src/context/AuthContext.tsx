@@ -180,8 +180,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           const parsed: UserProfile = JSON.parse(saved);
           const isDemo = isMockDataEnabled();
-          // If in real mode and saved user is one of demo accounts (drv-01, corp-01, adm-01), clear it
-          if (!isDemo && (parsed.id === 'drv-01' || parsed.id === 'corp-01' || parsed.id === 'adm-01')) {
+          // If in real mode and saved user is one of demo accounts or simulated users, clear it
+          if (!isDemo && (
+            parsed.id === 'drv-01' ||
+            parsed.id === 'corp-01' ||
+            parsed.id === 'adm-01' ||
+            parsed.id.startsWith('usr-google-') ||
+            parsed.id.startsWith('usr-line-')
+          )) {
             localStorage.removeItem('td-auth-user');
             queueMicrotask(() => {
               if (isMounted) setUser(null);
@@ -286,27 +292,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     provider: 'line' | 'google',
     role: UserRole = 'customer'
   ): Promise<{ success: boolean; user?: UserProfile; error?: string }> => {
-    const isDemo = isMockDataEnabled();
-
-    // 1. Direct LINE Login Flow (Uses native LINE OAuth without needing Supabase custom OIDC)
+    // 1. Direct LINE Login Flow (Uses native LINE OAuth)
     if (provider === 'line') {
-      const hasLineConfig = Boolean(process.env.NEXT_PUBLIC_LINE_CLIENT_ID);
-      if (isDemo && !hasLineConfig) {
-        const simulatedUser: UserProfile = {
-          id: `usr-line-${Date.now().toString().slice(-4)}`,
-          role,
-          name: role === 'driver' ? 'พี่ชัย รถตู้เชียงใหม่ (LINE)' : 'คุณนิดา (LINE User)',
-          emailOrPhone: '081-234-5678',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-          lineId: '@chaivan_cnx',
-          isAvailable: role === 'driver' ? true : undefined,
-          verificationStatus: role === 'driver' ? 'verified' : undefined,
-          companyName: role === 'customer' ? 'นิดา ทราเวล กรุ๊ป' : undefined,
-        };
-        saveUser(simulatedUser);
-        return { success: true, user: simulatedUser };
-      }
-
       if (typeof window !== 'undefined') {
         const currentPath = window.location.pathname + window.location.search;
         // Full browser navigation required for OAuth 302 redirect
@@ -318,19 +305,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // 2. Google Login via Supabase OAuth
     const supabase = getSupabase();
-    if (!supabase || isDemo) {
-      const simulatedUser: UserProfile = {
-        id: `usr-google-${Date.now().toString().slice(-4)}`,
-        role,
-        name: role === 'driver' ? 'พี่วิทย์ นอร์ธเทิร์น (Google)' : 'คุณสมชาย วงศ์สวัสดิ์ (Google Workspace)',
-        emailOrPhone: role === 'driver' ? 'chai.cnx@gmail.com' : 'somchai@siamtech.co.th',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-        isAvailable: role === 'driver' ? true : undefined,
-        verificationStatus: role === 'driver' ? 'verified' : undefined,
-        companyName: role === 'customer' ? 'บริษัท สยาม อินโนเวชั่น จำกัด (มหาชน)' : undefined,
+    if (!supabase) {
+      return {
+        success: false,
+        error: 'ระบบเข้าสู่ระบบด้วย Google ต้องเชื่อมต่อกับ Supabase: ไม่พบคีย์ NEXT_PUBLIC_SUPABASE_URL หรือ NEXT_PUBLIC_SUPABASE_ANON_KEY ในระบบ',
       };
-      saveUser(simulatedUser);
-      return { success: true, user: simulatedUser };
     }
 
     try {

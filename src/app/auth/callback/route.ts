@@ -1,11 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase/client';
 
+function getOrigin(req: NextRequest): string {
+  const forwardedHost = req.headers.get('x-forwarded-host');
+  const forwardedProto = req.headers.get('x-forwarded-proto') || 'https';
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+  const host = req.headers.get('host');
+  if (host) {
+    const proto = host.includes('localhost') ? 'http' : 'https';
+    return `${proto}://${host}`;
+  }
+  return new URL(req.url).origin;
+}
+
 export async function GET(req: NextRequest) {
-  const { searchParams, origin } = new URL(req.url);
+  const origin = getOrigin(req);
+  const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const role = searchParams.get('role') || 'customer';
   const next = searchParams.get('next') || '/';
+  const oauthErr = searchParams.get('error_description') || searchParams.get('error');
+
+  if (oauthErr) {
+    return NextResponse.redirect(`${origin}/?auth_error=${encodeURIComponent(oauthErr)}`);
+  }
 
   if (code) {
     const supabase = getSupabase();

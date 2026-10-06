@@ -83,8 +83,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       const res = await loginWithOAuth(provider, selectedRole);
       if (!res.success && res.error) {
         setOauthError(res.error);
-      } else if (res.success && isDemo) {
-        onClose();
       }
     } catch (err: unknown) {
       setOauthError(err instanceof Error ? err.message : 'Login failed');
