@@ -18,30 +18,37 @@ export async function GET(req: NextRequest) {
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
 
-  let role: 'driver' | 'customer' | 'admin' = 'customer';
+  let role: 'driver' | 'customer' = 'customer';
   let next = '/';
 
   if (state) {
     try {
       const decoded = JSON.parse(Buffer.from(state, 'base64url').toString());
-      if (decoded.role) role = decoded.role;
-      if (decoded.next) next = decoded.next;
+      // Security (CWE-269): Strictly sanitize role to driver/customer only
+      if (decoded.role === 'driver') role = 'driver';
+      if (decoded.next && typeof decoded.next === 'string' && decoded.next.startsWith('/')) {
+        next = decoded.next;
+      }
     } catch (e) {
       console.warn('[TripDee LINE Auth] Failed to parse state:', e);
     }
   }
-
   // If user cancelled on LINE consent screen or error occurred
   if (error || !code) {
     const targetUrl = new URL(next, origin);
     targetUrl.searchParams.set('auth_error', errorDescription || error || 'LINE login was cancelled');
     return NextResponse.redirect(targetUrl.toString());
   }
-
-  const clientId = process.env.LINE_CLIENT_ID || '2011750506';
-  const clientSecret = process.env.LINE_CLIENT_SECRET || 'fd99de2a24bcd1e45f674faff8277db9';
+  const clientId = process.env.LINE_CLIENT_ID;
+  const clientSecret = process.env.LINE_CLIENT_SECRET;
   const redirectUri = `${origin}/api/auth/line/callback`;
 
+  if (!clientId || !clientSecret) {
+    console.error('[TripDee LINE Auth] Missing LINE_CLIENT_ID or LINE_CLIENT_SECRET in environment');
+    const targetUrl = new URL(next, origin);
+    targetUrl.searchParams.set('auth_error', 'LINE login credentials not configured');
+    return NextResponse.redirect(targetUrl.toString());
+  }
   try {
     // 1. Exchange authorization code for access_token and id_token
     const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', {

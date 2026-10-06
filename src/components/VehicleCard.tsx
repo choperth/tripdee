@@ -258,7 +258,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
               className="w-full mb-2 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs sm:text-sm py-2 px-3 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border border-amber-500"
             >
               <span className="material-symbols-outlined text-[16px] text-slate-950">verified</span>
-              <span>จองและมัดจำ ฿300 (ล็อกคิวทันที)</span>
+              <span>{t('vc.depositCta')}</span>
             </button>
 
             <div className="grid grid-cols-2 gap-2">

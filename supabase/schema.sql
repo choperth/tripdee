@@ -203,10 +203,7 @@ alter table public.analytics_events enable row level security;
 alter table public.sponsors enable row level security;
 alter table public.push_subscriptions enable row level security;
 
-create policy "Allow public select on push_subscriptions"
-    on public.push_subscriptions for select
-    using (true);
-
+-- Push subscriptions policies (Insert/Delete allowed for notification registration)
 create policy "Allow public insert on push_subscriptions"
     on public.push_subscriptions for insert
     with check (true);
@@ -215,58 +212,58 @@ create policy "Allow public delete on push_subscriptions"
     on public.push_subscriptions for delete
     using (true);
 
--- Quotations policies
+-- Quotations policies (Public insert for lead generation; Select/Update/Delete restricted to authenticated service_role)
 create policy "Allow public insert on quotations"
     on public.quotations for insert
     with check (true);
 
-create policy "Allow public select on quotations"
+create policy "Restrict read quotations to service_role"
     on public.quotations for select
-    using (true);
+    using (auth.role() = 'service_role');
 
-create policy "Allow public update on quotations"
+create policy "Restrict update quotations to service_role"
     on public.quotations for update
-    using (true);
+    using (auth.role() = 'service_role');
 
-create policy "Allow public delete on quotations"
+create policy "Restrict delete quotations to service_role"
     on public.quotations for delete
-    using (true);
+    using (auth.role() = 'service_role');
 
--- Driver leads policies
+-- Driver leads policies (Public insert for driver registration; Select/Update/Delete restricted to service_role)
 create policy "Allow public insert on driver_leads"
     on public.driver_leads for insert
     with check (true);
 
-create policy "Allow public select on driver_leads"
+create policy "Restrict read driver_leads to service_role"
     on public.driver_leads for select
-    using (true);
+    using (auth.role() = 'service_role');
 
-create policy "Allow public update on driver_leads"
+create policy "Restrict update driver_leads to service_role"
     on public.driver_leads for update
-    using (true);
+    using (auth.role() = 'service_role');
 
-create policy "Allow public delete on driver_leads"
+create policy "Restrict delete driver_leads to service_role"
     on public.driver_leads for delete
-    using (true);
+    using (auth.role() = 'service_role');
 
--- Vehicles policies
+-- Vehicles policies (Public catalog read; mutations restricted to service_role)
 create policy "Allow public select on vehicles"
     on public.vehicles for select
     using (true);
 
-create policy "Allow public insert on vehicles"
+create policy "Restrict insert vehicles to service_role"
     on public.vehicles for insert
-    with check (true);
+    with check (auth.role() = 'service_role');
 
-create policy "Allow public update on vehicles"
+create policy "Restrict update vehicles to service_role"
     on public.vehicles for update
-    using (true);
+    using (auth.role() = 'service_role');
 
-create policy "Allow public delete on vehicles"
+create policy "Restrict delete vehicles to service_role"
     on public.vehicles for delete
-    using (true);
+    using (auth.role() = 'service_role');
 
--- Board posts policies
+-- Board posts policies (Public can browse and submit posts; mutations restricted to service_role)
 create policy "Allow public select on board_posts"
     on public.board_posts for select
     using (true);
@@ -275,40 +272,39 @@ create policy "Allow public insert on board_posts"
     on public.board_posts for insert
     with check (true);
 
-create policy "Allow public update on board_posts"
+create policy "Restrict update board_posts to service_role"
     on public.board_posts for update
-    using (true);
+    using (auth.role() = 'service_role');
 
-create policy "Allow public delete on board_posts"
+create policy "Restrict delete board_posts to service_role"
     on public.board_posts for delete
-    using (true);
+    using (auth.role() = 'service_role');
 
--- Sponsors policies
+-- Sponsors policies (Public catalog read; mutations restricted to service_role)
 create policy "Allow public select on sponsors"
     on public.sponsors for select
     using (true);
 
-create policy "Allow public insert on sponsors"
+create policy "Restrict insert sponsors to service_role"
     on public.sponsors for insert
-    with check (true);
+    with check (auth.role() = 'service_role');
 
-create policy "Allow public update on sponsors"
+create policy "Restrict update sponsors to service_role"
     on public.sponsors for update
-    using (true);
+    using (auth.role() = 'service_role');
 
-create policy "Allow public delete on sponsors"
+create policy "Restrict delete sponsors to service_role"
     on public.sponsors for delete
-    using (true);
+    using (auth.role() = 'service_role');
 
--- Analytics events policies
+-- Analytics events policies (Public write only; Read restricted to service_role)
 create policy "Allow public insert on analytics_events"
     on public.analytics_events for insert
     with check (true);
 
-create policy "Allow public select on analytics_events"
+create policy "Restrict select analytics_events to service_role"
     on public.analytics_events for select
-    using (true);
-
+    using (auth.role() = 'service_role');
 -- ------------------------------------------------------------------------------
 -- 8. MIGRATION: ALTER EXISTING TABLES (SAFE UPGRADE FOR EXISTING DATABASES)
 -- ------------------------------------------------------------------------------

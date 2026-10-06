@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchSponsors, saveSponsor, updateSponsor, deleteSponsor } from '@/lib/supabase/service';
+import { verifyAdminAccess, unauthorizedAdminResponse } from '@/lib/authGuard';
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,9 +22,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const body = await req.json();
-
     if (!body.title) {
       return NextResponse.json(
         { error: 'กรุณาระบุชื่อโรงแรม/ผู้ประกอบการ' },
@@ -57,6 +61,10 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const body = await req.json();
     if (!body.id) {
@@ -78,6 +86,10 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     let id = searchParams.get('id');

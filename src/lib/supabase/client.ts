@@ -14,8 +14,13 @@ let clientInstance: SupabaseClient<Database> | null = null;
  * Returns null if Supabase environment variables are missing.
  */
 export function getSupabase(): SupabaseClient<Database> | null {
-  if (!supabaseUrl || !supabaseKey) {
-    if (typeof window !== 'undefined') {
+  const isServer = typeof window === 'undefined';
+  const effectiveKey = (isServer && process.env.SUPABASE_SERVICE_ROLE_KEY)
+    ? process.env.SUPABASE_SERVICE_ROLE_KEY
+    : supabaseKey;
+
+  if (!supabaseUrl || !effectiveKey) {
+    if (!isServer) {
       console.warn(
         '[TripDee] Supabase environment variables NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY are missing.'
       );
@@ -24,10 +29,10 @@ export function getSupabase(): SupabaseClient<Database> | null {
   }
 
   if (!clientInstance) {
-    clientInstance = createClient<Database>(supabaseUrl, supabaseKey, {
+    clientInstance = createClient<Database>(supabaseUrl, effectiveKey, {
       auth: {
-        persistSession: true,
-        autoRefreshToken: true,
+        persistSession: !isServer,
+        autoRefreshToken: !isServer,
       },
     });
   }

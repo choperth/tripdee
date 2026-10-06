@@ -7,8 +7,14 @@ import {
   normalizeOrgType,
   normalizeVehicleTier,
 } from '@/lib/b2b';
+import { verifyAdminAccess, unauthorizedAdminResponse } from '@/lib/authGuard';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Security (CWE-200 / PDPA): Quotation leads contain customer PII and corporate pricing.
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   const quotations = await fetchQuotations();
   return NextResponse.json({
     success: true,
@@ -60,6 +66,10 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const body = await req.json();
     if (!body.id) {
@@ -103,6 +113,10 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     let id = searchParams.get('id');

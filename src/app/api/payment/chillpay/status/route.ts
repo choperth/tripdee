@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Security (CWE-200 / PDPA): Only expose necessary payment polling status, never return raw customer phone or full PII
     return NextResponse.json({
       success: true,
       bookingId: booking.id,
@@ -30,13 +31,7 @@ export async function GET(req: NextRequest) {
       isContactUnlocked: booking.isContactUnlocked,
       paidAt: booking.paidAt || null,
       chillpayTransactionId: booking.chillpayTransactionId || null,
-      customerName: booking.customerName,
-      customerPhone: booking.customerPhone,
-      route: booking.route,
-      travelDate: booking.travelDate,
-      totalPrice: booking.totalPrice,
       depositAmount: booking.depositAmount,
-      remainingAmount: booking.remainingAmount,
     });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);

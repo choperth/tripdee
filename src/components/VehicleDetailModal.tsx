@@ -761,7 +761,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     className="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer border border-amber-500"
                   >
                     <span className="material-symbols-outlined text-[18px]">verified</span>
-                    <span>จองและมัดจำ ฿300 (ล็อกคิวทันที)</span>
+                    <span>{t('vc.depositCta')}</span>
                   </button>
 
                   <div className="space-y-2">

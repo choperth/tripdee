@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchVehicles, saveVehicle, updateVehicle, deleteVehicle } from '@/lib/supabase/service';
 import { Vehicle } from '@/data/mockData';
+import { verifyAdminAccess, unauthorizedAdminResponse } from '@/lib/authGuard';
 
 export async function GET(req: NextRequest) {
   try {
@@ -83,6 +84,10 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const body = await req.json();
     if (!body.id) {
@@ -106,6 +111,10 @@ export async function PUT(req: NextRequest) {
 export const PATCH = PUT;
 
 export async function DELETE(req: NextRequest) {
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     let id = searchParams.get('id');

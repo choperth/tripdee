@@ -29,7 +29,7 @@ interface LineWebhookPayload {
 }
 
 function verifyLineSignature(rawBody: string, signature: string | null, secret: string): boolean {
-  if (!signature || !secret) return true;
+  if (!signature || !secret) return false;
   const hash = crypto.createHmac('sha256', secret).update(rawBody).digest('base64');
   return hash === signature;
 }
@@ -71,9 +71,9 @@ export async function POST(req: NextRequest) {
     const channelSecret = process.env.LINE_CHANNEL_SECRET;
     const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 
-    if (channelSecret && signature && !verifyLineSignature(rawBody, signature, channelSecret)) {
-      console.warn('[LINE Webhook] Invalid signature rejected');
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    if (!channelSecret || !signature || !verifyLineSignature(rawBody, signature, channelSecret)) {
+      console.warn('[LINE Webhook] Request rejected: missing or invalid signature/secret');
+      return NextResponse.json({ error: 'Unauthorized: Invalid LINE signature' }, { status: 401 });
     }
 
     let payload: LineWebhookPayload;

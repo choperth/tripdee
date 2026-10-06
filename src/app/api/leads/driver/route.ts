@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchDriverLeads, saveDriverLead, verifyDriverLead, updateDriverLead, deleteDriverLead } from '@/lib/supabase/service';
 import { validateHoneypot } from '@/lib/honeypot';
+import { verifyAdminAccess, unauthorizedAdminResponse } from '@/lib/authGuard';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Security (CWE-200 / PDPA): Driver registration list contains driver names, phone numbers, and documents.
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   const drivers = await fetchDriverLeads();
   return NextResponse.json({
     success: true,
@@ -31,6 +37,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (body.action === 'approve' && body.id) {
+      if (!verifyAdminAccess(req)) {
+        return unauthorizedAdminResponse('Unauthorized: Only administrators can approve driver verification');
+      }
       const ok = await verifyDriverLead(String(body.id));
       return NextResponse.json({ success: ok });
     }
@@ -73,12 +82,15 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const body = await req.json();
     if (!body.id) {
       return NextResponse.json({ error: 'Missing driver lead ID' }, { status: 400 });
     }
-
     const updated = await updateDriverLead(String(body.id), body);
     if (!updated) {
       return NextResponse.json({ error: 'Driver lead not found' }, { status: 404 });
@@ -94,10 +106,13 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     let id = searchParams.get('id');
-
     if (!id) {
       try {
         const body = await req.json();
@@ -106,7 +121,6 @@ export async function DELETE(req: NextRequest) {
         // No json body
       }
     }
-
     if (!id) {
       return NextResponse.json({ error: 'Missing driver lead ID' }, { status: 400 });
     }

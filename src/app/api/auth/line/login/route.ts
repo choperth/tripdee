@@ -2,11 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url);
-  const role = searchParams.get('role') || 'customer';
+  const requestedRole = searchParams.get('role');
+  // Security (CWE-269): Never allow requesting 'admin' role via public OAuth query parameter.
+  const role = requestedRole === 'driver' ? 'driver' : 'customer';
   const next = searchParams.get('next') || '/';
 
-  const clientId = process.env.LINE_CLIENT_ID || '2011750506';
+  const clientId = process.env.LINE_CLIENT_ID;
   const redirectUri = `${origin}/api/auth/line/callback`;
+  if (!clientId) {
+    const errorUrl = new URL(next, origin);
+    errorUrl.searchParams.set('auth_error', 'LINE login is not configured on this server');
+    return NextResponse.redirect(errorUrl.toString());
+  }
 
   // Encode state with role, return path, and random nonce
   const statePayload = {

@@ -26,9 +26,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const totalPrice = Number(body.totalPrice) || 0;
-    const totalDays = Number(body.totalDays) || 1;
-    const depositAmount = Number(body.depositAmount) || totalDays * 100;
+    const totalDays = Math.max(1, Number(body.totalDays) || 1);
+    // Security (CWE-20 / Tamper-proofing): Always calculate deposit strictly on server (100 THB/day)
+    const depositAmount = totalDays * 100;
+    const totalPrice = Math.max(depositAmount, Number(body.totalPrice) || 0);
     const remainingAmount = Math.max(0, totalPrice - depositAmount);
 
     // Generate unique order ID TD-BK-YYYYMMDD-XXXX

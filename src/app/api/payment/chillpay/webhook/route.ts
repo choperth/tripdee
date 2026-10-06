@@ -41,13 +41,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: 400, message: 'Missing OrderNo' }, { status: 400 });
     }
 
-    // 1. Verify Checksum
+    // 1. Verify Checksum & Secret Presence
     const config = getChillPayConfig();
-    const isChecksumValid = config.md5Secret
-      ? verifyChillPayWebhookChecksum(payload, config.md5Secret)
-      : true; // In sandbox or if secret is missing, allow fallback validation
+    if (!config.md5Secret) {
+      console.error('[ChillPay Webhook]: CHILLPAY_MD5_SECRET is not configured on this server');
+      return NextResponse.json({ status: 500, message: 'Webhook secret is not configured' }, { status: 500 });
+    }
 
-    if (!isChecksumValid && config.md5Secret) {
+    const isChecksumValid = verifyChillPayWebhookChecksum(payload, config.md5Secret);
+    if (!isChecksumValid) {
       console.warn('[ChillPay Webhook]: Checksum verification failed for OrderNo:', orderNo);
       return NextResponse.json({ status: 403, message: 'Invalid CheckSum' }, { status: 403 });
     }
@@ -61,6 +63,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: 404, message: 'Booking not found' }, { status: 404 });
     }
 
+    // 2.3 Verify paid amount matches expected deposit in database
+    // ChillPay Amount can be in THB or satang depending on route/gateway
+    const rawPaidAmount = Number(payload.Amount ?? payload.OrderAmount ?? 0);
+    const expectedDeposit = Number(booking.depositAmount || 0);
+    // Allow satang matching (e.g. 100 THB == 10000 satang) or direct THB matching
+    const isAmountMatching =
+      rawPaidAmount === expectedDeposit || rawPaidAmount === expectedDeposit * 100;
+
+    if (!isAmountMatching && rawPaidAmount > 0) {
+      console.warn(
+        `[ChillPay Webhook]: Paid amount mismatch for OrderNo ${orderNo}. Received: ${rawPaidAmount}, Expected: ${expectedDeposit}`
+      );
+      return NextResponse.json(
+        { status: 400, message: 'Paid amount does not match booking deposit' },
+        { status: 400 }
+      );
+    }
     if (isSuccess) {
       // 3. Update database: payment_status = 'paid', is_contact_unlocked = true
       const updatedBooking = await updateBookingPayment(orderNo, {

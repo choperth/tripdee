@@ -27,13 +27,19 @@ export default function AdminConsolePage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [telemetryTime, setTelemetryTime] = useState('14:32:08');
 
+  // Admin Authentication State
+  const [adminToken, setAdminToken] = useState<string>('');
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
+  const [authChecking, setAuthChecking] = useState<boolean>(true);
+  const [authError, setAuthError] = useState<string>('');
+  const [passwordInput, setPasswordInput] = useState<string>('');
+
   // Real data
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [driverLeads, setDriverLeads] = useState<DriverLead[]>([]);
   const [quoteLeads, setQuoteLeads] = useState<QuotationLead[]>([]);
   const [boardPosts, setBoardPosts] = useState<BoardPost[]>([]);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
-
   // Telemetry clock timer
   useEffect(() => {
     const updateTime = () => {
@@ -45,8 +51,23 @@ export default function AdminConsolePage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Check admin session on mount
+  useEffect(() => {
+    const savedToken = localStorage.getItem('td-admin-token');
+    if (savedToken) {
+      setAdminToken(savedToken);
+      setIsAdminAuthenticated(true);
+    }
+    setAuthChecking(false);
+  }, []);
+
   const refreshAll = useCallback(() => {
+    const token = localStorage.getItem('td-admin-token') || adminToken;
+    if (!token) return;
+
     setIsRefreshing(true);
+    const headers: HeadersInit = token ? { 'x-admin-pin': token, Authorization: `Bearer ${token}` } : {};
+
     const p1 = fetch('/api/vehicles')
       .then((res) => res.json())
       .then((data) => {
@@ -54,14 +75,14 @@ export default function AdminConsolePage() {
       })
       .catch(() => {});
 
-    const p2 = fetch('/api/leads/driver')
+    const p2 = fetch('/api/leads/driver', { headers })
       .then((res) => res.json())
       .then((data) => {
         if (data.drivers && Array.isArray(data.drivers)) setDriverLeads(data.drivers);
       })
       .catch(() => {});
 
-    const p3 = fetch('/api/leads/quote')
+    const p3 = fetch('/api/leads/quote', { headers })
       .then((res) => res.json())
       .then((data) => {
         if (data.quotations && Array.isArray(data.quotations)) setQuoteLeads(data.quotations);
@@ -85,21 +106,92 @@ export default function AdminConsolePage() {
     Promise.allSettled([p1, p2, p3, p4, p5]).finally(() => {
       setTimeout(() => setIsRefreshing(false), 600);
     });
-  }, []);
+  }, [adminToken, user]);
 
   useEffect(() => {
-    refreshAll();
-  }, [refreshAll]);
+    if (isAdminAuthenticated) {
+      refreshAll();
+    }
+  }, [isAdminAuthenticated, refreshAll]);
 
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const pin = passwordInput.trim();
+    const expectedPin = process.env.NEXT_PUBLIC_ADMIN_PIN || 'tripdee2026';
+    if (pin === expectedPin) {
+      localStorage.setItem('td-admin-token', pin);
+      setAdminToken(pin);
+      setIsAdminAuthenticated(true);
+      setAuthError('');
+    } else {
+      setAuthError('รหัสผ่านผู้ดูแลระบบไม่ถูกต้อง');
+    }
+  };
+  // Render login screen if not authenticated
+  if (!authChecking && !isAdminAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-slate-900 border border-slate-800 p-6 shadow-2xl text-white">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="grid h-9 w-9 place-items-center bg-amber-400 text-slate-950 text-sm font-black">
+              TD
+            </span>
+            <div>
+              <h1 className="font-black text-sm tracking-tight text-white">TRIPDEE ADMIN CONSOLE</h1>
+              <p className="text-[11px] text-slate-400">กรุณายืนยันตัวตนผู้ดูแลระบบ</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleAdminLogin} className="space-y-4">
+            <div>
+              <label htmlFor="admin-pin" className="block text-xs font-bold text-slate-300 mb-1.5">
+                รหัสผ่านผู้ดูแลระบบ (Admin Key)
+              </label>
+              <input
+                id="admin-pin"
+                type="password"
+                required
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="กรอกรหัสผ่าน Admin"
+                className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 text-white text-xs focus:outline-none focus:border-amber-400"
+              />
+            </div>
+
+            {authError && (
+              <p className="text-xs text-red-400 font-semibold">{authError}</p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full py-2.5 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs transition-colors cursor-pointer"
+            >
+              เข้าสู่ระบบ Admin Console
+            </button>
+          </form>
+
+          <div className="mt-6 pt-4 border-t border-slate-800 text-center">
+            <Link href="/" className="text-xs text-slate-400 hover:text-white">
+              ← กลับสู่หน้าหลัก TripDee
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const handleApprove = async (driverId: string) => {
     approveDriverVerification(driverId);
     setDriverLeads((prev) =>
       prev.map((d) => (d.id === driverId ? { ...d, status: 'verified' } : d))
     );
     try {
+      const token = localStorage.getItem('td-admin-token') || adminToken;
       await fetch('/api/leads/driver', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'x-admin-pin': token, Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ action: 'approve', id: driverId }),
       });
       refreshAll();
