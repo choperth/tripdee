@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const role = requestedRole === 'driver' ? 'driver' : 'customer';
   const next = searchParams.get('next') || '/';
 
-  const clientId = process.env.LINE_CLIENT_ID;
+  const clientId = process.env.LINE_CLIENT_ID || process.env.NEXT_PUBLIC_LINE_CLIENT_ID;
   const redirectUri = `${origin}/api/auth/line/callback`;
   if (!clientId) {
     const errorUrl = new URL(next, origin);

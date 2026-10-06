@@ -172,23 +172,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const saved = localStorage.getItem('td-auth-user');
       if (saved) {
-        const parsed: UserProfile = JSON.parse(saved);
-        const isDemo = isMockDataEnabled();
-        // If in real mode and saved user is one of demo accounts (drv-01, corp-01, adm-01), clear it
-        if (!isDemo && (parsed.id === 'drv-01' || parsed.id === 'corp-01' || parsed.id === 'adm-01')) {
+        if (saved === '[object Object]' || !saved.startsWith('{')) {
           localStorage.removeItem('td-auth-user');
           queueMicrotask(() => {
             if (isMounted) setUser(null);
           });
         } else {
-          queueMicrotask(() => {
-            if (isMounted) setUser(parsed);
-          });
+          const parsed: UserProfile = JSON.parse(saved);
+          const isDemo = isMockDataEnabled();
+          // If in real mode and saved user is one of demo accounts (drv-01, corp-01, adm-01), clear it
+          if (!isDemo && (parsed.id === 'drv-01' || parsed.id === 'corp-01' || parsed.id === 'adm-01')) {
+            localStorage.removeItem('td-auth-user');
+            queueMicrotask(() => {
+              if (isMounted) setUser(null);
+            });
+          } else {
+            queueMicrotask(() => {
+              if (isMounted) setUser(parsed);
+            });
+          }
         }
       }
     } catch {
-      /* ignore storage access error */
+      localStorage.removeItem('td-auth-user');
     }
+
+    // Subscribe to custom auth update and cross-tab storage events
+    const handleStorageAuth = () => {
+      try {
+        const saved = localStorage.getItem('td-auth-user');
+        if (saved && saved !== '[object Object]' && saved.startsWith('{')) {
+          const parsed = JSON.parse(saved);
+          setUser(parsed);
+        } else {
+          setUser(null);
+        }
+      } catch {
+        setUser(null);
+      }
+    };
+
+    window.addEventListener('tripdee-auth-updated', handleStorageAuth);
+    window.addEventListener('storage', handleStorageAuth);
 
     // Subscribe to Supabase auth events
     const supabase = getSupabase();
@@ -227,6 +252,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       isMounted = false;
+      window.removeEventListener('tripdee-auth-updated', handleStorageAuth);
+      window.removeEventListener('storage', handleStorageAuth);
       if (authSubscription) {
         authSubscription.unsubscribe();
       }
@@ -263,7 +290,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // 1. Direct LINE Login Flow (Uses native LINE OAuth without needing Supabase custom OIDC)
     if (provider === 'line') {
-      if (isDemo) {
+      const hasLineConfig = Boolean(process.env.NEXT_PUBLIC_LINE_CLIENT_ID);
+      if (isDemo && !hasLineConfig) {
         const simulatedUser: UserProfile = {
           id: `usr-line-${Date.now().toString().slice(-4)}`,
           role,

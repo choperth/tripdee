@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     targetUrl.searchParams.set('auth_error', errorDescription || error || 'LINE login was cancelled');
     return NextResponse.redirect(targetUrl.toString());
   }
-  const clientId = process.env.LINE_CLIENT_ID;
+  const clientId = process.env.LINE_CLIENT_ID || process.env.NEXT_PUBLIC_LINE_CLIENT_ID;
   const clientSecret = process.env.LINE_CLIENT_SECRET;
   const redirectUri = `${origin}/api/auth/line/callback`;
 
@@ -68,8 +68,15 @@ export async function GET(req: NextRequest) {
     if (!tokenRes.ok) {
       const errText = await tokenRes.text();
       console.error('[TripDee LINE Auth] Token exchange failed:', errText);
+      let errDetail = 'LINE Token Exchange Failed';
+      try {
+        const errJson = JSON.parse(errText);
+        errDetail = errJson.error_description || errJson.error || errDetail;
+      } catch {
+        /* ignore */
+      }
       const targetUrl = new URL(next, origin);
-      targetUrl.searchParams.set('auth_error', 'LINE Token Exchange Failed');
+      targetUrl.searchParams.set('auth_error', errDetail);
       return NextResponse.redirect(targetUrl.toString());
     }
 
@@ -105,15 +112,17 @@ export async function GET(req: NextRequest) {
     }
 
     // 4. Construct UserProfile
-    const userProfile: UserProfilePayload = {
+    const userProfile = {
       id: `line_${profile.userId}`,
       role,
       name: profile.displayName || 'LINE User',
+      driverNickname: role === 'driver' ? (profile.displayName || 'คนขับ LINE') : undefined,
       emailOrPhone: email || profile.displayName || 'LINE Account',
       avatar: profile.pictureUrl || undefined,
       lineId: `@${profile.displayName || ''}`.replace(/\s+/g, ''),
+      customerType: role === 'customer' ? ('individual' as const) : undefined,
       isAvailable: role === 'driver' ? true : undefined,
-      verificationStatus: role === 'driver' ? 'pending' : undefined,
+      verificationStatus: role === 'driver' ? ('pending' as const) : undefined,
     };
 
     // 5. Send an HTML bridge that sets the user into localStorage and redirects to `next`
@@ -141,7 +150,7 @@ export async function GET(req: NextRequest) {
   </div>
   <script>
     try {
-      localStorage.setItem('td-auth-user', ${safeUserJson});
+      localStorage.setItem('td-auth-user', ${JSON.stringify(safeUserJson)});
       window.dispatchEvent(new CustomEvent('tripdee-auth-updated'));
     } catch (e) {
       console.error(e);

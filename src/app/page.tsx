@@ -127,6 +127,26 @@ export default function HomePage() {
   }, []);
 
   const [plateFilter, setPlateFilter] = useState<'all' | 'yellow' | 'blue' | 'tax'>('all');
+  const [authBanner, setAuthBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const authErr = params.get('auth_error');
+    const authOk = params.get('auth');
+    if (authErr) {
+      setAuthBanner({ type: 'error', message: `เข้าสู่ระบบ LINE ไม่สำเร็จ: ${authErr}` });
+      const url = new URL(window.location.href);
+      url.searchParams.delete('auth_error');
+      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+    } else if (authOk === 'success') {
+      setAuthBanner({ type: 'success', message: 'เข้าสู่ระบบ LINE สำเร็จ ยินดีต้อนรับสู่ TripDee' });
+      const url = new URL(window.location.href);
+      url.searchParams.delete('auth');
+      url.searchParams.delete('role');
+      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+    }
+  }, []);
 
   useEffect(() => {
     loadVehicles();
@@ -369,6 +389,34 @@ export default function HomePage() {
       />
       <div aria-hidden="true" className="h-16 shrink-0" />
       <LiveTickerRibbon totalVans={totalVanCount} />
+      {authBanner && (
+        <aside
+          role="alert"
+          aria-live="polite"
+          className={`relative z-40 px-4 py-2.5 text-xs font-bold border-b transition-all flex items-center justify-between gap-3 ${
+            authBanner.type === 'error'
+              ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-200'
+              : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200'
+          }`}
+        >
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">
+                {authBanner.type === 'error' ? 'error' : 'check_circle'}
+              </span>
+              <span>{authBanner.message}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAuthBanner(null)}
+              className="p-1 hover:opacity-75 text-xs font-bold cursor-pointer"
+              aria-label="ปิดการแจ้งเตือน"
+            >
+              ✕
+            </button>
+          </div>
+        </aside>
+      )}
       {isClient && !demoBannerDismissed && (
         isDemo ? (
           <aside
