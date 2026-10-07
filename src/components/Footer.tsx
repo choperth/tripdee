@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { OFFICIAL_LINE_URL } from '@/lib/constants';
 
@@ -203,14 +202,6 @@ export const Footer: React.FC<FooterProps> = ({
                 >
                   {t('foot.driverJoin')}
                 </button>
-              </li>
-              <li>
-                <Link
-                  href="/driver"
-                  className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
-                >
-                  {t('nav.driverManage')}
-                </Link>
               </li>
               <li className="text-slate-600 dark:text-slate-400">
                 {t('foot.support247')}
