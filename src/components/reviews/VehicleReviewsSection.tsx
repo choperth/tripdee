@@ -18,7 +18,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { getPublicDriverName } from '@/lib/privacy';
 import {
   Review,
-  getVehicleReviews,
+  fetchVehicleReviews,
   calculateReviewStats,
 } from '@/lib/reviewsStore';
 import { WriteReviewModal } from './WriteReviewModal';
@@ -48,42 +48,33 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
   vehicle,
 }) => {
   const { t } = useLanguage();
-  const [reviews, setReviews] = useState<Review[]>(() => getVehicleReviews(vehicle.id, vehicle));
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState<boolean>(true);
   const [isWriteModalOpen, setIsWriteModalOpen] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [selectedStarFilter, setSelectedStarFilter] = useState<number | null>(null);
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null);
 
-  // Keep reviews synced when vehicle id changes
-  const [prevVehicleId, setPrevVehicleId] = useState(vehicle.id);
-  if (vehicle.id !== prevVehicleId) {
-    setPrevVehicleId(vehicle.id);
-    setReviews(getVehicleReviews(vehicle.id, vehicle));
-  }
-
+  // Reviews come from the database. A vehicle with none shows an empty state
+  // rather than a fabricated score and histogram.
   useEffect(() => {
-    // Listen to custom review added event
-    const handleReviewAdded = (e: Event) => {
-      const customEvent = e as CustomEvent<{ vehicleId: string; review: Review }>;
-      if (customEvent.detail && customEvent.detail.vehicleId === vehicle.id) {
-        setReviews((prev) => [customEvent.detail.review, ...prev.filter((r) => r.id !== customEvent.detail.review.id)]);
+    let cancelled = false;
+    setIsLoadingReviews(true);
+    fetchVehicleReviews(vehicle.id).then((loaded) => {
+      if (!cancelled) {
+        setReviews(loaded);
+        setIsLoadingReviews(false);
       }
+    });
+    return () => {
+      cancelled = true;
     };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('td:review-added', handleReviewAdded);
-      return () => {
-        window.removeEventListener('td:review-added', handleReviewAdded);
-      };
-    }
-  }, [vehicle.id, vehicle]);
+  }, [vehicle.id]);
 
   const publicName = getPublicDriverName(vehicle.driverName, vehicle.driverNickname);
   const driverInitial = publicName.charAt(0);
 
-  const stats = useMemo(() => {
-    return calculateReviewStats(reviews, vehicle.rating || 4.9, vehicle.reviewCount || 48);
-  }, [reviews, vehicle.rating, vehicle.reviewCount]);
+  const stats = useMemo(() => calculateReviewStats(reviews), [reviews]);
 
   // Filtered reviews
   const filteredReviews = useMemo(() => {
@@ -134,13 +125,14 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
       </div>
 
       {/* Ratings & High-Level Breakdown Bento Card */}
+      {stats.totalReviews > 0 && (
       <div className="p-space-md rounded-2xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 space-y-space-md">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-space-md items-center">
           {/* Left: Big Score & Stars */}
           <div className="md:col-span-5 flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 border-b md:border-b-0 md:border-r border-border-subtle/70 dark:border-slate-800 pb-space-sm md:pb-0 md:pr-space-md">
             <div className="flex items-baseline gap-2">
               <span className="text-4xl sm:text-5xl font-black text-navy-deep dark:text-white tracking-tight">
-                {stats.averageRating.toFixed(1)}
+                {stats.averageRating?.toFixed(1)}
               </span>
               <span className="text-sm font-medium text-ink-muted dark:text-slate-400">
                 / 5.0
@@ -152,7 +144,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
                 <Star
                   key={star}
                   className={`w-5 h-5 ${
-                    star <= Math.round(stats.averageRating)
+                    star <= Math.round(stats.averageRating ?? 0)
                       ? 'text-amber-400 fill-amber-400'
                       : 'text-border-subtle dark:text-slate-700'
                   }`}
@@ -174,7 +166,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
           <div className="md:col-span-7 space-y-1.5">
             {([5, 4, 3, 2, 1] as const).map((score) => {
               const count = stats.breakdown[score] || 0;
-              const percent = stats.totalReviews > 0 ? Math.round((count / stats.totalReviews) * 100) : 0;
+              const percent = Math.round((count / stats.totalReviews) * 100);
               const isSelected = selectedStarFilter === score;
 
               return (
@@ -246,6 +238,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
           </div>
         )}
       </div>
+      )}
 
       {/* Active Filter Bar (if any filter is selected) */}
       {(selectedStarFilter !== null || selectedTagFilter !== null) && (
@@ -299,7 +292,11 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
 
       {/* Reviews List */}
       <div className="space-y-space-sm">
-        {filteredReviews.length === 0 ? (
+        {isLoadingReviews ? (
+          <div className="p-space-xl rounded-2xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 text-center">
+            <p className="text-sm text-ink-muted dark:text-slate-400">{t('review.loading')}</p>
+          </div>
+        ) : filteredReviews.length === 0 ? (
           <div className="p-space-xl rounded-2xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 text-center space-y-2">
             <p className="text-base font-bold text-navy-deep dark:text-white">
               {selectedStarFilter !== null || selectedTagFilter !== null
@@ -460,7 +457,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
         isOpen={isWriteModalOpen}
         onClose={() => setIsWriteModalOpen(false)}
         onReviewSubmitted={(newRev) => {
-          setReviews((prev) => [newRev, ...prev]);
+          setReviews((prev) => [newRev, ...prev.filter((r) => r.id !== newRev.id)]);
           setIsExpanded(true);
         }}
       />

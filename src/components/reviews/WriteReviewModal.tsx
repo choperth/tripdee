@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { X, Star, Check, CheckCircle2, User, Calendar, MapPin, MessageSquare, Sparkles } from 'lucide-react';
+import { X, Star, Check, CheckCircle2, User, Phone, Calendar, MapPin, MessageSquare, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { Vehicle } from '@/data/mockData';
@@ -10,7 +10,7 @@ import { getPublicDriverName } from '@/lib/privacy';
 import {
   Review,
   POPULAR_REVIEW_TAGS,
-  addVehicleReview,
+  submitVehicleReview,
   NewReviewInput,
 } from '@/lib/reviewsStore';
 
@@ -34,14 +34,12 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [authorName, setAuthorName] = useState<string>('');
+  const [authorPhone, setAuthorPhone] = useState<string>('');
   const [travelDate, setTravelDate] = useState<string>('');
   const [tripRoute, setTripRoute] = useState<string>('');
   const [comment, setComment] = useState<string>('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([
-    'ขับนิ่ม ปลอดภัย',
-    'ตรงต่อเวลา',
-    'รถสะอาด แอร์เย็น',
-  ]);
+  // No tags pre-selected: let the reviewer choose what actually applied.
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -73,7 +71,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -92,29 +90,27 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
 
     setIsSubmitting(true);
 
-    try {
-      const input: NewReviewInput = {
-        vehicleId: vehicle.id,
-        authorName: cleanName,
-        rating,
-        travelDate: travelDate.trim() || t('review.dSoon'),
-        tripRoute: tripRoute.trim() || vehiclePopularRoutes(vehicle, locale)[0] || t('review.dGeneral'),
-        comment: cleanComment,
-        tags: selectedTags,
-      };
+    const input: NewReviewInput = {
+      vehicleId: vehicle.id,
+      authorName: cleanName,
+      authorPhone: authorPhone.trim() || undefined,
+      rating,
+      travelDate: travelDate.trim() || t('review.dSoon'),
+      tripRoute: tripRoute.trim() || t('review.dGeneral'),
+      comment: cleanComment,
+      tags: selectedTags,
+    };
 
-      const created = addVehicleReview(input);
-      setIsSubmitting(false);
-      setIsSubmitted(true);
+    const result = await submitVehicleReview(input);
+    setIsSubmitting(false);
 
-      if (onReviewSubmitted) {
-        onReviewSubmitted(created);
-      }
-    } catch (err) {
-      console.error('Error submitting review:', err);
-      setIsSubmitting(false);
-      setErrorMessage(t('review.errSave'));
+    if (!result.success || !result.review) {
+      setErrorMessage(result.error || t('review.errSave'));
+      return;
     }
+
+    setIsSubmitted(true);
+    onReviewSubmitted?.(result.review);
   };
 
   return (
@@ -136,7 +132,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
           <div>
             <div className="flex items-center gap-1.5 text-blue-action dark:text-blue-400 font-label-badge text-label-badge font-bold uppercase tracking-wider mb-1">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{t('review.verifiedPassenger')}</span>
+              <span>{t('review.modalEyebrow')}</span>
             </div>
             <h2 className="font-headline-lg text-headline-lg text-navy-deep dark:text-white">
               {t('review.modalTitle')}
@@ -263,6 +259,34 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
                     className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-border-subtle dark:border-slate-700 bg-paper-surface dark:bg-slate-800 text-ink-primary dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-action"
                   />
                 </div>
+              </div>
+
+              {/* Phone is used server-side to check for a completed booking.
+                  It is never rendered publicly and never leaves the server. */}
+              <div className="space-y-1">
+                <label
+                  htmlFor="review-phone"
+                  className="block text-body-subtext font-bold text-navy-deep dark:text-white"
+                >
+                  {t('review.phoneLabel')}
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    id="review-phone"
+                    type="tel"
+                    inputMode="numeric"
+                    value={authorPhone}
+                    onChange={(e) =>
+                      setAuthorPhone(e.target.value.replace(/[^0-9+\-\s]/g, '').slice(0, 20))
+                    }
+                    placeholder="08X-XXX-XXXX"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-border-subtle dark:border-slate-700 bg-paper-surface dark:bg-slate-800 text-ink-primary dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-action"
+                  />
+                </div>
+                <p className="text-[11px] text-ink-muted dark:text-slate-400">
+                  {t('review.phoneHint')}
+                </p>
               </div>
 
               <div className="space-y-1">

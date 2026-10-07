@@ -53,10 +53,12 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
   );
   const [totalDays, setTotalDays] = useState<number>(defaultTotalDays);
 
-  // Pricing calculations: ฿100/day system deposit fee
-  const dailyRate = vehicle?.zoneRates?.city || 1800;
+  // Pricing. The rate must come from the vehicle record: inventing one here
+  // would charge the customer an amount the driver never agreed to.
+  const dailyRate = vehicle?.zoneRates?.city ?? null;
+  const hasValidRate = typeof dailyRate === 'number' && dailyRate > 0;
   const daysCount = Math.max(1, Number(totalDays) || 1);
-  const totalPrice = dailyRate * daysCount;
+  const totalPrice = hasValidRate ? dailyRate * daysCount : 0;
   const depositAmount = 100 * daysCount;
   const remainingAmount = Math.max(0, totalPrice - depositAmount);
   // Payment flow step: 'form' | 'qr' | 'success'
@@ -132,6 +134,12 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
     e.preventDefault();
     if (!customerName.trim() || !customerPhone.trim()) {
       setErrorMessage('กรุณากรอกชื่อและเบอร์โทรศัพท์ของผู้จองให้ครบถ้วน');
+      return;
+    }
+    if (!hasValidRate) {
+      setErrorMessage(
+        'รถคันนี้ยังไม่ได้ระบุค่าบริการ กรุณาติดต่อคนขับโดยตรงเพื่อสอบถามราคา'
+      );
       return;
     }
 
@@ -223,7 +231,7 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
     plateType: vehicle?.plateType || 'yellow',
     isVerified: vehicle?.isVerified,
     canIssueTaxInvoice: vehicle?.canIssueTaxInvoice,
-    dailyRate,
+    dailyRate: dailyRate ?? undefined,
     totalPrice,
     depositAmount,
     remainingAmount,
@@ -281,6 +289,12 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
                     </span>
                   </div>
 
+                  {!hasValidRate ? (
+                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700 text-[11px] text-amber-700 dark:text-amber-400 font-semibold">
+                      คนขับยังไม่ได้ระบุค่าบริการสำหรับรถคันนี้
+                      กรุณาติดต่อคนขับโดยตรงเพื่อสอบถามราคาและรายละเอียดก่อนชำระเงิน
+                    </div>
+                  ) : (
                   <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-700 text-[11px]">
                     <div className="flex justify-between items-center text-slate-600 dark:text-slate-300">
                       <span>ค่าบริการรถมาตรฐาน ({daysCount} วัน):</span>
@@ -295,6 +309,7 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
                       <span className="font-mono text-sm text-emerald-700 dark:text-emerald-400">฿{remainingAmount.toLocaleString()}</span>
                     </div>
                   </div>
+                  )}
                 </div>
 
                 {/* Form Inputs */}
@@ -520,19 +535,21 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
                   )}
                 </div>
 
-                {/* Dev / Test helper button for instantaneous demo */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // Simulate Webhook success for demonstration / sandbox test
-                      setStep('success');
-                    }}
-                    className="text-[11px] text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
-                  >
-                    ⚡ [ทดสอบระบบ] จำลองว่าชำระเงินมัดจำสำเร็จทันที
-                  </button>
-                </div>
+                {/* Sandbox helper: skips straight to the success screen, which
+                    unlocks the driver's contact details. Never shipped. */}
+                {process.env.NODE_ENV !== 'production' && (
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStep('success');
+                      }}
+                      className="text-[11px] text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
+                    >
+                      ⚡ [ทดสอบระบบ] จำลองว่าชำระเงินมัดจำสำเร็จทันที
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

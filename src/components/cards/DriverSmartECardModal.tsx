@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   X,
   Phone,
@@ -27,6 +27,9 @@ import { vehicleTitle, vehicleLocation, vehicleAmenities } from '@/data/vehicleI
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { getPublicDriverName, maskPlateNumber } from '@/lib/privacy';
 import { formatLineLink } from '@/lib/contactUtils';
+import { generateQrMatrix, renderQrSvgPath } from '@/lib/qrCode';
+import { getBangkokTodayIso } from '@/lib/availabilityUtils';
+import { fetchVehicleReviews, Review } from '@/lib/reviewsStore';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 
@@ -46,68 +49,125 @@ export const DriverSmartECardModal: React.FC<DriverSmartECardModalProps> = ({
   const { t, locale } = useLanguage();
   const { trackCall } = useAnalytics();
 
-  // Dynamic driver meta
+  // Driver meta, straight from the vehicle record.
+  // No fallback contact details: a missing LINE id or plate must not be
+  // filled with another driver's real values, and this card is exported as a
+  // vCard into the customer's phone.
   const publicName = getPublicDriverName(vehicle.driverName, vehicle.driverNickname);
-  const driverNick = vehicle.driverNickname || publicName.split(' ')[0] || 'พี่ชัย';
-  const cleanPhone = vehicle.driverPhone.replace(/\D/g, '') || '0812345678';
-  const displayPhone = vehicle.driverPhone || '081-234-5678';
-  const lineId = vehicle.driverLine || '@chaivan_cnx';
-  const cleanPlate = vehicle.plateNumber ? maskPlateNumber(vehicle.plateNumber) : '30-8899 เชียงใหม่';
-  const title = vehicleTitle(vehicle, locale) || 'Toyota Commuter VIP 9 ที่นั่ง Custom Luxury';
+  const driverNick = vehicle.driverNickname || publicName.split(' ')[0] || '';
+  const cleanPhone = vehicle.driverPhone?.replace(/\D/g, '') || '';
+  const displayPhone = vehicle.driverPhone || '';
+  const lineId = vehicle.driverLine || '';
+  const cleanPlate = vehicle.plateNumber ? maskPlateNumber(vehicle.plateNumber) : '';
+  const title = vehicleTitle(vehicle, locale);
   const location = vehicleLocation(vehicle, locale);
-  const rating = vehicle.rating || 4.96;
-  const reviewCount = vehicle.reviewCount || 128;
-  const driverCode = `DRV-${(vehicle.region || 'CM').toUpperCase()}-${(vehicle.id || '50821').replace(/[^0-9]/g, '').slice(-5) || '50821'}`;
+  const rating = vehicle.rating;
+  const reviewCount = vehicle.reviewCount ?? 0;
+  const hasRating = typeof rating === 'number' && reviewCount > 0;
+  // Derived from the vehicle id so it is stable for a given vehicle; there is
+  // no separate issued driver code in the database yet.
+  const driverCode = `DRV-${(vehicle.region || 'CM').toUpperCase()}-${vehicle.id.replace(/[^0-9]/g, '').slice(-5) || vehicle.id.slice(-5).toUpperCase()}`;
 
   // Interactive Fare Calculator State
   const [selectedRouteKey, setSelectedRouteKey] = useState('city');
-  const [startDate, setStartDate] = useState('2026-10-06');
+  const [startDate, setStartDate] = useState(() =>
+    new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+  );
   const [daysCount, setDaysCount] = useState(3);
   const [passengers, setPassengers] = useState('5-7');
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const routeRates: Record<string, { label: string; price: number }> = {
-    city: { label: 'ในเมืองเชียงใหม่ / แม่ริม / ม่อนแจ่ม', price: 2000 },
-    inthanon: { label: 'ดอยอินทนนท์ / กิ่วแม่ปาน / แม่แจ่ม', price: 2400 },
-    chiangdao: { label: 'เชียงดาว / เมืองคอง / ดอยอ่างขาง', price: 2300 },
-    pai: { label: 'ทริปข้ามจังหวัด: ปาย - แม่ฮ่องสอน', price: 2800 },
-    chiangrai: { label: 'ทริปข้ามจังหวัด: เชียงราย - สามเหลี่ยมทองคำ', price: 2700 },
-    custom: { label: 'กำหนดเส้นทางเอง / จัดทริปตามใจชอบ', price: 2200 },
+  // Zone rates come from the vehicle record, not a fixed price list.
+  const zoneRates = vehicle.zoneRates;
+  const routeRates: Record<string, { label: string; price: number | null }> = {
+    city: { label: 'ในเมืองเชียงใหม่ / แม่ริม / ม่อนแจ่ม', price: zoneRates?.city ?? null },
+    inthanon: { label: 'ดอยอินทนนท์ / กิ่วแม่ปาน / แม่แจ่ม', price: zoneRates?.highHill ?? null },
+    chiangdao: { label: 'เชียงดาว / เมืองคอง / ดอยอ่างขาง', price: zoneRates?.midHill ?? null },
+    pai: { label: 'ทริปข้ามจังหวัด: ปาย - แม่ฮ่องสอน', price: zoneRates?.crossProvince ?? null },
+    chiangrai: { label: 'ทริปข้ามจังหวัด: เชียงราย - สามเหลี่ยมทองคำ', price: zoneRates?.crossProvince ?? null },
+    custom: { label: 'กำหนดเส้นทางเอง / จัดทริปตามใจชอบ', price: null },
   };
 
   const currentRate = routeRates[selectedRouteKey] || routeRates.city;
-  const estimatedTotal = currentRate.price * daysCount;
+  const estimatedTotal = currentRate.price !== null ? currentRate.price * daysCount : null;
 
-  // Primary image previews
-  const heroImage =
-    Array.isArray(vehicle.images) && vehicle.images.length > 0
-      ? vehicle.images[0]
-      : 'https://lh3.googleusercontent.com/aida-public/AB6AXuAisN1P5FSsx9DeHQvRzmwtHWpsoyZTboAoXSo3GstPGe72wQU03UjyGjnGR86b4mEEF5u1yzl_RhITqVZKaCXdZrihgL16bWHJNH8HIvXmnZhq3iMiCxx1ZQaJUuJMvkHAp6XxmbE_Eaain-gJ72P2hCe9ataF_p_ruY0NSVR6lA0Aqe_xgMyP1Am1udmSGmx_E7cCBixDULfvKs5rqu2Vv_Q6xx-KFl7xdrwlsiGowfb5OWi0-wQPFQ';
+  // Images: use what the driver uploaded, nothing else.
+  const vehicleImages = Array.isArray(vehicle.images) ? vehicle.images.filter(Boolean) : [];
+  const heroImage = vehicleImages[0] || null;
+  const interiorImage = vehicleImages[1] || null;
+  const luggageImage = vehicleImages[2] || null;
 
-  const interiorImage =
-    Array.isArray(vehicle.images) && vehicle.images.length > 1
-      ? vehicle.images[1]
-      : 'https://lh3.googleusercontent.com/aida-public/AB6AXuB1TgXZtzqqHv8JERwMTS3h93A2Mk7Uh1ifJR2ItgGHQBaAPMzwSHDc8yH4lJTpeCOv9eFNt2riZUEq_q8fz6DtyHxB1LnLquJJJd_CHmZSK-1zeqDBhQUMmOC73z4-_8iH0flS2l5gDdVRz3a5_wnMNaP_IF8NTXfKLriIhxuwlwFIcfr4RtWUm0mT17PUpB2UFJeZULXB5R6CW_UaOT0TbSQVtS9iiPMQA77uPjwaYt1_J8LGrPdeBw';
+  // Availability calendar built from the driver's own busyDates.
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const busyDates = Array.isArray(vehicle.busyDates) ? vehicle.busyDates : [];
+  const busySet = useMemo(() => new Set(busyDates), [vehicle.busyDates]);
 
-  const luggageImage =
-    Array.isArray(vehicle.images) && vehicle.images.length > 2
-      ? vehicle.images[2]
-      : 'https://lh3.googleusercontent.com/aida-public/AB6AXuCj4IEjGbot2BUfvUvQRcy6KF6Fgl3Vb-hJBOx4TLyZpGh8lH53YGUfQIFa3HE6Ooosp_4N86-xu7Qb5nNnSUPlfpSyZilZciJ0MmfNpwDOf-HaGXH5AVGPFy5th_zxi78svHZfwc6GbFJUqlX2_6K5g5-cqhaOmrnAijVnOGx8fGAKcxBRnwpu4gLwtHL6NRiGi5mXzAQxe1B1uh9tT_2ByskVEputp8zsRnbwHgzrGSRos2tomMODpw';
+  const calendarCells = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const firstWeekday = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const todayIso = getBangkokTodayIso();
+
+    const cells: ({ iso: string; day: number; isBusy: boolean; isToday: boolean } | null)[] =
+      Array.from({ length: firstWeekday }, () => null);
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      cells.push({ iso, day, isBusy: busySet.has(iso), isToday: iso === todayIso });
+    }
+    return cells;
+  }, [calendarMonth, busySet]);
+
+  const calendarLabel = useMemo(() => {
+    const monthNamesTh = [
+      'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
+    ];
+    const monthNamesEn = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    const m = calendarMonth.getMonth();
+    return `${monthNamesTh[m]} ${calendarMonth.getFullYear() + 543} / ${monthNamesEn[m]} ${calendarMonth.getFullYear()}`;
+  }, [calendarMonth]);
+
+  // Real reviews for this vehicle, loaded from the database.
+  const [cardReviews, setCardReviews] = useState<Review[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetchVehicleReviews(vehicle.id).then((loaded) => {
+      if (!cancelled) setCardReviews(loaded.slice(0, 3));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [vehicle.id]);
 
   if (!isOpen) return null;
 
   // vCard generator & download
   const handleDownloadVCard = () => {
+    const notes = [
+      title,
+      cleanPlate ? `ทะเบียน ${cleanPlate}` : '',
+      lineId ? `LINE: ${lineId}` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
     const vcardContent = `BEGIN:VCARD
-VERSION:3.0
-N:${publicName};;;;
-FN:${publicName} (${driverNick})
-ORG:TripDee Driver Network
-TITLE:Chauffeur / Van Operator ${driverCode}
-TEL;TYPE=CELL:${cleanPhone}
-NOTE:${title} ทะเบียน ${cleanPlate} LINE: ${lineId}
-URL:${typeof window !== 'undefined' ? window.location.href : 'https://tripdee.co'}
-END:VCARD`;
+    VERSION:3.0
+    N:${publicName};;;;
+    FN:${publicName} (${driverNick})
+    ORG:TripDee Driver Network
+    TITLE:Chauffeur / Van Operator ${driverCode}
+    TEL;TYPE=CELL:${cleanPhone}
+    NOTE:${notes}
+    URL:${typeof window !== 'undefined' ? window.location.href : 'https://tripdee.co'}
+    END:VCARD`;
 
     const blob = new Blob([vcardContent], { type: 'text/vcard;charset=utf-8;' });
     const link = document.createElement('a');
@@ -117,6 +177,20 @@ END:VCARD`;
     link.click();
     document.body.removeChild(link);
   };
+
+  // A real, scannable code. The previous inline SVG was decorative artwork,
+  // so scanning it did nothing.
+  const qrSvgPath = (() => {
+    const cardUrl =
+      typeof window !== 'undefined'
+        ? window.location.href
+        : `https://tripdee.co/driver/card?vehicleId=${vehicle.id}`;
+    try {
+      return renderQrSvgPath(generateQrMatrix(cardUrl));
+    } catch {
+      return null;
+    }
+  })();
 
   const handleCopyLink = () => {
     if (typeof window === 'undefined') return;
@@ -138,9 +212,15 @@ END:VCARD`;
       `- เส้นทาง: ${currentRate.label}\n` +
       `- เริ่มเดินทาง: ${startDate} (${daysCount} วัน)\n` +
       `- จำนวนผู้โดยสาร: ${passengers} ท่าน\n` +
-      `- ยอดประเมินเบื้องต้น: ฿${estimatedTotal.toLocaleString()} บาท\n` +
+      (estimatedTotal !== null
+        ? `- ยอดประเมินเบื้องต้น: ฿${estimatedTotal.toLocaleString()} บาท\n`
+        : `- ขอสอบถามราคาโดยประมาณสำหรับเส้นทางนี้ครับ\n`) +
       `(ติดต่อผ่านนามบัตรดิจิทัล TripDee ${driverCode})`;
 
+    if (!lineId) {
+      alert('คนขับยังไม่ได้ระบุ LINE ID กรุณาติดต่อผ่านเบอร์โทรศัพท์แทน');
+      return;
+    }
     const targetUrl = formatLineLink(lineId, lineText);
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
   };
@@ -230,32 +310,63 @@ END:VCARD`;
 
                     <div className="text-xs text-slate-600 dark:text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono">
                       <span>รหัส: <strong className="text-slate-950 dark:text-white font-bold">{driverCode}</strong></span>
-                      <span className="text-slate-300">•</span>
-                      <span>ใบขับขี่ ท.2 (ขนส่งรับรอง)</span>
-                      <span className="text-slate-300">•</span>
-                      <span>ทะเบียน {cleanPlate}</span>
+                      {vehicle.plateNumber && (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <span>ทะเบียน {cleanPlate}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* 4 Trust Meta Pillars */}
+                {/* Trust Meta Pillars — only figures backed by real records */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200 dark:border-slate-700 text-center">
                   <div className="flex flex-col items-center justify-center p-2">
-                    <div className="flex items-center gap-1 text-[#fea619]">
-                      <span className="text-lg font-bold text-slate-950 dark:text-white">{rating}</span>
-                      <span className="material-symbols-outlined text-[18px]">star</span>
-                    </div>
-                    <span className="text-[11px] text-slate-500">ผู้โดยสารจริง {reviewCount} ทริป</span>
+                    {hasRating ? (
+                      <>
+                        <div className="flex items-center gap-1 text-[#fea619]">
+                          <span className="text-lg font-bold text-slate-950 dark:text-white">{rating}</span>
+                          <span className="material-symbols-outlined text-[18px]">star</span>
+                        </div>
+                        <span className="text-[11px] text-slate-500">จากผู้โดยสารจริง {reviewCount} รีวิว</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-lg font-bold text-slate-400 dark:text-slate-500">—</span>
+                        <span className="text-[11px] text-slate-500">ยังไม่มีรีวิว</span>
+                      </>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-center justify-center p-2 border-l border-slate-200 dark:border-slate-700">
-                    <span className="text-lg font-bold text-slate-950 dark:text-white">14 ปี</span>
-                    <span className="text-[11px] text-slate-500">ประสบการณ์ขับขึ้นดอย</span>
+                    {vehicle.seats ? (
+                      <>
+                        <span className="text-lg font-bold text-slate-950 dark:text-white">{vehicle.seats} ที่นั่ง</span>
+                        <span className="text-[11px] text-slate-500">ความจุโดยสาร</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-lg font-bold text-slate-400 dark:text-slate-500">—</span>
+                        <span className="text-[11px] text-slate-500">ยังไม่ระบุที่นั่ง</span>
+                      </>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-center justify-center p-2 border-l border-slate-200 dark:border-slate-700">
-                    <span className="text-lg font-bold text-[#06c755]">&lt; 3 นาที</span>
-                    <span className="text-[11px] text-slate-500">อัตราตอบกลับรวดเร็ว</span>
+                    {vehicle.plateType ? (
+                      <>
+                        <span className="text-lg font-bold text-slate-950 dark:text-white">
+                          {vehicle.plateType === 'yellow' ? 'ป้ายเหลือง' : 'ป้ายขาว'}
+                        </span>
+                        <span className="text-[11px] text-slate-500">ประเภทป้ายทะเบียน</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-lg font-bold text-slate-400 dark:text-slate-500">—</span>
+                        <span className="text-[11px] text-slate-500">ยังไม่ระบุป้าย</span>
+                      </>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-center justify-center p-2 border-l border-slate-200 dark:border-slate-700">
@@ -271,11 +382,13 @@ END:VCARD`;
                     <span>สถานีประจำการ & เส้นทางชำนาญการพิเศษ</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5 text-xs">
-                    {['ท่าอากาศยานเชียงใหม่ (CNX)', 'ม่อนแจ่ม - แม่ริม', 'ดอยอินทนนท์ - แม่แจ่ม', 'เชียงดาว - อ่างขาง', 'ปาย - แม่ฮ่องสอน (1,864 โค้ง)', 'เชียงราย - วัดร่องขุ่น', 'น่าน - สะปัน'].map((tag, idx) => (
-                      <span key={idx} className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs">
-                        {tag}
-                      </span>
-                    ))}
+                    {(vehicle.popularRoutes?.length ? vehicle.popularRoutes : [location])
+                      .filter(Boolean)
+                      .map((tag, idx) => (
+                        <span key={idx} className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs">
+                          {tag}
+                        </span>
+                      ))}
                   </div>
                 </div>
 
@@ -347,45 +460,65 @@ END:VCARD`;
                       </span>
                     </a>
 
-                    <a
-                      href={formatLineLink(lineId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center justify-between px-4 py-3 bg-[#06c755] hover:brightness-105 text-white transition-all shadow-xs cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-white/20 flex items-center justify-center shrink-0">
-                          <span className="material-symbols-outlined text-white text-[22px]">chat</span>
-                        </div>
-                        <div>
-                          <span className="text-[11px] text-emerald-100 block uppercase tracking-wide">
-                            คุยไลน์ส่งโปรแกรมเที่ยว & นัดหมาย
-                          </span>
-                          <span className="text-xs font-bold tracking-wide">LINE ID: {lineId}</span>
-                        </div>
-                      </div>
-                      <span className="px-2 py-0.5 bg-white text-[#06c755] text-xs font-bold">ทักแชท</span>
-                    </a>
-
-                    <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+                    {/* International channels only appear when the driver
+                        actually supplied them. */}
+                    {lineId && (
                       <a
-                        href={vehicle.driverWhatsapp ? `https://wa.me/${vehicle.driverWhatsapp.replace(/\D/g, '')}` : `https://wa.me/${cleanPhone}`}
+                        href={formatLineLink(lineId)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 font-semibold transition-colors cursor-pointer"
+                        className="w-full flex items-center justify-between px-4 py-3 bg-[#06c755] hover:brightness-105 text-white transition-all shadow-xs cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-[16px] text-[#06c755]">forum</span>
-                        <span>WhatsApp</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 bg-white/20 flex items-center justify-center shrink-0">
+                            <span className="material-symbols-outlined text-white text-[22px]">chat</span>
+                          </div>
+                          <div>
+                            <span className="text-[11px] text-emerald-100 block uppercase tracking-wide">
+                              คุยไลน์ส่งโปรแกรมเที่ยว & นัดหมาย
+                            </span>
+                            <span className="text-xs font-bold tracking-wide">LINE ID: {lineId}</span>
+                          </div>
+                        </div>
+                        <span className="px-2 py-0.5 bg-white text-[#06c755] text-xs font-bold">ทักแชท</span>
                       </a>
-                      <button
-                        type="button"
-                        onClick={() => alert(`WeChat ID คนขับ: ${vehicle.driverWechat || 'chaicnx_van'}`)}
-                        className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 font-semibold transition-colors cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[16px] text-slate-950 dark:text-white">chat_bubble</span>
-                        <span>WeChat ID</span>
-                      </button>
-                    </div>
+                    )}
+
+                    {(vehicle.driverWhatsapp || vehicle.driverWechat || vehicle.driverKakao) && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-xs">
+                        {vehicle.driverWhatsapp && (
+                          <a
+                            href={`https://wa.me/${vehicle.driverWhatsapp.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 font-semibold transition-colors cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[16px] text-[#06c755]">forum</span>
+                            <span>WhatsApp</span>
+                          </a>
+                        )}
+                        {vehicle.driverWechat && (
+                          <button
+                            type="button"
+                            onClick={() => alert(`WeChat ID คนขับ: ${vehicle.driverWechat}`)}
+                            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 font-semibold transition-colors cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[16px] text-slate-950 dark:text-white">chat_bubble</span>
+                            <span>WeChat</span>
+                          </button>
+                        )}
+                        {vehicle.driverKakao && (
+                          <button
+                            type="button"
+                            onClick={() => alert(`KakaoTalk ID คนขับ: ${vehicle.driverKakao}`)}
+                            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 font-semibold transition-colors cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[16px] text-[#FEE500]">chat</span>
+                            <span>KakaoTalk</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -394,32 +527,17 @@ END:VCARD`;
                   <div className="flex items-center gap-4">
                     <div className="w-20 h-20 bg-slate-950 p-1.5 shrink-0 flex items-center justify-center">
                       <div className="w-full h-full bg-white p-1 flex items-center justify-center relative">
-                        {/* High Precision SVG QR Pattern */}
-                        <svg className="w-full h-full fill-current text-slate-950" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                          <rect height="30" width="30" x="0" y="0"></rect>
-                          <rect fill="white" height="20" width="20" x="5" y="5"></rect>
-                          <rect height="12" width="12" x="9" y="9"></rect>
-                          <rect height="30" width="30" x="70" y="0"></rect>
-                          <rect fill="white" height="20" width="20" x="75" y="5"></rect>
-                          <rect height="12" width="12" x="79" y="9"></rect>
-                          <rect height="30" width="30" x="0" y="70"></rect>
-                          <rect fill="white" height="20" width="20" x="5" y="75"></rect>
-                          <rect height="12" width="12" x="9" y="79"></rect>
-                          <rect height="8" width="8" x="36" y="10"></rect>
-                          <rect height="8" width="8" x="48" y="10"></rect>
-                          <rect height="8" width="8" x="36" y="24"></rect>
-                          <rect height="8" width="16" x="48" y="32"></rect>
-                          <rect height="8" width="12" x="10" y="44"></rect>
-                          <rect height="8" width="8" x="30" y="44"></rect>
-                          <rect height="12" width="12" x="44" y="48"></rect>
-                          <rect height="8" width="12" x="64" y="44"></rect>
-                          <rect height="12" width="10" x="80" y="40"></rect>
-                          <rect height="16" width="8" x="36" y="70"></rect>
-                          <rect height="8" width="12" x="50" y="74"></rect>
-                          <rect height="8" width="16" x="72" y="70"></rect>
-                          <rect height="12" width="8" x="70" y="84"></rect>
-                          <rect height="10" width="10" x="84" y="84"></rect>
-                        </svg>
+                        {qrSvgPath ? (
+                          <svg
+                            className="w-full h-full fill-current text-slate-950"
+                            viewBox="0 0 100 100"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path d={qrSvgPath} />
+                          </svg>
+                        ) : (
+                          <span className="material-symbols-outlined text-slate-300 text-[20px]">qr_code_2</span>
+                        )}
                       </div>
                     </div>
 
@@ -488,12 +606,16 @@ END:VCARD`;
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="font-mono text-xs px-3 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-bold text-slate-900 dark:text-white">
-                  ทะเบียน {cleanPlate}
-                </span>
-                <span className="px-2.5 py-1 bg-[#e8f9ee] text-[#06c755] text-xs font-bold border border-emerald-200">
-                  ตรวจสภาพปี 2568 ผ่าน
-                </span>
+                {cleanPlate && (
+                  <span className="font-mono text-xs px-3 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-bold text-slate-900 dark:text-white">
+                    ทะเบียน {cleanPlate}
+                  </span>
+                )}
+                {vehicle.isVerified && (
+                  <span className="px-2.5 py-1 bg-[#e8f9ee] text-[#06c755] text-xs font-bold border border-emerald-200">
+                    ผ่านการตรวจสอบโดย TripDee
+                  </span>
+                )}
               </div>
             </div>
 
@@ -501,30 +623,44 @@ END:VCARD`;
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-8 group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div className="aspect-[16/10] w-full relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={heroImage}
-                    alt={`ภาพภายนอกตัวรถ ${title}`}
-                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                  />
+                  {heroImage ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={heroImage}
+                      alt={`ภาพภายนอกตัวรถ ${title}`}
+                      className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full grid place-items-center bg-slate-100 dark:bg-slate-800 text-xs text-slate-500 dark:text-slate-400 p-4 text-center">
+                      คนขับยังไม่ได้เพิ่มรูปภาพรถ
+                    </div>
+                  )}
                   <div className="absolute top-3 left-3 bg-slate-950 text-white px-3 py-1 text-xs font-semibold">
                     ภาพภายนอกตัวรถจริง (Exterior 360°)
                   </div>
-                  <div className="absolute bottom-3 right-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-mono">
-                    {title}
-                  </div>
+                  {title && (
+                    <div className="absolute bottom-3 right-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-mono">
+                      {title}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="md:col-span-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
                 <div className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
                   <div className="aspect-[16/10] md:aspect-[16/9.5] w-full relative">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={interiorImage}
-                      alt="ห้องโดยสาร VIP"
-                      className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                    />
+                    {interiorImage ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={interiorImage}
+                        alt="ห้องโดยสาร VIP"
+                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full grid place-items-center bg-slate-100 dark:bg-slate-800 text-xs text-slate-500 dark:text-slate-400 p-4 text-center">
+                        ยังไม่มีรูปห้องโดยสาร
+                      </div>
+                    )}
                     <div className="absolute bottom-2 left-2 bg-slate-950/90 text-white px-2.5 py-0.5 text-[11px] font-bold">
                       เบาะนวดไฟฟ้าระดับ First Class
                     </div>
@@ -533,12 +669,18 @@ END:VCARD`;
 
                 <div className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
                   <div className="aspect-[16/10] md:aspect-[16/9.5] w-full relative">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={luggageImage}
-                      alt="พื้นที่กระเป๋าสัมภาระ"
-                      className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                    />
+                    {luggageImage ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={luggageImage}
+                        alt="พื้นที่กระเป๋าสัมภาระ"
+                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full grid place-items-center bg-slate-100 dark:bg-slate-800 text-xs text-slate-500 dark:text-slate-400 p-4 text-center">
+                        ยังไม่มีรูปพื้นที่เก็บสัมภาระ
+                      </div>
+                    )}
                     <div className="absolute bottom-2 left-2 bg-slate-950/90 text-white px-2.5 py-0.5 text-[11px] font-bold">
                       พื้นที่วางกระเป๋าเดินทางขนาดใหญ่ (5-7 ใบ)
                     </div>
@@ -597,18 +739,36 @@ END:VCARD`;
         {/* ============================================================== */}
         <section className="w-full px-4 sm:px-6 lg:px-8 py-6 bg-[#f8fafc] dark:bg-slate-950">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Live Monthly Calendar (7 Cols) */}
+            {/* Monthly availability calendar, driven by vehicle.busyDates */}
             <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="material-symbols-outlined text-[#06c755] text-[20px]">calendar_month</span>
-                    <h3 className="text-base font-bold text-slate-950 dark:text-white">ปฏิทินคิวงาน{driverNick} (อัปเดตแบบเรียลไทม์)</h3>
+                    <h3 className="text-base font-bold text-slate-950 dark:text-white">ปฏิทินคิวงาน{driverNick}</h3>
                   </div>
                   <p className="text-xs text-slate-500">ตรวจสอบวันที่คิวว่างเพื่อวางแผนการเดินทางล่วงหน้า</p>
                 </div>
-                <div className="flex items-center bg-slate-100 dark:bg-slate-800 px-3 py-1 border border-slate-200 dark:border-slate-700 text-xs font-bold font-mono">
-                  <span>ตุลาคม 2569 / Oct 2026</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+                    aria-label="เดือนก่อนหน้า"
+                    className="w-7 h-7 grid place-items-center bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                  </button>
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-800 px-3 py-1 border border-slate-200 dark:border-slate-700 text-xs font-bold font-mono whitespace-nowrap">
+                    <span>{calendarLabel}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+                    aria-label="เดือนถัดไป"
+                    className="w-7 h-7 grid place-items-center bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                  </button>
                 </div>
               </div>
 
@@ -616,7 +776,7 @@ END:VCARD`;
               <div className="flex items-center gap-4 text-xs">
                 <span className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200 font-semibold">
                   <span className="w-3 h-3 bg-white border border-[#06c755] text-[#06c755] flex items-center justify-center font-bold text-[9px]">●</span>
-                  <span>คิวว่างพร้อมรับงาน</span>
+                  <span>คิ��ว่างพร้อมรับงาน</span>
                 </span>
                 <span className="flex items-center gap-1.5 text-slate-500">
                   <span className="w-3 h-3 bg-slate-100 border border-slate-300 text-slate-400 flex items-center justify-center text-[10px]">✕</span>
@@ -641,106 +801,51 @@ END:VCARD`;
                 </div>
 
                 <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                  {/* Trailing days */}
-                  <div className="p-2.5 text-slate-300 bg-slate-50/50">28</div>
-                  <div className="p-2.5 text-slate-300 bg-slate-50/50">29</div>
-                  <div className="p-2.5 text-slate-300 bg-slate-50/50">30</div>
-                  {/* Booked Days */}
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
-                    <span className="block font-bold">1</span>
-                    <span className="text-[9px] block">ติดงาน</span>
-                  </div>
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
-                    <span className="block font-bold">2</span>
-                    <span className="text-[9px] block">ติดงาน</span>
-                  </div>
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
-                    <span className="block font-bold">3</span>
-                    <span className="text-[9px] block">ติดงาน</span>
-                  </div>
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
-                    <span className="block font-bold">4</span>
-                    <span className="text-[9px] block">ติดงาน</span>
-                  </div>
-
-                  {/* Today */}
-                  <div className="p-2 bg-[#fef3c7] border-2 border-[#d97706] text-slate-950 font-bold">
-                    <span className="block">5</span>
-                    <span className="text-[9px] text-[#d97706] font-bold block">วันนี้-ว่าง</span>
-                  </div>
-
-                  {/* Available Days */}
-                  {[6, 7, 8, 9].map((d) => (
-                    <div key={d} className="p-2 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold hover:bg-[#e8f9ee] transition-colors">
-                      <span className="block">{d}</span>
-                      <span className="text-[9px] text-[#06c755] block">ว่าง</span>
-                    </div>
-                  ))}
-
-                  {/* Booked weekend */}
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
-                    <span className="block font-bold">10</span>
-                    <span className="text-[9px] block">ติดงาน</span>
-                  </div>
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
-                    <span className="block font-bold">11</span>
-                    <span className="text-[9px] block">ติดงาน</span>
-                  </div>
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
-                    <span className="block font-bold">12</span>
-                    <span className="text-[9px] block">ติดงาน</span>
-                  </div>
-
-                  {[13, 14, 15, 16, 17].map((d) => (
-                    <div key={d} className="p-2 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold hover:bg-[#e8f9ee] transition-colors">
-                      <span className="block">{d}</span>
-                      <span className="text-[9px] text-[#06c755] block">ว่าง</span>
-                    </div>
-                  ))}
-
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
-                    <span className="block font-bold">18</span>
-                    <span className="text-[9px] block">ติดงาน</span>
-                  </div>
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
-                    <span className="block font-bold">19</span>
-                    <span className="text-[9px] block">ติดงาน</span>
-                  </div>
-
-                  {[20, 21, 22].map((d) => (
-                    <div key={d} className="p-2 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold hover:bg-[#e8f9ee] transition-colors">
-                      <span className="block">{d}</span>
-                      <span className="text-[9px] text-[#06c755] block">ว่าง</span>
-                    </div>
-                  ))}
-
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
-                    <span className="block font-bold">23</span>
-                    <span className="text-[9px] block">ติดงาน</span>
-                  </div>
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
-                    <span className="block font-bold">24</span>
-                    <span className="text-[9px] block">ติดงาน</span>
-                  </div>
-                  <div className="p-2 bg-slate-100 dark:bg-slate-800/40 text-slate-400">
-                    <span className="block font-bold">25</span>
-                    <span className="text-[9px] block">ติดงาน</span>
-                  </div>
-
-                  {[26, 27, 28, 29, 30, 31].map((d) => (
-                    <div key={d} className="p-2 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold hover:bg-[#e8f9ee] transition-colors">
-                      <span className="block">{d}</span>
-                      <span className="text-[9px] text-[#06c755] block">ว่าง</span>
-                    </div>
-                  ))}
-                  <div className="p-2.5 text-slate-300 bg-slate-50/50">1</div>
+                  {calendarCells.map((cell) =>
+                    cell ? (
+                      <div
+                        key={cell.iso}
+                        className={`p-2 ${
+                          cell.isToday
+                            ? 'bg-[#fef3c7] border-2 border-[#d97706] text-slate-950 font-bold'
+                            : cell.isBusy
+                              ? 'bg-slate-100 dark:bg-slate-800/40 text-slate-400'
+                              : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold hover:bg-[#e8f9ee] transition-colors'
+                        }`}
+                      >
+                        <span className="block">{cell.day}</span>
+                        <span
+                          className={`text-[9px] block ${
+                            cell.isToday
+                              ? 'text-[#d97706] font-bold'
+                              : cell.isBusy
+                                ? ''
+                                : 'text-[#06c755]'
+                          }`}
+                        >
+                          {cell.isBusy ? 'ติดงาน' : cell.isToday ? 'วันนี้' : 'ว่าง'}
+                        </span>
+                      </div>
+                    ) : (
+                      <div key={`pad-${cell}`} className="p-2.5 bg-slate-50/50" />
+                    )
+                  )}
                 </div>
               </div>
 
-              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
-                <span>หมายเหตุ: วันที่ติดงานแล้วสามารถสอบถามคิวรถในทีมงานเดียวกันของ{driverNick}ได้ตลอดเวลา</span>
-                <span className="font-bold text-slate-950 dark:text-white shrink-0">ทีมงาน 8 คัน</span>
-              </div>
+              {busyDates.length > 0 ? (
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                  <span>วันที่คนขับระบุว่าติดงานอยู่ {busyDates.length} วัน</span>
+                  <span className="font-bold text-slate-950 dark:text-white shrink-0">
+                    อัปเดตล่าสุดจากข้อมูลในระบบ
+                  </span>
+                </div>
+              ) : (
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400">
+                  คนขับยังไม่ได้ระบุวันที่ติดงาน ปฏิทินจึงแสดงทุกวันว่าง
+                  กรุณาสอบถามยืนยันกับคนขับก่อนวางแผนการเดินทาง
+                </div>
+              )}
             </div>
 
             {/* Quick Route Inquiry & Fare Estimator (5 Cols) */}
@@ -761,7 +866,8 @@ END:VCARD`;
                   >
                     {Object.entries(routeRates).map(([k, val]) => (
                       <option key={k} value={k}>
-                        {val.label} (฿{val.price.toLocaleString()} / วัน)
+                        {val.label}
+                        {val.price !== null ? ` (฿${val.price.toLocaleString()} / วัน)` : ' (สอบถามราคา)'}
                       </option>
                     ))}
                   </select>
@@ -818,7 +924,9 @@ END:VCARD`;
                 <div className="bg-slate-50 dark:bg-slate-800/60 p-4 border border-slate-200 dark:border-slate-700 space-y-2">
                   <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                     <span>อัตราค่าบริการคนขับ + รถตู้ VIP:</span>
-                    <span className="font-mono font-bold text-slate-950 dark:text-white">฿{currentRate.price.toLocaleString()} / วัน</span>
+                    <span className="font-mono font-bold text-slate-950 dark:text-white">
+                      {currentRate.price !== null ? `฿${currentRate.price.toLocaleString()} / วัน` : 'ยังไม่ระบุ'}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                     <span>ระยะเวลาการใช้งาน:</span>
@@ -834,8 +942,21 @@ END:VCARD`;
                       <span className="text-[10px] text-slate-400">*ไม่รวมค่าน้ำมันและค่าผ่านทางตามจริง</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">฿{estimatedTotal.toLocaleString()}</span>
-                      <span className="text-[11px] text-slate-500 block">บาท</span>
+                      {estimatedTotal !== null ? (
+                        <>
+                          <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
+                            ฿{estimatedTotal.toLocaleString()}
+                          </span>
+                          <span className="text-[11px] text-slate-500 block">บาท</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                            สอบถามคนขับ
+                          </span>
+                          <span className="text-[11px] text-slate-500 block">คนขับยังไม่ได้ระบุราคา</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -877,7 +998,16 @@ END:VCARD`;
                 <h4 className="font-bold text-slate-950 dark:text-white text-sm">เมืองเชียงใหม่ & แม่ริม</h4>
                 <p className="text-slate-500 text-[11px]">ม่อนแจ่ม, ปางช้างแม่สา, สวนสิริกิติ์, คาเฟ่หางดง, ไนท์ซาฟารี</p>
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <div className="text-xl font-bold font-mono text-slate-950 dark:text-white">฿2,000 <span className="text-xs text-slate-400 font-normal">/ วัน</span></div>
+                  <div className="text-xl font-bold font-mono text-slate-950 dark:text-white">
+                    {zoneRates?.city != null ? (
+                      <>
+                        ฿{zoneRates.city.toLocaleString()}{' '}
+                        <span className="text-xs text-slate-400 font-normal">/ วัน</span>
+                      </>
+                    ) : (
+                      <span className="text-base text-amber-600 dark:text-amber-400">ยังไม่ระบุราคา</span>
+                    )}
+                  </div>
                   <span className="text-[11px] text-slate-400 block mt-1">ให้บริการ 10-12 ชม./วัน • ฟรีน้ำดื่มผ้าเย็น</span>
                 </div>
               </div>
@@ -887,7 +1017,16 @@ END:VCARD`;
                 <h4 className="font-bold text-slate-950 dark:text-white text-sm">ดอยอินทนนท์ / เชียงดาว</h4>
                 <p className="text-slate-500 text-[11px]">ยอดดอยอินทนนท์, กิ่วแม่ปาน, ป่าบงเปียง, อ่างขาง, สันป่าเกี๊ยะ</p>
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <div className="text-xl font-bold font-mono text-slate-950 dark:text-white">฿2,300 - 2,500 <span className="text-xs text-slate-400 font-normal">/ วัน</span></div>
+                  <div className="text-xl font-bold font-mono text-slate-950 dark:text-white">
+                    {zoneRates?.highHill != null ? (
+                      <>
+                        ฿{zoneRates.highHill.toLocaleString()}{' '}
+                        <span className="text-xs text-slate-400 font-normal">/ วัน</span>
+                      </>
+                    ) : (
+                      <span className="text-base text-amber-600 dark:text-amber-400">ยังไม่ระบุราคา</span>
+                    )}
+                  </div>
                   <span className="text-[11px] text-slate-400 block mt-1">ชำนาญทางโค้งลาดชันสูง • แนะนำจุดชมวิว</span>
                 </div>
               </div>
@@ -897,7 +1036,16 @@ END:VCARD`;
                 <h4 className="font-bold text-slate-950 dark:text-white text-sm">ปาย - แม่ฮ่องสอน / เชียงราย</h4>
                 <p className="text-slate-500 text-[11px]">ปาย 762 โค้ง, บ้านรักไทย, ปางอุ๋ง, วัดร่องขุ่น, สิงห์ปาร์ค, ดอยตุง</p>
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <div className="text-xl font-bold font-mono text-slate-950 dark:text-white">฿2,800 <span className="text-xs text-slate-400 font-normal">/ วัน</span></div>
+                  <div className="text-xl font-bold font-mono text-slate-950 dark:text-white">
+                    {zoneRates?.crossProvince != null ? (
+                      <>
+                        ฿{zoneRates.crossProvince.toLocaleString()}{' '}
+                        <span className="text-xs text-slate-400 font-normal">/ วัน</span>
+                      </>
+                    ) : (
+                      <span className="text-base text-amber-600 dark:text-amber-400">ยังไม่ระบุราคา</span>
+                    )}
+                  </div>
                   <span className="text-[11px] text-slate-400 block mt-1">ขับนุ่มนวล ไม่เมารถ • พักค้างคืนต่างจังหวัด</span>
                 </div>
               </div>
@@ -916,64 +1064,72 @@ END:VCARD`;
         </section>
 
         {/* ============================================================== */}
-        {/* SECTION 5: VERIFIED REVIEWS */}
+        {/* SECTION 5: REVIEWS FROM REAL PASSENGERS */}
         {/* ============================================================== */}
         <section className="w-full px-4 sm:px-6 lg:px-8 py-6 bg-[#f8fafc] dark:bg-slate-950">
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-[#fea619] text-[20px]">rate_review</span>
-                <h3 className="text-base font-bold text-slate-950 dark:text-white">เสียงตอบรับจริงจากผู้โดยสาร ({reviewCount} ทริป)</h3>
+                <h3 className="text-base font-bold text-slate-950 dark:text-white">
+                  เสียงตอบรับจากผู้โดยสาร ({reviewCount} รีวิว)
+                </h3>
               </div>
-              <div className="flex items-center gap-2 font-mono font-bold text-xs text-[#fea619]">
-                <span>★ {rating} / 5.0</span>
-                <span className="text-slate-400 font-normal">ความพึงพอใจ 99.2%</span>
-              </div>
+              {hasRating && (
+                <div className="flex items-center gap-2 font-mono font-bold text-xs text-[#fea619]">
+                  <span>
+                    ★ {rating} / 5.0
+                  </span>
+                </div>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 space-y-3 shadow-xs">
-                <div className="flex items-center justify-between text-[#fea619] font-bold">
-                  <span>★★★★★</span>
-                  <span className="text-slate-400 font-normal text-[11px]">22 ก.ย. 2569</span>
-                </div>
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
-                  &quot;พาคุณพ่อคุณแม่และญาติผู้ใหญ่ 7 คนไปเที่ยวดอยอินทนนท์และกิ่วแม่ปาน {driverNick}ขับรถนิ่มมาก ไม่กระชากเลย ผู้สูงอายุไม่เมารถ เบาะนวดไฟฟ้าถูกใจคุณแม่มาก รถสะอาดเหมือนใหม่ออกห้าง แนะนำเลยครับ!&quot;
+            {cardReviews.length === 0 ? (
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 text-center shadow-xs">
+                <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 text-[36px]">
+                  rate_review
+                </span>
+                <p className="text-sm font-bold text-slate-950 dark:text-white mt-2">
+                  ยังไม่มีรีวิวสำหรับรถคันนี้
                 </p>
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <span className="font-bold text-slate-900 dark:text-white">คุณพงศกร และครอบครัว</span>
-                  <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] text-[10px] font-bold">VERIFIED RIDER</span>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 space-y-3 shadow-xs">
-                <div className="flex items-center justify-between text-[#fea619] font-bold">
-                  <span>★★★★★</span>
-                  <span className="text-slate-400 font-normal text-[11px]">14 ก.ย. 2569</span>
-                </div>
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
-                  &quot;ทางบริษัทจัดทริปพาลูกค้า VIP จากสิงคโปร์มาสัมมนาที่เชียงใหม่ {driverNick}แต่งตัวสุภาพเรียบร้อย พูดภาษาอังกฤษพื้นฐานสื่อสารได้ดีมาก ตรงต่อเวลาก่อนนัด 20 นาทีทุกวัน เรื่องเอกสารใบเสร็จออกได้รวดเร็ว มืออาชีพตัวจริง&quot;
+                <p className="text-xs text-slate-500 mt-1">
+                  รีวิวจะปรากฏที่นี่เมื่อมีผู้โดยสารเขียนรีวิวหลังใช้บริการ
                 </p>
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <span className="font-bold text-slate-900 dark:text-white">คุณณิชาภัทร (ฝ่ายจัดซื้อ บมจ.)</span>
-                  <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] text-[10px] font-bold">CORPORATE CLIENT</span>
-                </div>
               </div>
-
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 space-y-3 shadow-xs">
-                <div className="flex items-center justify-between text-[#fea619] font-bold">
-                  <span>★★★★★</span>
-                  <span className="text-slate-400 font-normal text-[11px]">28 ส.ค. 2569</span>
-                </div>
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
-                  &quot;เส้นทางปาย-ปางอุ๋งโค้งโหดมาก แต่{driverNick}ขับนิ่งและปลอดภัยสุดๆ รู้จักมุมถ่ายรูปสวยๆ แวะร้านกาแฟวิวเด็ดที่คนไม่ค่อยรู้จัก คอยช่วยยกกระเป๋าทุกครั้ง ประทับใจมาก ทริปหน้าจะจองอีกแน่นอนค่ะ&quot;
-                </p>
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <span className="font-bold text-slate-900 dark:text-white">คุณธนภรณ์ และแก๊งเพื่อน</span>
-                  <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] text-[10px] font-bold">VERIFIED RIDER</span>
-                </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                {cardReviews.map((rev) => (
+                  <div
+                    key={rev.id}
+                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 space-y-3 shadow-xs"
+                  >
+                    <div className="flex items-center justify-between text-[#fea619] font-bold">
+                      <span>
+                        {'★'.repeat(Math.max(1, Math.min(5, Math.round(rev.rating))))}
+                      </span>
+                      {rev.travelDate && (
+                        <span className="text-slate-400 font-normal text-[11px]">
+                          {rev.travelDate}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
+                      &quot;{rev.comment}&quot;
+                    </p>
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                      <span className="font-bold text-slate-900 dark:text-white truncate">
+                        {rev.authorName}
+                      </span>
+                      {rev.verifiedTrip && (
+                        <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] text-[10px] font-bold shrink-0">
+                          VERIFIED RIDER
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -988,28 +1144,32 @@ END:VCARD`;
                 {publicName} ({driverNick})
               </span>
               <span className="text-[11px] text-slate-500 block truncate">
-                {title} • ทะเบียน {cleanPlate}
+                {[title, cleanPlate ? `ทะเบียน ${cleanPlate}` : ''].filter(Boolean).join(' • ')}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0 text-xs">
-            <a
-              href={`tel:${cleanPhone}`}
-              className="inline-flex items-center gap-1 px-3.5 py-2 bg-slate-950 hover:bg-slate-800 text-white font-bold transition-colors shadow-xs cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[16px]">call</span>
-              <span>โทร {displayPhone}</span>
-            </a>
-            <a
-              href={formatLineLink(lineId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-3.5 py-2 bg-[#06c755] hover:brightness-105 text-white font-bold transition-all shadow-xs cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[16px]">chat</span>
-              <span>คุยไลน์ทันที</span>
-            </a>
+            {displayPhone && (
+              <a
+                href={`tel:${cleanPhone}`}
+                className="inline-flex items-center gap-1 px-3.5 py-2 bg-slate-950 hover:bg-slate-800 text-white font-bold transition-colors shadow-xs cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">call</span>
+                <span>โทร {displayPhone}</span>
+              </a>
+            )}
+            {lineId && (
+              <a
+                href={formatLineLink(lineId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-3.5 py-2 bg-[#06c755] hover:brightness-105 text-white font-bold transition-all shadow-xs cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">chat</span>
+                <span>คุยไลน์ทันที</span>
+              </a>
+            )}
           </div>
         </div>
       </div>

@@ -543,6 +543,7 @@ export type Database = {
           is_contact_unlocked: boolean;
           created_at: string;
           paid_at: string | null;
+          completed_at: string | null;
         };
         Insert: {
           id?: string;
@@ -564,6 +565,7 @@ export type Database = {
           is_contact_unlocked?: boolean;
           created_at?: string;
           paid_at?: string | null;
+          completed_at?: string | null;
         };
         Update: {
           id?: string;
@@ -585,6 +587,55 @@ export type Database = {
           is_contact_unlocked?: boolean;
           created_at?: string;
           paid_at?: string | null;
+          completed_at?: string | null;
+        };
+        Relationships: [];
+      };
+      reviews: {
+        Row: {
+          id: string;
+          vehicle_id: string;
+          author_name: string;
+          author_phone: string | null;
+          rating: number;
+          travel_date: string | null;
+          trip_route: string | null;
+          comment: string;
+          tags: string[];
+          driver_reply: string | null;
+          driver_reply_date: string | null;
+          verified_trip: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          vehicle_id: string;
+          author_name: string;
+          author_phone?: string | null;
+          rating: number;
+          travel_date?: string | null;
+          trip_route?: string | null;
+          comment: string;
+          tags?: string[];
+          driver_reply?: string | null;
+          driver_reply_date?: string | null;
+          verified_trip?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          vehicle_id?: string;
+          author_name?: string;
+          author_phone?: string | null;
+          rating?: number;
+          travel_date?: string | null;
+          trip_route?: string | null;
+          comment?: string;
+          tags?: string[];
+          driver_reply?: string | null;
+          driver_reply_date?: string | null;
+          verified_trip?: boolean;
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -593,7 +644,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      refresh_vehicle_rating: {
+        Args: { target_vehicle_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;
