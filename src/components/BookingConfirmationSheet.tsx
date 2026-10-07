@@ -187,15 +187,15 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
   };
 
   const content = (
-    <div className="w-full max-w-4xl mx-auto bg-white text-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200 print:shadow-none print:border-none print:rounded-none print:m-0 print:p-0">
+    <div className="w-full max-w-4xl mx-auto bg-white text-slate-900 rounded-none shadow-2xl overflow-hidden border border-slate-300 dark:border-slate-800 print:shadow-none print:border-none print:rounded-none print:m-0 print:p-0">
       {/* Screen-only Action Toolbar */}
-      <div className="no-print bg-slate-900 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
+      <div className="no-print bg-slate-950 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
         <div className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-blue-400" />
+          <FileText className="h-5 w-5 text-slate-300" />
           <span className="font-extrabold text-sm tracking-tight">
             {t('sheet.toolbarTitle')}
           </span>
-          <span className="rounded-full bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-0.5 font-bold border border-emerald-500/30">
+          <span className="rounded-none bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider border border-emerald-500/40">
             A4 Print-Ready
           </span>
         </div>
@@ -204,16 +204,16 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
           <button
             type="button"
             onClick={() => setIsEditing(!isEditing)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wider bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
           >
-            <Edit3 className="h-3.5 w-3.5 text-blue-400" />
+            <Edit3 className="h-3.5 w-3.5 text-slate-300" />
             <span>{isEditing ? t('sheet.preview') : t('sheet.edit')}</span>
           </button>
 
           <button
             type="button"
             onClick={handleCopySummary}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#06C755] hover:bg-[#05B04B] text-white shadow-xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wider bg-[#06C755] hover:bg-[#05B04B] text-white shadow-xs transition-colors cursor-pointer"
           >
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             <span>{copied ? t('sheet.copied') : t('sheet.copyLine')}</span>
@@ -222,7 +222,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
           <button
             type="button"
             onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-extrabold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-none text-xs font-extrabold uppercase tracking-wider bg-slate-100 hover:bg-white text-slate-900 border border-slate-300 shadow-xs transition-all cursor-pointer"
           >
             <Printer className="h-4 w-4" />
             <span>{t('sheet.print')}</span>
@@ -232,7 +232,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
             <button
               type="button"
               onClick={onClose}
-              className="ml-2 text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-800 transition-colors"
+              className="ml-2 text-slate-400 hover:text-white p-1 rounded-none border border-slate-700 hover:bg-slate-800 transition-colors"
               aria-label={t('auth.close')}
             >
               <X className="h-5 w-5" />
@@ -256,7 +256,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 type="text"
                 value={data.customerName}
                 onChange={(e) => setData({ ...data, customerName: e.target.value })}
-                className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 font-medium"
+                className="w-full bg-white border border-slate-300 rounded-none px-2.5 py-1.5 font-medium"
               />
             </div>
             <div>
@@ -266,7 +266,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 type="text"
                 value={data.customerPhone}
                 onChange={(e) => setData({ ...data, customerPhone: e.target.value })}
-                className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 font-medium"
+                className="w-full bg-white border border-slate-300 rounded-none px-2.5 py-1.5 font-medium"
               />
             </div>
             <div>
@@ -276,7 +276,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 type="text"
                 value={data.passengers}
                 onChange={(e) => setData({ ...data, passengers: e.target.value })}
-                className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 font-medium"
+                className="w-full bg-white border border-slate-300 rounded-none px-2.5 py-1.5 font-medium"
               />
             </div>
             <div>
@@ -286,7 +286,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 type="text"
                 value={data.travelDates}
                 onChange={(e) => setData({ ...data, travelDates: e.target.value })}
-                className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 font-medium"
+                className="w-full bg-white border border-slate-300 rounded-none px-2.5 py-1.5 font-medium"
               />
             </div>
             <div>
@@ -297,7 +297,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 min="1"
                 value={data.totalDays}
                 onChange={(e) => handleRateOrDaysChange(Number(e.target.value) || 1, data.dailyRate)}
-                className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 font-medium"
+                className="w-full bg-white border border-slate-300 rounded-none px-2.5 py-1.5 font-medium"
               />
             </div>
             <div>
@@ -310,7 +310,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 onChange={(e) =>
                   handleRateOrDaysChange(data.totalDays, e.target.value === '' ? null : Number(e.target.value))
                 }
-                className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 font-medium"
+                className="w-full bg-white border border-slate-300 rounded-none px-2.5 py-1.5 font-medium"
               />
             </div>
             <div>
@@ -320,7 +320,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 type="text"
                 value={data.pickupLocation}
                 onChange={(e) => setData({ ...data, pickupLocation: e.target.value })}
-                className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 font-medium"
+                className="w-full bg-white border border-slate-300 rounded-none px-2.5 py-1.5 font-medium"
               />
             </div>
             <div>
@@ -330,7 +330,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 type="text"
                 value={data.pickupTime}
                 onChange={(e) => setData({ ...data, pickupTime: e.target.value })}
-                className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 font-medium"
+                className="w-full bg-white border border-slate-300 rounded-none px-2.5 py-1.5 font-medium"
               />
             </div>
             <div>
@@ -347,7 +347,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                     remainingAmount: data.totalPrice - dep,
                   });
                 }}
-                className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 font-medium"
+                className="w-full bg-white border border-slate-300 rounded-none px-2.5 py-1.5 font-medium"
               />
             </div>
             <div className="sm:col-span-3">
@@ -357,7 +357,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 type="text"
                 value={data.routeDetails}
                 onChange={(e) => setData({ ...data, routeDetails: e.target.value })}
-                className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 font-medium"
+                className="w-full bg-white border border-slate-300 rounded-none px-2.5 py-1.5 font-medium"
               />
             </div>
           </div>
@@ -370,7 +370,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
         <div className="flex flex-wrap items-start justify-between gap-4 pb-6 border-b-2 border-slate-900">
           <div>
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-[#0A192F] grid place-items-center text-white font-extrabold text-base shadow-xs border border-slate-800">
+              <div className="h-10 w-10 rounded-none bg-[#0A192F] grid place-items-center text-white font-extrabold text-base shadow-xs border border-slate-850">
                 TD
               </div>
               <div>
@@ -378,10 +378,10 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                   <h1 className="text-2xl font-black tracking-tight text-[#0A192F]">
                     TripDee
                   </h1>
-                  <span className="text-xl font-bold text-[#2563EB]">
+                  <span className="text-xl font-bold text-slate-900">
                     {t('brand.logoAlt')}
                   </span>
-                  <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 bg-slate-100 text-slate-600 border border-slate-200 rounded font-semibold">
+                  <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 bg-slate-100 text-slate-700 border border-slate-300 rounded-none font-bold">
                     Official Platform
                   </span>
                 </div>
@@ -401,7 +401,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
           </div>
 
           <div className="text-right">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 text-xs font-black mb-2">
+            <div className="inline-flex items-center gap-1.5 rounded-none bg-emerald-50 text-emerald-800 border border-emerald-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider mb-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
               <span>{t('sheet.statusBadge')}</span>
             </div>
@@ -416,9 +416,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
 
         {/* Section 1 & 2: Grid for Customer and Driver Info */}
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+          <div className="rounded-none border border-slate-200 bg-slate-50/70 p-4">
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
-              <Users className="h-4 w-4 text-blue-600" />
+              <Users className="h-4 w-4 text-slate-700" />
               <span>{t('sheet.secCustomer')}</span>
             </h3>
             <div className="space-y-1.5 text-xs">
@@ -452,14 +452,14 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+          <div className="rounded-none border border-slate-200 bg-slate-50/70 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                <CarFront className="h-4 w-4 text-blue-600" />
+                <CarFront className="h-4 w-4 text-slate-700" />
                 <span>{t('sheet.secVehicle')}</span>
               </h3>
               {data.isVerified && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 px-2 py-0.5 text-[10px] font-black border border-amber-300">
+                <span className="inline-flex items-center gap-1 rounded-none bg-amber-100 text-amber-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-amber-300">
                   <span className="text-amber-600 font-bold">★</span>
                   {t('sheet.featured')}
                 </span>
@@ -483,7 +483,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">{t('sheet.labelPlate')}</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-mono font-bold text-amber-900 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded text-[11px]">
+                  <span className="font-mono font-bold text-amber-900 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-none text-[11px]">
                     {data.plateNumber}
                   </span>
                   <span className="text-[10px] font-bold text-slate-600">
@@ -496,9 +496,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
         </div>
 
         {/* Section 3 */}
-        <div className="mt-5 rounded-xl border border-slate-200 p-4 bg-white">
+        <div className="mt-5 rounded-none border border-slate-200 p-4 bg-white">
           <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
-            <MapPin className="h-4 w-4 text-blue-600" />
+            <MapPin className="h-4 w-4 text-slate-700" />
             <span>{t('sheet.secTrip')}</span>
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -519,14 +519,14 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 <div>
                   <span className="text-slate-500 block text-[11px]">{t('sheet.labelPickup')}</span>
                   <span className="font-bold text-slate-900">{data.pickupLocation}</span>
-                  <span className="ml-1.5 font-extrabold text-blue-600">{t('sheet.atTime', { time: data.pickupTime })}</span>
+                  <span className="ml-1.5 font-extrabold text-slate-900">{t('sheet.atTime', { time: data.pickupTime })}</span>
                 </div>
               </div>
             </div>
 
             <div>
               <span className="text-slate-500 block text-[11px] mb-1">{t('sheet.fRouteDetails')}:</span>
-              <div className="rounded-lg bg-slate-50 border border-slate-200 p-2.5 font-medium text-slate-800 text-xs leading-relaxed">
+              <div className="rounded-none bg-slate-50 border border-slate-200 p-2.5 font-medium text-slate-800 text-xs leading-relaxed">
                 {data.routeDetails}
               </div>
             </div>
@@ -534,13 +534,13 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
         </div>
 
         {/* Section 4 */}
-        <div className="mt-5 rounded-xl border border-[#0A192F] overflow-hidden">
+        <div className="mt-5 rounded-none border border-[#0A192F] overflow-hidden">
           <div className="bg-[#0A192F] text-white px-4 py-2.5 flex items-center justify-between">
             <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
               <DollarSign className="h-4 w-4 text-amber-400" />
               <span>{t('sheet.secFinancial')}</span>
             </h3>
-            <span className="text-[11px] text-amber-300 font-bold">
+            <span className="text-[11px] text-amber-300 font-bold uppercase tracking-wider">
               {t('sheet.zeroCommission')}
             </span>
           </div>
@@ -562,7 +562,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
 
             <div className="flex justify-between items-center py-1 border-b border-slate-200">
               <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
+                <span className="h-2 w-2 rounded-none bg-emerald-500 inline-block" />
                 <span className="text-slate-700 font-bold">{t('sheet.depositPaid')}</span>
               </div>
               <span className="font-extrabold text-emerald-700 text-sm">
@@ -570,12 +570,12 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               </span>
             </div>
 
-            <div className="flex justify-between items-center py-1 bg-white p-2 rounded-lg border border-slate-200">
+            <div className="flex justify-between items-center py-1 bg-white p-2 rounded-none border border-slate-200">
               <div>
                 <span className="text-slate-900 font-black">{t('sheet.remaining')}</span>
                 <p className="text-[10px] text-slate-500">{t('sheet.remainingNote')}</p>
               </div>
-              <span className="font-black text-blue-700 text-base">
+              <span className="font-black text-slate-900 text-base">
                 ฿{data.remainingAmount.toLocaleString()}
               </span>
             </div>
@@ -597,7 +597,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               )}
             </div>
 
-            <div className="mt-3 rounded-lg bg-amber-50 border border-amber-300 p-2.5 flex items-start gap-2 text-[11px] text-amber-900 font-semibold">
+            <div className="mt-3 rounded-none bg-amber-50 border border-amber-300 p-2.5 flex items-start gap-2 text-[11px] text-amber-900 font-semibold">
               <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
                 <p className="font-black">{t('sheet.safetyTitle')}</p>
@@ -608,7 +608,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
             </div>
 
             {/* Travel Safety Verification Notice */}
-            <div className="mt-2.5 rounded-lg bg-emerald-50/90 border border-emerald-300 p-2.5 flex items-start gap-2 text-[11px] text-emerald-950">
+            <div className="mt-2.5 rounded-none bg-emerald-50/90 border border-emerald-300 p-2.5 flex items-start gap-2 text-[11px] text-emerald-950">
               <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
               <p className="font-medium leading-relaxed">
                 🛡️ เพื่อความปลอดภัยและความคุ้มครองตลอดการเดินทาง กรุณาตรวจสอบชื่อคนขับและหมายเลขทะเบียนรถให้ตรงกับใบนัดหมายนี้ ขอให้ท่านและคณะมีความสุขตลอดทริปครับ
@@ -618,8 +618,8 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
         </div>
 
         {/* Section 5: Standard Trip Terms */}
-        <div className="mt-4 rounded-xl border border-slate-200 p-3.5 bg-slate-50/50 text-[11px] text-slate-600 space-y-1.5">
-          <p className="font-black text-slate-800">{t('sheet.standardsTitle')}</p>
+        <div className="mt-4 rounded-none border border-slate-200 p-3.5 bg-slate-50/50 text-[11px] text-slate-600 space-y-1.5">
+          <p className="font-black text-slate-800 uppercase tracking-wider">{t('sheet.standardsTitle')}</p>
           <ul className="list-disc pl-4 space-y-1">
             <li>เวลาทำงานปกติ 10 ชั่วโมง/วัน (สิ้นสุดไม่เกิน 18:00–19:00 น.)</li>
             <li>ค่าล่วงเวลา (OT): เศษชั่วโมงละ 200 บาท (ชำระตรงกับคนขับ)</li>
@@ -660,7 +660,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
   if (isModal) {
     return (
       <div
-        className="fixed inset-0 z-[500] flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-xs overflow-y-auto"
+        className="fixed inset-0 z-[500] flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-sm overflow-y-auto"
         onClick={onClose}
         role="presentation"
       >
@@ -670,7 +670,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
           aria-modal="true"
           aria-label={t('sheet.aria')}
           onClick={(e) => e.stopPropagation()}
-          className="relative my-auto w-full max-w-4xl max-h-[95vh] overflow-y-auto rounded-2xl"
+          className="relative my-auto w-full max-w-4xl max-h-[95vh] overflow-y-auto rounded-none border border-slate-300 dark:border-slate-700 shadow-2xl"
         >
           {content}
         </div>

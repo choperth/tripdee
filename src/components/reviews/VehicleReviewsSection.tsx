@@ -95,13 +95,13 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
   return (
     <section
       id="vehicle-reviews"
-      className="bg-paper-canvas dark:bg-slate-800/60 p-space-lg rounded-2xl border border-border-subtle dark:border-slate-700/70 space-y-space-md"
+      className="bg-white dark:bg-slate-900 p-space-lg rounded-none border border-slate-200 dark:border-slate-800 shadow-2xs space-y-space-md"
     >
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm pb-space-xs border-b border-border-subtle/70 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm pb-space-xs border-b border-slate-200 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-1 rounded-lg bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+            <span className="p-1 rounded-none border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center">
               <Star className="w-5 h-5 fill-amber-400 text-amber-500" />
             </span>
             <h2 className="font-headline-lg text-headline-lg text-navy-deep dark:text-white">
@@ -116,7 +116,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
         <button
           type="button"
           onClick={() => setIsWriteModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-space-md py-2.5 rounded-xl bg-blue-action hover:bg-blue-action-hover text-white font-title-card text-title-card shadow-sm transition-all active:scale-[0.98] cursor-pointer self-start sm:self-auto shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-space-md py-2.5 rounded-none bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-bold text-xs uppercase tracking-wider shadow-sm transition-all active:scale-[0.98] cursor-pointer self-start sm:self-auto shrink-0"
         >
           <MessageSquarePlus className="w-4 h-4" />
           <span>{t('review.writeBtn')}</span>
@@ -125,10 +125,10 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
 
       {/* Ratings & High-Level Breakdown Bento Card */}
       {stats.totalReviews > 0 && (
-      <div className="p-space-md rounded-2xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 space-y-space-md">
+      <div className="p-space-md rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-space-md">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-space-md items-center">
           {/* Left: Big Score & Stars */}
-          <div className="md:col-span-5 flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 border-b md:border-b-0 md:border-r border-border-subtle/70 dark:border-slate-800 pb-space-sm md:pb-0 md:pr-space-md">
+          <div className="md:col-span-5 flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-700 pb-space-sm md:pb-0 md:pr-space-md">
             <div className="flex items-baseline gap-2">
               <span className="text-4xl sm:text-5xl font-black text-navy-deep dark:text-white tracking-tight">
                 {stats.averageRating?.toFixed(1)}
@@ -155,7 +155,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
               {t('review.totalReviews', { n: stats.totalReviews })}
             </p>
 
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-medium text-xs border border-emerald-200/50">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-none bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] uppercase tracking-wider border border-emerald-300 dark:border-emerald-800">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>{t('review.satisfaction', { pct: stats.percentage5 })}</span>
             </span>
@@ -173,25 +173,25 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
                   key={score}
                   type="button"
                   onClick={() => setSelectedStarFilter(isSelected ? null : score)}
-                  className={`w-full flex items-center gap-2 text-xs py-0.5 px-1.5 rounded-lg transition-colors cursor-pointer text-left ${
+                  className={`w-full flex items-center gap-2 text-xs py-1 px-2 rounded-none transition-colors cursor-pointer text-left ${
                     isSelected
-                      ? 'bg-blue-50 dark:bg-slate-800 font-bold'
-                      : 'hover:bg-paper-surface-muted dark:hover:bg-slate-800/60'
+                      ? 'bg-slate-200 dark:bg-slate-700 font-bold text-slate-900 dark:text-white'
+                      : 'hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
                   }`}
                 >
-                  <span className="flex items-center gap-1 w-12 shrink-0 font-medium text-ink-secondary dark:text-slate-300">
+                  <span className="flex items-center gap-1 w-12 shrink-0 font-bold text-slate-700 dark:text-slate-300">
                     <span>{score}</span>
                     <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                   </span>
 
-                  <div className="flex-1 h-2 rounded-full bg-paper-surface-muted dark:bg-slate-800 overflow-hidden">
+                  <div className="flex-1 h-2 rounded-none bg-slate-200 dark:bg-slate-700 overflow-hidden">
                     <div
-                      className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                      className="h-full bg-amber-400 rounded-none transition-all duration-500"
                       style={{ width: `${percent}%` }}
                     />
                   </div>
 
-                  <span className="w-9 text-right font-mono text-ink-muted dark:text-slate-400 text-[11px] shrink-0">
+                  <span className="w-9 text-right font-mono text-ink-muted dark:text-slate-400 text-[11px] shrink-0 font-bold">
                     {count}
                   </span>
                 </button>
@@ -202,8 +202,8 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
 
         {/* Highlight Tag Clouds */}
         {stats.topTags.length > 0 && (
-          <div className="pt-space-xs border-t border-border-subtle/70 dark:border-slate-800">
-            <span className="text-xs font-bold text-navy-deep dark:text-white block mb-2">
+          <div className="pt-space-xs border-t border-slate-200 dark:border-slate-700">
+            <span className="text-xs font-bold text-navy-deep dark:text-white block mb-2 uppercase tracking-wider">
               {t('review.highlightTags')}
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -214,18 +214,18 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
                     key={tag}
                     type="button"
                     onClick={() => setSelectedTagFilter(isSelected ? null : tag)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-all cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-none text-xs transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-blue-action text-white shadow-xs font-bold'
-                        : 'bg-paper-canvas dark:bg-slate-800 text-ink-secondary dark:text-slate-300 border border-border-subtle/80 dark:border-slate-700 hover:border-blue-action/50'
+                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold border border-slate-900 dark:border-white'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:border-slate-900 dark:hover:border-slate-400'
                     }`}
                   >
                     <span>{tag}</span>
                     <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                      className={`text-[10px] px-1.5 py-0.2 rounded-none font-mono font-bold ${
                         isSelected
-                          ? 'bg-white/25 text-white'
-                          : 'bg-paper-surface-muted dark:bg-slate-700 text-ink-muted dark:text-slate-400'
+                          ? 'bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                       }`}
                     >
                       {count}
@@ -241,17 +241,17 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
 
       {/* Active Filter Bar (if any filter is selected) */}
       {(selectedStarFilter !== null || selectedTagFilter !== null) && (
-        <div className="flex items-center justify-between p-2 rounded-xl bg-blue-50/70 dark:bg-slate-800/80 border border-blue-200/60 dark:border-slate-700 text-xs">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <Filter className="w-3.5 h-3.5 text-blue-action shrink-0" />
-            <span className="text-ink-secondary dark:text-slate-300">{t('review.filterLabel')}</span>
+        <div className="flex items-center justify-between p-2.5 rounded-none bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Filter className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300 shrink-0" />
+            <span className="text-slate-600 dark:text-slate-400 font-medium">{t('review.filterLabel')}</span>
             {selectedStarFilter !== null && (
-              <span className="bg-blue-action text-white px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
+              <span className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-2 py-0.5 rounded-none font-bold flex items-center gap-1 text-[11px]">
                 <span>{selectedStarFilter} ดาว</span>
                 <button
                   type="button"
                   onClick={() => setSelectedStarFilter(null)}
-                  className="hover:opacity-80"
+                  className="hover:opacity-80 cursor-pointer"
                   aria-label={t('review.clearStars')}
                 >
                   <X className="w-3 h-3" />
@@ -259,19 +259,19 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
               </span>
             )}
             {selectedTagFilter !== null && (
-              <span className="bg-blue-action text-white px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
+              <span className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-2 py-0.5 rounded-none font-bold flex items-center gap-1 text-[11px]">
                 <span>{selectedTagFilter}</span>
                 <button
                   type="button"
                   onClick={() => setSelectedTagFilter(null)}
-                  className="hover:opacity-80"
+                  className="hover:opacity-80 cursor-pointer"
                   aria-label={t('review.clearTags')}
                 >
                   <X className="w-3 h-3" />
                 </button>
               </span>
             )}
-            <span className="text-ink-muted dark:text-slate-400">
+            <span className="text-slate-500 dark:text-slate-400 font-medium">
               (พบ {filteredReviews.length} รีวิว)
             </span>
           </div>
@@ -282,7 +282,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
               setSelectedStarFilter(null);
               setSelectedTagFilter(null);
             }}
-            className="text-blue-action dark:text-blue-400 font-bold hover:underline shrink-0 cursor-pointer"
+            className="text-slate-900 dark:text-slate-200 font-bold hover:underline shrink-0 cursor-pointer text-xs"
           >
             ล้างทั้งหมด
           </button>
@@ -292,11 +292,11 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
       {/* Reviews List */}
       <div className="space-y-space-sm">
         {isLoadingReviews ? (
-          <div className="p-space-xl rounded-2xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 text-center">
+          <div className="p-space-xl rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-center">
             <p className="text-sm text-ink-muted dark:text-slate-400">{t('review.loading')}</p>
           </div>
         ) : filteredReviews.length === 0 ? (
-          <div className="p-space-xl rounded-2xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 text-center space-y-2">
+          <div className="p-space-xl rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-center space-y-2">
             <p className="text-base font-bold text-navy-deep dark:text-white">
               {selectedStarFilter !== null || selectedTagFilter !== null
                 ? t('review.noReviewsMatch')
@@ -309,7 +309,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
               <button
                 type="button"
                 onClick={() => setIsWriteModalOpen(true)}
-                className="px-space-md py-2 rounded-xl bg-blue-action text-white font-medium text-xs hover:bg-blue-action-hover transition-colors cursor-pointer"
+                className="px-space-md py-2 rounded-none bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-wider hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 {t('review.writeBtn')}
               </button>
@@ -323,13 +323,13 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
             return (
               <div
                 key={rev.id}
-                className="p-space-md rounded-2xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle/80 dark:border-slate-800 space-y-space-xs transition-all hover:shadow-sm"
+                className="p-space-md rounded-none bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-space-xs transition-all hover:border-slate-300 dark:hover:border-slate-700"
               >
                 {/* Author Info & Rating */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5">
                     <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border shadow-2xs shrink-0 ${avatarColorClass}`}
+                      className={`w-9 h-9 rounded-none flex items-center justify-center font-bold text-sm border shadow-2xs shrink-0 ${avatarColorClass}`}
                     >
                       {authorInitial}
                     </div>
@@ -340,7 +340,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
                           {rev.authorName}
                         </span>
                         {rev.verifiedTrip && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200/50">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-none border border-emerald-300 dark:border-emerald-800">
                             <CheckCircle2 className="w-3 h-3" />
                             <span>{t('review.verifiedPassenger')}</span>
                           </span>
@@ -386,7 +386,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
                     {rev.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="px-2 py-0.5 rounded-full bg-paper-canvas dark:bg-slate-800 text-[11px] font-medium text-ink-secondary dark:text-slate-300 border border-border-subtle/70 dark:border-slate-700"
+                        className="px-2 py-0.5 rounded-none bg-slate-50 dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                       >
                         {tag}
                       </span>
@@ -401,11 +401,11 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
 
                 {/* Driver's Reply Box (if present) */}
                 {rev.driverReply && (
-                  <div className="mt-2 p-space-sm rounded-xl bg-blue-50/60 dark:bg-slate-800/80 border border-blue-200/60 dark:border-slate-700/80 space-y-1">
+                  <div className="mt-2 p-space-sm rounded-none bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-navy-deep dark:text-white">
                         <CornerDownRight className="w-3.5 h-3.5 text-blue-action shrink-0" />
-                        <div className="w-5 h-5 rounded-full bg-blue-action text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                        <div className="w-5 h-5 rounded-none bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[10px] font-bold flex items-center justify-center shrink-0">
                           {driverInitial}
                         </div>
                         <span>
@@ -433,7 +433,7 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="inline-flex items-center gap-1.5 px-space-lg py-2 rounded-xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-700 text-navy-deep dark:text-white font-body-medium text-xs hover:bg-surface-variant transition-colors cursor-pointer shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-space-lg py-2 rounded-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-xs uppercase tracking-wider hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer shadow-2xs"
           >
             {isExpanded ? (
               <>

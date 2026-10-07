@@ -292,10 +292,10 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
     <div ref={containerRef} className={`relative w-full ${className}`}>
       {/* Input Trigger Bar */}
       <div
-        className={`w-full min-h-[44px] h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base border transition-all flex items-center justify-between cursor-pointer select-none ${
+        className={`w-full min-h-[44px] h-11 px-3 bg-white dark:bg-slate-850 dark:text-white rounded-none text-body-base font-body-base border transition-all flex items-center justify-between cursor-pointer select-none ${
           isOpen
-            ? 'ring-2 ring-blue-action border-blue-action bg-paper-elevated dark:bg-slate-900 shadow-md'
-            : 'border-transparent hover:border-border-subtle hover:bg-paper-surface-muted/80'
+            ? 'border-slate-900 dark:border-white bg-white dark:bg-slate-900 shadow-sm'
+            : 'border-slate-300 dark:border-slate-700 hover:border-slate-900 dark:hover:border-slate-400'
         }`}
         onClick={() => setIsOpen(!isOpen)}
         role="button"
@@ -309,13 +309,13 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
         }}
       >
         <div className="flex items-center gap-2 overflow-hidden flex-1 mr-1">
-          <CalendarIcon className={`w-4 h-4 shrink-0 transition-colors ${isOpen ? 'text-blue-action' : 'text-ink-muted dark:text-slate-400'}`} />
+          <CalendarIcon className={`w-4 h-4 shrink-0 transition-colors ${isOpen ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`} />
           {value ? (
             <span className="font-bold text-navy-deep dark:text-white truncate text-xs sm:text-sm">
               {value}
             </span>
           ) : (
-            <span className="text-ink-muted dark:text-slate-400 truncate text-xs sm:text-sm">
+            <span className="text-slate-400 dark:text-slate-500 truncate text-xs sm:text-sm">
               {placeholder || t('tdp.placeholder')}
             </span>
           )}
@@ -326,14 +326,14 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
             <button
               type="button"
               onClick={handleClear}
-              className="p-1 rounded-full text-ink-muted hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+              className="p-1 rounded-none text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
               title={t('tdp.clearDate')}
             >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
 
-          <span className="p-1 text-ink-muted dark:text-slate-400">
+          <span className="p-1 text-slate-500 dark:text-slate-400">
             {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </span>
         </div>
@@ -353,16 +353,16 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
 
       {/* Interactive Expandable Calendar Panel */}
       {isOpen && (
-        <div className="mt-2 w-full bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 rounded-2xl shadow-xl p-3 sm:p-4 z-50 animate-fade-in space-y-3">
+        <div className="mt-2 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-none shadow-2xl p-3 sm:p-4 z-50 animate-fade-in space-y-3">
           {/* Header Bar: Month & Year Selectors + Nav buttons */}
-          <div className="flex items-center justify-between gap-1 pb-2 border-b border-border-subtle dark:border-slate-800">
+          <div className="flex items-center justify-between gap-1 pb-2 border-b border-slate-200 dark:border-slate-800">
             {/* Quick Month & Year Dropdowns */}
             <div className="flex items-center gap-1.5">
               {/* Month Select */}
               <select
                 value={viewMonth}
                 onChange={(e) => setViewMonth(Number(e.target.value))}
-                className="h-8 px-2 bg-paper-surface-muted dark:bg-slate-800 text-navy-deep dark:text-white rounded-lg text-xs font-bold border border-border-subtle dark:border-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-action"
+                className="h-8 px-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-none text-xs font-bold border border-slate-300 dark:border-slate-700 cursor-pointer focus:outline-none focus:border-slate-900"
               >
                 {monthNames.map((name, idx) => (
                   <option key={name} value={idx}>
@@ -375,7 +375,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
               <select
                 value={viewYear}
                 onChange={(e) => setViewYear(Number(e.target.value))}
-                className="h-8 px-2 bg-paper-surface-muted dark:bg-slate-800 text-navy-deep dark:text-white rounded-lg text-xs font-bold border border-border-subtle dark:border-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-action"
+                className="h-8 px-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-none text-xs font-bold border border-slate-300 dark:border-slate-700 cursor-pointer focus:outline-none focus:border-slate-900"
               >
                 {availableYears.map((yr) => (
                   <option key={yr} value={yr}>
@@ -390,7 +390,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="w-7 h-7 rounded-lg border border-border-subtle dark:border-slate-700 hover:bg-paper-surface-muted dark:hover:bg-slate-800 flex items-center justify-center text-ink-secondary dark:text-slate-300 transition-colors"
+                className="w-7 h-7 rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-colors"
                 title={t('tdp.prevMonth')}
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -398,7 +398,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="w-7 h-7 rounded-lg border border-border-subtle dark:border-slate-700 hover:bg-paper-surface-muted dark:hover:bg-slate-800 flex items-center justify-center text-ink-secondary dark:text-slate-300 transition-colors"
+                className="w-7 h-7 rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-colors"
                 title={t('tdp.nextMonth')}
               >
                 <ChevronRight className="w-4 h-4" />
@@ -408,34 +408,34 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
 
           {/* Quick Date Presets Bar */}
           <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
-            <span className="text-[11px] font-bold text-ink-muted dark:text-slate-400 flex items-center gap-1 mr-1">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1 mr-1">
               <span>{t('tdp.quick')}</span>
             </span>
             <button
               type="button"
               onClick={handleQuickToday}
-              className="px-2.5 py-1 rounded-lg bg-paper-surface-muted dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 text-navy-deep dark:text-white font-medium text-[11px] transition-colors"
+              className="px-2.5 py-1 rounded-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-slate-800 dark:text-white font-bold text-[11px] uppercase tracking-wider transition-colors cursor-pointer"
             >
               {t('tdp.today')}
             </button>
             <button
               type="button"
               onClick={handleQuickTomorrow}
-              className="px-2.5 py-1 rounded-lg bg-paper-surface-muted dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 text-navy-deep dark:text-white font-medium text-[11px] transition-colors"
+              className="px-2.5 py-1 rounded-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-slate-800 dark:text-white font-bold text-[11px] uppercase tracking-wider transition-colors cursor-pointer"
             >
               {t('tdp.tomorrow')}
             </button>
             <button
               type="button"
               onClick={handleQuickThisWeekend}
-              className="px-2.5 py-1 rounded-lg bg-paper-surface-muted dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-slate-700 text-amber-700 dark:text-amber-400 font-medium text-[11px] transition-colors"
+              className="px-2.5 py-1 rounded-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-amber-700 dark:text-amber-400 font-bold text-[11px] uppercase tracking-wider transition-colors cursor-pointer"
             >
               {t('tdp.weekend')}
             </button>
           </div>
 
           {/* Weekday Column Headers */}
-          <div className="grid grid-cols-7 gap-1 text-center font-bold text-[11px] text-ink-muted dark:text-slate-400">
+          <div className="grid grid-cols-7 gap-1 text-center font-bold text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             {dayHeaders.map((dh, i) => (
               <div key={dh} className={i === 0 ? 'text-rose-500 font-bold' : ''}>
                 {dh}
@@ -474,21 +474,21 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
                   type="button"
                   disabled={isPast}
                   onClick={() => handleSelectDay(iso)}
-                  className={`h-9 sm:h-10 text-xs sm:text-sm font-bold flex flex-col items-center justify-center relative transition-all cursor-pointer ${
+                  className={`h-9 sm:h-10 text-xs sm:text-sm font-bold flex flex-col items-center justify-center relative transition-all cursor-pointer rounded-none ${
                     isPast
-                      ? 'opacity-25 bg-transparent cursor-not-allowed text-ink-muted'
+                      ? 'opacity-25 bg-transparent cursor-not-allowed text-slate-400'
                       : isSelected
-                      ? 'bg-blue-action text-white shadow-md rounded-xl scale-105 z-10'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm z-10 font-black'
                       : isInRange
-                      ? 'bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 rounded-none'
+                      ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white'
                       : isToday
-                      ? 'bg-blue-50 dark:bg-slate-800 text-blue-action border-2 border-blue-action rounded-xl hover:bg-blue-100'
-                      : 'bg-paper-surface-muted/60 dark:bg-slate-800/80 rounded-xl text-ink-primary dark:text-slate-200 hover:border-blue-action hover:bg-blue-50 dark:hover:bg-slate-700'
+                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-2 border-slate-900 dark:border-white font-black'
+                      : 'bg-slate-50/70 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                 >
                   <span>{dayNum}</span>
                   {isToday && !isSelected && (
-                    <span className="w-1 h-1 rounded-full bg-blue-action absolute bottom-1" />
+                    <span className="w-1 h-1 rounded-none bg-slate-900 dark:bg-white absolute bottom-1" />
                   )}
                 </button>
               );
@@ -497,8 +497,8 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
 
           {/* Manual text edit toggle */}
           {isManualMode ? (
-            <div className="pt-2 border-t border-border-subtle dark:border-slate-800 space-y-1.5">
-              <label className="text-[11px] font-bold text-ink-muted dark:text-slate-400 block">
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block uppercase tracking-wider">
                 {t('tdp.manualLabel')}
               </label>
               <input
@@ -506,17 +506,17 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={t('tdp.manualPh')}
-                className="w-full h-9 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-action focus:outline-none"
+                className="w-full h-9 px-3 bg-white dark:bg-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 rounded-none text-xs focus:border-slate-900 dark:focus:border-white focus:outline-none"
               />
             </div>
           ) : null}
 
           {/* Footer Controls */}
-          <div className="flex items-center justify-between pt-2 border-t border-border-subtle dark:border-slate-800">
+          <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setIsManualMode(!isManualMode)}
-              className="text-[11px] text-ink-muted dark:text-slate-400 hover:text-blue-action flex items-center gap-1 font-medium transition-colors"
+              className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 font-bold transition-colors cursor-pointer"
             >
               <Edit3 className="w-3 h-3" />
               <span>{isManualMode ? t('tdp.manualHide') : t('tdp.manualShow')}</span>
@@ -527,7 +527,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="px-2.5 py-1 rounded-lg text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-1 transition-colors"
+                  className="px-2.5 py-1 rounded-none border border-rose-300 dark:border-rose-900 text-xs font-bold uppercase tracking-wider text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span>{t('tdp.clearValue')}</span>
@@ -537,7 +537,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="px-3.5 py-1.5 rounded-xl bg-blue-action hover:bg-blue-action-hover text-white text-xs font-bold flex items-center gap-1 shadow-sm transition-all active:scale-[0.98]"
+                className="px-4 py-1.5 rounded-none bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm transition-all cursor-pointer"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>{t('tdp.done')}</span>

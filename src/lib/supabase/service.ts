@@ -1000,14 +1000,17 @@ export async function saveVehicle(vehicle: Vehicle): Promise<Vehicle> {
  * Read a single vehicle including ones that are not publicly listed.
  * Owner/approval checks depend on being able to see pending rows.
  */
-export async function fetchVehicleById(id: string): Promise<Vehicle | null> {
+export async function fetchVehicleById(id: string, reqUrl?: string): Promise<Vehicle | null> {
+  const cleanId = (id || '').trim();
+  if (!cleanId) return null;
+
   const supabase = getSupabase();
   if (supabase) {
     try {
       const { data, error } = await supabase
         .from('vehicles')
         .select('*')
-        .eq('id', id)
+        .eq('id', cleanId)
         .limit(1);
       if (!error && data && data.length > 0) {
         return mapVehicleRow(data[0] as unknown as VehicleRow);
@@ -1017,11 +1020,29 @@ export async function fetchVehicleById(id: string): Promise<Vehicle | null> {
     }
   }
 
-  const local = getApprovedVehicles().find((v) => v.id === id);
+  const local = getApprovedVehicles().find((v) => v.id === cleanId);
   if (local) return local;
 
-  const all = await fetchVehicles(undefined, { includeUnapproved: true });
-  return all.find((v) => v.id === id) || null;
+  const all = await fetchVehicles(reqUrl, { includeUnapproved: true });
+  const found = all.find((v) => v.id === cleanId);
+  if (found) return found;
+
+  const cleanDigits = cleanId.replace(/\D/g, '');
+  if (cleanDigits.length >= 9) {
+    const byPhone = all.find((v) => (v.driverPhone || '').replace(/\D/g, '') === cleanDigits);
+    if (byPhone) return byPhone;
+  }
+
+  if (isMockDataEnabled(reqUrl)) {
+    const mockMatch = VEHICLES.find((v) => v.id === cleanId);
+    if (mockMatch) return mockMatch;
+    if (cleanDigits.length >= 9) {
+      const mockByPhone = VEHICLES.find((v) => (v.driverPhone || '').replace(/\D/g, '') === cleanDigits);
+      if (mockByPhone) return mockByPhone;
+    }
+  }
+
+  return null;
 }
 
 export async function updateVehicle(id: string, updates: Partial<Vehicle>): Promise<Vehicle | null> {

@@ -956,7 +956,7 @@ export const TripBoard: React.FC = () => {
               {user ? (
                 <div className="p-3.5 bg-line-green-soft/70 dark:bg-emerald-950/40 border border-line-green/30 dark:border-emerald-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-line-green text-white flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-none bg-line-green text-white flex items-center justify-center shrink-0">
                       <UserCheck className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
@@ -1527,7 +1527,7 @@ export const TripBoard: React.FC = () => {
       {closingPost && renderPortal(
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-navy-deep/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-paper-elevated dark:bg-slate-900 rounded-none max-w-sm w-full p-space-lg shadow-2xl border border-border-subtle dark:border-slate-800 space-y-space-sm text-center">
-            <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-500 mx-auto flex items-center justify-center">
+            <div className="w-12 h-12 rounded-none bg-rose-50 dark:bg-rose-950/60 text-rose-500 border border-rose-200 dark:border-rose-900 mx-auto flex items-center justify-center">
               <Lock className="w-6 h-6" />
             </div>
             <h4 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
@@ -1549,7 +1549,7 @@ export const TripBoard: React.FC = () => {
                 value={closePin}
                 onChange={(e) => setClosePin(e.target.value)}
                 placeholder={t('board.pinPh')}
-                className="w-full h-11 text-center font-headline-md text-headline-md tracking-widest bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500"
+                className="w-full h-11 text-center font-headline-md text-headline-md tracking-widest bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-none border border-border-subtle dark:border-slate-700 focus:outline-none focus:border-rose-500"
               />
 
               {closeError && (
@@ -1563,14 +1563,14 @@ export const TripBoard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setClosingPost(null)}
-                  className="h-10 border border-border-subtle rounded-xl text-ink-secondary font-body-medium hover:bg-paper-surface-muted"
+                  className="h-10 border border-border-subtle dark:border-slate-700 rounded-none text-ink-secondary dark:text-slate-300 font-body-medium hover:bg-paper-surface-muted dark:hover:bg-slate-800 cursor-pointer transition-colors"
                 >
                   {t('board.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isClosing}
-                  className="h-10 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-body-medium flex items-center justify-center gap-1 shadow-sm"
+                  className="h-10 bg-rose-600 hover:bg-rose-700 text-white rounded-none font-body-medium flex items-center justify-center gap-1 shadow-sm cursor-pointer transition-colors"
                 >
                   {isClosing ? <Loader2 className="w-4 h-4 animate-spin" /> : t('board.confirmClose')}
                 </button>
@@ -1586,7 +1586,7 @@ export const TripBoard: React.FC = () => {
           <div className="bg-paper-elevated dark:bg-slate-900 rounded-none max-w-lg w-full max-h-[90vh] overflow-y-auto p-space-lg shadow-2xl border border-border-subtle dark:border-slate-800 space-y-space-md">
             <div className="flex items-start justify-between border-b border-border-subtle dark:border-slate-800 pb-space-sm">
               <div>
-                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 mb-1">
+                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-none text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 mb-1">
                   <span className="material-symbols-outlined text-[14px]">rate_review</span>
                   <span>{t('board.quoteTitle')}</span>
                 </div>
@@ -1600,7 +1600,7 @@ export const TripBoard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setQuoteDriverPost(null)}
-                className="p-1.5 text-ink-muted hover:text-ink-primary dark:hover:text-white rounded-lg transition-colors"
+                className="p-1.5 text-ink-muted hover:text-ink-primary dark:hover:text-white rounded-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1618,7 +1618,7 @@ export const TripBoard: React.FC = () => {
                     value={driverQuoteForm.driverName}
                     onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, driverName: e.target.value }))}
                     placeholder={t('board.qNamePh')}
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-none border border-border-subtle dark:border-slate-700 text-body-base font-body-base focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
@@ -1632,7 +1632,7 @@ export const TripBoard: React.FC = () => {
                     value={driverQuoteForm.driverPhone}
                     onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, driverPhone: e.target.value }))}
                     placeholder="08x-xxx-xxxx"
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-none border border-border-subtle dark:border-slate-700 text-body-base font-body-base focus:outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
@@ -1647,7 +1647,7 @@ export const TripBoard: React.FC = () => {
                   value={driverQuoteForm.vehicleModel}
                   onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, vehicleModel: e.target.value }))}
                   placeholder={t('board.qVehiclePh')}
-                  className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-none border border-border-subtle dark:border-slate-700 text-body-base font-body-base focus:outline-none focus:border-amber-500"
                 />
               </div>
 
@@ -1661,7 +1661,7 @@ export const TripBoard: React.FC = () => {
                     value={driverQuoteForm.driverLine}
                     onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, driverLine: e.target.value }))}
                     placeholder={t('board.fLinePh')}
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-none border border-border-subtle dark:border-slate-700 text-body-base font-body-base focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
@@ -1674,7 +1674,7 @@ export const TripBoard: React.FC = () => {
                     value={driverQuoteForm.driverWhatsApp}
                     onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, driverWhatsApp: e.target.value }))}
                     placeholder={t('board.phonePh')}
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-none border border-border-subtle dark:border-slate-700 text-body-base font-body-base focus:outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
@@ -1692,7 +1692,7 @@ export const TripBoard: React.FC = () => {
                     value={driverQuoteForm.price}
                     onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, price: e.target.value }))}
                     placeholder="4500"
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-none border border-border-subtle dark:border-slate-700 text-body-base font-body-base focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
@@ -1703,7 +1703,7 @@ export const TripBoard: React.FC = () => {
                   <select
                     value={driverQuoteForm.priceNote}
                     onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, priceNote: e.target.value }))}
-                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-none border border-border-subtle dark:border-slate-700 text-body-base font-body-base focus:outline-none focus:border-amber-500"
                   >
                     <option value="รวมค่าน้ำมันแล้ว">{t('board.qFuel1')}</option>
                     <option value="ไม่รวมน้ำมัน (เติมคืนตามจริง)">{t('board.qFuel2')}</option>
@@ -1722,18 +1722,18 @@ export const TripBoard: React.FC = () => {
                   value={driverQuoteForm.message}
                   onChange={(e) => setDriverQuoteForm((prev) => ({ ...prev, message: e.target.value }))}
                   placeholder={t('board.qMsgPh')}
-                  className="w-full p-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                  className="w-full p-3 bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-none border border-border-subtle dark:border-slate-700 text-body-base font-body-base focus:outline-none focus:border-amber-500 resize-none"
                 />
               </div>
 
               {quoteSubmitError && (
-                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-xs text-rose-600 dark:text-rose-400 font-bold">
+                <div className="p-3 rounded-none bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-xs text-rose-600 dark:text-rose-400 font-bold">
                   {quoteSubmitError}
                 </div>
               )}
 
               {quoteSubmitSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1.5">
+                <div className="p-3 rounded-none bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span>{quoteSubmitSuccess}</span>
                 </div>
@@ -1743,7 +1743,7 @@ export const TripBoard: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmittingQuote}
-                  className="w-full h-12 bg-amber-500 hover:bg-amber-600 text-white font-title-card text-title-card rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="w-full h-12 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm rounded-none border border-amber-600 shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider"
                 >
                   {isSubmittingQuote ? (
                     <>
@@ -1769,7 +1769,7 @@ export const TripBoard: React.FC = () => {
           <div className="bg-paper-elevated dark:bg-slate-900 rounded-none max-w-2xl w-full max-h-[90vh] overflow-y-auto p-space-lg shadow-2xl border border-border-subtle dark:border-slate-800 space-y-space-md">
             <div className="flex items-start justify-between border-b border-border-subtle dark:border-slate-800 pb-space-sm">
               <div>
-                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 mb-1">
+                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-none text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 mb-1">
                   <span className="material-symbols-outlined text-[14px]">compare_arrows</span>
                   <span>{t('board.compareTitle')}</span>
                 </div>
@@ -1783,15 +1783,15 @@ export const TripBoard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setViewQuotesPost(null)}
-                className="p-1.5 text-ink-muted hover:text-ink-primary dark:hover:text-white rounded-lg transition-colors"
+                className="p-1.5 text-ink-muted hover:text-ink-primary dark:hover:text-white rounded-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {acceptSuccessMessage ? (
-              <div className="p-space-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-center space-y-space-sm">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300 mx-auto flex items-center justify-center">
+              <div className="p-space-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-none text-center space-y-space-sm">
+                <div className="w-12 h-12 rounded-none bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 mx-auto flex items-center justify-center">
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <h4 className="font-headline-md text-headline-md text-emerald-900 dark:text-emerald-200 font-bold">
@@ -1803,14 +1803,14 @@ export const TripBoard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setViewQuotesPost(null)}
-                  className="mt-2 px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-body-medium shadow-sm transition-all"
+                  className="mt-2 px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-none font-bold uppercase tracking-wider text-xs shadow-sm transition-all cursor-pointer"
                 >
                   {t('auth.close')}
                 </button>
               </div>
             ) : fetchedQuotes === null && viewQuotesPost.pin ? (
-              <div className="p-space-md border border-border-subtle dark:border-slate-800 rounded-2xl space-y-space-sm text-center">
-                <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 mx-auto flex items-center justify-center">
+              <div className="p-space-md border border-border-subtle dark:border-slate-800 rounded-none space-y-space-sm text-center">
+                <div className="w-10 h-10 rounded-none bg-blue-50 dark:bg-blue-950 text-blue-600 border border-blue-200 dark:border-blue-800 mx-auto flex items-center justify-center">
                   <Lock className="w-5 h-5" />
                 </div>
                 <h4 className="font-title-card text-title-card text-navy-deep dark:text-white">
@@ -1834,7 +1834,7 @@ export const TripBoard: React.FC = () => {
                     value={customerQuotesPin}
                     onChange={(e) => setCustomerQuotesPin(e.target.value)}
                     placeholder={t('board.pinPh')}
-                    className="w-full h-11 text-center font-headline-md tracking-widest bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-action"
+                    className="w-full h-11 text-center font-headline-md tracking-widest bg-paper-surface-muted dark:bg-slate-800 dark:text-white rounded-none border border-border-subtle dark:border-slate-700 focus:outline-none focus:border-blue-action"
                   />
                   {quotesFetchError && (
                     <div className="text-xs text-rose-500 font-bold">{quotesFetchError}</div>
@@ -1842,7 +1842,7 @@ export const TripBoard: React.FC = () => {
                   <button
                     type="submit"
                     disabled={isLoadingQuotes}
-                    className="w-full h-10 bg-blue-action hover:bg-blue-action-hover text-white rounded-xl font-body-medium flex items-center justify-center gap-1 shadow-sm"
+                    className="w-full h-10 bg-blue-action hover:bg-blue-action-hover text-white rounded-none font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1 shadow-sm cursor-pointer"
                   >
                     {isLoadingQuotes ? <Loader2 className="w-4 h-4 animate-spin" /> : t('board.unlock')}
                   </button>
@@ -1854,7 +1854,7 @@ export const TripBoard: React.FC = () => {
                 <span className="text-sm">{t('board.quotesLoading')}</span>
               </div>
             ) : fetchedQuotes && fetchedQuotes.length === 0 ? (
-              <div className="py-10 text-center space-y-2 border border-dashed border-border-subtle dark:border-slate-800 rounded-2xl">
+              <div className="py-10 text-center space-y-2 border border-dashed border-border-subtle dark:border-slate-800 rounded-none">
                 <span className="material-symbols-outlined text-[36px] text-ink-muted">inbox</span>
                 <p className="font-title-card text-title-card text-navy-deep dark:text-white">
                   {t('board.noQuotes')}
@@ -1867,7 +1867,7 @@ export const TripBoard: React.FC = () => {
               <div className="space-y-space-sm">
                 {/* Magic Link / Ownership Banner */}
                 {customerQuotesToken && (
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 rounded-none flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2 text-blue-900 dark:text-blue-200">
                       <span className="material-symbols-outlined text-blue-600 text-[18px]">link</span>
                       <span>{t('board.magicBannerHint')}</span>
@@ -1882,7 +1882,7 @@ export const TripBoard: React.FC = () => {
                         setCopiedMagicLink(true);
                         setTimeout(() => setCopiedMagicLink(false), 2000);
                       }}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center gap-1 shrink-0 transition-all shadow-xs"
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-none font-bold text-xs uppercase flex items-center gap-1 shrink-0 transition-all shadow-xs cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[14px]">
                         {copiedMagicLink ? 'check' : 'content_copy'}
@@ -1912,11 +1912,11 @@ export const TripBoard: React.FC = () => {
                   {fetchedQuotes?.map((quote, idx) => (
                     <div
                       key={quote.id}
-                      className="p-4 rounded-2xl bg-paper-surface dark:bg-slate-800/80 border border-border-subtle dark:border-slate-700 hover:border-blue-action transition-all shadow-xs space-y-3"
+                      className="p-4 rounded-none bg-paper-surface dark:bg-slate-800/80 border border-border-subtle dark:border-slate-700 hover:border-blue-action transition-all shadow-xs space-y-3"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border-subtle/60 dark:border-slate-700/60 pb-2">
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full bg-blue-action text-white text-xs font-bold flex items-center justify-center">
+                          <span className="w-6 h-6 rounded-none bg-blue-action text-white text-xs font-bold flex items-center justify-center">
                             #{idx + 1}
                           </span>
                           <div>
@@ -1940,7 +1940,7 @@ export const TripBoard: React.FC = () => {
                       </div>
 
                       {quote.message && (
-                        <p className="text-xs text-ink-secondary dark:text-slate-300 bg-paper-surface-muted dark:bg-slate-900/60 p-2.5 rounded-xl italic">
+                        <p className="text-xs text-ink-secondary dark:text-slate-300 bg-paper-surface-muted dark:bg-slate-900/60 p-2.5 rounded-none border border-slate-200/50 dark:border-slate-800 italic">
                           &ldquo;{quote.message}&rdquo;
                         </p>
                       )}
@@ -1949,7 +1949,7 @@ export const TripBoard: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <a
                             href={`tel:${quote.driverPhone}`}
-                            className="px-3 py-1.5 bg-navy-deep hover:bg-navy-surface text-white rounded-lg text-xs font-body-medium flex items-center gap-1 transition-all"
+                            className="px-3 py-1.5 bg-navy-deep hover:bg-navy-surface text-white rounded-none text-xs font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
                           >
                             <span className="material-symbols-outlined text-[14px]">call</span>
                             <span>{t('board.callDriver', { phone: quote.driverPhone })}</span>
@@ -1959,7 +1959,7 @@ export const TripBoard: React.FC = () => {
                               href={quote.driverLine.startsWith('http') ? quote.driverLine : `https://line.me/ti/p/~${quote.driverLine}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-3 py-1.5 bg-line-green hover:bg-line-green-hover text-white rounded-lg text-xs font-body-medium flex items-center gap-1 transition-all"
+                              className="px-3 py-1.5 bg-line-green hover:bg-line-green-hover text-white rounded-none text-xs font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
                             >
                               <span className="material-symbols-outlined text-[14px]">chat</span>
                               <span>{t('board.lineChat')}</span>
@@ -1970,7 +1970,7 @@ export const TripBoard: React.FC = () => {
                               href={formatWhatsAppLink(quote.driverWhatsApp, `Hello ${quote.driverName}, I saw your quote for my trip on TripDee.`)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-3 py-1.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-lg text-xs font-body-medium flex items-center gap-1 transition-all"
+                              className="px-3 py-1.5 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-none text-xs font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
                             >
                               <span className="material-symbols-outlined text-[14px]">forum</span>
                               <span>WhatsApp</span>
@@ -1982,7 +1982,7 @@ export const TripBoard: React.FC = () => {
                           type="button"
                           onClick={() => handleAcceptQuote(quote)}
                           disabled={acceptingQuoteId !== null}
-                          className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm transition-all active:scale-[0.98]"
+                          className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-none text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
                         >
                           {acceptingQuoteId === quote.id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -2005,7 +2005,7 @@ export const TripBoard: React.FC = () => {
       {createdMagicLinkPost && renderPortal(
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-navy-deep/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-paper-elevated dark:bg-slate-900 rounded-none max-w-md w-full p-6 shadow-2xl border border-border-subtle dark:border-slate-800 space-y-4 text-center">
-            <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center shadow-xs">
+            <div className="w-14 h-14 rounded-none bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 mx-auto flex items-center justify-center shadow-xs">
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <div>
@@ -2017,7 +2017,7 @@ export const TripBoard: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-3 bg-paper-surface-muted dark:bg-slate-800 rounded-xl border border-border-subtle dark:border-slate-700 flex items-center justify-between gap-2">
+            <div className="p-3 bg-paper-surface-muted dark:bg-slate-800 rounded-none border border-border-subtle dark:border-slate-700 flex items-center justify-between gap-2">
               <div className="text-left font-mono text-xs text-ink-primary dark:text-slate-200 truncate flex-1">
                 {createdMagicLinkPost.link}
               </div>
@@ -2030,7 +2030,7 @@ export const TripBoard: React.FC = () => {
                   setCopiedMagicLink(true);
                   setTimeout(() => setCopiedMagicLink(false), 2000);
                 }}
-                className="px-3 py-1.5 bg-blue-action hover:bg-blue-action-hover text-white rounded-lg text-xs font-bold flex items-center gap-1 shrink-0 transition-all shadow-xs"
+                className="px-3 py-1.5 bg-blue-action hover:bg-blue-action-hover text-white rounded-none text-xs font-bold uppercase flex items-center gap-1 shrink-0 transition-all shadow-xs cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[14px]">
                   {copiedMagicLink ? 'check' : 'content_copy'}
@@ -2050,7 +2050,7 @@ export const TripBoard: React.FC = () => {
                     handleOpenCustomerQuotes(foundPost, token);
                   }
                 }}
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1 shadow-sm transition-all"
+                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-none font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1 shadow-sm transition-all cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">visibility</span>
                 <span>{t('board.viewMyQuotesBtn')}</span>
@@ -2058,7 +2058,7 @@ export const TripBoard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCreatedMagicLinkPost(null)}
-                className="px-4 py-2.5 bg-paper-surface hover:bg-paper-surface-muted text-ink-secondary dark:text-slate-300 rounded-xl font-medium text-sm border border-border-subtle dark:border-slate-700 transition-all"
+                className="px-4 py-2.5 bg-paper-surface hover:bg-paper-surface-muted text-ink-secondary dark:text-slate-300 rounded-none font-bold text-xs uppercase tracking-wider border border-border-subtle dark:border-slate-700 transition-all cursor-pointer"
               >
                 {t('auth.close')}
               </button>

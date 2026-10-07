@@ -258,27 +258,27 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
       aria-labelledby="sponsor-report-title"
       className="fixed inset-0 z-[500] flex items-center justify-center p-3 sm:p-4 bg-ink/65 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200"
     >
-      <div className="td-elev-lift relative w-full max-w-3xl rounded-modal bg-card p-5 sm:p-7 text-ink my-6 max-h-[92vh] overflow-y-auto">
+      <div className="relative w-full max-w-3xl rounded-none bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-5 sm:p-7 text-ink my-6 max-h-[92vh] overflow-y-auto shadow-2xl">
         {/* Top Close Button */}
         <button
           onClick={onClose}
           aria-label={t('auth.close')}
-          className="absolute top-4 right-4 grid h-9 w-9 place-items-center rounded-full bg-paper-2 text-ink hover:bg-paper transition-colors"
+          className="absolute top-4 right-4 grid h-8 w-8 place-items-center rounded-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
         >
-          <X className="h-4.5 w-4.5" strokeWidth={2.5} />
+          <X className="h-4 w-4" strokeWidth={2.5} />
         </button>
 
         {/* Action Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pr-10 mb-5 border-b border-rule pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 pr-10 mb-5 border-b border-slate-200 dark:border-slate-800 pb-4">
           <div className="flex items-center gap-2">
-            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-berry text-white">
+            <span className="grid h-10 w-10 place-items-center rounded-none bg-slate-900 text-white">
               <FileSpreadsheet className="h-5 w-5" strokeWidth={2.5} />
             </span>
             <div>
-              <h2 id="sponsor-report-title" className="font-display text-xl font-extrabold text-ink leading-tight">
+              <h2 id="sponsor-report-title" className="font-display text-xl font-extrabold text-slate-900 dark:text-white leading-tight">
                 {t('spn.reportTitle')}
               </h2>
-              <p className="text-xs font-bold text-ink-2">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
                 {t('spn.reportSubtitle')}
               </p>
             </div>
@@ -289,7 +289,7 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
             <button
               type="button"
               onClick={handleOpenLineShare}
-              className="td-btn td-pop inline-flex items-center gap-1.5 rounded-pill bg-[#06C755] hover:bg-[#05b34c] px-3.5 py-2 text-xs font-extrabold text-white shadow-sm transition-transform"
+              className="inline-flex items-center gap-1.5 rounded-none bg-[#06C755] hover:bg-[#05b34c] px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-xs transition-colors cursor-pointer"
             >
               <Share2 className="h-4 w-4" />
               <span>{t('spn.sendLine')}</span>
@@ -298,9 +298,9 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
             <button
               type="button"
               onClick={handleCopyText}
-              className="td-btn inline-flex items-center gap-1.5 rounded-pill border border-rule bg-paper px-3 py-2 text-xs font-extrabold text-ink hover:bg-paper-2 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
             >
-              {copied ? <Check className="h-4 w-4 text-leaf" /> : <Copy className="h-4 w-4 text-ink-2" />}
+              {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4 text-slate-500" />}
               <span>{copied ? t('spn.copied') : t('spn.copy')}</span>
             </button>
 
@@ -308,9 +308,9 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
               type="button"
               disabled={isGeneratingImg}
               onClick={handleDownloadImage}
-              className="td-btn inline-flex items-center gap-1.5 rounded-pill border border-rule bg-card px-3 py-2 text-xs font-extrabold text-ink hover:bg-paper-2 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
             >
-              <Download className="h-4 w-4 text-accent-deep" />
+              <Download className="h-4 w-4 text-slate-700 dark:text-slate-300" />
               <span>{isGeneratingImg ? t('spn.saving') : t('spn.savePng')}</span>
             </button>
 
@@ -318,7 +318,7 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
               type="button"
               onClick={() => window.print()}
               aria-label={t('spn.print')}
-              className="hidden sm:inline-flex p-2 rounded-full border border-rule text-ink-2 hover:text-ink hover:bg-paper-2"
+              className="hidden sm:inline-flex p-2 rounded-none border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <Printer className="h-4 w-4" />
             </button>
@@ -328,32 +328,32 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
         {/* Printable / Viewable 1-Page Report Card */}
         <div
           ref={reportRef}
-          className="rounded-card border border-rule bg-paper p-5 sm:p-7 space-y-5 text-ink shadow-sm"
+          className="rounded-none border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 p-5 sm:p-7 space-y-5 text-slate-900 dark:text-slate-100 shadow-2xs"
         >
           {/* Card Header */}
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-dashed border-rule pb-4">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-slate-300 dark:border-slate-700 pb-4">
             <div>
-              <div className="flex items-center gap-1.5 font-display text-2xl font-extrabold text-ink">
+              <div className="flex items-center gap-1.5 font-display text-2xl font-extrabold text-slate-900 dark:text-white">
                 TripDee
-                <span className="inline-block h-2 w-2 rounded-full bg-accent" />
-                <span className="text-sm font-bold text-ink-2">{t('spn.brandSuffix')}</span>
+                <span className="inline-block h-2 w-2 rounded-none bg-slate-900 dark:bg-white" />
+                <span className="text-sm font-bold text-slate-500 dark:text-slate-400">{t('spn.brandSuffix')}</span>
               </div>
-              <p className="text-xs font-bold text-ink-2 mt-0.5">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5">
                 {t('spn.officialNote')}
               </p>
             </div>
             <div className="text-right">
-              <span className="rounded-pill bg-grape-soft px-3 py-1 text-xs font-extrabold text-grape inline-flex items-center gap-1">
+              <span className="rounded-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 inline-flex items-center gap-1">
                 <Sparkles className="h-3 w-3" />
                 {t('spn.periodBadge')}
               </span>
-              <p className="text-[11px] text-ink-2 mt-1 font-mono">{t('spn.asOf', { date: reportDate })}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">{t('spn.asOf', { date: reportDate })}</p>
             </div>
           </div>
 
           {/* Sponsor Profile Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl bg-card p-4 border border-rule">
-            <div className="relative h-20 w-28 rounded-xl overflow-hidden border border-rule shrink-0 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-none bg-white dark:bg-slate-900 p-4 border border-slate-200 dark:border-slate-800">
+            <div className="relative h-20 w-28 rounded-none overflow-hidden border border-slate-300 dark:border-slate-700 shrink-0 shadow-2xs">
               <Image
                 src={sponsor.image}
                 alt={sponsor.title}
@@ -364,18 +364,18 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="rounded-pill bg-berry-soft px-2.5 py-0.5 text-[10px] font-extrabold text-berry-deep">
+                <span className="rounded-none bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                   {sponsor.categoryLabel}
                 </span>
-                <span className="text-xs font-bold text-ink-2 flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5 text-accent-deep" />
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5 text-slate-500" />
                   {sponsor.location}
                 </span>
               </div>
-              <h3 className="font-display text-lg font-extrabold text-ink mt-1 truncate">
+              <h3 className="font-display text-lg font-extrabold text-slate-900 dark:text-white mt-1 truncate">
                 {sponsor.title}
               </h3>
-              <p className="text-xs font-bold text-berry flex items-center gap-1 mt-0.5">
+              <p className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-0.5">
                 <BadgePercent className="h-3.5 w-3.5 shrink-0" />
                 {sponsor.discountText}
               </p>
@@ -384,78 +384,78 @@ export const SponsorReportModal: React.FC<SponsorReportModalProps> = ({
 
           {/* Key Metric Numbers */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-2xl bg-berry-soft/30 p-4 border border-berry/10">
-              <div className="flex items-center justify-between text-xs font-bold text-berry">
+            <div className="rounded-none bg-white dark:bg-slate-900 p-4 border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 <span>{t('spn.mClicks')}</span>
                 <MousePointerClick className="h-4 w-4" />
               </div>
-              <p className="td-fig mt-2 text-3xl font-extrabold text-berry">
+              <p className="td-fig mt-2 text-3xl font-extrabold text-slate-900 dark:text-white">
                 {uniqueClickCount}
-                <span className="text-xs font-bold ml-1 text-ink-2">Unique</span>
+                <span className="text-xs font-bold ml-1 text-slate-500">Unique</span>
               </p>
-              <p className="text-[11px] text-ink-2 mt-1">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                 {t('srep.totalClicks', { n: clickCount })} • {lastClickedAt ? t('srep.latestAt', { time: new Date(lastClickedAt).toLocaleTimeString(numLocale) }) : t('srep.filtered24')}
               </p>
             </div>
 
-            <div className="rounded-2xl bg-sky-soft/40 p-4 border border-sky/10">
-              <div className="flex items-center justify-between text-xs font-bold text-sky">
+            <div className="rounded-none bg-white dark:bg-slate-900 p-4 border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 <span>{t('spn.mImpr')}</span>
                 <Users className="h-4 w-4" />
               </div>
-              <p className="td-fig mt-2 text-3xl font-extrabold text-ink">
+              <p className="td-fig mt-2 text-3xl font-extrabold text-slate-900 dark:text-white">
                 {baselineImpressions.toLocaleString(numLocale)}
-                <span className="text-xs font-bold ml-1 text-ink-2">{t('spn.times')}</span>
+                <span className="text-xs font-bold ml-1 text-slate-500">{t('spn.times')}</span>
               </p>
-              <p className="text-[11px] text-ink-2 mt-1">{t('spn.mImprNote')}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{t('spn.mImprNote')}</p>
             </div>
 
-            <div className="rounded-2xl bg-leaf-soft/40 p-4 border border-leaf/10">
-              <div className="flex items-center justify-between text-xs font-bold text-leaf">
+            <div className="rounded-none bg-white dark:bg-slate-900 p-4 border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                 <span>{t('spn.mCtr')}</span>
                 <TrendingUp className="h-4 w-4" />
               </div>
-              <p className="td-fig mt-2 text-3xl font-extrabold text-leaf">
+              <p className="td-fig mt-2 text-3xl font-extrabold text-emerald-700 dark:text-emerald-400">
                 {ctrPercentage}%
               </p>
-              <p className="text-[11px] text-ink-2 mt-1">{t('spn.mCtrNote')}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{t('spn.mCtrNote')}</p>
             </div>
           </div>
 
           {/* Insights / Audience Section */}
-          <div className="rounded-2xl bg-card p-4 border border-rule space-y-2 text-xs">
-            <h4 className="font-extrabold text-ink flex items-center gap-1.5 text-xs uppercase tracking-wide">
-              <Clock className="h-3.5 w-3.5 text-accent-deep" />
+          <div className="rounded-none bg-white dark:bg-slate-900 p-4 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+            <h4 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs uppercase tracking-wider">
+              <Clock className="h-3.5 w-3.5 text-slate-700 dark:text-slate-300" />
               {t('spn.insightsTitle')}
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-ink-2">
-              <div className="rounded-xl bg-paper p-2.5">
-                <span className="font-bold text-ink block mb-0.5">{t('spn.audLabel')}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-slate-600 dark:text-slate-400">
+              <div className="rounded-none bg-slate-50 dark:bg-slate-800 p-2.5 border border-slate-200 dark:border-slate-700">
+                <span className="font-bold text-slate-900 dark:text-white block mb-0.5">{t('spn.audLabel')}</span>
                 {t('spn.audBody')}
               </div>
-              <div className="rounded-xl bg-paper p-2.5">
-                <span className="font-bold text-ink block mb-0.5">{t('spn.peakLabel')}</span>
+              <div className="rounded-none bg-slate-50 dark:bg-slate-800 p-2.5 border border-slate-200 dark:border-slate-700">
+                <span className="font-bold text-slate-900 dark:text-white block mb-0.5">{t('spn.peakLabel')}</span>
                 {t('spn.peakBody')}
               </div>
             </div>
           </div>
 
           {/* Footer note */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-rule text-[11px] text-ink-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
             <span>{t('spn.autoFooter')}</span>
             <span className="font-mono">{t('spn.idBadge', { id: sponsor.id })}</span>
           </div>
         </div>
 
         {/* Bottom Fast Action Prompt */}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 bg-sun-soft p-3.5 rounded-card">
-          <p className="text-xs font-bold text-ink">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 bg-slate-100 dark:bg-slate-800 p-3.5 rounded-none border border-slate-200 dark:border-slate-700">
+          <p className="text-xs font-bold text-slate-900 dark:text-white">
             {t('spn.adminTip')}
           </p>
           <button
             type="button"
             onClick={handleOpenLineShare}
-            className="td-btn td-pop shrink-0 rounded-pill bg-[#06C755] px-4 py-1.5 text-xs font-extrabold text-white"
+            className="shrink-0 rounded-none bg-[#06C755] hover:bg-[#05b34c] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white transition-colors cursor-pointer"
           >
             {t('spn.sendSummary')}
           </button>

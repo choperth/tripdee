@@ -59,10 +59,10 @@ export const DangerZone: React.FC<DangerZoneProps> = ({
     <>
       {/* Danger Zone Container */}
       <div
-        className={`rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/40 dark:bg-rose-950/20 p-4 sm:p-5 text-left space-y-3 ${className}`}
+        className={`rounded-none border border-rose-200 dark:border-rose-900/50 bg-rose-50/40 dark:bg-rose-950/20 p-4 sm:p-5 text-left space-y-3 ${className}`}
       >
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+          <div className="w-9 h-9 rounded-none border border-rose-300 dark:border-rose-800 bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
             <ShieldAlert className="w-5 h-5" />
           </div>
           <div className="space-y-1 flex-1 min-w-0">
@@ -70,7 +70,7 @@ export const DangerZone: React.FC<DangerZoneProps> = ({
               <h4 className="text-sm sm:text-base text-rose-900 dark:text-rose-200 font-bold">
                 {title || t('danger.title')}
               </h4>
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+              <span className="px-2 py-0.5 rounded-none text-[10px] font-bold uppercase tracking-wider bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
                 PDPA / Privacy
               </span>
             </div>
@@ -84,7 +84,7 @@ export const DangerZone: React.FC<DangerZoneProps> = ({
           <button
             type="button"
             onClick={handleOpen}
-            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 rounded-none bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-xs font-bold uppercase tracking-wider shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
             <span>{buttonLabel || t('danger.deleteBtn')}</span>
@@ -97,33 +97,33 @@ export const DangerZone: React.FC<DangerZoneProps> = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="danger-modal-title"
-          className="fixed inset-0 z-500 flex items-center justify-center p-4 bg-navy-deep/75 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-500 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in"
           onClick={() => !isDeleting && setIsOpen(false)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg rounded-3xl bg-paper-elevated dark:bg-slate-900 border border-rose-200 dark:border-rose-900/80 p-6 sm:p-7 shadow-2xl space-y-5 text-left text-ink-primary dark:text-slate-100 animate-in zoom-in-95 duration-150"
+            className="relative w-full max-w-lg rounded-none bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-6 sm:p-7 shadow-2xl space-y-5 text-left text-slate-900 dark:text-slate-100 animate-in zoom-in-95 duration-150"
           >
             {/* Close Button */}
             <button
               type="button"
               disabled={isDeleting}
               onClick={() => setIsOpen(false)}
-              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-paper-surface-muted dark:bg-slate-800 flex items-center justify-center text-ink-secondary hover:text-ink-primary transition-colors disabled:opacity-50"
+              className="absolute top-5 right-5 w-8 h-8 rounded-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
 
             {/* Header */}
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-600 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-none bg-rose-50 dark:bg-rose-950/50 border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-6 h-6" />
               </div>
               <div>
                 <h3 id="danger-modal-title" className="font-headline-md text-headline-md text-rose-600 dark:text-rose-400 font-extrabold leading-snug">
                   {t('danger.modalTitle')}
                 </h3>
-                <span className="text-[11px] font-bold text-ink-muted dark:text-slate-400">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                   {t('danger.modalSubtitle')}
                 </span>
               </div>
@@ -131,15 +131,15 @@ export const DangerZone: React.FC<DangerZoneProps> = ({
 
             {/* Target name if specified */}
             {targetName && (
-              <div className="p-3 rounded-xl bg-paper-surface-muted dark:bg-slate-800 border border-border-subtle text-xs font-bold text-navy-deep dark:text-white flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-rose-500" />
+              <div className="p-3 rounded-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-navy-deep dark:text-white flex items-center gap-2">
+                <span className="w-2 h-2 rounded-none bg-rose-500" />
                 <span>{t('danger.targetLabel')} <strong className="text-rose-600 dark:text-rose-400">{targetName}</strong></span>
               </div>
             )}
 
             {/* Warning Callout */}
-            <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-xs text-rose-800 dark:text-rose-300 leading-relaxed space-y-1">
-              <div className="font-bold flex items-center gap-1.5 text-rose-900 dark:text-rose-200">
+            <div className="p-3.5 rounded-none bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-xs text-rose-800 dark:text-rose-300 leading-relaxed space-y-1">
+              <div className="font-bold flex items-center gap-1.5 text-rose-900 dark:text-rose-200 uppercase tracking-wider text-[11px]">
                 <AlertTriangle className="w-3.5 h-3.5" />
                 <span>{t('danger.warningHeader')}</span>
               </div>
@@ -147,22 +147,22 @@ export const DangerZone: React.FC<DangerZoneProps> = ({
             </div>
 
             {/* Step 1: Checkbox confirmation */}
-            <label className="flex items-start gap-3 p-3 rounded-xl border border-border-subtle dark:border-slate-800 bg-paper-surface-muted dark:bg-slate-800/60 cursor-pointer hover:border-rose-400 transition-colors">
+            <label className="flex items-start gap-3 p-3 rounded-none border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 cursor-pointer hover:border-rose-400 transition-colors">
               <input
                 type="checkbox"
                 checked={confirmedCheck}
                 disabled={isDeleting}
                 onChange={(e) => setConfirmedCheck(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded text-rose-600 focus:ring-rose-500 cursor-pointer"
+                className="mt-0.5 w-4 h-4 rounded-none text-rose-600 focus:ring-rose-500 cursor-pointer"
               />
-              <span className="text-xs font-bold text-ink-primary dark:text-slate-200 leading-snug">
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-snug">
                 {t('danger.checkConfirm')}
               </span>
             </label>
 
             {/* Step 2: Typing verification */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-ink-muted dark:text-slate-400">
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 {t('danger.typeToConfirm', { word: requiredWord })}
               </label>
               <input
@@ -171,23 +171,23 @@ export const DangerZone: React.FC<DangerZoneProps> = ({
                 value={typedWord}
                 onChange={(e) => setTypedWord(e.target.value)}
                 placeholder={requiredWord}
-                className="w-full h-11 px-3 bg-paper-surface-muted dark:bg-slate-800 rounded-xl border border-border-subtle dark:border-slate-700 text-sm font-bold text-ink-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+                className="w-full h-11 px-3 bg-white dark:bg-slate-800 rounded-none border border-slate-300 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-rose-500"
               />
             </div>
 
             {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-100 text-rose-700 text-xs font-bold">
+              <div className="p-3 rounded-none bg-rose-100 text-rose-700 border border-rose-300 text-xs font-bold">
                 {errorMsg}
               </div>
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-subtle dark:border-slate-800">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 disabled={isDeleting}
                 onClick={() => setIsOpen(false)}
-                className="px-4 py-2.5 rounded-xl border border-border-subtle text-ink-secondary dark:text-slate-300 text-xs sm:text-sm font-bold hover:bg-paper-surface-muted dark:hover:bg-slate-800 transition-colors"
+                className="px-4 py-2.5 rounded-none border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 {t('danger.cancelBtn')}
               </button>
@@ -196,7 +196,7 @@ export const DangerZone: React.FC<DangerZoneProps> = ({
                 type="button"
                 disabled={!canProceed || isDeleting}
                 onClick={handleConfirm}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:hover:bg-rose-600 text-white text-xs sm:text-sm font-extrabold shadow-sm transition-all flex items-center gap-2"
+                className="px-5 py-2.5 rounded-none bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:hover:bg-rose-600 text-white text-xs font-bold uppercase tracking-wider shadow-xs transition-all flex items-center gap-2 cursor-pointer"
               >
                 {isDeleting ? (
                   <>

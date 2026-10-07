@@ -164,7 +164,7 @@ export const DriverBusinessCardView: React.FC<DriverBusinessCardViewProps> = ({
     TITLE:Chauffeur / Van Operator ${driverCode}
     TEL;TYPE=CELL:${cleanPhone}
     NOTE:${notes}
-    URL:${typeof window !== 'undefined' ? window.location.href : 'https://tripdee.co'}
+    URL:${publicCardUrl}
     END:VCARD`;
 
     const blob = new Blob([vcardContent], { type: 'text/vcard;charset=utf-8;' });
@@ -176,30 +176,32 @@ export const DriverBusinessCardView: React.FC<DriverBusinessCardViewProps> = ({
     document.body.removeChild(link);
   };
 
-  // A real, scannable code. The previous inline SVG was decorative artwork,
-  // so scanning it did nothing.
-  const qrSvgPath = (() => {
-    const cardUrl =
-      typeof window !== 'undefined'
-        ? window.location.href
-        : `https://tripdee.co/driver/card?vehicleId=${vehicle.id}`;
+  const publicCardUrl = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/driver/card?id=${encodeURIComponent(vehicle.id)}`;
+    }
+    return `https://tripdee.co/driver/card?id=${encodeURIComponent(vehicle.id)}`;
+  }, [vehicle.id]);
+
+  // A real, scannable code pointing directly to this driver's digital card.
+  const qrSvgPath = useMemo(() => {
     try {
-      return renderQrSvgPath(generateQrMatrix(cardUrl));
+      return renderQrSvgPath(generateQrMatrix(publicCardUrl));
     } catch {
       return null;
     }
-  })();
+  }, [publicCardUrl]);
 
   const handleCopyLink = () => {
     if (typeof window === 'undefined') return;
-    navigator.clipboard.writeText(window.location.href);
+    navigator.clipboard.writeText(publicCardUrl);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
   const handleShareLine = () => {
     if (typeof window === 'undefined') return;
-    const shareUrl = encodeURIComponent(window.location.href);
+    const shareUrl = encodeURIComponent(publicCardUrl);
     window.open(`https://social-plugins.line.me/lineit/share?url=${shareUrl}`, '_blank');
   };
 

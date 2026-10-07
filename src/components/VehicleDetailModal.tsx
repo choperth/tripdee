@@ -42,7 +42,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className="relative flex flex-col w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-3xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 shadow-2xl text-ink-primary dark:text-slate-100"
+        className="relative flex flex-col w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-none bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 shadow-2xl text-slate-900 dark:text-slate-100"
       >
         <VehicleDetailView
           vehicle={vehicle}

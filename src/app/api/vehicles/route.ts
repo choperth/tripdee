@@ -91,10 +91,10 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Single vehicle lookup, used by the driver's portal to hydrate the form.
-    const singleId = url.searchParams.get('id');
+    // Single vehicle lookup, used by the driver's portal to hydrate the form and driver card.
+    const singleId = url.searchParams.get('id') || url.searchParams.get('vehicleId');
     if (singleId) {
-      const vehicle = await fetchVehicleById(singleId);
+      const vehicle = await fetchVehicleById(singleId, req.url);
       const isAdmin = verifyAdminAccess(req);
       const isOwner = Boolean(
         session && vehicle?.ownerId && vehicle.ownerId === session.userId
@@ -102,7 +102,8 @@ export async function GET(req: NextRequest) {
       if (!vehicle) {
         return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 });
       }
-      if (!isAdmin && !isOwner && vehicle.approvalStatus !== 'approved') {
+      const isHidden = vehicle.approvalStatus === 'pending' || vehicle.approvalStatus === 'rejected';
+      if (!isAdmin && !isOwner && isHidden) {
         return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 });
       }
       return NextResponse.json({ success: true, vehicle });

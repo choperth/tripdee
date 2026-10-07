@@ -64,7 +64,7 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-400 flex items-center justify-center overflow-y-auto bg-navy-deep/80 backdrop-blur-sm p-3 sm:p-5 animate-fade-in"
+      className="fixed inset-0 z-400 flex items-center justify-center overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-3 sm:p-5 animate-fade-in"
       onClick={onClose}
       role="presentation"
     >
@@ -74,12 +74,12 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
         aria-modal="true"
         aria-labelledby="fleet-modal-title"
         onClick={(e) => e.stopPropagation()}
-        className="relative flex flex-col w-full max-w-3xl max-h-[90vh] rounded-3xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 shadow-2xl text-ink-primary dark:text-slate-100 overflow-hidden"
+        className="relative flex flex-col w-full max-w-3xl max-h-[90vh] rounded-none bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 shadow-2xl text-ink-primary dark:text-slate-100 overflow-hidden"
       >
         {/* Header Bar */}
-        <div className="flex items-center justify-between p-4 sm:p-5 bg-navy-deep text-white border-b border-navy-surface">
+        <div className="flex items-center justify-between p-4 sm:p-5 bg-slate-900 text-white border-b border-slate-800">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-blue-500/20 border border-blue-400/40 text-white font-bold text-xl flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-none bg-slate-800 border border-slate-700 text-white font-bold text-xl flex items-center justify-center shrink-0">
               {publicDriverName.charAt(0)}
             </div>
             <div className="min-w-0">
@@ -87,12 +87,12 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
                 <h2 id="fleet-modal-title" className="font-headline-md text-lg sm:text-xl font-bold text-white truncate">
                   {publicDriverName}
                 </h2>
-                <span className="px-2 py-0.5 rounded-full bg-blue-500/30 text-blue-200 text-xs font-semibold flex items-center gap-1 border border-blue-400/30">
+                <span className="px-2 py-0.5 rounded-none bg-slate-800 text-slate-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border border-slate-700">
                   <span className="material-symbols-outlined text-[14px]">garage_home</span>
                   <span>{t('fleet.count', { n: fleetVehicles.length })}</span>
                 </span>
                 {leadVehicle.isVerified && (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500/30 text-amber-200 text-xs font-semibold flex items-center gap-1 border border-amber-400/40">
+                  <span className="px-2 py-0.5 rounded-none bg-amber-400/20 text-amber-300 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border border-amber-400/40">
                     <span className="material-symbols-outlined text-[14px] text-amber-300">star</span>
                     <span>{t('fleet.verified')}</span>
                   </span>
@@ -108,16 +108,16 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label={t('auth.close')}
-            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-2"
+            className="w-8 h-8 rounded-none border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-2"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Fleet Description Subhead */}
-        <div className="px-4 sm:px-6 py-3 bg-blue-50/70 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900/50 flex items-center justify-between gap-3 text-xs sm:text-sm text-blue-900 dark:text-blue-200">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[18px]">verified</span>
+        <div className="px-4 sm:px-6 py-2.5 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 text-xs sm:text-sm text-slate-800 dark:text-slate-200">
+          <div className="flex items-center gap-2 font-medium">
+            <span className="material-symbols-outlined text-slate-900 dark:text-white text-[18px]">verified</span>
             <span>{t('fleet.trustNote')}</span>
           </div>
           <div className="flex items-center gap-1 text-amber-500 shrink-0 font-bold">
@@ -145,11 +145,11 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
               return (
                 <div
                   key={vehicle.id}
-                  className="rounded-2xl border border-border-subtle dark:border-slate-800 bg-paper-canvas dark:bg-slate-800/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+                  className="rounded-none border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 overflow-hidden shadow-2xs hover:border-slate-400 dark:hover:border-slate-600 transition-colors flex flex-col justify-between"
                 >
                   <div>
                     {/* Thumbnail Image */}
-                    <div className="relative h-40 w-full overflow-hidden bg-navy-deep group cursor-pointer" onClick={() => { onSelectVehicleDetail(vehicle); onClose(); }}>
+                    <div className="relative h-40 w-full overflow-hidden bg-slate-950 group cursor-pointer" onClick={() => { onSelectVehicleDetail(vehicle); onClose(); }}>
                       {vehicle.images?.[0] ? (
                         <Image
                           src={vehicle.images[0]}
@@ -165,17 +165,17 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
                           </span>
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/80 via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
                       <div className="absolute top-2 left-2 flex items-center gap-1">
-                        <span className="px-2 py-0.5 rounded bg-navy-deep/90 text-white text-[11px] font-bold">
+                        <span className="px-2 py-0.5 rounded-none bg-slate-900/90 text-white text-[10px] font-bold uppercase tracking-wider">
                           {t('vehicle.seats', { n: vehicle.seats })}
                         </span>
                         {vehicle.plateType === 'yellow' ? (
-                          <span className="px-2 py-0.5 rounded bg-amber-400 text-amber-950 text-[11px] font-bold">
+                          <span className="px-2 py-0.5 rounded-none bg-amber-400 text-amber-950 text-[10px] font-black uppercase tracking-wider">
                             {t('hero.quickYellow')}
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded bg-blue-600 text-white text-[11px] font-bold">
+                          <span className="px-2 py-0.5 rounded-none bg-slate-700 text-white text-[10px] font-bold uppercase tracking-wider">
                             {t('fleet.plateBlue')}
                           </span>
                         )}
@@ -197,7 +197,7 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
                     <div className="p-3.5 space-y-2">
                       <h3
                         onClick={() => { onSelectVehicleDetail(vehicle); onClose(); }}
-                        className="font-bold text-sm text-navy-deep dark:text-white line-clamp-2 hover:text-blue-action cursor-pointer"
+                        className="font-bold text-sm text-navy-deep dark:text-white line-clamp-2 hover:underline cursor-pointer"
                       >
                         {vehicleTitle(vehicle, locale)}
                       </h3>
@@ -207,7 +207,7 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
                         {vehicleAmenities(vehicle, locale).slice(0, 2).map((amenity) => (
                           <span
                             key={amenity}
-                            className="px-2 py-0.5 rounded-md bg-paper-surface-muted dark:bg-slate-700/60 text-ink-secondary dark:text-slate-300 text-[11px] truncate max-w-[180px]"
+                            className="px-2 py-0.5 rounded-none bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase truncate max-w-[180px] border border-slate-200 dark:border-slate-700"
                           >
                             ✓ {amenity}
                           </span>
@@ -224,7 +224,7 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
                         onSelectVehicleDetail(vehicle);
                         onClose();
                       }}
-                      className="w-full h-9 rounded-xl bg-blue-action/10 dark:bg-blue-400/20 hover:bg-blue-action hover:text-white dark:hover:bg-blue-500 text-blue-action dark:text-blue-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      className="w-full h-9 rounded-none bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold text-xs uppercase tracking-wider border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                       <span>{t('fleet.viewSpec')}</span>
@@ -234,7 +234,7 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
                       <a
                         href={`tel:${vehicle.driverPhone}`}
                         onClick={() => handleCall(vehicle)}
-                        className="h-8 rounded-lg bg-navy-deep hover:bg-navy-surface text-white text-xs font-bold flex items-center justify-center gap-1 shadow-xs"
+                        className="h-8 rounded-none bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1 shadow-xs"
                       >
                         <Phone className="w-3 h-3" />
                         <span>{t('fleet.callDirect')}</span>
@@ -243,7 +243,7 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
                         href={vehicle.driverLine}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="h-8 rounded-lg bg-line-green hover:bg-line-green-hover text-white text-xs font-bold flex items-center justify-center gap-1 shadow-xs"
+                        className="h-8 rounded-none bg-[#06C755] hover:bg-[#05B04B] text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1 shadow-xs"
                       >
                         <MessageSquare className="w-3 h-3" />
                         <span>{t('vehicle.lineChat')}</span>
@@ -257,12 +257,12 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
         </div>
 
         {/* Footer with Filter Shortcut */}
-        <div className="p-3 sm:p-4 bg-paper-canvas dark:bg-slate-800/90 border-t border-border-subtle dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+        <div className="p-3 sm:p-4 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
           {onFilterFleetOnHome && (
             <button
               type="button"
               onClick={handleFilterHome}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-action hover:underline cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white hover:underline cursor-pointer"
             >
               <Users className="w-3.5 h-3.5" />
               <span>{t('fleet.showOnly', { name: publicDriverName })}</span>
@@ -272,7 +272,7 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="ml-auto px-4 py-2 rounded-xl bg-paper-surface-muted hover:bg-border-subtle dark:bg-slate-700 dark:hover:bg-slate-600 text-ink-primary dark:text-white text-xs font-bold transition-colors cursor-pointer"
+            className="ml-auto px-4 py-2 rounded-none bg-white hover:bg-slate-100 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
           >
             {t('auth.close')}
           </button>

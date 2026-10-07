@@ -9,6 +9,7 @@ import { compressImage } from '@/lib/imageCompression';
 import { fetchVehicleReviews, calculateReviewStats, Review } from '@/lib/reviewsStore';
 import { Vehicle } from '@/data/mockData';
 import { toISODateString, generateDateRange } from '@/lib/availabilityUtils';
+import { DriverSmartECardModal } from '@/components/cards/DriverSmartECardModal';
 
 export interface DriverPortalContentProps {
   isModal?: boolean;
@@ -31,6 +32,7 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   const [saveError, setSaveError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [showECardModal, setShowECardModal] = useState(false);
 
   // Form states initialized from user.
   // No demo fallbacks: a brand-new driver must start from a blank form, not
@@ -178,7 +180,7 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
 
   if (!user) {
     return (
-      <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md mx-auto my-12">
+      <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none max-w-md mx-auto my-12 shadow-sm">
         <span className="material-symbols-outlined text-[48px] text-amber-500 mb-2">lock</span>
         <h2 className="text-base font-bold text-slate-950 dark:text-white mb-1">กรุณาเข้าสู่ระบบ</h2>
         <p className="text-xs text-slate-500 mb-4">เข้าสู่ระบบบัญชีคนขับเพื่อจัดการข้อมูล ยานพาหนะ และคิวงานของคุณ</p>
@@ -186,14 +188,14 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-slate-950 text-white text-xs font-bold rounded-xl cursor-pointer"
+            className="px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold rounded-none cursor-pointer transition-colors"
           >
             ปิดหน้าต่าง
           </button>
         ) : (
           <Link
             href="/"
-            className="inline-flex px-4 py-2 bg-slate-950 text-white text-xs font-bold rounded-xl"
+            className="inline-flex px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold rounded-none transition-colors"
           >
             กลับหน้าหลัก
           </Link>
@@ -485,49 +487,63 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
                 </div>
               </div>
 
-              {/* Master Availability Toggle Switch */}
-              <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200 dark:border-slate-700 shrink-0">
-                <div className="flex flex-col text-right">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white">
-                    สถานะการรับงาน
-                  </span>
-                  <span
-                    className={`text-xs font-bold ${
-                      isAvailable ? 'text-[#06C755]' : 'text-slate-500'
-                    }`}
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                {ownVehicle && (
+                  <button
+                    type="button"
+                    onClick={() => setShowECardModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    title="เปิดดูนามบัตรดิจิทัลและ QR Code ของคุณ (Digital Business Card)"
                   >
-                    {isTogglingAvailability
-                      ? 'กำลังบันทึก...'
-                      : !ownVehicle
-                        ? 'ยังไม่มีข้อมูลรถที่บันทึกไว้'
-                        : !isAvailable
-                          ? 'พักงานชั่วคราว'
-                          : isListed
-                            ? 'พร้อมรับงาน (แสดงในผลค้นหา)'
-                            : 'พร้อมรับงาน (รออนุมัติรถก่อนแสดงผล)'}
-                  </span>
-                  {availabilityError && (
-                    <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 mt-0.5">
-                      {availabilityError}
+                    <span className="material-symbols-outlined text-[18px]">contact_phone</span>
+                    <span>นามบัตรดิจิทัลของฉัน</span>
+                  </button>
+                )}
+
+                {/* Master Availability Toggle Switch */}
+                <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200 dark:border-slate-700">
+                  <div className="flex flex-col text-right">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                      สถานะการรับงาน
                     </span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  aria-pressed={isAvailable}
-                  onClick={handleToggleAvailability}
-                  disabled={isTogglingAvailability || !ownVehicle}
-                  className={`relative inline-flex h-8 w-16 items-center transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer disabled:opacity-60 ${
-                    isAvailable ? 'bg-[#06C755]' : 'bg-slate-400 dark:bg-slate-600'
-                  }`}
-                  title="คลิกเพื่อสลับสถานะ ว่าง/พักงาน"
-                >
-                  <span
-                    className={`inline-block h-6 w-6 transform bg-white transition-transform shadow-xs ${
-                      isAvailable ? 'translate-x-9' : 'translate-x-1'
+                    <span
+                      className={`text-xs font-bold ${
+                        isAvailable ? 'text-[#06C755]' : 'text-slate-500'
+                      }`}
+                    >
+                      {isTogglingAvailability
+                        ? 'กำลังบันทึก...'
+                        : !ownVehicle
+                          ? 'ยังไม่มีข้อมูลรถที่บันทึกไว้'
+                          : !isAvailable
+                            ? 'พักงานชั่วคราว'
+                            : isListed
+                              ? 'พร้อมรับงาน (แสดงในผลค้นหา)'
+                              : 'พร้อมรับงาน (รออนุมัติรถก่อนแสดงผล)'}
+                    </span>
+                    {availabilityError && (
+                      <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 mt-0.5">
+                        {availabilityError}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    aria-pressed={isAvailable}
+                    onClick={handleToggleAvailability}
+                    disabled={isTogglingAvailability || !ownVehicle}
+                    className={`relative inline-flex h-8 w-16 items-center transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer disabled:opacity-60 ${
+                      isAvailable ? 'bg-[#06C755]' : 'bg-slate-400 dark:bg-slate-600'
                     }`}
-                  />
-                </button>
+                    title="คลิกเพื่อสลับสถานะ ว่าง/พักงาน"
+                  >
+                    <span
+                      className={`inline-block h-6 w-6 transform bg-white transition-transform shadow-xs ${
+                        isAvailable ? 'translate-x-9' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1759,6 +1775,15 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Driver Smart E-Card Modal */}
+          {showECardModal && ownVehicle && (
+            <DriverSmartECardModal
+              vehicle={ownVehicle}
+              isOpen={showECardModal}
+              onClose={() => setShowECardModal(false)}
+            />
           )}
         </div>
       </div>

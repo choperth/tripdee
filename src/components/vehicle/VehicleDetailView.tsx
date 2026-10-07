@@ -161,13 +161,13 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
     <div className="flex flex-col w-full text-ink-primary dark:text-slate-100">
       {/* Top Header Bar */}
       {isModal ? (
-        <div className="sticky top-0 z-30 flex items-center justify-between px-space-md py-space-xs bg-paper-elevated/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-border-subtle dark:border-slate-800">
-          <div className="flex items-center gap-1.5 sm:gap-2 text-body-subtext font-body-subtext text-ink-muted dark:text-slate-400 min-w-0">
+        <div className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-5 py-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-slate-500 dark:text-slate-400 min-w-0">
             <span className="shrink-0">{t('detail.breadcrumbHome')}</span>
             <ChevronRight className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate max-w-[80px] sm:max-w-none">{shortLocation}</span>
             <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-            <span className="text-navy-deep dark:text-white font-bold truncate">
+            <span className="text-slate-950 dark:text-white font-bold truncate">
               {publicName}
             </span>
           </div>
@@ -176,30 +176,30 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
             type="button"
             onClick={onClose}
             aria-label={t('auth.close')}
-            className="w-8 h-8 rounded-full bg-paper-surface-muted dark:bg-slate-800 flex items-center justify-center text-ink-secondary hover:text-ink-primary hover:bg-surface-variant transition-colors cursor-pointer shrink-0 ml-2"
+            className="w-8 h-8 rounded-none border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer shrink-0 ml-2"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       ) : (
-        <div className="flex items-center justify-between text-xs text-ink-2 mb-4">
+        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-4">
           <div className="flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap">
-            <Link href="/" className="hover:text-ink font-semibold">
+            <Link href="/" className="hover:text-slate-950 dark:hover:text-white font-semibold">
               {t('detail.breadcrumbHome')}
             </Link>
             <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-            <Link href="/" className="hover:text-ink font-semibold">
+            <Link href="/" className="hover:text-slate-950 dark:hover:text-white font-semibold">
               {t('nav.van')}
             </Link>
             <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-            <span className="font-bold text-ink truncate">{title}</span>
+            <span className="font-bold text-slate-950 dark:text-white truncate">{title}</span>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0 ml-3">
             <button
               type="button"
               onClick={handleShare}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-rule bg-card hover:bg-paper transition-colors cursor-pointer"
+              className="flex h-8 w-8 items-center justify-center rounded-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               title="แชร์ลิงก์"
             >
               <Share2 className="h-3.5 w-3.5" />
@@ -207,8 +207,10 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
             <button
               type="button"
               onClick={() => setIsBookmarked(!isBookmarked)}
-              className={`flex h-8 w-8 items-center justify-center rounded-full border border-rule transition-colors cursor-pointer ${
-                isBookmarked ? 'bg-rose-50 text-rose-500' : 'bg-card hover:bg-paper'
+              className={`flex h-8 w-8 items-center justify-center rounded-none border transition-colors cursor-pointer ${
+                isBookmarked
+                  ? 'bg-amber-400 text-slate-950 border-amber-500'
+                  : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
               title="บันทึก"
             >
@@ -219,63 +221,63 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
       )}
 
       {/* Main Body Content */}
-      <div className={isModal ? 'p-space-md lg:p-space-xl space-y-space-lg' : 'space-y-space-lg'}>
-        {/* Top Guarantee Strip & Badges Bar (Stitch Redesign) */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md pb-space-sm border-b border-border-subtle/70 dark:border-slate-800">
+      <div className={isModal ? 'p-4 sm:p-6 lg:p-7 space-y-6' : 'space-y-6'}>
+        {/* Top Guarantee Strip & Badges Bar (Bauhaus Redesign) */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <div className="flex flex-wrap items-center gap-space-xs mb-space-2xs">
+            <div className="flex flex-wrap items-center gap-1.5 mb-2">
               {isSelfDrive ? (
-                <span className="inline-flex items-center gap-space-2xs bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-space-xs py-[2px] rounded font-label-badge text-label-badge font-bold">
+                <span className="inline-flex items-center gap-1 bg-indigo-700 text-white text-[10px] font-black px-2 py-0.5 border border-indigo-800 uppercase rounded-none">
                   <Car className="w-3 h-3" />
                   <span>{t('detail.selfDriveBadge')}</span>
                 </span>
               ) : vehicle.plateType === 'yellow' ? (
-                <span className="inline-flex items-center gap-space-2xs bg-taxi-yellow-soft text-on-tertiary-fixed-variant dark:bg-amber-950/70 dark:text-amber-300 px-space-xs py-[2px] rounded font-label-badge text-label-badge font-bold border border-amber-300/40">
-                  <span className="material-symbols-outlined text-[13px] text-amber-accent">
+                <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 border border-amber-500 uppercase rounded-none">
+                  <span className="material-symbols-outlined text-[13px] text-slate-950">
                     local_taxi
                   </span>
                   <span>{t('detail.yellowPlateLong')}</span>
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-space-2xs bg-blue-subtle text-blue-action dark:bg-blue-950 dark:text-blue-300 px-space-xs py-[2px] rounded font-label-badge text-label-badge font-bold">
+                <span className="inline-flex items-center gap-1 bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 border border-slate-900 rounded-none">
                   <span>{t('vehicle.bluePlate')}</span>
                 </span>
               )}
 
               {vehicle.isVerified ? (
-                <span className="inline-flex items-center gap-space-2xs bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 px-space-xs py-[2px] rounded font-label-badge text-label-badge font-black shadow-xs border border-amber-300">
-                  <span className="material-symbols-outlined text-[13px] text-slate-950 font-bold">star</span>
+                <span className="inline-flex items-center gap-1 bg-slate-900 text-amber-400 text-[10px] font-black px-2 py-0.5 border border-slate-900 uppercase rounded-none">
+                  <span className="material-symbols-outlined text-[13px] text-amber-400 font-bold">star</span>
                   <span>{t('detail.featuredBadge')}</span>
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-space-2xs bg-blue-subtle text-blue-action dark:bg-blue-950/70 dark:text-blue-300 px-space-xs py-[2px] rounded font-label-badge text-label-badge font-bold">
+                <span className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold px-2 py-0.5 border border-slate-200 dark:border-slate-700 rounded-none">
                   <span>{t('detail.standardListing')}</span>
                 </span>
               )}
 
-              <span className="inline-flex items-center gap-space-2xs bg-blue-subtle text-blue-action dark:bg-blue-950/60 dark:text-blue-300 px-space-xs py-[2px] rounded font-label-badge text-label-badge font-bold">
+              <span className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold px-2 py-0.5 border border-slate-200 dark:border-slate-700 rounded-none">
                 <span className="material-symbols-outlined text-[13px]">handshake</span>
                 <span>{t('detail.zeroCommission')}</span>
               </span>
             </div>
 
-            <h1 className="font-headline-xl text-headline-xl text-navy-deep dark:text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-950 dark:text-white tracking-tight">
               {title}
             </h1>
 
-            <div className="flex items-center flex-wrap gap-space-md text-body-subtext font-body-subtext text-ink-secondary dark:text-slate-300 mt-space-2xs">
+            <div className="flex items-center flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400 mt-2">
               <a
                 href="#vehicle-reviews"
                 onClick={(e) => {
                   e.preventDefault();
                   document.getElementById('vehicle-reviews')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="flex items-center gap-space-2xs hover:opacity-80 transition-opacity cursor-pointer group"
+                className="flex items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer group"
               >
-                <span className="material-symbols-outlined text-[16px] text-amber-accent">
+                <span className="material-symbols-outlined text-[16px] text-amber-500">
                   star
                 </span>
-                <strong className="text-navy-deep dark:text-white font-body-medium group-hover:underline">
+                <strong className="text-slate-950 dark:text-white font-bold group-hover:underline">
                   {hasRating ? vehicle.rating : '—'}
                 </strong>
                 <span className="group-hover:underline">
@@ -283,25 +285,25 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 </span>
               </a>
               <span>•</span>
-              <span className="flex items-center gap-space-2xs">
-                <span className="material-symbols-outlined text-[16px] text-ink-muted">
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[16px] text-slate-400">
                   pin_drop
                 </span>
                 <span>{t('detail.basedAt')} {location}</span>
               </span>
               <span>•</span>
-              <span className="flex items-center gap-space-2xs text-verified-emerald">
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
                 <span className="material-symbols-outlined text-[16px]">shield_with_heart</span>
                 <span>{t('detail.insuranceFull')}</span>
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-space-xs self-start md:self-center shrink-0">
+          <div className="flex items-center gap-2 self-start md:self-center shrink-0">
             <button
               type="button"
               onClick={() => setShowECardModal(true)}
-              className="inline-flex items-center gap-space-2xs px-space-md py-space-xs bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant rounded-xl font-body-medium text-body-medium transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-none border border-slate-300 dark:border-slate-700 text-xs font-bold transition-colors shadow-2xs cursor-pointer"
               title={t('vdm.ecardTitle')}
             >
               <QrCode className="w-4 h-4 text-amber-500" />
@@ -310,10 +312,10 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
             <button
               type="button"
               onClick={() => setIsBookmarked(!isBookmarked)}
-              className={`inline-flex items-center gap-space-2xs px-space-md py-space-xs rounded-xl font-body-medium text-body-medium transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none border text-xs font-bold transition-colors shadow-2xs cursor-pointer ${
                 isBookmarked
-                  ? 'bg-amber-accent text-white shadow-sm'
-                  : 'bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant'
+                  ? 'bg-amber-400 text-slate-950 border-amber-500'
+                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
               <Bookmark className="w-4 h-4" />
@@ -322,7 +324,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
             <button
               type="button"
               onClick={handleShare}
-              className="inline-flex items-center gap-space-2xs px-space-md py-space-xs bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 hover:bg-surface-variant rounded-xl font-body-medium text-body-medium transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-none border border-slate-300 dark:border-slate-700 text-xs font-bold transition-colors shadow-2xs cursor-pointer"
             >
               <Share2 className="w-4 h-4" />
               <span>{sharedToast ? t('detail.shared') : t('detail.share')}</span>
@@ -332,9 +334,9 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
 
         {/* Photo Gallery Bento Layout */}
         {galleryImages.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-space-sm rounded-2xl overflow-hidden shadow-sm">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 rounded-none border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xs">
             {/* Large Feature Photo */}
-            <div className="col-span-2 md:col-span-2 md:row-span-2 relative h-56 sm:h-64 md:h-[380px] bg-navy-deep group overflow-hidden">
+            <div className="col-span-2 md:col-span-2 md:row-span-2 relative h-56 sm:h-64 md:h-[380px] bg-slate-900 group overflow-hidden">
               <Image
                 src={galleryImages[0]}
                 alt={title}
@@ -343,19 +345,19 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/80 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-space-md left-space-md text-surface flex flex-col gap-1 pointer-events-none">
-                <span className="bg-navy-deep/80 backdrop-blur-md px-space-xs py-1 rounded text-surface font-label-badge text-label-badge w-fit">
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-3 left-3 text-white flex flex-col gap-1 pointer-events-none">
+                <span className="bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded-none text-white text-[10px] font-black uppercase tracking-wider w-fit border border-slate-700">
                   {t('detail.cabinCaption', { n: vehicle.seats })}
                 </span>
-                <p className="font-title-card text-title-card font-bold text-surface">
+                <p className="font-bold text-sm sm:text-base text-white">
                   {publicName}
                 </p>
               </div>
             </div>
 
             {/* Grid Photo 2 */}
-            <div className="relative h-40 md:h-[185px] overflow-hidden group bg-ink-primary">
+            <div className="relative h-40 md:h-[185px] overflow-hidden group bg-slate-900">
               <Image
                 src={galleryImages[1] || galleryImages[0]}
                 alt={t('detail.photoInteriorAlt')}
@@ -363,13 +365,13 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 sizes="(max-width: 768px) 100vw, 25vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <span className="absolute top-space-xs left-space-xs bg-navy-deep/80 backdrop-blur-md text-surface font-label-badge text-[10px] px-space-xs py-0.5 rounded">
+              <span className="absolute top-2 left-2 bg-slate-950/85 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-none border border-slate-700 uppercase">
                 {t('detail.capKaraoke')}
               </span>
             </div>
 
             {/* Grid Photo 3 */}
-            <div className="relative h-40 md:h-[185px] overflow-hidden group bg-ink-primary">
+            <div className="relative h-40 md:h-[185px] overflow-hidden group bg-slate-900">
               <Image
                 src={galleryImages[0]}
                 alt={t('detail.photoExteriorAlt')}
@@ -377,13 +379,13 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 sizes="(max-width: 768px) 100vw, 25vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <span className="absolute top-space-xs left-space-xs bg-taxi-yellow-soft text-on-tertiary-fixed-variant font-label-badge text-[10px] px-space-xs py-0.5 rounded font-bold">
+              <span className="absolute top-2 left-2 bg-amber-400 text-slate-950 text-[10px] px-2 py-0.5 rounded-none font-black border border-amber-500 uppercase">
                 {vehicle.plateNumber ? maskPlateNumber(vehicle.plateNumber) : t('detail.plateLegal')}
               </span>
             </div>
 
             {/* Grid Photo 4 */}
-            <div className="relative h-40 md:h-[185px] overflow-hidden group bg-ink-primary">
+            <div className="relative h-40 md:h-[185px] overflow-hidden group bg-slate-900">
               <Image
                 src={galleryImages[1] || galleryImages[0]}
                 alt={t('detail.photoChargeAlt')}
@@ -391,13 +393,13 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 sizes="(max-width: 768px) 100vw, 25vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <span className="absolute top-space-xs left-space-xs bg-navy-deep/80 backdrop-blur-md text-surface font-label-badge text-[10px] px-space-xs py-0.5 rounded">
+              <span className="absolute top-2 left-2 bg-slate-950/85 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-none border border-slate-700 uppercase">
                 {t('detail.capCharge')}
               </span>
             </div>
 
             {/* Grid Photo 5 with View All overlay */}
-            <div className="relative h-40 md:h-[185px] overflow-hidden group bg-navy-deep">
+            <div className="relative h-40 md:h-[185px] overflow-hidden group bg-slate-900">
               <Image
                 src={galleryImages[0]}
                 alt={t('detail.viewAllPhotos', { n: galleryImages.length })}
@@ -405,14 +407,14 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 sizes="(max-width: 768px) 100vw, 25vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-navy-deep/60 hover:bg-navy-deep/75 transition-colors flex items-center justify-center gap-space-xs text-surface font-body-medium text-body-medium">
-                <span className="material-symbols-outlined text-[20px]">photo_library</span>
+              <div className="absolute inset-0 bg-slate-950/60 hover:bg-slate-950/75 transition-colors flex items-center justify-center gap-1.5 text-white font-bold text-xs sm:text-sm">
+                <span className="material-symbols-outlined text-[18px]">photo_library</span>
                 <span>{t('detail.viewAllPhotos', { n: galleryImages.length })}</span>
               </div>
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 p-space-lg text-center">
+          <div className="rounded-none border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 p-6 text-center">
             <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 text-[32px]">
               photo_library
             </span>
@@ -424,108 +426,108 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
         )}
 
         {/* Main Content & Sticky Rail (8 Cols left, 4 Cols right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column: Specs, Driver Dossier, Amenities, Policies (8 cols) */}
-          <div className="lg:col-span-8 flex flex-col gap-space-xl">
+          <div className="lg:col-span-8 flex flex-col gap-6">
             {/* Vehicle Core Highlights */}
-            <section className="bg-paper-canvas dark:bg-slate-800/60 p-space-lg rounded-2xl border border-border-subtle dark:border-slate-700/70 space-y-space-md">
+            <section className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-none border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-blue-action font-label-badge text-label-badge uppercase tracking-wider">
+                  <span className="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">
                     {t('detail.eyebrowSpecs')}
                   </span>
-                  <h2 className="font-headline-lg text-headline-lg text-navy-deep dark:text-white mt-1">
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-950 dark:text-white mt-0.5">
                     {t('detail.specsTitle')}
                   </h2>
                 </div>
-                <span className="px-space-md py-space-xs rounded-full bg-blue-subtle text-blue-action font-bold text-headline-md">
+                <span className="px-3 py-1 rounded-none bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-sm uppercase tracking-wider">
                   {t('vehicle.seats', { n: vehicle.seats })}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-space-sm">
-                <div className="p-space-sm bg-paper-elevated dark:bg-slate-900 rounded-xl flex flex-col gap-1 border border-border-subtle/70 dark:border-slate-800">
-                  <span className="material-symbols-outlined text-blue-action text-[22px]">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-none flex flex-col gap-1 border border-slate-200 dark:border-slate-700">
+                  <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[20px]">
                     airline_seat_recline_extra
                   </span>
-                  <span className="text-ink-muted dark:text-slate-400 font-body-subtext">{t('detail.seatingPlan')}</span>
-                  <span className="text-navy-deep dark:text-white font-title-card">{t('detail.vipSeats', { n: vehicle.seats })}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px]">{t('detail.seatingPlan')}</span>
+                  <span className="text-slate-950 dark:text-white font-bold text-sm">{t('detail.vipSeats', { n: vehicle.seats })}</span>
                 </div>
 
-                <div className="p-space-sm bg-paper-elevated dark:bg-slate-900 rounded-xl flex flex-col gap-1 border border-border-subtle/70 dark:border-slate-800">
-                  <span className="material-symbols-outlined text-blue-action text-[22px]">speed</span>
-                  <span className="text-ink-muted dark:text-slate-400 font-body-subtext">{t('detail.engineLabel')}</span>
-                  <span className="text-navy-deep dark:text-white font-title-card">2.8 GD Diesel Turbo</span>
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-none flex flex-col gap-1 border border-slate-200 dark:border-slate-700">
+                  <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[20px]">speed</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px]">{t('detail.engineLabel')}</span>
+                  <span className="text-slate-950 dark:text-white font-bold text-sm">2.8 GD Diesel Turbo</span>
                 </div>
 
-                <div className="p-space-sm bg-paper-elevated dark:bg-slate-900 rounded-xl flex flex-col gap-1 border border-border-subtle/70 dark:border-slate-800">
-                  <span className="material-symbols-outlined text-blue-action text-[22px]">luggage</span>
-                  <span className="text-ink-muted dark:text-slate-400 font-body-subtext">{t('detail.luggageLabel')}</span>
-                  <span className="text-navy-deep dark:text-white font-title-card">{t('detail.luggageValue')}</span>
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-none flex flex-col gap-1 border border-slate-200 dark:border-slate-700">
+                  <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[20px]">luggage</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px]">{t('detail.luggageLabel')}</span>
+                  <span className="text-slate-950 dark:text-white font-bold text-sm">{t('detail.luggageValue')}</span>
                 </div>
 
-                <div className="p-space-sm bg-paper-elevated dark:bg-slate-900 rounded-xl flex flex-col gap-1 border border-border-subtle/70 dark:border-slate-800">
-                  <span className="material-symbols-outlined text-blue-action text-[22px]">local_gas_station</span>
-                  <span className="text-ink-muted dark:text-slate-400 font-body-subtext">{t('detail.fuelLabel')}</span>
-                  <span className="text-navy-deep dark:text-white font-title-card">{t('vdm.diesel')}</span>
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-none flex flex-col gap-1 border border-slate-200 dark:border-slate-700">
+                  <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[20px]">local_gas_station</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px]">{t('detail.fuelLabel')}</span>
+                  <span className="text-slate-950 dark:text-white font-bold text-sm">{t('vdm.diesel')}</span>
                 </div>
               </div>
 
-              <p className="font-body-base text-body-base text-ink-secondary dark:text-slate-300 leading-relaxed pt-1">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
                 {description}
               </p>
             </section>
 
             {/* Driver Dossier & Verified Documents */}
-            <section className="bg-paper-canvas dark:bg-slate-800/60 p-space-lg rounded-2xl border border-border-subtle dark:border-slate-700/70 space-y-space-md">
-              <div className="flex items-center gap-space-2xs">
-                <span className="material-symbols-outlined text-verified-emerald text-[22px]">
+            <section className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-none border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+              <div className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-[20px]">
                   verified_user
                 </span>
-                <h2 className="font-headline-lg text-headline-lg text-navy-deep dark:text-white">
+                <h2 className="text-xl font-bold text-slate-950 dark:text-white">
                   {t('detail.driverTitle')}
                 </h2>
               </div>
 
-              <div className="p-space-md bg-paper-elevated dark:bg-slate-900 rounded-2xl border border-border-subtle dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md">
-                <div className="flex items-center gap-space-md">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-none border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-full bg-blue-subtle text-blue-action font-bold flex items-center justify-center text-2xl border-2 border-blue-action/30">
+                    <div className="w-14 h-14 rounded-none bg-slate-900 text-white font-bold flex items-center justify-center text-xl border border-slate-300 dark:border-slate-700">
                       {publicName.charAt(0)}
                     </div>
-                    <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
-                      <Star className="w-3.5 h-3.5 fill-white text-white" />
+                    <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-none bg-amber-400 flex items-center justify-center text-slate-950 shadow-2xs border border-amber-500">
+                      <Star className="w-3 h-3 fill-slate-950 text-slate-950" />
                     </span>
                   </div>
 
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-headline-md text-headline-md text-navy-deep dark:text-white">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-base text-slate-950 dark:text-white">
                         {publicName}
                       </h3>
                       {vehicle.isVerified ? (
-                        <span className="px-space-xs py-[2px] rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 font-label-badge font-bold border border-amber-400/40 flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                        <span className="px-2 py-0.5 rounded-none bg-slate-900 text-amber-400 font-black text-[10px] border border-slate-900 flex items-center gap-1 uppercase">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                           <span>{t('detail.featuredBadge')}</span>
                         </span>
                       ) : (
-                        <span className="px-space-xs py-[2px] rounded-full bg-blue-subtle text-blue-action dark:bg-blue-950/60 dark:text-blue-300 font-label-badge font-bold">
+                        <span className="px-2 py-0.5 rounded-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px] border border-slate-200 dark:border-slate-700">
                           {t('detail.standardListing')}
                         </span>
                       )}
                       <button
                         type="button"
                         onClick={() => setShowECardModal(true)}
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300/60 font-label-badge font-bold hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-none bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300/80 font-bold text-[10px] hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer"
                       >
-                        <QrCode className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                        <QrCode className="w-3 h-3 text-amber-700 dark:text-amber-400" />
                         <span>{t('ecard.btn')}</span>
                       </button>
                     </div>
-                    <p className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {t('detail.driverExp', { loc: shortLocation })}
                     </p>
-                    <div className="flex items-center gap-space-xs text-body-subtext text-ink-secondary dark:text-slate-300 mt-1">
+                    <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 mt-1">
                       <span>{t('detail.langLabel')} 🇹🇭 {t('detail.langTh')}</span>
                       {vehicle.languages?.includes('en') && <span>• 🇬🇧 {t('vehicle.langEn')}</span>}
                       {vehicle.languages?.includes('zh') && <span>• 🇨🇳 {t('vehicle.langZh')}</span>}
@@ -533,11 +535,11 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                   </div>
                 </div>
 
-                <div className="text-left sm:text-right border-t sm:border-t-0 pt-space-xs sm:pt-0 border-border-subtle w-full sm:w-auto">
-                  <span className="text-body-subtext text-ink-muted dark:text-slate-400 block">
+                <div className="text-left sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200 dark:border-slate-700 w-full sm:w-auto">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
                     {t('detail.licenseLabel')}
                   </span>
-                  <span className="font-body-medium text-navy-deep dark:text-white font-bold flex items-center gap-1 sm:justify-end">
+                  <span className="text-xs font-bold text-slate-950 dark:text-white flex items-center gap-1 sm:justify-end mt-0.5">
                     <span className="material-symbols-outlined text-[16px] text-amber-500">
                       {vehicle.plateType === 'yellow' ? 'local_taxi' : 'directions_car'}
                     </span>
@@ -563,17 +565,17 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
             <VehicleReviewsSection vehicle={vehicle} />
 
             {/* Amenity Spec Checklist */}
-            <section className="bg-paper-canvas dark:bg-slate-800/60 p-space-lg rounded-2xl border border-border-subtle dark:border-slate-700/70 space-y-space-md">
-              <h2 className="font-headline-lg text-headline-lg text-navy-deep dark:text-white">
+            <section className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-none border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+              <h2 className="text-xl font-bold text-slate-950 dark:text-white">
                 {t('detail.amenities')}
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {amenities.map((item) => (
                   <div
                     key={item}
-                    className="p-space-xs px-space-sm rounded-xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle/70 dark:border-slate-800 flex items-center gap-space-xs text-body-base"
+                    className="p-2.5 rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-800 dark:text-slate-200"
                   >
-                    <span className="material-symbols-outlined text-verified-emerald text-[20px] shrink-0">
+                    <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-[18px] shrink-0">
                       check_circle
                     </span>
                     <span>{item}</span>
@@ -583,21 +585,21 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
             </section>
 
             {/* Transparent Pricing Breakdown Table by Zones */}
-            <section className="bg-paper-canvas dark:bg-slate-800/60 p-space-lg rounded-2xl border border-border-subtle dark:border-slate-700/70 space-y-space-md">
-              <h2 className="font-headline-lg text-headline-lg text-navy-deep dark:text-white">
+            <section className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-none border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+              <h2 className="text-xl font-bold text-slate-950 dark:text-white">
                 {t('detail.ratesTitle')}
               </h2>
 
-              <div className="overflow-hidden rounded-xl border border-border-subtle dark:border-slate-700 bg-paper-elevated dark:bg-slate-900">
-                <table className="w-full text-left font-body-base text-body-base">
-                  <thead className="bg-paper-surface-muted dark:bg-slate-800 text-ink-secondary dark:text-slate-300 font-label-badge text-label-badge uppercase">
+              <div className="overflow-hidden rounded-none border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-bold uppercase tracking-wider">
                     <tr>
-                      <th className="p-space-sm">{t('detail.colZone')}</th>
-                      <th className="p-space-sm">{t('detail.colRoute')}</th>
-                      <th className="p-space-sm text-right">{t('detail.colPrice')}</th>
+                      <th className="p-3">{t('detail.colZone')}</th>
+                      <th className="p-3">{t('detail.colRoute')}</th>
+                      <th className="p-3 text-right">{t('detail.colPrice')}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border-subtle dark:divide-slate-800">
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                     {(
                       [
                         { key: 'city' as const, label: t('zone.city.label'), route: t('vdm.routeCity') },
@@ -608,11 +610,11 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                       .filter((row) => Number(vehicle.zoneRates?.[row.key]) > 0)
                       .map((row, idx) => (
                         <tr key={row.key}>
-                          <td className="p-space-sm font-bold text-navy-deep dark:text-white">
+                          <td className="p-3 font-bold text-slate-950 dark:text-white">
                             {t('detail.zoneLine', { no: idx + 1, label: row.label })}
                           </td>
-                          <td className="p-space-sm text-ink-secondary dark:text-slate-400">{row.route}</td>
-                          <td className="p-space-sm text-right font-bold text-blue-action">
+                          <td className="p-3 text-slate-600 dark:text-slate-400">{row.route}</td>
+                          <td className="p-3 text-right font-black text-slate-950 dark:text-white font-mono">
                             ฿{Number(vehicle.zoneRates![row.key]).toLocaleString()}
                           </td>
                         </tr>
@@ -621,13 +623,13 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 </table>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm pt-space-xs text-body-subtext text-ink-secondary dark:text-slate-400">
-                <div className="p-space-sm rounded-xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle/70 dark:border-slate-800 space-y-1">
-                  <span className="font-bold text-navy-deep dark:text-white block">{t('detail.hoursTitle')}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs text-slate-600 dark:text-slate-400">
+                <div className="p-3 rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                  <span className="font-bold text-slate-950 dark:text-white block">{t('detail.hoursTitle')}</span>
                   <p>• {t('detail.termsHours', { h: 10, start: '08:00', end: '18:00', rate: `${STANDARD_TERMS.overtimeRatePerHour} ฿` })}</p>
                 </div>
-                <div className="p-space-sm rounded-xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle/70 dark:border-slate-800 space-y-1">
-                  <span className="font-bold text-navy-deep dark:text-white block">{t('detail.stayTitle')}</span>
+                <div className="p-3 rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                  <span className="font-bold text-slate-950 dark:text-white block">{t('detail.stayTitle')}</span>
                   <p>• {t('detail.termsStay', { rate: `${STANDARD_TERMS.overnightStayRate} ฿` })}</p>
                   <p>• {t('terms.fuelNote')}</p>
                 </div>
@@ -636,33 +638,33 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
 
             {/* Other Fleet Vehicles of this Driver */}
             {companionVehicles.length > 0 && (
-              <section className="bg-blue-50/50 dark:bg-slate-800/50 p-space-lg rounded-2xl border border-blue-200/70 dark:border-slate-700/80 space-y-space-md">
+              <section className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-none border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
-                    <h2 className="font-headline-lg text-headline-lg text-navy-deep dark:text-white flex items-center gap-2">
-                      <span className="material-symbols-outlined text-blue-action dark:text-blue-400">garage_home</span>
+                    <h2 className="text-xl font-bold text-slate-950 dark:text-white flex items-center gap-2">
+                      <span className="material-symbols-outlined text-slate-900 dark:text-slate-200">garage_home</span>
                       <span>{t('detail.fleetTitle', { name: publicName })}</span>
                     </h2>
-                    <p className="text-body-subtext text-ink-muted dark:text-slate-400 mt-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {t('detail.fleetDesc', { n: companionVehicles.length })}
                     </p>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-action dark:text-blue-300 font-bold text-xs">
+                  <span className="px-2 py-0.5 rounded-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs border border-slate-300 dark:border-slate-700">
                     {t('detail.fleetTotal', { n: companionVehicles.length + 1 })}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   {companionVehicles.map((comp) => {
                     const compBasePrice = comp.zoneRates?.city ?? null;
 
                     return (
                       <div
                         key={comp.id}
-                        className="p-3 rounded-xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 shadow-xs hover:border-blue-action/40 transition-all flex flex-col justify-between"
+                        className="p-3 rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-slate-400 dark:hover:border-slate-600 transition-colors flex flex-col justify-between"
                       >
                         <div>
-                          <div className="relative h-28 w-full rounded-lg overflow-hidden bg-navy-deep mb-2">
+                          <div className="relative h-28 w-full rounded-none overflow-hidden bg-slate-900 mb-2 border border-slate-200 dark:border-slate-700">
                             {comp.images?.[0] ? (
                               <Image
                                 src={comp.images[0]}
@@ -679,34 +681,34 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                               </div>
                             )}
                             <div className="absolute top-1.5 left-1.5 flex items-center gap-1">
-                              <span className="px-1.5 py-0.5 rounded bg-navy-deep/90 text-white text-[10px] font-bold">
+                              <span className="px-1.5 py-0.5 rounded-none bg-slate-900/90 text-white text-[10px] font-bold">
                                 {t('vehicle.seats', { n: comp.seats })}
                               </span>
                               {comp.plateType === 'yellow' ? (
-                                <span className="px-1.5 py-0.5 rounded bg-amber-400 text-amber-950 text-[10px] font-bold">
+                                <span className="px-1.5 py-0.5 rounded-none bg-amber-400 text-slate-950 text-[10px] font-black border border-amber-500 uppercase">
                                   {t('hero.quickYellow')}
                                 </span>
                               ) : (
-                                <span className="px-1.5 py-0.5 rounded bg-blue-600 text-white text-[10px] font-bold">
+                                <span className="px-1.5 py-0.5 rounded-none bg-slate-900 text-white text-[10px] font-bold">
                                   {t('fleet.plateBlue')}
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          <h3 className="font-bold text-sm text-navy-deep dark:text-white line-clamp-1 mb-1">
+                          <h3 className="font-bold text-sm text-slate-950 dark:text-white line-clamp-1 mb-1">
                             {comp.title}
                           </h3>
-                          <p className="text-xs text-ink-muted dark:text-slate-400 truncate mb-2">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate mb-2">
                             {(comp.amenities ?? []).slice(0, 2).join(' • ')}
                           </p>
                         </div>
 
-                        <div className="pt-2 border-t border-border-subtle/70 dark:border-slate-800 flex items-center justify-between">
+                        <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
                           <div>
-                            <span className="text-[10px] text-ink-muted dark:text-slate-400 block">{t('detail.fromPrice')}</span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block">{t('detail.fromPrice')}</span>
                             {compBasePrice !== null ? (
-                              <span className="text-xs font-bold text-blue-action dark:text-blue-400">
+                              <span className="text-xs font-black text-slate-950 dark:text-white font-mono">
                                 ฿{compBasePrice.toLocaleString()}{t('vehicle.perDay')}
                               </span>
                             ) : (
@@ -720,14 +722,14 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                             <button
                               type="button"
                               onClick={() => onSelectVehicle(comp)}
-                              className="px-3 py-1.5 rounded-lg bg-blue-action hover:bg-blue-action-hover text-white text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+                              className="px-3 py-1.5 rounded-none bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 text-xs font-bold transition-colors cursor-pointer shadow-2xs active:scale-95"
                             >
                               {t('detail.switchTo')}
                             </button>
                           ) : (
                             <Link
                               href={`/vehicle/${comp.id}`}
-                              className="px-3 py-1.5 rounded-lg bg-blue-action hover:bg-blue-action-hover text-white text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95 inline-block text-center"
+                              className="px-3 py-1.5 rounded-none bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 text-xs font-bold transition-colors cursor-pointer shadow-2xs active:scale-95 inline-block text-center"
                             >
                               {t('detail.switchTo')}
                             </Link>
@@ -742,28 +744,28 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
           </div>
 
           {/* Right Column: Sticky Booking & Direct Actions (4 cols) */}
-          <div className="lg:col-span-4 sticky top-24 space-y-space-md">
-            <div className="bg-paper-canvas dark:bg-slate-800/80 rounded-3xl p-space-lg border border-border-subtle dark:border-slate-700 shadow-xl space-y-space-md">
+          <div className="lg:col-span-4 sticky top-24 space-y-4">
+            <div className="bg-white dark:bg-slate-900 rounded-none p-5 sm:p-6 border border-slate-300 dark:border-slate-800 shadow-md space-y-4">
               <div>
-                <span className="font-body-subtext text-body-subtext text-ink-muted dark:text-slate-400 block">
+                <span className="text-xs text-slate-500 dark:text-slate-400 block uppercase tracking-wider">
                   {t('vehicle.priceFrom')}
                 </span>
-                <div className="flex items-baseline gap-1">
+                <div className="flex items-baseline gap-1 mt-0.5">
                   {basePrice !== null ? (
                     <>
-                      <span className="font-price-headline text-[32px] font-black text-navy-deep dark:text-white leading-tight">
+                      <span className="text-3xl font-black text-slate-950 dark:text-white font-mono leading-tight">
                         ฿{basePrice.toLocaleString()}
                       </span>
-                      <span className="text-body-base text-ink-muted dark:text-slate-400">{t('vehicle.perDay')}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{t('vehicle.perDay')}</span>
                     </>
                   ) : (
-                    <span className="font-price-headline text-[24px] font-black text-amber-600 dark:text-amber-400 leading-tight">
+                    <span className="text-2xl font-black text-amber-600 dark:text-amber-400 leading-tight">
                       {t('vehicle.priceOnRequest')}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-bold text-body-subtext">
+                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
                     <span className="material-symbols-outlined text-[16px]">verified</span>
                     <span>{t('vehicle.noCommission')}</span>
                   </span>
@@ -773,9 +775,9 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                       e.preventDefault();
                       document.getElementById('vehicle-reviews')?.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className="text-xs text-ink-muted hover:text-blue-action dark:text-slate-400 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer font-medium transition-colors"
+                    className="text-xs text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer font-medium transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[14px] text-amber-accent">star</span>
+                    <span className="material-symbols-outlined text-[14px] text-amber-500">star</span>
                     <span>{hasRating ? `${vehicle.rating} (${vehicle.reviewCount})` : t('detail.noReviews')}</span>
                   </a>
                 </div>
@@ -783,8 +785,8 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
 
               {/* Upcoming Busy Dates Alert Pill */}
               {upcomingRanges.length > 0 && (
-                <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-xs font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5 shadow-2xs">
-                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
+                <div className="p-2.5 rounded-none bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-xs font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5 shadow-2xs">
+                  <span className="w-2 h-2 rounded-none bg-rose-500 animate-pulse shrink-0" />
                   <span className="truncate">
                     {t('cal.cardUpcomingBusy', { range: upcomingRanges[0].label })}
                     {upcomingRanges.length > 1 && ` (+${upcomingRanges.length - 1})`}
@@ -793,13 +795,13 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
               )}
 
               {/* ช่องทางติดต่อด่วน (Direct Channels) */}
-              <div className="p-3.5 rounded-2xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle dark:border-slate-800 space-y-3 shadow-xs">
+              <div className="p-4 rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-navy-deep dark:text-white">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-slate-950 dark:text-white">
+                    <span className="w-2 h-2 rounded-none bg-emerald-500 animate-pulse" />
                     <span>{t('detail.directChannels')}</span>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-none bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800 uppercase">
                     {t('detail.directDeal')}
                   </span>
                 </div>
@@ -808,9 +810,9 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowDepositModal(true)}
-                  className="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer border border-amber-500"
+                  className="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-none text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs transition-colors active:scale-[0.98] cursor-pointer border border-amber-500"
                 >
-                  <span className="material-symbols-outlined text-[18px]">verified</span>
+                  <span className="material-symbols-outlined text-[17px]">verified</span>
                   <span>{t('vc.depositCta')}</span>
                 </button>
 
@@ -818,9 +820,9 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                   <a
                     href={`tel:${vehicle.driverPhone}`}
                     onClick={handleDirectCall}
-                    className="w-full h-11 bg-navy-deep hover:bg-navy-surface text-white rounded-xl font-title-card text-title-card flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+                    className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 rounded-none font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-2xs transition-colors active:scale-[0.98] cursor-pointer border border-slate-900 dark:border-white"
                   >
-                    <span className="material-symbols-outlined text-[19px]">call</span>
+                    <span className="material-symbols-outlined text-[18px]">call</span>
                     <span>
                       {isPhoneRevealed
                         ? vehicle.driverPhone
@@ -837,7 +839,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                     }}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full h-11 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-xl font-title-card text-title-card flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
+                    className="w-full h-11 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-none font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-2xs transition-colors active:scale-[0.98] cursor-pointer border border-[#06C755]"
                   >
                     <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
                       <path d="M12 2C6.48 2 2 5.92 2 10.75c0 3.08 1.83 5.79 4.6 7.29-.2.74-.74 2.68-.85 3.08-.13.48.18.47.37.35.15-.09 2.06-1.39 2.87-1.95.66.19 1.34.29 2.01.29 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/>
@@ -853,7 +855,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="h-11 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer"
+                      className="h-10 rounded-none bg-[#25D366] hover:bg-[#20ba5a] text-white flex items-center justify-center shadow-2xs transition-colors active:scale-95 cursor-pointer border border-[#25D366]"
                       title={t('detail.whatsappHint')}
                       aria-label="WhatsApp"
                     >
@@ -866,7 +868,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                   <button
                     type="button"
                     onClick={handleCopyWechat}
-                    className="h-11 rounded-xl bg-[#07C160] hover:bg-[#06ab55] text-white flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer relative"
+                    className="h-10 rounded-none bg-[#07C160] hover:bg-[#06ab55] text-white flex items-center justify-center shadow-2xs transition-colors active:scale-95 cursor-pointer relative border border-[#07C160]"
                     title={vehicle.driverWechat ? t('detail.wechatCopyHint', { id: vehicle.driverWechat }) : t('detail.wechatEmptyHint')}
                     aria-label="WeChat"
                   >
@@ -878,7 +880,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                   <button
                     type="button"
                     onClick={handleCopyKakao}
-                    className="h-11 rounded-xl bg-[#FEE500] hover:bg-[#edd600] text-[#3C1E1E] flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer relative"
+                    className="h-10 rounded-none bg-[#FEE500] hover:bg-[#edd600] text-[#3C1E1E] flex items-center justify-center shadow-2xs transition-colors active:scale-95 cursor-pointer relative border border-[#ebd300]"
                     title={vehicle.driverKakao ? t('detail.kakaoCopyHint', { id: vehicle.driverKakao }) : t('detail.kakaoEmptyHint')}
                     aria-label="KakaoTalk"
                   >
@@ -895,7 +897,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                       <button
                         type="button"
                         onClick={handleCopyWechat}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 border border-teal-200/60 dark:border-teal-900/50 hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-none bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 border border-teal-200/60 dark:border-teal-900/50 hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors cursor-pointer"
                         title={t('detail.copyWechatTitle')}
                       >
                         <span className="font-bold">WeChat:</span>
@@ -909,7 +911,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                       <button
                         type="button"
                         onClick={handleCopyKakao}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/60 dark:border-amber-900/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-none bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/60 dark:border-amber-900/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer"
                         title={t('detail.copyKakaoTitle')}
                       >
                         <span className="font-bold">Kakao:</span>
@@ -924,7 +926,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
 
                 {/* Notification notice message */}
                 {channelNotice && (
-                  <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 text-[11px] font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1.5 animate-fade-in shadow-2xs">
+                  <div className="p-2 rounded-none bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 text-[11px] font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1.5 animate-fade-in shadow-2xs">
                     <span className="material-symbols-outlined text-[15px] shrink-0 text-blue-600 dark:text-blue-400">info</span>
                     <span className="leading-snug">{channelNotice}</span>
                   </div>
@@ -934,7 +936,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowBookingSheet(true)}
-                  className="w-full h-11 bg-blue-action hover:bg-blue-action-hover text-on-primary rounded-xl font-body-medium text-body-medium flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.98] cursor-pointer"
+                  className="w-full h-11 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-none font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-600 transition-colors shadow-2xs active:scale-[0.98] cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">calendar_month</span>
                   <span>{t('detail.requestBooking')}</span>
@@ -942,9 +944,9 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
               </div>
 
               {/* Trust Guarantee Box */}
-              <div className="p-space-sm rounded-xl bg-paper-elevated dark:bg-slate-900 border border-border-subtle/70 dark:border-slate-800 space-y-1 text-body-subtext text-ink-secondary dark:text-slate-400">
-                <div className="flex items-center gap-1 text-navy-deep dark:text-white font-bold">
-                  <span className="material-symbols-outlined text-[16px] text-verified-emerald">
+              <div className="p-3 rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1 text-xs text-slate-600 dark:text-slate-400">
+                <div className="flex items-center gap-1 text-slate-950 dark:text-white font-bold">
+                  <span className="material-symbols-outlined text-[16px] text-emerald-600 dark:text-emerald-400">
                     shield
                   </span>
                   <span>{t('detail.guaranteeTitle')}</span>
@@ -959,20 +961,20 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 if (!rawSponsor) return null;
                 const perkSponsor = getLocalizedSponsor(rawSponsor, locale);
                 return (
-                  <div className="p-space-sm rounded-2xl bg-gradient-to-br from-amber-50/70 via-paper-elevated to-paper-canvas dark:from-amber-950/25 dark:via-slate-900 dark:to-slate-900 border border-amber-300/50 dark:border-amber-900/40 space-y-2">
+                  <div className="p-3.5 rounded-none bg-amber-50/60 dark:bg-amber-950/30 border border-amber-300/60 dark:border-amber-800/60 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-900 dark:text-amber-300 font-bold text-[11px] flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[13px] text-amber-600 dark:text-amber-400">verified</span>
+                      <span className="px-2 py-0.5 rounded-none bg-amber-400 text-slate-950 font-black text-[10px] border border-amber-500 uppercase flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[13px] text-slate-950 font-bold">verified</span>
                         <span>{t('spn.travelerPerk')}</span>
                       </span>
-                      <span className="text-[10px] text-ink-muted dark:text-slate-400">{t('vdm.partner')}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">{t('vdm.partner')}</span>
                     </div>
 
                     <div className="space-y-0.5">
-                      <h4 className="font-bold text-xs text-navy-deep dark:text-white leading-tight">
+                      <h4 className="font-bold text-xs text-slate-950 dark:text-white leading-tight">
                         {perkSponsor.title}
                       </h4>
-                      <p className="text-[11px] text-ink-secondary dark:text-slate-300 line-clamp-2">
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2">
                         {perkSponsor.tagline}
                       </p>
                     </div>
@@ -990,7 +992,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                           targetUrl: perkSponsor.link,
                         });
                       }}
-                      className="w-full py-1.5 px-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 dark:bg-amber-500 dark:hover:bg-amber-600 text-amber-950 font-bold text-xs flex items-center justify-center gap-1 transition-colors shadow-xs"
+                      className="w-full py-2 px-3 rounded-none bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center gap-1 transition-colors shadow-xs border border-amber-500"
                     >
                       <span className="truncate">{perkSponsor.discountText}</span>
                       <span className="material-symbols-outlined text-[14px]">arrow_forward</span>

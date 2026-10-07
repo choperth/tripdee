@@ -142,17 +142,17 @@ export const ScrollQualityMonitor: React.FC = () => {
         <button
           onClick={() => setIsOpen(true)}
           title={t('sqm.openTitle')}
-          className="flex items-center gap-2 rounded-full bg-ink/90 backdrop-blur-md px-3.5 py-2 text-xs font-bold text-paper shadow-lg hover:bg-ink transition-transform active:scale-95 border border-rule/30"
+          className="flex items-center gap-2 rounded-none bg-slate-900/95 backdrop-blur-md px-3.5 py-2 text-xs font-bold text-white shadow-lg hover:bg-slate-900 transition-transform active:scale-95 border border-slate-700 cursor-pointer"
         >
-          <Activity className="h-4 w-4 text-leaf animate-pulse" />
+          <Activity className="h-4 w-4 text-emerald-400 animate-pulse" />
           <span>Monitor: {fps} FPS</span>
-          <span className="h-2 w-2 rounded-full bg-leaf" />
+          <span className="h-2 w-2 rounded-none bg-emerald-400" />
         </button>
       ) : (
-        <div className="w-80 rounded-2xl bg-card/95 backdrop-blur-md p-4 shadow-2xl border border-rule text-ink animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="w-80 rounded-none bg-card/95 backdrop-blur-md p-4 shadow-2xl border border-rule text-ink animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div className="flex items-center justify-between border-b border-rule pb-2 mb-3">
             <div className="flex items-center gap-2">
-              <span className="grid h-7 w-7 place-items-center rounded-lg bg-leaf/20 text-leaf">
+              <span className="grid h-7 w-7 place-items-center rounded-none bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                 <Activity className="h-4 w-4" />
               </span>
               <div>
@@ -165,14 +165,14 @@ export const ScrollQualityMonitor: React.FC = () => {
                 onClick={resetMetrics}
                 title={t('sqm.resetTitle')}
                 aria-label={t('sqm.resetAria')}
-                className="grid h-6 w-6 place-items-center rounded-md hover:bg-paper text-ink-2"
+                className="grid h-6 w-6 place-items-center rounded-none hover:bg-paper text-ink-2 cursor-pointer"
               >
                 <RotateCcw className="h-3 w-3" />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
                 aria-label={t('sqm.closeAria')}
-                className="grid h-6 w-6 place-items-center rounded-md hover:bg-paper text-ink-2 font-bold text-xs"
+                className="grid h-6 w-6 place-items-center rounded-none hover:bg-paper text-ink-2 font-bold text-xs cursor-pointer"
               >
                 ✕
               </button>
@@ -181,28 +181,28 @@ export const ScrollQualityMonitor: React.FC = () => {
 
           {/* Metrics Grid */}
           <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-            <div className="rounded-xl bg-paper p-2.5 border border-rule/60">
+            <div className="rounded-none bg-paper p-2.5 border border-rule/60">
               <span className="text-[10px] text-ink-2 font-semibold block">{t('sqm.fpsLabel')}</span>
               <span className={`text-lg font-mono font-extrabold ${fps >= 55 ? 'text-leaf' : fps >= 30 ? 'text-sun-ink' : 'text-berry'}`}>
                 {fps} <span className="text-[10px] font-normal text-ink-2">fps</span>
               </span>
             </div>
 
-            <div className="rounded-xl bg-paper p-2.5 border border-rule/60">
+            <div className="rounded-none bg-paper p-2.5 border border-rule/60">
               <span className="text-[10px] text-ink-2 font-semibold block">Layout Shift (CLS)</span>
               <span className={`text-lg font-mono font-extrabold ${cls === 0 ? 'text-leaf' : cls < 0.05 ? 'text-sun-ink' : 'text-berry'}`}>
                 {cls.toFixed(3)}
               </span>
             </div>
 
-            <div className="rounded-xl bg-paper p-2.5 border border-rule/60">
+            <div className="rounded-none bg-paper p-2.5 border border-rule/60">
               <span className="text-[10px] text-ink-2 font-semibold block">{t('sqm.jitterLabel')}</span>
               <span className={`text-lg font-mono font-extrabold ${jitterCount === 0 ? 'text-leaf' : 'text-berry'}`}>
                 {jitterCount} <span className="text-[10px] font-normal text-ink-2">{t('sqm.jitterUnit')}</span>
               </span>
             </div>
 
-            <div className="rounded-xl bg-paper p-2.5 border border-rule/60">
+            <div className="rounded-none bg-paper p-2.5 border border-rule/60">
               <span className="text-[10px] text-ink-2 font-semibold block">Top Spacer Height</span>
               <span className="text-lg font-mono font-extrabold text-ink">
                 {spacerHeight} <span className="text-[10px] font-normal text-ink-2">{t('sqm.pxSuffix')}</span>
@@ -215,14 +215,14 @@ export const ScrollQualityMonitor: React.FC = () => {
             <button
               onClick={runBenchmark}
               disabled={isBenchmarking}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-accent px-3 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-accent-deep transition-transform active:scale-98 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 rounded-none bg-accent px-3 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-accent-deep transition-transform active:scale-98 disabled:opacity-50 cursor-pointer"
             >
               <Zap className="h-3.5 w-3.5" />
               <span>{isBenchmarking ? t('sqm.benchRunning') : t('sqm.benchCta')}</span>
             </button>
 
             {benchmarkResult && (
-              <div className="rounded-xl bg-leaf-soft p-2.5 text-[11px] text-leaf font-bold flex items-start gap-1.5 border border-leaf/30">
+              <div className="rounded-none bg-leaf-soft p-2.5 text-[11px] text-leaf font-bold flex items-start gap-1.5 border border-leaf/30">
                 <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>{benchmarkResult}</span>
               </div>

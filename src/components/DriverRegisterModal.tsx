@@ -384,7 +384,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
             {/* Submitted Success Screen */}
             {submitted ? (
               <div className="py-10 text-center space-y-4">
-                <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-emerald-500 text-white shadow-md">
+                <div className="mx-auto grid h-16 w-16 place-items-center rounded-none bg-emerald-500 text-white shadow-md border border-emerald-600">
                   <PartyPopper className="h-8 w-8" />
                 </div>
                 <h3 className="font-display text-2xl font-extrabold text-ink">
@@ -400,14 +400,14 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                       setSubmitted(false);
                       setCurrentStep(1);
                     }}
-                    className="py-2.5 px-5 rounded-xl bg-paper-2 hover:bg-card border border-rule text-xs font-bold text-ink transition-all"
+                    className="py-2.5 px-5 rounded-none bg-paper-2 hover:bg-card border border-rule text-xs font-bold text-ink transition-all cursor-pointer"
                   >
                     {t('reg.successAddMore')}
                   </button>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="py-2.5 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-bold text-white transition-all shadow-xs"
+                    className="py-2.5 px-5 rounded-none bg-slate-900 hover:bg-slate-800 text-xs font-bold text-white transition-all shadow-xs cursor-pointer"
                   >
                     {t('reg.successDone')}
                   </button>
@@ -611,7 +611,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                       <label className="text-xs font-bold text-ink">{t('reg.fServiceType')}</label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <label
-                          className={`flex items-center gap-3.5 p-3.5 rounded-xl border shadow-2xs cursor-pointer transition-all ${
+                          className={`flex items-center gap-3.5 p-3.5 rounded-none border shadow-2xs cursor-pointer transition-all ${
                             formData.serviceType === 'with_driver'
                               ? 'bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500'
                               : 'bg-card border-rule hover:bg-paper-2'
@@ -641,7 +641,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                         </label>
 
                         <label
-                          className={`flex items-center gap-3.5 p-3.5 rounded-xl border shadow-2xs cursor-pointer transition-all ${
+                          className={`flex items-center gap-3.5 p-3.5 rounded-none border shadow-2xs cursor-pointer transition-all ${
                             formData.serviceType === 'self_drive'
                               ? 'bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500'
                               : 'bg-card border-rule hover:bg-paper-2'
@@ -686,7 +686,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                               setFormData({ ...formData, vehicleModel: e.target.value });
                             }
                           }}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-rule text-ink text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
+                          className="w-full px-3.5 py-2.5 rounded-none bg-card border border-rule text-ink text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
                         >
                           {VEHICLE_CATEGORY_GROUPS.map((group) => (
                             <optgroup key={group.category} label={group.label}>
@@ -707,7 +707,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                             placeholder={t('reg.modelCustomPh')}
                             value={customModelText}
                             onChange={(e) => setCustomModelText(e.target.value)}
-                            className="w-full px-3.5 py-2 rounded-xl bg-card border border-rule text-ink text-xs mt-1"
+                            className="w-full px-3.5 py-2 rounded-none bg-card border border-rule text-ink text-xs mt-1"
                           />
                         )}
                       </div>
@@ -717,7 +717,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                         <select
                           value={formData.seats}
                           onChange={(e) => setFormData({ ...formData, seats: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-rule text-ink text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
+                          className="w-full px-3.5 py-2.5 rounded-none bg-card border border-rule text-ink text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
                         >
                           <option value="10–13">10–13 ที่นั่ง (มาตรฐานเดิมโรงงาน เน้นจุคนครบทั้งแก๊ง)</option>
                           <option value="8–9">8–9 ที่นั่ง (VIP เบาะใหญ่ นั่งสบาย)</option>
@@ -734,7 +734,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                         <label className="text-xs font-bold text-ink">{t('reg.fPlateType')}</label>
                         <div className="grid grid-cols-2 gap-2">
                           <label
-                            className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer text-xs font-bold transition-all ${
+                            className={`flex items-center gap-2 p-2.5 rounded-none border cursor-pointer text-xs font-bold transition-all ${
                               formData.plateType === 'yellow'
                                 ? 'bg-amber-500/15 border-amber-500/40 text-amber-900 dark:text-amber-300 ring-1 ring-amber-500/50'
                                 : 'bg-card border-rule text-ink-2'
@@ -751,7 +751,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                           </label>
 
                           <label
-                            className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer text-xs font-bold transition-all ${
+                            className={`flex items-center gap-2 p-2.5 rounded-none border cursor-pointer text-xs font-bold transition-all ${
                               formData.plateType === 'blue'
                                 ? 'bg-blue-500/15 border-blue-500/40 text-blue-900 dark:text-blue-300 ring-1 ring-blue-500/50'
                                 : 'bg-card border-rule text-ink-2'
@@ -779,7 +779,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                           placeholder={t('reg.fPlateNumberPh')}
                           value={formData.plateNumber}
                           onChange={(e) => setFormData({ ...formData, plateNumber: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
+                          className="w-full px-3.5 py-2.5 rounded-none bg-card border border-rule text-ink placeholder:text-ink-3 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs"
                         />
                       </div>
                     </div>
@@ -894,13 +894,13 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                 {currentStep === 3 && (
                   <div className="space-y-5 animate-fade-in">
                     {/* Tax Compliance Checkbox */}
-                    <div className="p-4 rounded-xl bg-paper-2 border border-rule flex items-start gap-3.5">
+                    <div className="p-4 rounded-none bg-paper-2 border border-rule flex items-start gap-3.5">
                       <input
                         type="checkbox"
                         id="tax_capable"
                         checked={formData.canIssueTaxInvoice}
                         onChange={(e) => setFormData({ ...formData, canIssueTaxInvoice: e.target.checked })}
-                        className="rounded border-rule text-amber-500 focus:ring-amber-500 h-5 w-5 mt-0.5 cursor-pointer"
+                        className="rounded-none border-rule text-amber-500 focus:ring-amber-500 h-5 w-5 mt-0.5 cursor-pointer"
                       />
                       <div className="flex-1">
                         <label
@@ -929,7 +929,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                               key={amenity}
                               type="button"
                               onClick={() => toggleAmenity(amenity)}
-                              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border flex items-center gap-1.5 ${
+                              className={`px-3 py-1.5 rounded-none text-xs font-semibold transition-all border flex items-center gap-1.5 cursor-pointer ${
                                 isSelected
                                   ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
                                   : 'bg-paper-2 text-ink-2 border-rule hover:bg-card hover:text-ink'
@@ -953,7 +953,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                             placeholder={t('reg.fPickupPh')}
                             value={formData.pickupLocation}
                             onChange={(e) => setFormData({ ...formData, pickupLocation: e.target.value })}
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-rule text-ink text-xs"
+                            className="w-full px-3.5 py-2.5 rounded-none bg-card border border-rule text-ink text-xs"
                           />
                         </div>
                         <div className="space-y-1">
@@ -963,14 +963,14 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                             placeholder={t('reg.fDepositPh')}
                             value={formData.depositTerms}
                             onChange={(e) => setFormData({ ...formData, depositTerms: e.target.value })}
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-card border border-rule text-ink text-xs"
+                            className="w-full px-3.5 py-2.5 rounded-none bg-card border border-rule text-ink text-xs"
                           />
                         </div>
                       </div>
                     )}
 
                     {/* Highlight Notice Box */}
-                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-ink space-y-1">
+                    <div className="p-4 rounded-none bg-amber-500/10 border border-amber-500/20 text-ink space-y-1">
                       <div className="flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400">
                         <ShieldCheck className="h-4 w-4" />
                         {t('reg.termsNotice')}

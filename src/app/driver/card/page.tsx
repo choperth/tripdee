@@ -13,37 +13,153 @@ export default function DriverBusinessCardPage() {
   useEffect(() => {
     let active = true;
     const params = new URLSearchParams(window.location.search);
-    const qId = params.get('id') || params.get('vehicleId');
+    const qId = (
+      params.get('id') ||
+      params.get('vehicleId') ||
+      params.get('code') ||
+      params.get('driverId') ||
+      params.get('v') ||
+      ''
+    ).trim();
+    const qPhone = (
+      params.get('phone') ||
+      params.get('driverPhone') ||
+      params.get('tel') ||
+      ''
+    ).trim();
 
-    if (!qId) {
-      queueMicrotask(() => {
-        if (active) setStatus('missing');
-      });
-      return () => {
-        active = false;
-      };
-    }
+    const demoMatch = () => {
+      if (!isMockDataEnabled()) return null;
+      if (qId) {
+        const found = VEHICLES.find((v) => v.id === qId);
+        if (found) return found;
+      }
+      if (qPhone) {
+        const cleanP = qPhone.replace(/\D/g, '');
+        const found = VEHICLES.find((v) => (v.driverPhone || '').replace(/\D/g, '') === cleanP);
+        if (found) return found;
+      }
+      return null;
+    };
 
-    const demoMatch = () => (isMockDataEnabled() ? VEHICLES.find((v) => v.id === qId) || null : null);
+    const loadCard = async () => {
+      try {
+        let targetId = qId;
 
-    fetch('/api/vehicles' + window.location.search)
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load vehicles');
-        return res.json();
-      })
-      .then((data) => {
+        // If no ID or phone query was provided, check if a logged-in driver is opening their own card
+        if (!targetId && !qPhone) {
+          try {
+            const mineRes = await fetch('/api/vehicles?scope=mine');
+            if (mineRes.ok) {
+              const mineData = await mineRes.json();
+              const myVehicle = Array.isArray(mineData.vehicles) ? mineData.vehicles[0] : null;
+              if (myVehicle) {
+                if (!active) return;
+                setVehicle(myVehicle);
+                setStatus('ready');
+                return;
+              }
+            }
+          } catch {
+            // ignore session error and fall through
+          }
+
+          if (!active) return;
+          const fallbackDemo = demoMatch();
+          if (fallbackDemo) {
+            setVehicle(fallbackDemo);
+            setStatus('ready');
+          } else {
+            setStatus('missing');
+          }
+          return;
+        }
+
+        // Construct request URL: make sure id parameter is explicitly sent
+        const query = new URLSearchParams(window.location.search);
+        if (targetId && !query.has('id')) {
+          query.set('id', targetId);
+        }
+        const apiUrl = `/api/vehicles?${query.toString()}`;
+
+        const res = await fetch(apiUrl);
+        if (!res.ok) {
+          throw new Error('Vehicle lookup responded with ' + res.status);
+        }
+
+        const data = await res.json();
         if (!active) return;
-        const list: Vehicle[] = Array.isArray(data.vehicles) ? data.vehicles : [];
-        const match = list.find((v) => v.id === qId) || demoMatch();
+
+        let match: Vehicle | null = null;
+        // Priority 1: Single vehicle response ({ success: true, vehicle: { ... } })
+        if (data.vehicle && typeof data.vehicle === 'object' && data.vehicle.id) {
+          match = data.vehicle;
+        }
+        // Priority 2: Fleet list response ({ success: true, vehicles: [ ... ] })
+        else if (Array.isArray(data.vehicles)) {
+          if (targetId) {
+            match = data.vehicles.find((v: Vehicle) => v.id === targetId) || null;
+          }
+          if (!match && qPhone) {
+            const cleanP = qPhone.replace(/\D/g, '');
+            match =
+              data.vehicles.find(
+                (v: Vehicle) => (v.driverPhone || '').replace(/\D/g, '') === cleanP
+              ) || null;
+          }
+          if (!match && data.vehicles.length === 1 && targetId) {
+            match = data.vehicles[0];
+          }
+        }
+
+        // Priority 3: Demo match if mock data is enabled
+        if (!match) {
+          match = demoMatch();
+        }
+
         setVehicle(match);
         setStatus(match ? 'ready' : 'missing');
-      })
-      .catch(() => {
+      } catch (err) {
+        console.warn('[TripDee Driver Card] Direct lookup error, trying fleet list fallback:', err);
+        if (!active) return;
+
+        // Try fleet list fallback
+        try {
+          const listRes = await fetch('/api/vehicles');
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            const list: Vehicle[] = Array.isArray(listData.vehicles) ? listData.vehicles : [];
+            let fallbackMatch: Vehicle | null = null;
+            if (qId) {
+              fallbackMatch = list.find((v) => v.id === qId) || null;
+            }
+            if (!fallbackMatch && qPhone) {
+              const cleanP = qPhone.replace(/\D/g, '');
+              fallbackMatch =
+                list.find(
+                  (v) => (v.driverPhone || '').replace(/\D/g, '') === cleanP
+                ) || null;
+            }
+            if (!fallbackMatch) {
+              fallbackMatch = demoMatch();
+            }
+            if (!active) return;
+            setVehicle(fallbackMatch);
+            setStatus(fallbackMatch ? 'ready' : 'missing');
+            return;
+          }
+        } catch {
+          // ignore
+        }
+
         if (!active) return;
         const match = demoMatch();
         setVehicle(match);
         setStatus(match ? 'ready' : 'missing');
-      });
+      }
+    };
+
+    void loadCard();
 
     return () => {
       active = false;

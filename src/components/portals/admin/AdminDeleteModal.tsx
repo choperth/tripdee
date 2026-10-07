@@ -33,29 +33,29 @@ export const AdminDeleteModal: React.FC<AdminDeleteModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="admin-delete-title"
-      className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-ink/70 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150"
     >
-      <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl border border-rule text-ink relative">
+      <div className="w-full max-w-md rounded-none bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 grid h-8 w-8 place-items-center rounded-full bg-paper hover:bg-paper-2 text-ink-2"
+          className="absolute top-4 right-4 grid h-8 w-8 place-items-center rounded-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
 
-        <div className="flex items-center gap-3 text-berry mb-4">
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-berry/10 text-berry">
+        <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400 mb-4">
+          <span className="grid h-10 w-10 place-items-center rounded-none bg-rose-50 dark:bg-rose-950/50 border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400">
             <AlertTriangle className="h-5 w-5" />
           </span>
           <div>
-            <h3 id="admin-delete-title" className="font-display font-extrabold text-lg text-ink">{title}</h3>
-            <p className="text-xs text-ink-2">{t('padm.warnIrreversible')}</p>
+            <h3 id="admin-delete-title" className="font-display font-extrabold text-lg text-slate-900 dark:text-white">{title}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t('padm.warnIrreversible')}</p>
           </div>
         </div>
 
-        <div className="my-4 rounded-xl bg-paper p-3 border border-rule/70 text-xs">
-          <span className="text-ink-2 block font-medium mb-1">{t('padm.itemToDelete')}</span>
-          <span className="font-extrabold text-ink text-sm break-words">{itemTitle}</span>
+        <div className="my-4 rounded-none bg-slate-50 dark:bg-slate-800/60 p-3.5 border border-slate-200 dark:border-slate-700 text-xs">
+          <span className="text-slate-500 dark:text-slate-400 block font-bold mb-1 uppercase tracking-wider text-[10px]">{t('padm.itemToDelete')}</span>
+          <span className="font-extrabold text-slate-900 dark:text-white text-sm break-words">{itemTitle}</span>
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
@@ -63,7 +63,7 @@ export const AdminDeleteModal: React.FC<AdminDeleteModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="rounded-pill px-4 py-2 text-xs font-bold text-ink-2 hover:bg-paper"
+            className="rounded-none border border-slate-300 dark:border-slate-700 px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             {t('padm.cancel')}
           </button>
@@ -71,7 +71,7 @@ export const AdminDeleteModal: React.FC<AdminDeleteModalProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={isDeleting}
-            className="flex items-center gap-1.5 rounded-pill bg-berry px-5 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-berry/90 transition-transform active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-none bg-rose-600 hover:bg-rose-700 dark:bg-rose-700 dark:hover:bg-rose-600 px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50"
           >
             <Trash2 className="h-4 w-4" />
             <span>{isDeleting ? t('padm.deleting') : t('padm.confirmDelete')}</span>
