@@ -8,11 +8,8 @@ import {
   ShieldCheck,
   CarFront,
   Briefcase,
-  Crown,
   MessageCircle,
   ArrowRight,
-  Lock,
-  KeyRound,
   Phone,
   AlertCircle,
   Loader2,
@@ -25,7 +22,7 @@ import { Vehicle } from '@/data/mockData';
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultRole?: UserRole;
+  defaultRole?: 'driver' | 'customer';
   onOpenRegisterModal?: () => void;
 }
 
@@ -37,8 +34,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 }) => {
   const { loginAsDemo, loginWithCredentials, loginWithOAuth } = useAuth();
   const { t } = useLanguage();
-  const [selectedRole, setSelectedRole] = useState<UserRole>(defaultRole);
-
+  const [selectedRole, setSelectedRole] = useState<'driver' | 'customer'>(defaultRole || 'driver');
   // OAuth State
   const [oauthLoading, setOauthLoading] = useState<'line' | 'google' | null>(null);
   const [oauthError, setOauthError] = useState('');
@@ -52,10 +48,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [customerName, setCustomerName] = useState('');
   const [customerContact, setCustomerContact] = useState('');
   const [customerTaxId, setCustomerTaxId] = useState('');
-
-  // Real Mode Admin Form State
-  const [adminPassword, setAdminPassword] = useState('');
-  const [adminError, setAdminError] = useState('');
 
   // Demo direct login fallback form
   const [directName, setDirectName] = useState('');
@@ -253,21 +245,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     onClose();
   };
 
-  // Real Admin Login
-  const handleAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const targetPin = process.env.NEXT_PUBLIC_ADMIN_PIN || 'tripdee2026';
-    if (adminPassword.trim() === targetPin) {
-      setAdminError('');
-      loginWithCredentials('admin', t('auth.demoAdminName'), 'admin@tripdee.co', {
-        id: 'adm-real',
-      });
-      onClose();
-    } else {
-      setAdminError(t('auth.adminPassWrong'));
-    }
-  };
-
   const roleTabClass = (role: UserRole) =>
     `flex flex-1 flex-col items-center gap-1 px-2 py-3 text-xs transition-all cursor-pointer border-r border-slate-200 dark:border-slate-800 last:border-r-0 ${
       selectedRole === role
@@ -348,17 +325,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <span>{t('auth.roleCustomer')}</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedRole('admin');
-              setOauthError('');
-            }}
-            className={roleTabClass('admin')}
-          >
-            <Crown className={`h-4 w-4 ${selectedRole === 'admin' ? 'text-amber-500' : ''}`} strokeWidth={2.5} />
-            <span>{t('auth.roleAdmin')}</span>
-          </button>
         </div>
 
         {/* =========================================================================
@@ -386,18 +352,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   <span className="grid h-11 w-11 shrink-0 place-items-center bg-slate-900 text-white dark:bg-white dark:text-slate-950">
                     {selectedRole === 'driver' && <CarFront className="h-5 w-5" strokeWidth={2.5} />}
                     {selectedRole === 'customer' && <Briefcase className="h-5 w-5" strokeWidth={2.5} />}
-                    {selectedRole === 'admin' && <Crown className="h-5 w-5" strokeWidth={2.5} />}
                   </span>
                   <div>
                     <p className="text-sm font-bold text-slate-950 dark:text-white">
                       {selectedRole === 'driver' && t('auth.demoDriverName')}
                       {selectedRole === 'customer' && t('auth.demoCustName')}
-                      {selectedRole === 'admin' && t('auth.demoAdminName')}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       {selectedRole === 'driver' && t('auth.demoDriverDesc')}
                       {selectedRole === 'customer' && t('auth.demoCustDesc')}
-                      {selectedRole === 'admin' && t('auth.demoAdminDesc')}
                     </p>
                   </div>
                 </div>
@@ -635,44 +598,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               </div>
             )}
 
-            {/* 3. Admin Login Form (Password Protected) */}
-            {selectedRole === 'admin' && (
-              <form onSubmit={handleAdminLogin} className="space-y-4">
-                <div>
-                  <label htmlFor="admin-password-input" className={labelClass}>
-                    {t('auth.adminPassLabel')}
-                  </label>
-                  <div className="relative">
-                    <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input
-                      id="admin-password-input"
-                      type="password"
-                      required
-                      value={adminPassword}
-                      onChange={(e) => setAdminPassword(e.target.value)}
-                      placeholder={t('auth.adminPassPh')}
-                      className={`${inputClass} pl-10 pr-3.5`}
-                      autoComplete="current-password"
-                    />
-                  </div>
-                </div>
-
-                {adminError && (
-                  <div className="border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-3 text-xs font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 shrink-0" />
-                    <span>{adminError}</span>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  className="w-full h-12 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-950 text-white text-sm font-bold flex items-center justify-center gap-2 border border-slate-900 dark:border-white transition-all active:scale-[0.99] cursor-pointer"
-                >
-                  <Lock className="h-4 w-4" />
-                  <span>{t('auth.submit')}</span>
-                </button>
-              </form>
-            )}
           </div>
         )}
       </div>
