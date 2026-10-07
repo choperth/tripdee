@@ -74,7 +74,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
   const handleShare = () => {
     if (!vehicle) return;
     if (typeof window !== 'undefined') {
-      const url = `${window.location.origin}/#vehicle-${vehicle.id}`;
+      const url = `${window.location.origin}/vehicle/${vehicle.id}`;
       navigator.clipboard.writeText(url);
       setSharedToast(true);
       setTimeout(() => setSharedToast(false), 2500);

@@ -1,9 +1,10 @@
 import type { MetadataRoute } from 'next';
 import { POPULAR_ROUTES } from '@/data/mockData';
+import { fetchVehicles } from '@/lib/supabase/service';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tripdee.co';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const currentDate = new Date();
 
   // Core Landing Pages & Section Views
@@ -55,5 +56,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...routeEntries];
+  // Shareable vehicle detail pages (/vehicle/[id])
+  let vehicleEntries: MetadataRoute.Sitemap = [];
+  try {
+    const vehicles = await fetchVehicles();
+    vehicleEntries = vehicles
+      .filter((v) => v.approvalStatus !== 'pending' && v.approvalStatus !== 'rejected')
+      .map((v) => ({
+        url: `${BASE_URL}/vehicle/${encodeURIComponent(v.id)}`,
+        lastModified: currentDate,
+        changeFrequency: 'daily' as const,
+        priority: 0.8,
+      }));
+  } catch {
+    vehicleEntries = [];
+  }
+
+  return [...staticRoutes, ...routeEntries, ...vehicleEntries];
 }

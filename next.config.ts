@@ -44,6 +44,10 @@ const nextConfig: NextConfig = {
         hostname: 'thumb.wikimedia.org',
         pathname: '/wikipedia/commons/thumb/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
     ],
   },
   async headers() {
