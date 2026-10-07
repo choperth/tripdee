@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createSessionToken, withSessionCookie } from '@/lib/authGuard';
 
 interface UserProfilePayload {
   id: string;
@@ -148,6 +149,15 @@ export async function GET(req: NextRequest) {
     const safeTargetUrl = targetUrl.toString();
     const safeUserJson = JSON.stringify(userProfile);
 
+    // 4b. Issue a signed, httpOnly session cookie so the API can verify which
+    // driver a request belongs to. localStorage alone is not trustworthy for
+    // authorisation decisions.
+    const { token } = await createSessionToken({
+      userId: userProfile.id,
+      role,
+      email: userProfile.emailOrPhone,
+    });
+
     const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -175,11 +185,14 @@ export async function GET(req: NextRequest) {
 </body>
 </html>`;
 
-    return new NextResponse(html, {
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-      },
-    });
+    return withSessionCookie(
+      new NextResponse(html, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+        },
+      }),
+      token
+    );
   } catch (err: unknown) {
     console.error('[TripDee LINE Auth] Unexpected error:', err);
     const targetUrl = new URL(next, origin);

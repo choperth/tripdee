@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -59,54 +59,41 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
 
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [featuredRequested, setFeaturedRequested] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
-  // Form states initialized from user
-  const [nickname, setNickname] = useState(user?.driverNickname || 'พี่ชัย รถตู้เชียงใหม่');
-  const [phone, setPhone] = useState(user?.emailOrPhone || '081-234-5678');
-  const [lineId, setLineId] = useState(user?.lineId || '@chaivan_cnx');
-  const [whatsapp, setWhatsapp] = useState(user?.whatsapp || '+66812345678');
-  const [wechat, setWechat] = useState(user?.wechat || 'chaicnx_van');
-  const [kakao, setKakao] = useState(user?.kakao || 'chaivan_cnx');
-  const [vehicleTitle, setVehicleTitle] = useState(
-    user?.vehicleTitle ||
-      'Toyota Commuter VIP 9 ที่นั่ง เบาะนวดไฟฟ้าพร้อมระบบแอร์ไมโครบัส และเครื่องเสียงคาราโอเกะพร้อมจอ Android'
-  );
-  const [vehiclePlate, setVehiclePlate] = useState(
-    user?.vehiclePlate || 'นข-8899 เชียงใหม่ (ป้ายเหลือง 30)'
-  );
+  // Form states initialized from user.
+  // No demo fallbacks: a brand-new driver must start from a blank form, not
+  // from another driver's plate number and phone number.
+  const [nickname, setNickname] = useState(user?.driverNickname || user?.name || '');
+  const [phone, setPhone] = useState(user?.emailOrPhone || '');
+  const [lineId, setLineId] = useState(user?.lineId || '');
+  const [whatsapp, setWhatsapp] = useState(user?.whatsapp || '');
+  const [wechat, setWechat] = useState(user?.wechat || '');
+  const [kakao, setKakao] = useState(user?.kakao || '');
+  const [vehicleTitle, setVehicleTitle] = useState(user?.vehicleTitle || '');
+  const [vehiclePlate, setVehiclePlate] = useState(user?.vehiclePlate || '');
   const [seats, setSeats] = useState(user?.seats || 9);
 
   // Images state
-  const defaultImages = [
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuAS93Lp5tyiq38Q_n22TpfbbKacX038jBbYwO5RuyZUQztVRvefnvBxCjnr5tOWW_NYriItTmR_eAbeU03VGReHeAPlhd3_pn2VagF9BopeuhwROEM4B7fGxbacwxTQ3XndDHkoIy82Ab4N2KosofEc-H2pRCciI_-oJDN8s2N3aJLzGnKOfhr_hVRG5gOkx13aoVuELco9uUYLxm4Yyi65VWzDqBDiBtfEVUr5GAb-d1nTeNHTg9ZJ3A',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuBr0Jnx4Zp38sVSSSh605OCALpmCVZRB2A2Z2-__1MqJJs-g7BRiRwWVpH2h-3EGisOuCseR7gESRLtly9jGmInYdr82IEiTFDfRa5KUbto1gUaJrEWyJNPCD8iX5zPd3c9BVyJ7eZLnjDAqUdtVwRyzkyZXpne9RMCfO8X9hvZOJ4UVaUb-lDKkMiV2xcUDuFcR9k7iFO7tjIl9z4RY-rskAdQ0Pqfs4UiIzk53nth-Pgn0Jfxwzn2NA',
-  ];
+  const [images, setImages] = useState<string[]>(() =>
+    Array.isArray(user?.images) ? user.images : []
+  );
 
-  const [images, setImages] = useState<string[]>(() => {
-    if (Array.isArray(user?.images) && user.images.length > 0) {
-      return user.images;
-    }
-    return defaultImages;
-  });
-
-  const [photoMeta, setPhotoMeta] = useState<Record<number, { name: string; size: string }>>({
-    0: { name: 'cnx-commuter-exterior.jpg', size: '2.4 MB' },
-    1: { name: 'vip-cabin-seats.jpg', size: '3.1 MB' },
-  });
+  const [photoMeta, setPhotoMeta] = useState<Record<number, { name: string; size: string }>>({});
 
   // Busy Dates state
-  const [busyDates, setBusyDates] = useState<string[]>(() => {
-    if (Array.isArray(user?.busyDates) && user.busyDates.length > 0) {
-      return user.busyDates;
-    }
-    // Demo busy dates in line with mockup (Sept 11, 12, etc.)
-    const bkk = getBangkokTodayIso();
-    const [y, m] = bkk.split('-');
-    return [`${y}-${m}-11`, `${y}-${m}-12`];
-  });
+  const [busyDates, setBusyDates] = useState<string[]>(() =>
+    Array.isArray(user?.busyDates) ? user.busyDates : []
+  );
+
+  /** Id of the driver's own vehicle row, once we have loaded it. */
+  const [vehicleId, setVehicleId] = useState<string>('');
+  /** pending = submitted, awaiting admin review; approved = live on the site. */
+  const [approvalStatus, setApprovalStatus] = useState<'pending' | 'approved' | 'rejected' | ''>('');
+  const [loadError, setLoadError] = useState('');
 
   // Calendar Interval Form states
   const [intervalStart, setIntervalStart] = useState('');
@@ -122,36 +109,129 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
   const fileInputRef2 = useRef<HTMLInputElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
+  // Load this driver's own vehicle row on open. This is the source of truth;
+  // localStorage only holds a convenience cache for offline rendering.
+  const loadOwnVehicle = useCallback(async () => {
+    setLoadError('');
+    try {
+      const res = await fetch('/api/vehicles?scope=mine');
+      if (!res.ok) {
+        // No signed session (e.g. demo login) — fall back to the cached profile.
+        return;
+      }
+      const data = await res.json();
+      const mine = Array.isArray(data.vehicles) ? data.vehicles[0] : null;
+      if (!mine) return;
+
+      setVehicleId(mine.id);
+      setApprovalStatus(mine.approvalStatus || '');
+      setNickname(mine.driverNickname || mine.driverName || '');
+      setPhone(mine.driverPhone || '');
+      setLineId(mine.driverLine || '');
+      setWhatsapp(mine.driverWhatsapp || '');
+      setWechat(mine.driverWechat || '');
+      setKakao(mine.driverKakao || '');
+      setVehicleTitle(mine.title || '');
+      setVehiclePlate(mine.plateNumber || '');
+      setSeats(mine.seats || 9);
+      setImages(Array.isArray(mine.images) ? mine.images : []);
+      setBusyDates(Array.isArray(mine.busyDates) ? mine.busyDates : []);
+    } catch (err) {
+      setLoadError('โหลดข้อมูลรถจากเซิร์ฟเวอร์ไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ');
+      console.warn('[TripDee] Failed to load own vehicle:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen || !user) return;
+    loadOwnVehicle();
+  }, [isOpen, user, loadOwnVehicle]);
+
   if (!isOpen || !user) return null;
 
   // Driver Meta
   const driverCode = `TD-VN-${(user.id || '50821').replace(/[^0-9]/g, '').slice(-5) || '50821'}`;
-  const driverDisplayName = user.name || 'นายสุรชัย ใจดี';
-  const driverNick = nickname || user.driverNickname || 'พี่ชัย รถตู้เชียงใหม่';
+  const driverDisplayName = user.name || '';
+  const driverNick = nickname || user.driverNickname || '';
 
 
-  // Profile Save
-  const handleSaveProfile = (e?: React.FormEvent) => {
+  // Profile Save — persists to the vehicles table, then mirrors into localStorage.
+  const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+
+    const cleanPhone = phone.trim();
+    if (cleanPhone.replace(/\D/g, '').length < 9) {
+      setSaveError('กรุณากรอกเบอร์โทรศัพท์ที่ติดต่อได้ (อย่างน้อย 9 หลัก)');
+      return;
+    }
+    if (!vehicleTitle.trim()) {
+      setSaveError('กรุณากรอกหัวข้อรุ่นรถสำหรับแสดงผลหน้าเว็บ');
+      return;
+    }
+
     setIsSaving(true);
-    updateDriverProfile({
-      driverNickname: nickname,
-      emailOrPhone: phone,
-      lineId,
-      whatsapp: whatsapp.trim() || undefined,
-      wechat: wechat.trim() || undefined,
-      kakao: kakao.trim() || undefined,
-      vehicleTitle,
-      vehiclePlate,
-      seats: Number(seats),
-      images,
-      busyDates,
-    });
-    setTimeout(() => {
-      setIsSaving(false);
+    setSaveError('');
+
+    try {
+      const payload = {
+        id: vehicleId || undefined,
+        title: vehicleTitle.trim(),
+        type: 'van',
+        seats: Number(seats) || 9,
+        driverName: driverDisplayName || nickname.trim(),
+        driverNickname: nickname.trim(),
+        driverPhone: cleanPhone,
+        driverLine: lineId.trim() || undefined,
+        driverWhatsapp: whatsapp.trim() || undefined,
+        driverWechat: wechat.trim() || undefined,
+        driverKakao: kakao.trim() || undefined,
+        plateNumber: vehiclePlate.trim() || undefined,
+        images: images.length > 0 ? images : undefined,
+        busyDates,
+      };
+
+      const res = await fetch('/api/vehicles', {
+        method: vehicleId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setSaveError(data.error || 'บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        return;
+      }
+
+      if (data.vehicle?.id) {
+        setVehicleId(data.vehicle.id);
+        setApprovalStatus(data.vehicle.approvalStatus || 'pending');
+      }
+
+      // Mirror into the local profile so the navbar and portal header render
+      // correctly without another round trip.
+      updateDriverProfile({
+        driverNickname: nickname.trim(),
+        emailOrPhone: cleanPhone,
+        lineId: lineId.trim() || undefined,
+        whatsapp: whatsapp.trim() || undefined,
+        wechat: wechat.trim() || undefined,
+        kakao: kakao.trim() || undefined,
+        vehicleTitle: vehicleTitle.trim(),
+        vehiclePlate: vehiclePlate.trim() || undefined,
+        seats: Number(seats) || 9,
+        images,
+        busyDates,
+      });
+
+      window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2500);
-    }, 600);
+      setTimeout(() => setSaveSuccess(false), 4000);
+    } catch (err) {
+      setSaveError((err as Error).message || 'บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Image Upload handler
@@ -1552,35 +1632,80 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                 <span>ออกจากระบบ</span>
               </button>
 
-              <button
-                type="button"
-                onClick={handleSaveProfile}
-                disabled={isSaving}
-                className={`px-8 py-2.5 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer ${
-                  saveSuccess
-                    ? 'bg-[#06C755]'
-                    : isSaving
-                    ? 'bg-slate-700'
-                    : 'bg-slate-950 hover:bg-slate-800'
-                }`}
-              >
-                {isSaving ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span>กำลังบันทึก...</span>
-                  </>
-                ) : saveSuccess ? (
-                  <>
-                    <Check className="h-4 w-4" strokeWidth={3} />
-                    <span>บันทึกเรียบร้อย!</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-[18px]">save</span>
-                    <span>บันทึกการแก้ไขทั้งหมด</span>
-                  </>
-                )}
-              </button>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  disabled={isSaving}
+                  className={`px-8 py-2.5 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer ${
+                    saveSuccess
+                      ? 'bg-[#06C755]'
+                      : isSaving
+                      ? 'bg-slate-700'
+                      : 'bg-slate-950 hover:bg-slate-800'
+                  }`}
+                >
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span>กำลังบันทึก...</span>
+                    </>
+                  ) : saveSuccess ? (
+                    <>
+                      <Check className="h-4 w-4" strokeWidth={3} />
+                      <span>บันทึกเรียบร้อย!</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[18px]">save</span>
+                      <span>บันทึกการแก้ไขทั้งหมด</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Save feedback + approval state */}
+            <div className="mt-3 space-y-2">
+              {saveError && (
+                <div
+                  role="alert"
+                  className="flex items-center gap-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold px-3 py-2"
+                >
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{saveError}</span>
+                </div>
+              )}
+
+              {loadError && (
+                <div
+                  role="alert"
+                  className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-semibold px-3 py-2"
+                >
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{loadError}</span>
+                </div>
+              )}
+
+              {saveSuccess && approvalStatus === 'pending' && (
+                <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs px-3 py-2.5">
+                  <span className="material-symbols-outlined text-[18px] shrink-0 mt-px">hourglass_top</span>
+                  <div>
+                    <p className="font-bold">บันทึกแล้ว รอผู้ดูแลระบบอนุมัติ</p>
+                    <p className="mt-0.5 text-amber-800 dark:text-amber-300/90">
+                      ข้อมูลรถของคุณจะยังไม่แสดงบนหน้าเว็บจนกว่าแอดมินจะตรวจสอบและอนุมัติ
+                      หลังจากแก้ไขข้อมูลรถที่ได้รับการอนุมัติแล้ว ระบบจะส่งกลับมารอตรวจใหม่อีกครั้ง
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {saveSuccess && approvalStatus === 'approved' && (
+                <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold px-3 py-2">
+                  <Check className="h-4 w-4 shrink-0" />
+                  <span>บันทึกแล้ว และรถของคุณได้รับการอนุมัติแล้ว (แสดงบนหน้าเว็บ)</span>
+                </div>
+              )}
             </div>
           </div>
 

@@ -631,14 +631,292 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
 // 3. VEHICLES CATALOG SERVICE
 // ==============================================================================
 
-export async function fetchVehicles(reqUrl?: string): Promise<Vehicle[]> {
+/**
+ * Raw `vehicles` row shape, including the columns added by migration 06.
+ * Declared loosely so a pre-migration database still type-checks.
+ */
+type VehicleRow = {
+  id: string;
+  title: string;
+  type: Vehicle['type'];
+  seats: number;
+  driver_name: string;
+  driver_nickname: string;
+  driver_phone: string;
+  driver_line?: string | null;
+  driver_whatsapp?: string | null;
+  driver_wechat?: string | null;
+  driver_kakao?: string | null;
+  languages?: string[] | null;
+  rating?: number | null;
+  review_count?: number | null;
+  is_verified?: boolean | null;
+  images?: string[] | null;
+  zone_rates?: Record<ZoneId, number> | null;
+  rate_note?: string | null;
+  location: string;
+  region?: string | null;
+  popular_routes?: string[] | null;
+  amenities?: string[] | null;
+  description?: string | null;
+  plate_type?: 'yellow' | 'blue' | null;
+  plate_number?: string | null;
+  can_issue_tax_invoice?: boolean | null;
+  business_type?: 'company' | 'individual' | null;
+  is_available?: boolean | null;
+  rental_type?: 'with_driver' | 'self_drive' | null;
+  transmission?: 'auto' | 'manual' | null;
+  busy_dates?: string[] | null;
+  owner_id?: string | null;
+  approval_status?: 'pending' | 'approved' | 'rejected' | null;
+  submitted_at?: string | null;
+  reviewed_at?: string | null;
+  reviewed_by?: string | null;
+};
+
+/** Map a raw `vehicles` row into the app-level `Vehicle` shape. */
+function mapVehicleRow(row: VehicleRow): Vehicle {
+  return {
+    id: row.id,
+    title: row.title,
+    type: row.type,
+    seats: row.seats,
+    driverName: row.driver_name,
+    driverNickname: row.driver_nickname,
+    driverPhone: row.driver_phone,
+    driverLine: row.driver_line || '',
+    driverWhatsapp: row.driver_whatsapp || undefined,
+    driverWechat: row.driver_wechat || undefined,
+    driverKakao: row.driver_kakao || undefined,
+    languages: (row.languages as ('th' | 'en' | 'zh' | 'ko')[]) || ['th'],
+    rating: Number(row.rating) || 5.0,
+    reviewCount: Number(row.review_count) || 0,
+    isVerified: Boolean(row.is_verified),
+    images: row.images || [],
+    zoneRates: row.zone_rates as Record<ZoneId, number>,
+    rateNote: row.rate_note || undefined,
+    location: row.location,
+    region: (row.region as 'north' | 'central' | 'south' | 'east' | 'isan') || 'north',
+    popularRoutes: row.popular_routes || [],
+    amenities: row.amenities || [],
+    description: row.description || '',
+    plateType: row.plate_type || undefined,
+    plateNumber: row.plate_number || undefined,
+    canIssueTaxInvoice:
+      row.can_issue_tax_invoice === null || row.can_issue_tax_invoice === undefined
+        ? undefined
+        : Boolean(row.can_issue_tax_invoice),
+    businessType: row.business_type || undefined,
+    isAvailable: row.is_available === null || row.is_available === undefined ? true : Boolean(row.is_available),
+    rentalType: row.rental_type || (row.type === 'van' ? 'with_driver' : 'self_drive'),
+    transmission: row.transmission || undefined,
+    busyDates: Array.isArray(row.busy_dates) ? row.busy_dates : undefined,
+    ownerId: row.owner_id || undefined,
+    approvalStatus: row.approval_status || undefined,
+    submittedAt: row.submitted_at || undefined,
+    reviewedAt: row.reviewed_at || undefined,
+    reviewedBy: row.reviewed_by || undefined,
+  };
+}
+
+/**
+ * Columns added by migration 06. The application must keep working on a
+ * database where that migration has not been run yet, so writes are filtered
+ * down to the columns that actually exist. Crucially, when `owner_id` /
+ * `approval_status` are absent the app refuses driver self-service writes
+ * instead of publishing unowned, unreviewed vehicles to the public catalogue.
+ */
+const OPTIONAL_VEHICLE_COLUMNS = [
+  'plate_type',
+  'plate_number',
+  'can_issue_tax_invoice',
+  'business_type',
+  'is_available',
+  'rental_type',
+  'transmission',
+  'busy_dates',
+  'owner_id',
+  'approval_status',
+  'submitted_at',
+  'reviewed_at',
+  'reviewed_by',
+] as const;
+
+type OptionalColumn = (typeof OPTIONAL_VEHICLE_COLUMNS)[number];
+
+/**
+ * Probe groups. Every optional column must appear in exactly one group,
+ * otherwise it is silently dropped from writes (which is how plate numbers
+ * went missing in the first place).
+ */
+const OPTIONAL_VEHICLE_COLUMN_GROUPS: OptionalColumn[][] = [
+  // Group 1 is the base migration. Keep it small so a partial migration
+  // still lets the rest through.
+  ['plate_type', 'plate_number', 'can_issue_tax_invoice'],
+  ['business_type', 'is_available', 'rental_type', 'transmission'],
+  // Ownership + approval.
+  ['owner_id', 'approval_status'],
+  // Decoration columns; safe to treat as best-effort.
+  ['busy_dates'],
+  ['submitted_at', 'reviewed_at', 'reviewed_by'],
+];
+
+let columnSupportPromise: Promise<Set<string>> | null = null;
+
+/** Probe once per process which optional columns the live table has. */
+async function getSupportedColumns(): Promise<Set<string>> {
+  if (columnSupportPromise) return columnSupportPromise;
+
+  columnSupportPromise = (async () => {
+    const supabase = getSupabase();
+    if (!supabase) return new Set<string>();
+    const supported = new Set<string>();
+    try {
+      // A single select naming every optional column fails if ANY is missing,
+      // so probe in small groups to learn the maximum that exists.
+      for (const group of OPTIONAL_VEHICLE_COLUMN_GROUPS) {
+        const { error } = await supabase
+          .from('vehicles')
+          .select(group.join(','))
+          .limit(1);
+        if (!error) group.forEach((c) => supported.add(c));
+      }
+    } catch (err) {
+      console.warn('[TripDee Supabase] Column probe failed, assuming base schema:', err);
+    }
+    return supported;
+  })();
+
+  return columnSupportPromise;
+}
+
+/** True when migration 06 has been applied (ownership + approval available). */
+export async function isVehicleOwnershipSupported(): Promise<boolean> {
+  const cols = await getSupportedColumns();
+  return cols.has('owner_id') && cols.has('approval_status');
+}
+
+/** Drop any keys the live table does not have. */
+function filterToSupportedColumns(
+  payload: Record<string, unknown>,
+  supported: Set<string>
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if ((OPTIONAL_VEHICLE_COLUMNS as readonly string[]).includes(key) && !supported.has(key)) {
+      continue;
+    }
+    out[key] = value;
+  }
+  return out;
+}
+
+/** Build the column payload for an upsert. */
+function toVehicleRowPayload(vehicle: Vehicle): Record<string, unknown> {
+  return {
+    id: vehicle.id,
+    title: vehicle.title,
+    type: vehicle.type,
+    seats: vehicle.seats,
+    driver_name: vehicle.driverName,
+    driver_nickname: vehicle.driverNickname,
+    driver_phone: vehicle.driverPhone,
+    driver_line: vehicle.driverLine || null,
+    driver_whatsapp: vehicle.driverWhatsapp || null,
+    driver_wechat: vehicle.driverWechat || null,
+    driver_kakao: vehicle.driverKakao || null,
+    languages: vehicle.languages,
+    rating: vehicle.rating,
+    review_count: vehicle.reviewCount,
+    is_verified: vehicle.isVerified,
+    images: vehicle.images,
+    zone_rates: vehicle.zoneRates,
+    rate_note: vehicle.rateNote || null,
+    location: vehicle.location,
+    region: vehicle.region || 'north',
+    popular_routes: vehicle.popularRoutes,
+    amenities: vehicle.amenities,
+    description: vehicle.description,
+    plate_type: vehicle.plateType || null,
+    plate_number: vehicle.plateNumber || null,
+    can_issue_tax_invoice: vehicle.canIssueTaxInvoice ?? null,
+    business_type: vehicle.businessType || null,
+    is_available: vehicle.isAvailable ?? true,
+    rental_type: vehicle.rentalType || (vehicle.type === 'van' ? 'with_driver' : 'self_drive'),
+    transmission: vehicle.transmission || null,
+    busy_dates: vehicle.busyDates || null,
+    owner_id: vehicle.ownerId || null,
+    approval_status: vehicle.approvalStatus || 'approved',
+    submitted_at: vehicle.submittedAt || new Date().toISOString(),
+    reviewed_at: vehicle.reviewedAt || null,
+    reviewed_by: vehicle.reviewedBy || null,
+  };
+}
+
+/** Translate a `Vehicle` update patch into its snake_case column form. */
+function toVehicleColumnUpdates(updates: Partial<Vehicle>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (updates.title !== undefined) out.title = updates.title;
+  if (updates.type !== undefined) out.type = updates.type;
+  if (updates.seats !== undefined) out.seats = updates.seats;
+  if (updates.driverName !== undefined) out.driver_name = updates.driverName;
+  if (updates.driverNickname !== undefined) out.driver_nickname = updates.driverNickname;
+  if (updates.driverPhone !== undefined) out.driver_phone = updates.driverPhone;
+  if (updates.driverLine !== undefined) out.driver_line = updates.driverLine;
+  if (updates.driverWhatsapp !== undefined) out.driver_whatsapp = updates.driverWhatsapp;
+  if (updates.driverWechat !== undefined) out.driver_wechat = updates.driverWechat;
+  if (updates.driverKakao !== undefined) out.driver_kakao = updates.driverKakao;
+  if (updates.languages !== undefined) out.languages = updates.languages;
+  if (updates.rating !== undefined) out.rating = updates.rating;
+  if (updates.reviewCount !== undefined) out.review_count = updates.reviewCount;
+  if (updates.isVerified !== undefined) out.is_verified = updates.isVerified;
+  if (updates.images !== undefined) out.images = updates.images;
+  if (updates.zoneRates !== undefined) out.zone_rates = updates.zoneRates;
+  if (updates.rateNote !== undefined) out.rate_note = updates.rateNote;
+  if (updates.location !== undefined) out.location = updates.location;
+  if (updates.region !== undefined) out.region = updates.region;
+  if (updates.popularRoutes !== undefined) out.popular_routes = updates.popularRoutes;
+  if (updates.amenities !== undefined) out.amenities = updates.amenities;
+  if (updates.description !== undefined) out.description = updates.description;
+  if (updates.plateType !== undefined) out.plate_type = updates.plateType;
+  if (updates.plateNumber !== undefined) out.plate_number = updates.plateNumber;
+  if (updates.canIssueTaxInvoice !== undefined) out.can_issue_tax_invoice = updates.canIssueTaxInvoice;
+  if (updates.businessType !== undefined) out.business_type = updates.businessType;
+  if (updates.isAvailable !== undefined) out.is_available = updates.isAvailable;
+  if (updates.rentalType !== undefined) out.rental_type = updates.rentalType;
+  if (updates.transmission !== undefined) out.transmission = updates.transmission;
+  if (updates.busyDates !== undefined) out.busy_dates = updates.busyDates;
+  if (updates.ownerId !== undefined) out.owner_id = updates.ownerId;
+  if (updates.approvalStatus !== undefined) out.approval_status = updates.approvalStatus;
+  if (updates.submittedAt !== undefined) out.submitted_at = updates.submittedAt;
+  if (updates.reviewedAt !== undefined) out.reviewed_at = updates.reviewedAt;
+  if (updates.reviewedBy !== undefined) out.reviewed_by = updates.reviewedBy;
+  return out;
+}
+
+export async function fetchVehicles(
+  reqUrl?: string,
+  options?: { includeUnapproved?: boolean; ownerId?: string }
+): Promise<Vehicle[]> {
   const allowMock = isMockDataEnabled(reqUrl);
+  const includeUnapproved = Boolean(options?.includeUnapproved);
+  const ownerId = options?.ownerId;
   const localApproved = (getApprovedVehicles() || []).filter((v) => !isExcludedTestVehicle(v.id) && (allowMock ? true : !isMockVehicleId(v.id)));
   const deletedIds = getDeletedVehicleIds();
   const supabase = getSupabase();
 
+  // Public listings only ever surface approved vehicles.
+  const isPubliclyVisible = (v: { approvalStatus?: string }) =>
+    includeUnapproved || !v.approvalStatus || v.approvalStatus === 'approved';
+
   if (!supabase) {
-    const combined = localApproved.filter((v) => !deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id));
+    const combined = localApproved.filter(
+      (v) =>
+        !deletedIds.includes(v.id) &&
+        !isExcludedTestVehicle(v.id) &&
+        isPubliclyVisible(v) &&
+        (!ownerId || v.ownerId === ownerId)
+    );
     if (allowMock) {
       for (const v of VEHICLES) {
         if (!deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id) && !combined.some((c) => c.id === v.id)) {
@@ -650,55 +928,47 @@ export async function fetchVehicles(reqUrl?: string): Promise<Vehicle[]> {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('vehicles')
-      .select('*')
-      .order('rating', { ascending: false });
+    const supported = await getSupportedColumns();
+    const ownershipAvailable = supported.has('owner_id') && supported.has('approval_status');
+    const canFilterInQuery = ownershipAvailable && !includeUnapproved;
+    const canFilterByOwner = ownershipAvailable && Boolean(ownerId);
+
+    let query = supabase.from('vehicles').select('*');
+    if (canFilterInQuery) {
+      query = query.eq('approval_status', 'approved');
+    }
+    if (canFilterByOwner) {
+      query = query.eq('owner_id', ownerId!);
+    }
+    const { data, error } = await query.order('rating', { ascending: false });
 
     let baseVehicles: Vehicle[] = allowMock ? VEHICLES.filter((v) => !isExcludedTestVehicle(v.id)) : [];
 
-    if (!error && data && data.length > 0) {
+    if (error) {
+      if (!/approval_status|owner_id|column/i.test(error.message || '')) {
+        throw error;
+      }
+      const fallback = await supabase.from('vehicles').select('*').order('rating', { ascending: false });
+      if (!fallback.error && fallback.data && fallback.data.length > 0) {
+        baseVehicles = (fallback.data as unknown as VehicleRow[])
+          .filter((row) => isPubliclyVisible({ approvalStatus: row.approval_status ?? undefined }))
+          .filter((row) => (ownerId ? row.owner_id === ownerId : true))
+          .map(mapVehicleRow);
+      }
+    } else if (data && data.length > 0) {
       const validRows = (allowMock ? data : data.filter((row) => !isMockVehicleId(row.id))).filter(
         (row) => !isExcludedTestVehicle(row.id)
       );
-      baseVehicles = validRows.map((row) => ({
-        id: row.id,
-        title: row.title,
-        type: row.type,
-        seats: row.seats,
-        driverName: row.driver_name,
-        driverNickname: row.driver_nickname,
-        driverPhone: row.driver_phone,
-        driverLine: row.driver_line || '',
-        driverWhatsapp: row.driver_whatsapp || undefined,
-        driverWechat: row.driver_wechat || undefined,
-        driverKakao: row.driver_kakao || undefined,
-        languages: (row.languages as ('th' | 'en' | 'zh' | 'ko')[]) || ['th'],
-        rating: Number(row.rating) || 5.0,
-        reviewCount: Number(row.review_count) || 0,
-        isVerified: Boolean(row.is_verified),
-        images: row.images || [],
-        zoneRates: row.zone_rates as Record<ZoneId, number>,
-        rateNote: row.rate_note || undefined,
-        location: row.location,
-        region: (row.region as 'north' | 'central' | 'south' | 'east' | 'isan') || 'north',
-        popularRoutes: row.popular_routes || [],
-        amenities: row.amenities || [],
-        description: row.description || '',
-        plateType: (row.plate_type as 'yellow' | 'blue') || undefined,
-        plateNumber: row.plate_number || undefined,
-        canIssueTaxInvoice: row.can_issue_tax_invoice !== null ? Boolean(row.can_issue_tax_invoice) : undefined,
-        businessType: (row.business_type as 'company' | 'individual') || undefined,
-        isAvailable: row.is_available !== null ? Boolean(row.is_available) : true,
-        rentalType: (row.rental_type as 'with_driver' | 'self_drive') || (row.type === 'van' ? 'with_driver' : 'self_drive'),
-        transmission: (row.transmission as 'auto' | 'manual') || undefined,
-        busyDates: Array.isArray((row as unknown as Record<string, unknown>).busy_dates)
-          ? ((row as unknown as Record<string, unknown>).busy_dates as string[])
-          : undefined,
-      }));
+      baseVehicles = validRows.map((row) => mapVehicleRow(row as unknown as VehicleRow));
     }
 
-    const combined = localApproved.filter((v) => !deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id));
+    const combined = localApproved.filter(
+      (v) =>
+        !deletedIds.includes(v.id) &&
+        !isExcludedTestVehicle(v.id) &&
+        isPubliclyVisible(v) &&
+        (!ownerId || v.ownerId === ownerId)
+    );
     for (const v of baseVehicles) {
       if (!deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id) && !combined.some((c) => c.id === v.id)) {
         combined.push(v);
@@ -707,7 +977,13 @@ export async function fetchVehicles(reqUrl?: string): Promise<Vehicle[]> {
     return combined;
   } catch (err) {
     console.warn('[TripDee Supabase] Error fetching vehicles:', err);
-    const combined = localApproved.filter((v) => !deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id));
+    const combined = localApproved.filter(
+      (v) =>
+        !deletedIds.includes(v.id) &&
+        !isExcludedTestVehicle(v.id) &&
+        isPubliclyVisible(v) &&
+        (!ownerId || v.ownerId === ownerId)
+    );
     if (allowMock) {
       for (const v of VEHICLES) {
         if (!deletedIds.includes(v.id) && !isExcludedTestVehicle(v.id) && !combined.some((c) => c.id === v.id)) {
@@ -724,81 +1000,49 @@ export async function saveVehicle(vehicle: Vehicle): Promise<Vehicle> {
   const supabase = getSupabase();
   if (!supabase) return vehicle;
 
-  try {
-    const fullVehicleData = {
-      id: vehicle.id,
-      title: vehicle.title,
-      type: vehicle.type,
-      seats: vehicle.seats,
-      driver_name: vehicle.driverName,
-      driver_nickname: vehicle.driverNickname,
-      driver_phone: vehicle.driverPhone,
-      driver_line: vehicle.driverLine || null,
-      driver_whatsapp: vehicle.driverWhatsapp || null,
-      driver_wechat: vehicle.driverWechat || null,
-      driver_kakao: vehicle.driverKakao || null,
-      languages: vehicle.languages,
-      rating: vehicle.rating,
-      review_count: vehicle.reviewCount,
-      is_verified: vehicle.isVerified,
-      images: vehicle.images,
-      zone_rates: vehicle.zoneRates,
-      rate_note: vehicle.rateNote || null,
-      location: vehicle.location,
-      region: vehicle.region || 'north',
-      popular_routes: vehicle.popularRoutes,
-      amenities: vehicle.amenities,
-      description: vehicle.description,
-      plate_type: vehicle.plateType || null,
-      plate_number: vehicle.plateNumber || null,
-      can_issue_tax_invoice: vehicle.canIssueTaxInvoice ?? null,
-      business_type: vehicle.businessType || null,
-      is_available: vehicle.isAvailable ?? true,
-      rental_type: vehicle.rentalType || (vehicle.type === 'van' ? 'with_driver' : 'self_drive'),
-      transmission: vehicle.transmission || null,
-      busy_dates: vehicle.busyDates || null,
-    };
+  const supported = await getSupportedColumns();
+  const res = await (supabase.from('vehicles') as unknown as {
+    upsert: (data: Record<string, unknown>) => Promise<{ error?: { code?: string; message?: string } }>;
+  }).upsert(filterToSupportedColumns(toVehicleRowPayload(vehicle), supported));
 
-    const res = await (supabase.from('vehicles') as unknown as { upsert: (data: Record<string, unknown>) => Promise<{ error?: { code?: string; message?: string } }> }).upsert(fullVehicleData);
-
-    if (res?.error && (res.error.code === 'PGRST204' || res.error.message?.includes('column'))) {
-      console.warn('[TripDee Supabase] Retrying saveVehicle with base columns due to schema cache mismatch:', res.error.message);
-      const baseVehicleData = {
-        id: vehicle.id,
-        title: vehicle.title,
-        type: vehicle.type,
-        seats: vehicle.seats,
-        driver_name: vehicle.driverName,
-        driver_nickname: vehicle.driverNickname,
-        driver_phone: vehicle.driverPhone,
-        driver_line: vehicle.driverLine || null,
-        driver_whatsapp: vehicle.driverWhatsapp || null,
-        driver_wechat: vehicle.driverWechat || null,
-        driver_kakao: vehicle.driverKakao || null,
-        languages: vehicle.languages,
-        rating: vehicle.rating,
-        review_count: vehicle.reviewCount,
-        is_verified: vehicle.isVerified,
-        images: vehicle.images,
-        zone_rates: vehicle.zoneRates,
-        rate_note: vehicle.rateNote || null,
-        location: vehicle.location,
-        region: vehicle.region || 'north',
-        popular_routes: vehicle.popularRoutes,
-        amenities: vehicle.amenities,
-        description: vehicle.description,
-      };
-      await (supabase.from('vehicles') as unknown as { upsert: (data: Record<string, unknown>) => Promise<unknown> }).upsert(baseVehicleData);
-    }
-  } catch (err) {
-    console.warn('[TripDee Supabase] Exception saving vehicle:', err);
+  if (res?.error) {
+    // Surface this instead of silently degrading to a partial write: a schema
+    // mismatch must never look like a successful save to the caller.
+    throw new Error(`saveVehicle failed: ${res.error.message}`);
   }
   return vehicle;
 }
 
+/**
+ * Read a single vehicle including ones that are not publicly listed.
+ * Owner/approval checks depend on being able to see pending rows.
+ */
+export async function fetchVehicleById(id: string): Promise<Vehicle | null> {
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('id', id)
+        .limit(1);
+      if (!error && data && data.length > 0) {
+        return mapVehicleRow(data[0] as unknown as VehicleRow);
+      }
+    } catch (err) {
+      console.warn('[TripDee Supabase] Error fetching vehicle by id:', err);
+    }
+  }
+
+  const local = getApprovedVehicles().find((v) => v.id === id);
+  if (local) return local;
+
+  const all = await fetchVehicles(undefined, { includeUnapproved: true });
+  return all.find((v) => v.id === id) || null;
+}
+
 export async function updateVehicle(id: string, updates: Partial<Vehicle>): Promise<Vehicle | null> {
-  const currentVehicles = await fetchVehicles();
-  const target = currentVehicles.find((v) => v.id === id);
+  const target = await fetchVehicleById(id);
   if (!target) return null;
 
   const merged: Vehicle = { ...target, ...updates };
@@ -807,58 +1051,13 @@ export async function updateVehicle(id: string, updates: Partial<Vehicle>): Prom
   const supabase = getSupabase();
   if (!supabase) return merged;
 
-  try {
-    const supabaseUpdates: Record<string, unknown> = {};
-    if (updates.title !== undefined) supabaseUpdates.title = updates.title;
-    if (updates.type !== undefined) supabaseUpdates.type = updates.type;
-    if (updates.seats !== undefined) supabaseUpdates.seats = updates.seats;
-    if (updates.driverName !== undefined) supabaseUpdates.driver_name = updates.driverName;
-    if (updates.driverNickname !== undefined) supabaseUpdates.driver_nickname = updates.driverNickname;
-    if (updates.driverPhone !== undefined) supabaseUpdates.driver_phone = updates.driverPhone;
-    if (updates.driverLine !== undefined) supabaseUpdates.driver_line = updates.driverLine;
-    if (updates.driverWhatsapp !== undefined) supabaseUpdates.driver_whatsapp = updates.driverWhatsapp;
-    if (updates.driverWechat !== undefined) supabaseUpdates.driver_wechat = updates.driverWechat;
-    if (updates.driverKakao !== undefined) supabaseUpdates.driver_kakao = updates.driverKakao;
-    if (updates.languages !== undefined) supabaseUpdates.languages = updates.languages;
-    if (updates.rating !== undefined) supabaseUpdates.rating = updates.rating;
-    if (updates.reviewCount !== undefined) supabaseUpdates.review_count = updates.reviewCount;
-    if (updates.isVerified !== undefined) supabaseUpdates.is_verified = updates.isVerified;
-    if (updates.images !== undefined) supabaseUpdates.images = updates.images;
-    if (updates.zoneRates !== undefined) supabaseUpdates.zone_rates = updates.zoneRates;
-    if (updates.rateNote !== undefined) supabaseUpdates.rate_note = updates.rateNote;
-    if (updates.location !== undefined) supabaseUpdates.location = updates.location;
-    if (updates.region !== undefined) supabaseUpdates.region = updates.region;
-    if (updates.popularRoutes !== undefined) supabaseUpdates.popular_routes = updates.popularRoutes;
-    if (updates.amenities !== undefined) supabaseUpdates.amenities = updates.amenities;
-    if (updates.description !== undefined) supabaseUpdates.description = updates.description;
-    if (updates.plateType !== undefined) supabaseUpdates.plate_type = updates.plateType;
-    if (updates.plateNumber !== undefined) supabaseUpdates.plate_number = updates.plateNumber;
-    if (updates.canIssueTaxInvoice !== undefined) supabaseUpdates.can_issue_tax_invoice = updates.canIssueTaxInvoice;
-    if (updates.businessType !== undefined) supabaseUpdates.business_type = updates.businessType;
-    if (updates.isAvailable !== undefined) supabaseUpdates.is_available = updates.isAvailable;
-    if (updates.rentalType !== undefined) supabaseUpdates.rental_type = updates.rentalType;
-    if (updates.transmission !== undefined) supabaseUpdates.transmission = updates.transmission;
-    if (updates.busyDates !== undefined) supabaseUpdates.busy_dates = updates.busyDates;
-
-    const res = await (supabase.from('vehicles') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
-    const updateError = (res as { error?: { code?: string; message?: string } })?.error;
-    if (updateError && (updateError.code === 'PGRST204' || updateError.message?.includes('column'))) {
-      const baseKeys = new Set([
-        'title', 'type', 'seats', 'driver_name', 'driver_nickname', 'driver_phone',
-        'driver_line', 'driver_whatsapp', 'driver_wechat', 'driver_kakao', 'languages',
-        'rating', 'review_count', 'is_verified', 'images', 'zone_rates', 'rate_note',
-        'location', 'region', 'popular_routes', 'amenities', 'description'
-      ]);
-      const stripped: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(supabaseUpdates)) {
-        if (baseKeys.has(k)) stripped[k] = v;
-      }
-      if (Object.keys(stripped).length > 0) {
-        await (supabase.from('vehicles') as unknown as DynamicTableQuery).update(stripped).eq('id', id);
-      }
-    }
-  } catch (err) {
-    console.warn('[TripDee Supabase] Exception updating vehicle:', err);
+  const supported = await getSupportedColumns();
+  const res = await (supabase.from('vehicles') as unknown as DynamicTableQuery)
+    .update(filterToSupportedColumns(toVehicleColumnUpdates(updates), supported))
+    .eq('id', id);
+  const updateError = (res as { error?: { code?: string; message?: string } })?.error;
+  if (updateError) {
+    throw new Error(`updateVehicle failed: ${updateError.message}`);
   }
   return merged;
 }
@@ -868,13 +1067,54 @@ export async function deleteVehicle(id: string): Promise<boolean> {
   const supabase = getSupabase();
   if (!supabase) return true;
 
-  try {
-    await supabase.from('vehicles').delete().eq('id', id);
-    return true;
-  } catch (err) {
-    console.warn('[TripDee Supabase] Exception deleting vehicle:', err);
-    return true;
+  const res = await supabase.from('vehicles').delete().eq('id', id);
+  if (res.error) {
+    throw new Error(`deleteVehicle failed: ${res.error.message}`);
   }
+  return true;
+}
+
+/**
+ * Approve or reject a driver-submitted vehicle. Only an administrator should
+ * call this; the API route enforces that before reaching here.
+ */
+export async function reviewVehicle(
+  id: string,
+  decision: 'approved' | 'rejected',
+  reviewedBy: string
+): Promise<Vehicle | null> {
+  const target = await fetchVehicleById(id);
+  if (!target) return null;
+
+  const merged: Vehicle = {
+    ...target,
+    approvalStatus: decision,
+    reviewedAt: new Date().toISOString(),
+    reviewedBy,
+  };
+  addApprovedVehicle(merged);
+
+  const supabase = getSupabase();
+  if (!supabase) return merged;
+
+  const supported = await getSupportedColumns();
+  const res = await (supabase.from('vehicles') as unknown as DynamicTableQuery)
+    .update(
+      filterToSupportedColumns(
+        {
+          approval_status: decision,
+          reviewed_at: merged.reviewedAt,
+          reviewed_by: reviewedBy,
+        },
+        supported
+      )
+    )
+    .eq('id', id);
+  const updateError = (res as { error?: { code?: string; message?: string } })?.error;
+  if (updateError) {
+    throw new Error(`reviewVehicle failed: ${updateError.message}`);
+  }
+  return merged;
 }
 
 // ==============================================================================

@@ -68,7 +68,8 @@ export default function AdminConsolePage() {
     setIsRefreshing(true);
     const headers: HeadersInit = token ? { 'x-admin-pin': token, Authorization: `Bearer ${token}` } : {};
 
-    const p1 = fetch('/api/vehicles')
+    // scope=admin returns the full fleet including vehicles still awaiting review.
+    const p1 = fetch('/api/vehicles?scope=admin', { headers })
       .then((res) => res.json())
       .then((data) => {
         if (data.vehicles && Array.isArray(data.vehicles)) setVehicles(data.vehicles);

@@ -336,6 +336,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         /* ignore */
       }
     }
+    // Clear the signed session cookie too, otherwise the API would still treat
+    // this browser as an authenticated driver.
+    try {
+      await fetch('/api/auth/session', { method: 'DELETE' });
+    } catch {
+      /* ignore */
+    }
   };
 
   const toggleDriverAvailability = () => {

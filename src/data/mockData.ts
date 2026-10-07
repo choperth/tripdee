@@ -54,6 +54,13 @@ export interface Vehicle {
   transmission?: 'auto' | 'manual';
   /** รายการวันที่ติดงาน/คิวเต็ม (ISO date strings: "YYYY-MM-DD") */
   busyDates?: string[];
+  /** Auth user id ของคนขับเจ้าของรถ (ไม่มี = รถที่แอดมินสร้างเอง) */
+  ownerId?: string;
+  /** pending = รอแอดมินอนุมัติ, rejected = ไม่ผ่าน, approved = แสดงบนหน้าเว็บ */
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  submittedAt?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
 }
 
 export interface Sponsor {

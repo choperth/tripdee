@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase/client';
+import { createSessionToken, withSessionCookie } from '@/lib/authGuard';
 
 function getOrigin(req: NextRequest): string {
   const forwardedHost = req.headers.get('x-forwarded-host');
@@ -137,6 +138,15 @@ export async function GET(req: NextRequest) {
     const safeTargetUrl = targetUrl.toString();
     const safeUserJson = JSON.stringify(userProfile);
 
+    // 5b. Issue a signed, httpOnly session cookie so the API can verify which
+    // driver a request belongs to. localStorage alone is not trustworthy for
+    // authorisation decisions.
+    const { token } = await createSessionToken({
+      userId: userProfile.id,
+      role,
+      email: userProfile.emailOrPhone,
+    });
+
     const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -169,12 +179,15 @@ export async function GET(req: NextRequest) {
 </body>
 </html>`;
 
-    return new NextResponse(html, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-      },
-    });
+    return withSessionCookie(
+      new NextResponse(html, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+        },
+      }),
+      token
+    );
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : 'Google OAuth internal error';
     console.error('[TripDee Google Auth] Unexpected error:', err);

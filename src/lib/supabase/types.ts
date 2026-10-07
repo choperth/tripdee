@@ -197,6 +197,12 @@ export type Database = {
           is_available: boolean | null;
           rental_type?: 'with_driver' | 'self_drive' | null;
           transmission?: 'auto' | 'manual' | null;
+          busy_dates?: string[] | null;
+          owner_id?: string | null;
+          approval_status?: 'pending' | 'approved' | 'rejected' | null;
+          submitted_at?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
           created_at: string;
         };
         Insert: {
@@ -230,6 +236,12 @@ export type Database = {
           is_available?: boolean | null;
           rental_type?: 'with_driver' | 'self_drive' | null;
           transmission?: 'auto' | 'manual' | null;
+          busy_dates?: string[] | null;
+          owner_id?: string | null;
+          approval_status?: 'pending' | 'approved' | 'rejected' | null;
+          submitted_at?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
           created_at?: string;
         };
         Update: {
@@ -263,6 +275,12 @@ export type Database = {
           is_available?: boolean | null;
           rental_type?: 'with_driver' | 'self_drive' | null;
           transmission?: 'auto' | 'manual' | null;
+          busy_dates?: string[] | null;
+          owner_id?: string | null;
+          approval_status?: 'pending' | 'approved' | 'rejected' | null;
+          submitted_at?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
           created_at?: string;
         };
         Relationships: [];

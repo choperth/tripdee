@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Vehicle, ZoneId } from '@/data/mockData';
 import { ALL_VEHICLE_MODELS } from '@/data/vehicleModels';
-import { CarFront, Plus, Pencil, Trash2, Search, Star, Download, ChevronDown, ChevronLeft, ChevronRight, Phone } from 'lucide-react';
+import { CarFront, Plus, Pencil, Trash2, Search, Star, Download, ChevronDown, ChevronLeft, ChevronRight, Phone, Check, X } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
 
@@ -14,7 +14,7 @@ interface AdminVehicleTabProps {
 
 const PAGE_SIZE = 5;
 
-type StatusFilter = 'all' | 'available' | 'busy';
+type StatusFilter = 'all' | 'available' | 'busy' | 'pending';
 type TypeFilter = 'all' | 'van' | 'suv' | 'car';
 
 export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRefresh }) => {
@@ -33,6 +33,8 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const availableCount = vehicles.filter((v) => v.isAvailable !== false).length;
+  const pendingCount = vehicles.filter((v) => v.approvalStatus === 'pending').length;
+  const rejectedCount = vehicles.filter((v) => v.approvalStatus === 'rejected').length;
 
   const filtered = vehicles.filter((v) => {
     const q = searchTerm.trim().toLowerCase();
@@ -54,6 +56,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
     if (regionFilter !== 'all' && v.region !== regionFilter) return false;
     if (plateOnly && v.plateType !== 'yellow') return false;
     if (featuredOnly && !v.isVerified) return false;
+    if (statusFilter === 'pending' && v.approvalStatus !== 'pending') return false;
     return true;
   });
 
@@ -96,17 +99,51 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
     URL.revokeObjectURL(url);
   };
 
+  const adminHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem('td-admin-token') || '';
+    return token ? { 'x-admin-pin': token, Authorization: `Bearer ${token}` } : {};
+  };
+
   const handleToggleVerified = async (v: Vehicle) => {
     try {
-      await fetch('/api/vehicles', {
+      const res = await fetch('/api/vehicles', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
         body: JSON.stringify({ id: v.id, isVerified: !v.isVerified }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'อัปเดตสถานะไม่สำเร็จ');
+      }
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
     } catch (err) {
       console.error('Error toggling verified:', err);
+    }
+  };
+
+  /**
+   * Approve or reject a driver-submitted vehicle. Until a vehicle is approved
+   * it is filtered out of every public listing.
+   */
+  const handleReview = async (v: Vehicle, decision: 'approved' | 'rejected') => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/vehicles', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+        body: JSON.stringify({ id: v.id, approvalStatus: decision }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'ดำเนินการไม่สำเร็จ');
+      }
+      onRefresh();
+      window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
+    } catch (err) {
+      console.error('Error reviewing vehicle:', err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -168,11 +205,15 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
 
     try {
       const method = editingVehicle ? 'PUT' : 'POST';
-      await fetch('/api/vehicles', {
+      const res = await fetch('/api/vehicles', {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
         body: JSON.stringify(vehicleData),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'บันทึกไม่สำเร็จ');
+      }
 
       setEditingVehicle(null);
       setIsNewModalOpen(false);
@@ -204,6 +245,16 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
             <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700 px-2 py-0.5">
               {vehicles.length} คัน ทั้งหมดในระบบ
             </span>
+            {pendingCount > 0 && (
+              <span className="text-[11px] font-mono font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 px-2 py-0.5">
+                รออนุมัติ {pendingCount} คัน
+              </span>
+            )}
+            {rejectedCount > 0 && (
+              <span className="text-[11px] font-mono font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 px-2 py-0.5">
+                ไม่ผ่าน {rejectedCount} คัน
+              </span>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -251,6 +302,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
               <option value="all">สถานะ: ทั้งหมด ({vehicles.length})</option>
               <option value="available">พร้อมรับงาน ({availableCount})</option>
               <option value="busy">ติดงาน ({vehicles.length - availableCount})</option>
+              <option value="pending">รออนุมัติ ({pendingCount})</option>
             </select>
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
           </div>
@@ -323,6 +375,19 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
           >
             พร้อมรับงานทันที ({availableCount})
           </button>
+          {pendingCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setStatusFilter((s) => (s === 'pending' ? 'all' : 'pending'))}
+              className={`px-2.5 py-1 text-[11px] font-bold border transition-colors cursor-pointer rounded-none ${
+                statusFilter === 'pending'
+                  ? 'bg-amber-500 text-slate-950 border-amber-600'
+                  : 'bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-950/50'
+              }`}
+            >
+              รออนุมัติ ({pendingCount})
+            </button>
+          )}
           <div className="ml-auto flex items-center gap-1.5 text-[11px] text-slate-400">
             <span className="font-mono uppercase">เรียงลำดับ:</span>
             <div className="relative">
@@ -366,7 +431,19 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <h4 className="font-bold text-sm text-slate-950 dark:text-white">{v.title}</h4>
-                        {v.isVerified && (
+                        {v.approvalStatus === 'pending' && (
+                          <span className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 px-2 py-0.5 text-[11px] font-bold border border-amber-300 dark:border-amber-700">
+                            <span className="material-symbols-outlined text-[13px]">hourglass_top</span>
+                            รออนุมัติ
+                          </span>
+                        )}
+                        {v.approvalStatus === 'rejected' && (
+                          <span className="inline-flex items-center gap-1 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 px-2 py-0.5 text-[11px] font-bold border border-rose-300 dark:border-rose-800">
+                            <span className="material-symbols-outlined text-[13px]">cancel</span>
+                            ไม่ผ่านการอนุมัติ
+                          </span>
+                        )}
+                        {v.approvalStatus === 'approved' && v.isVerified && (
                           <button
                             type="button"
                             onClick={() => handleToggleVerified(v)}
@@ -392,7 +469,40 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {!v.isVerified && (
+                    {v.approvalStatus === 'pending' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleReview(v, 'approved')}
+                          disabled={isSubmitting}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700 transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          <Check className="h-3 w-3" strokeWidth={3} />
+                          อนุมัติ
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleReview(v, 'rejected')}
+                          disabled={isSubmitting}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white border border-rose-700 transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          <X className="h-3 w-3" strokeWidth={3} />
+                          ไม่อนุมัติ
+                        </button>
+                      </>
+                    )}
+                    {v.approvalStatus === 'rejected' && (
+                      <button
+                        type="button"
+                        onClick={() => handleReview(v, 'approved')}
+                        disabled={isSubmitting}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        <Check className="h-3 w-3" strokeWidth={3} />
+                        อนุมัติ
+                      </button>
+                    )}
+                    {v.approvalStatus === 'approved' && !v.isVerified && (
                       <button
                         onClick={() => handleToggleVerified(v)}
                         title={t('padm.featuredOn')}
