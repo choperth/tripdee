@@ -39,10 +39,7 @@ const DriverPortalModal = dynamic(
   () => import('@/components/portals/DriverPortalModal').then((m) => m.DriverPortalModal),
   { ssr: false }
 );
-const DriverSelfServiceModal = dynamic(
-  () => import('@/components/portals/DriverSelfServiceModal').then((m) => m.DriverSelfServiceModal),
-  { ssr: false }
-);
+
 const CustomerPortalModal = dynamic(
   () => import('@/components/portals/CustomerPortalModal').then((m) => m.CustomerPortalModal),
   { ssr: false }
@@ -216,7 +213,6 @@ export default function HomePage() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isPortalOpen, setIsPortalOpen] = useState<boolean>(false);
-  const [isDriverSelfServiceOpen, setIsDriverSelfServiceOpen] = useState<boolean>(false);
 
   const [driverFleetModal, setDriverFleetModal] = useState<{
     isOpen: boolean;
@@ -421,7 +417,6 @@ export default function HomePage() {
         onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
         onOpenPortal={() => setIsPortalOpen(true)}
-        onOpenDriverSelfService={() => setIsDriverSelfServiceOpen(true)}
       />
       <div aria-hidden="true" className="h-16 shrink-0" />
       <LiveTickerRibbon availableVans={availableVanCount} />
@@ -847,7 +842,6 @@ export default function HomePage() {
       </main>
 
       <Footer
-        onOpenDriverSelfService={() => setIsDriverSelfServiceOpen(true)}
         onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
         onSelectZone={(zone) => {
           setSelectedZone(zone);
@@ -888,14 +882,6 @@ export default function HomePage() {
         }}
       />
       <DriverRegisterModal isOpen={isRegisterModalOpen} onClose={() => setIsRegisterModalOpen(false)} />
-      <DriverSelfServiceModal
-        isOpen={isDriverSelfServiceOpen}
-        onClose={() => setIsDriverSelfServiceOpen(false)}
-        onOpenRegisterModal={() => {
-          setIsDriverSelfServiceOpen(false);
-          setIsRegisterModalOpen(true);
-        }}
-      />
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}

@@ -2,18 +2,17 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { OFFICIAL_LINE_URL } from '@/lib/constants';
 
 interface FooterProps {
-  onOpenDriverSelfService?: () => void;
   onOpenRegisterModal?: () => void;
   onSelectZone?: (zone: string) => void;
   onSelectTab?: (tab: 'van' | 'suv_driver' | 'car' | 'hotel' | 'corporate') => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
-  onOpenDriverSelfService,
   onOpenRegisterModal,
   onSelectZone,
   onSelectTab,
@@ -205,17 +204,14 @@ export const Footer: React.FC<FooterProps> = ({
                   {t('foot.driverJoin')}
                 </button>
               </li>
-              {onOpenDriverSelfService && (
-                <li>
-                  <button
-                    type="button"
-                    onClick={onOpenDriverSelfService}
-                    className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
-                  >
-                    {t('nav.driverManage')}
-                  </button>
-                </li>
-              )}
+              <li>
+                <Link
+                  href="/driver"
+                  className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
+                >
+                  {t('nav.driverManage')}
+                </Link>
+              </li>
               <li className="text-slate-600 dark:text-slate-400">
                 {t('foot.support247')}
               </li>

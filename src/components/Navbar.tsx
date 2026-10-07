@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   Menu,
   X,
@@ -21,7 +22,6 @@ interface NavbarProps {
   onOpenRegisterModal?: () => void;
   onOpenLoginModal?: () => void;
   onOpenPortal?: () => void;
-  onOpenDriverSelfService?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -30,7 +30,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenRegisterModal = () => {},
   onOpenLoginModal = () => {},
   onOpenPortal = () => {},
-  onOpenDriverSelfService,
 }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -236,36 +235,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Driver Portal CTA */}
-            {onOpenDriverSelfService ? (
-              <button
-                type="button"
-                onClick={onOpenDriverSelfService}
-                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:border-emerald-300 transition-all rounded-none cursor-pointer"
-                title={t('nav.driverCta')}
-              >
-                <span className="material-symbols-outlined text-[16px] text-[#06C755]">
-                  local_taxi
-                </span>
-                <span>{t('nav.driverCtaShort')}</span>
-                <span className="text-[9px] bg-[#E8F9EE] dark:bg-emerald-950 text-[#06C755] border border-emerald-200 dark:border-emerald-800 px-1 font-bold">
-                  {t('nav.free')}
-                </span>
-              </button>
-            ) : (
-              <a
-                href="/driver"
-                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:border-emerald-300 transition-all rounded-none cursor-pointer"
-                title={t('nav.driverCta')}
-              >
-                <span className="material-symbols-outlined text-[16px] text-[#06C755]">
-                  local_taxi
-                </span>
-                <span>{t('nav.driverCtaShort')}</span>
-                <span className="text-[9px] bg-[#E8F9EE] dark:bg-emerald-950 text-[#06C755] border border-emerald-200 dark:border-emerald-800 px-1 font-bold">
-                  {t('nav.free')}
-                </span>
-              </a>
-            )}
+            <Link
+              href="/driver"
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:border-emerald-300 transition-all rounded-none cursor-pointer"
+              title={t('nav.driverCta')}
+            >
+              <span className="material-symbols-outlined text-[16px] text-[#06C755]">
+                local_taxi
+              </span>
+              <span>{t('nav.driverCtaShort')}</span>
+              <span className="text-[9px] bg-[#E8F9EE] dark:bg-emerald-950 text-[#06C755] border border-emerald-200 dark:border-emerald-800 px-1 font-bold">
+                {t('nav.free')}
+              </span>
+            </Link>
 
             {/* User Login/Portal */}
             {user ? (
@@ -492,21 +474,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </button>
                   )}
 
-                  {onOpenDriverSelfService && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onOpenDriverSelfService();
-                      }}
-                      className="w-full h-11 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-none font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[18px] text-[#06C755]">
-                        local_taxi
-                      </span>
-                      <span>{t('nav.driverManage')}</span>
-                    </button>
-                  )}
+                  <Link
+                    href="/driver"
+                    onClick={() => setMenuOpen(false)}
+                    className="w-full h-11 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-none font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px] text-[#06C755]">
+                      local_taxi
+                    </span>
+                    <span>{t('nav.driverManage')}</span>
+                  </Link>
 
                   {user?.role !== 'driver' && (
                     <button
