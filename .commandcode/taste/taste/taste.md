@@ -1,0 +1,10 @@
+# Taste
+- Public/production surfaces must never render fabricated data: no hardcoded fallback ratings (`|| 5.0`), prices (`|| 1900/2100/2300/2700`), stock photos (unsplash), or fake phone numbers when real data is missing — render an honest empty state instead ("price on request", "no reviews yet", "no photos"). Confidence: 0.95
+- Mock/demo data may only appear when explicitly gated behind demo-mode checks (e.g. `isMockEnvEnabled()` / `isMockDataEnabled()`); it must never take priority over API/database data or be used as a production default. Confidence: 0.9
+- Verification and trust claims (verified badges, "background-checked", tax-invoice eligibility) must derive from real data fields and never default to true; unrated items must show 0/no-score rather than a perfect 5.0. Confidence: 0.9
+- When real data is incomplete (missing rates, contacts, photos), degrade gracefully with partial UI: hide contact buttons without a real number, show "ask the driver for a price", use icon placeholders instead of broken images. Confidence: 0.85
+- Fail closed on missing credentials: never fall back to hardcoded/default secrets (e.g. a default admin PIN like 'tripdee2026') — refuse access outright when no secret is configured, and keep write-prone fields (verified_trip, driver_reply, is_verified) server-side only. Confidence: 0.85
+- After refactors, verify with `npx tsc --noEmit`, ESLint, and a production build before committing; report pre-existing errors separately from newly introduced ones and leave out-of-scope pre-existing lint errors untouched. Confidence: 0.75
+- Finish tasks by committing and pushing; split into logical commits by concern with conventional-commit prefixes (`fix(auth):`, `fix(data):`) and detailed English bodies explaining the *why*, plus a `Co-authored-by: CommandCodeBot <noreply@commandcode.ai>` trailer. Confidence: 0.6
+- Flag anything requiring user action (re-run SQL migrations, set env secrets) explicitly at the end of the summary. Confidence: 0.7
+- User writes brief Thai prompts (e.g. "ดำเนินการต่อ" = "continue") and expects work to simply continue where it left off, without re-explanation. Confidence: 0.75

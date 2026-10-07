@@ -191,6 +191,10 @@ export const TripBoard: React.FC = () => {
     return activePosts.filter((p) => !p.isClosed && !isBoardPostExpired(p));
   }, [activePosts]);
 
+  const matchedCount = useMemo(() => {
+    return activePosts.filter((p) => Boolean(p.acceptedQuoteId)).length;
+  }, [activePosts]);
+
   const postMatchesQuery = React.useCallback((p: BoardPost) => {
     if (filter === 'request' && p.type !== 'request') return false;
     if (filter === 'share' && p.type !== 'share') return false;
@@ -1452,10 +1456,10 @@ export const TripBoard: React.FC = () => {
               <div className="grid grid-cols-3 gap-2 py-3 px-4 bg-paper-surface-muted/60 dark:bg-slate-800/60 border border-border-subtle dark:border-slate-700 text-center">
                 <div>
                   <div className="font-headline-md text-base sm:text-lg font-extrabold text-navy-deep dark:text-white tabular-nums">
-                    {t('board.statAvgQuote')}
+                    {t('board.statOpenPosts', { n: openPosts.length })}
                   </div>
                   <div className="font-caption text-[11px] text-ink-secondary dark:text-slate-400">
-                    {t('board.statAvgQuoteDesc')}
+                    {t('board.statOpenPostsDesc')}
                   </div>
                 </div>
                 <div className="border-l border-r border-border-subtle dark:border-slate-700">
@@ -1468,10 +1472,10 @@ export const TripBoard: React.FC = () => {
                 </div>
                 <div>
                   <div className="font-headline-md text-base sm:text-lg font-extrabold text-navy-deep dark:text-white tabular-nums">
-                    {t('board.statDriverCount')}
+                    {t('board.statMatched', { n: matchedCount })}
                   </div>
                   <div className="font-caption text-[11px] text-ink-secondary dark:text-slate-400">
-                    {t('board.statDriverCountDesc')}
+                    {t('board.statMatchedDesc')}
                   </div>
                 </div>
               </div>

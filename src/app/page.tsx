@@ -327,6 +327,18 @@ export default function HomePage() {
       ).length,
     [vehicles, isDemo]
   );
+  const availableVanCount = useMemo(
+    () =>
+      vehicles.filter(
+        (v) =>
+          !isExcludedTestVehicle(v.id) &&
+          (isDemo || !isMockVehicleId(v.id)) &&
+          v.type === 'van' &&
+          v.rentalType !== 'self_drive' &&
+          v.isAvailable !== false
+      ).length,
+    [vehicles, isDemo]
+  );
   const totalSuvDriverCount = useMemo(
     () =>
       vehicles.filter(
@@ -412,7 +424,7 @@ export default function HomePage() {
         onOpenDriverSelfService={() => setIsDriverSelfServiceOpen(true)}
       />
       <div aria-hidden="true" className="h-16 shrink-0" />
-      <LiveTickerRibbon totalVans={totalVanCount} />
+      <LiveTickerRibbon availableVans={availableVanCount} />
       {authBanner && (
         <aside
           role="alert"

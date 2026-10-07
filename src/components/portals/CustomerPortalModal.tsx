@@ -291,7 +291,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
                 <span className="block text-[11px] text-slate-500 dark:text-slate-400">ทริปส่วนตัว & คูปองสิทธิพิเศษ</span>
               </span>
               <span className={`text-[10px] font-black px-2 py-0.5 shrink-0 ${!isCorporate ? 'bg-slate-950 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
-                {pendingQuotes.length > 0 ? `${pendingQuotes.length} ทริปกําลังถึง` : '1 ทริปกําลังถึง'}
+                {t('pcus.tripsIncoming', { n: pendingQuotes.length })}
               </span>
             </button>
             <button type="button" onClick={handleOpenDriverPortal} className="flex items-center gap-3 p-3.5 rounded-none border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-950 dark:hover:border-white text-left transition-colors cursor-pointer">
