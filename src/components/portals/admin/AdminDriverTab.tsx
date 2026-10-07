@@ -183,16 +183,8 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
               รอตรวจสอบเอกสาร ({pendingCount})
             </button>
             {tabBtn('interviewed', 'ผ่านการสัมภาษณ์แล้ว (0)', 'bg-slate-900 text-white border-slate-900')}
-            {tabBtn('approved', `อนุมัติขึ้นเว็บแล้ว (${542 + verifiedCount > 542 ? 542 + verifiedCount : 542})`, 'bg-slate-900 text-white border-slate-900')}
-            <button
-              type="button"
-              onClick={() => setActiveTab('suspended')}
-              className={`px-2.5 py-1 text-[12px] text-slate-500 hover:text-slate-800 transition-colors cursor-pointer whitespace-nowrap ${
-                activeTab === 'suspended' ? 'bg-slate-900 text-white' : ''
-              }`}
-            >
-              ระงับใช้งาน{rejectedCount > 0 ? ` (${rejectedCount})` : ''}
-            </button>
+            {tabBtn('approved', `อนุมัติขึ้นเว็บแล้ว (${verifiedCount})`, 'bg-slate-900 text-white border-slate-900')}
+            {tabBtn('suspended', `ระงับใช้งาน (${rejectedCount})`, 'bg-slate-900 text-white border-slate-900')}
           </div>
 
           <div className="flex items-center gap-2">
@@ -214,7 +206,15 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
       {/* ── Driver Cards ───────────────────────────────────────── */}
       {filtered.length === 0 ? (
         <p className="text-xs text-slate-500 italic p-8 text-center bg-white border border-slate-200">
-          {t('padm.driverEmpty')}
+          {activeTab === 'approved'
+            ? 'ยังไม่มีรายการคนขับที่อนุมัติขึ้นเว็บ'
+            : activeTab === 'suspended'
+            ? 'ไม่มีรายการคนขับที่ถูกระงับใช้งาน'
+            : activeTab === 'interviewed'
+            ? 'ไม่มีรายการคนขับที่ผ่านการสัมภาษณ์'
+            : searchTerm
+            ? 'ไม่พบข้อมูลคนขับที่ค้นหา'
+            : t('padm.driverEmpty')}
         </p>
       ) : (
         <div className="space-y-5">
