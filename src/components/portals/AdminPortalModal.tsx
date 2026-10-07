@@ -5,7 +5,7 @@ import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
-import { Vehicle, BoardPost, Sponsor, SPONSORS } from '@/data/mockData';
+import { Vehicle, BoardPost, Sponsor } from '@/data/mockData';
 import { DriverLead, QuotationLead } from '@/lib/leadsStore';
 import {
   X,
@@ -54,7 +54,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
   const [operatorFilter, setOperatorFilter] = useState<'pending' | 'approved' | 'suspended'>('pending');
   const [reportSponsor, setReportSponsor] = useState<Sponsor | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [telemetryTime, setTelemetryTime] = useState('14:32:08');
+  const [telemetryTime, setTelemetryTime] = useState('');
 
   // Real data collections
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -78,22 +78,26 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
   const refreshAll = useCallback(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('td-admin-token') : null;
+    if (!token) return;
+    const headers: HeadersInit = { 'x-admin-pin': token, Authorization: `Bearer ${token}` };
+
     setIsRefreshing(true);
-    const p1 = fetch('/api/vehicles')
+    const p1 = fetch('/api/vehicles?scope=admin', { headers })
       .then((res) => res.json())
       .then((data) => {
         if (data.vehicles && Array.isArray(data.vehicles)) setVehicles(data.vehicles);
       })
       .catch(() => {});
 
-    const p2 = fetch('/api/leads/driver')
+    const p2 = fetch('/api/leads/driver', { headers })
       .then((res) => res.json())
       .then((data) => {
         if (data.drivers && Array.isArray(data.drivers)) setDriverLeads(data.drivers);
       })
       .catch(() => {});
 
-    const p3 = fetch('/api/leads/quote')
+    const p3 = fetch('/api/leads/quote', { headers })
       .then((res) => res.json())
       .then((data) => {
         if (data.quotations && Array.isArray(data.quotations)) setQuoteLeads(data.quotations);
@@ -167,6 +171,27 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
 
   const pendingDriversCount = driverLeads.filter((d) => d.status === 'pending').length;
   const pendingQuotesCount = quoteLeads.filter((q) => q.status === 'pending').length;
+  const verifiedDriversCount = driverLeads.filter((d) => d.status === 'verified').length;
+  const rejectedDriversCount = driverLeads.filter((d) => d.status === 'rejected').length;
+  const pendingVehiclesCount = vehicles.filter((v) => v.approvalStatus === 'pending').length;
+  const yellowPlateCount = vehicles.filter((v) => v.plateType === 'yellow').length;
+  const bluePlateCount = vehicles.filter((v) => v.plateType === 'blue').length;
+  const openBoardCount = boardPosts.filter((p) => !p.isClosed).length;
+  const matchedBoardCount = boardPosts.filter((p) => Boolean(p.acceptedQuoteId)).length;
+  const corporateBoardCount = boardPosts.filter((p) => p.category === 'corporate').length;
+  const estimatedPipeline = quoteLeads.reduce((sum, q) => sum + (Number(q.estimatedPrice) || 0), 0);
+  const cityRates = vehicles
+    .map((v) => v.zoneRates?.city)
+    .filter((r): r is number => typeof r === 'number' && r > 0);
+  const avgCityRate =
+    cityRates.length > 0 ? Math.round(cityRates.reduce((s, r) => s + r, 0) / cityRates.length) : null;
+  const visibleDriverLeads = driverLeads.filter((d) =>
+    operatorFilter === 'pending'
+      ? d.status === 'pending'
+      : operatorFilter === 'approved'
+        ? d.status === 'verified'
+        : d.status === 'rejected'
+  );
 
   return (
     <div
@@ -190,23 +215,18 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-none">
               <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
                 <span className="material-symbols-outlined text-[14px] sm:text-[16px] text-[#06c755]">lock</span>
-                <span className="hidden sm:inline">ระบบแอดมิน - ปลอดภัยสูง SSL 256-bit</span>
-                <span className="sm:hidden">SSL 256-bit</span>
+                <span className="hidden sm:inline">ระบบแอดมิน</span>
+                <span className="sm:hidden">แอดมิน</span>
               </div>
               <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
               <div className="hidden xl:flex items-center gap-2 px-2.5 py-1 bg-[#fef3c7] dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-xs font-semibold text-[#d97706] dark:text-amber-300">
                 <span className="material-symbols-outlined text-[16px]">campaign</span>
-                <span>สถานะ: คลัสเตอร์สำรองพร้อมใช้งาน อัตราส่งงาน 99.98%</span>
+                <span>รถ {vehicles.length} คัน • ประกาศ {boardPosts.length} • รออนุมัติ {pendingVehiclesCount}</span>
               </div>
             </div>
 
             {/* Right cluster info & user actions */}
             <div className="flex items-center gap-3">
-              <div className="hidden lg:flex items-center gap-2 px-2 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                <span className="material-symbols-outlined text-[18px] text-slate-400">lan</span>
-                <span className="text-xs text-slate-600 dark:text-slate-300 font-mono">Latency: 14ms</span>
-              </div>
-
               <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200 dark:border-slate-700">
                 <div className="flex flex-col text-right hidden sm:flex">
                   <span className="text-xs font-bold text-slate-900 dark:text-white leading-tight">Super Admin</span>
@@ -296,7 +316,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                   { id: 'bookings', label: `การจอง & ตรวจสอบ (${quoteLeads.length})`, icon: 'receipt_long', badge: pendingQuotesCount },
                   { id: 'operators', label: `พาร์ทเนอร์คนขับ (${driverLeads.length})`, icon: 'verified_user', badge: pendingDriversCount },
                   { id: 'board', label: `กระดานงาน TripBoard (${boardPosts.length})`, icon: 'sync_alt' },
-                  { id: 'sponsors', label: `สปอนเซอร์ & สัญญา (${sponsors.length || SPONSORS.length})`, icon: 'campaign' },
+                  { id: 'sponsors', label: `สปอนเซอร์ & สัญญา (${sponsors.length})`, icon: 'campaign' },
                   { id: 'security', label: 'ระบบความปลอดภัย (Audit Logs)', icon: 'shield' },
                 ].map((item) => (
                   <button
@@ -350,7 +370,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                         <span className="px-2 py-0.5 bg-[#0d1c32] text-white text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">
                           Mission Control
                         </span>
-                        <span className="text-[10px] sm:text-xs text-slate-400 font-mono truncate">Node ID: BKK-CORE-ALPHA-01</span>
+                        <span className="text-[10px] sm:text-xs text-slate-400 font-mono truncate">ข้อมูลจริงจากระบบ</span>
                       </div>
                       <h1 className="text-base sm:text-xl md:text-2xl font-bold text-slate-950 dark:text-white tracking-tight leading-tight">
                         แผงควบคุมระบบบริหารจัดการส่วนกลาง
@@ -402,16 +422,18 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                     <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-400">
                       <span className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
                         <span className="w-2 h-2 rounded-full bg-[#06c755] animate-pulse"></span>
-                        SERVER STATUS: OPTIMAL
+                        ข้อมูลจริงจากระบบ
                       </span>
                       <span className="text-slate-300 dark:text-slate-600">|</span>
-                      <span>Latency: <strong className="text-slate-900 dark:text-white font-mono">24ms</strong></span>
+                      <span>ยานพาหนะ <strong className="text-slate-900 dark:text-white font-mono">{vehicles.length}</strong></span>
                       <span className="text-slate-300 dark:text-slate-600">|</span>
-                      <span>API Availability: <strong className="text-slate-900 dark:text-white font-mono">99.98% SLA</strong></span>
+                      <span>ประกาศทริป <strong className="text-slate-900 dark:text-white font-mono">{boardPosts.length}</strong></span>
                       <span className="text-slate-300 dark:text-slate-600">|</span>
-                      <span>Primary Database: <strong className="text-slate-900 dark:text-white font-mono">PostgreSQL HA (BKK-NODE-1)</strong></span>
+                      <span>ใบเสนอราคาองค์กร <strong className="text-slate-900 dark:text-white font-mono">{quoteLeads.length}</strong></span>
                       <span className="text-slate-300 dark:text-slate-600">|</span>
-                      <span>PDPA Compliance Engine: <strong className="text-[#06c755] font-semibold">Active</strong></span>
+                      <span>ใบสมัครคนขับ <strong className="text-slate-900 dark:text-white font-mono">{driverLeads.length}</strong></span>
+                      <span className="text-slate-300 dark:text-slate-600">|</span>
+                      <span>สปอนเซอร์ <strong className="text-slate-900 dark:text-white font-mono">{sponsors.length}</strong></span>
                     </div>
 
                     <div className="text-xs font-mono text-slate-400">
@@ -433,7 +455,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                         </div>
                         <div className="flex items-baseline gap-2">
                           <span className="text-3xl font-extrabold text-slate-950 dark:text-white font-mono">
-                            {boardPosts.length > 0 ? boardPosts.length + 140 : 148}
+                            {boardPosts.length}
                           </span>
                           <span className="text-xs text-slate-500">ทริป</span>
                         </div>
@@ -441,9 +463,9 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                       <div className="mt-4 pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
                         <div className="flex items-center gap-1.5 text-xs text-[#06c755] font-bold">
                           <span className="material-symbols-outlined text-[16px]">trending_up</span>
-                          <span>+14.2% เทียบกับสัปดาห์ก่อน</span>
+                          <span>จับคู่สำเร็จ {matchedBoardCount} ทริป</span>
                         </div>
-                        <span className="text-[11px] text-slate-400">คาราวานองค์กรพิเศษ 18 ขบวน (B2B Active)</span>
+                        <span className="text-[11px] text-slate-400">เปิดรับอยู่ {openBoardCount} ประกาศ • งานองค์กร {corporateBoardCount} ประกาศ</span>
                       </div>
                     </div>
 
@@ -456,7 +478,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                         </div>
                         <div className="flex items-baseline gap-2">
                           <span className="text-3xl font-extrabold text-slate-950 dark:text-white font-mono">
-                            {vehicles.length > 0 ? vehicles.length + 500 : 542}
+                            {vehicles.length}
                           </span>
                           <span className="text-xs text-slate-500">คัน</span>
                         </div>
@@ -464,9 +486,9 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                       <div className="mt-4 pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
                         <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#fef3c7] text-[#d97706] text-xs font-bold w-fit">
                           <span className="material-symbols-outlined text-[14px]">hourglass_top</span>
-                          <span>รออนุมัติตรวจเอกสาร {pendingDriversCount || 12} คัน</span>
+                          <span>รออนุมัติ {pendingVehiclesCount} คัน</span>
                         </div>
-                        <span className="text-[11px] text-slate-400">ตรวจสอบแล้ว: ป้ายเหลือง 410 คัน • ป้ายเขียว 132 คัน</span>
+                        <span className="text-[11px] text-slate-400">ป้ายเหลือง {yellowPlateCount} คัน • ป้ายฟ้า {bluePlateCount} คัน</span>
                       </div>
                     </div>
 
@@ -474,20 +496,20 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                     <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between shadow-xs">
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">สมาชิกผู้ใช้งานรวม</span>
+                          <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">คำขอใบเสนอราคาองค์กร</span>
                           <span className="material-symbols-outlined text-[20px] text-slate-900 dark:text-white">groups</span>
                         </div>
                         <div className="flex items-baseline gap-2">
-                          <span className="text-3xl font-extrabold text-slate-950 dark:text-white font-mono">24,890</span>
-                          <span className="text-xs text-slate-500">บัญชี</span>
+                          <span className="text-3xl font-extrabold text-slate-950 dark:text-white font-mono">{quoteLeads.length}</span>
+                          <span className="text-xs text-slate-500">รายการ</span>
                         </div>
                       </div>
                       <div className="mt-4 pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
                         <div className="flex items-center gap-1.5 text-xs text-slate-900 dark:text-white font-semibold">
                           <span className="material-symbols-outlined text-[16px]">domain</span>
-                          <span>B2B Corporate {quoteLeads.length || 184} บริษัท</span>
+                          <span>รออนุมัติ {pendingQuotesCount} รายการ</span>
                         </div>
-                        <span className="text-[11px] text-slate-400">อัตราคงอยู่ของผู้ใช้ (Retention Rate) 88.4%</span>
+                        <span className="text-[11px] text-slate-400">ใบสมัครคนขับ {driverLeads.length} ราย (รอตรวจ {pendingDriversCount})</span>
                       </div>
                     </div>
 
@@ -495,11 +517,11 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                     <div className="bg-[#0d1c32] text-white p-5 border border-slate-800 flex flex-col justify-between shadow-md">
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">มูลค่าธุรกรรมรวม (GMV)</span>
+                          <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">มูลค่าประเมินรวม (Pipeline)</span>
                           <span className="material-symbols-outlined text-[20px] text-[#fea619]">payments</span>
                         </div>
                         <div className="flex items-baseline gap-1">
-                          <span className="text-3xl font-extrabold font-mono text-white">฿2,845,000</span>
+                          <span className="text-3xl font-extrabold font-mono text-white">฿{estimatedPipeline.toLocaleString()}</span>
                         </div>
                       </div>
                       <div className="mt-4 pt-2 border-t border-slate-800 flex flex-col gap-1">
@@ -507,7 +529,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                           <span className="material-symbols-outlined text-[14px]">check_circle</span>
                           <span>โมเดลดีลตรงคนขับ ตลอดชีพ</span>
                         </div>
-                        <span className="text-[11px] text-slate-400">รายได้โฆษณา & สปอนเซอร์ ฿148,500</span>
+                        <span className="text-[11px] text-slate-400">สปอนเซอร์ที่ใช้งาน {sponsors.length} ราย</span>
                       </div>
                     </div>
                   </section>
@@ -540,7 +562,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                                   : 'text-slate-600 hover:text-slate-950'
                               }`}
                             >
-                              รอตรวจ ({pendingDriversCount || 12})
+                              รอตรวจ ({pendingDriversCount})
                             </button>
                             <button
                               type="button"
@@ -551,7 +573,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                                   : 'text-slate-600 hover:text-slate-950'
                               }`}
                             >
-                              อนุมัติแล้ว (524)
+                              อนุมัติแล้ว ({verifiedDriversCount})
                             </button>
                             <button
                               type="button"
@@ -562,170 +584,68 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                                   : 'text-slate-600 hover:text-slate-950'
                               }`}
                             >
-                              พักใบอนุญาต (6)
+                              ไม่ผ่าน ({rejectedDriversCount})
                             </button>
                           </div>
                         </div>
 
                         {/* Queue Registry */}
                         <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800">
-                          {/* Driver Entry 1 */}
-                          <div className="p-5 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center text-sm font-bold text-slate-800 dark:text-slate-200">
-                                สม
-                              </div>
-                              <div className="flex flex-col gap-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-xs sm:text-sm font-bold text-slate-950 dark:text-white">นายสมศักดิ์ วงศ์มณี</span>
-                                  <span className="px-2 py-0.2 bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono text-[10px]">
-                                    ID: DRV-CM-9081
-                                  </span>
-                                  <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] text-[11px] font-bold flex items-center gap-1 border border-emerald-200">
-                                    <span className="material-symbols-outlined text-[12px]">verified</span> ประวัติตำรวจ: ผ่านแล้ว
-                                  </span>
+                          {visibleDriverLeads.slice(0, 3).map((d) => (
+                            <div
+                              key={d.id}
+                              className="p-5 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
+                            >
+                              <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center text-sm font-bold text-slate-800 dark:text-slate-200">
+                                  {(d.nickname || d.driverName || '?').trim().slice(0, 2)}
                                 </div>
-                                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-                                  <span className="flex items-center gap-1 text-slate-900 dark:text-white font-medium">
-                                    <span className="material-symbols-outlined text-[16px] text-slate-400">directions_car</span>
-                                    Toyota Commuter VIP 9 ที่นั่ง
-                                  </span>
-                                  <span className="text-slate-300">•</span>
-                                  <span>ประจำสถานี: <strong>เชียงใหม่ - ภาคเหนือ</strong></span>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-slate-500">
-                                  <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800">ป้ายเหลือง 30-8911 ชม.</span>
-                                  <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800">ใบขับขี่สาธารณะ ท.2</span>
-                                  <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800">ประกันชั้น 1 คุ้มครองผู้โดยสาร</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => setActiveView('operators')}
-                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">visibility</span>
-                                <span>ตรวจเอกสาร</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleApprove('DRV-CM-9081')}
-                                className="px-4 py-2 bg-[#06c755] hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">check</span>
-                                <span>อนุมัติผู้ขับขี่</span>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Driver Entry 2 */}
-                          <div className="p-5 bg-slate-50/30 dark:bg-slate-800/20 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 bg-[#fef3c7] text-[#d97706] shrink-0 flex items-center justify-center text-sm font-bold">
-                                ธน
-                              </div>
-                              <div className="flex flex-col gap-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-xs sm:text-sm font-bold text-slate-950 dark:text-white">นายธนกร กิจเจริญ</span>
-                                  <span className="px-2 py-0.2 bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono text-[10px]">
-                                    ID: DRV-BKK-4420
-                                  </span>
-                                  <span className="px-2 py-0.5 bg-[#fef3c7] text-[#d97706] text-[11px] font-bold flex items-center gap-1 border border-amber-300">
-                                    <span className="material-symbols-outlined text-[12px]">schedule</span> รอตรวจ พ.ร.บ. คุ้มครอง
-                                  </span>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-                                  <span className="flex items-center gap-1 text-slate-900 dark:text-white font-medium">
-                                    <span className="material-symbols-outlined text-[16px] text-slate-400">directions_car</span>
-                                    Toyota Majesty 7 ที่นั่ง VIP
-                                  </span>
-                                  <span className="text-slate-300">•</span>
-                                  <span>ประจำสถานี: <strong>กรุงเทพฯ - พัทยา - ชลบุรี</strong></span>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-slate-500">
-                                  <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800">ป้ายเหลือง 30-1044 กทม.</span>
-                                  <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800">ใบขับขี่ประเภท ท.2 (มีผลถึง 2027)</span>
-                                  <span className="px-2 py-0.5 bg-rose-100 text-rose-700 font-bold">ขาดเอกสาร พ.ร.บ. ภาคบังคับ</span>
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-xs sm:text-sm font-bold text-slate-950 dark:text-white">{d.driverName}</span>
+                                    <span className="px-2 py-0.2 bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono text-[10px]">
+                                      {d.id}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                                    <span className="flex items-center gap-1 text-slate-900 dark:text-white font-medium">
+                                      <span className="material-symbols-outlined text-[16px] text-slate-400">directions_car</span>
+                                      {d.vehicleModel || '—'}
+                                      {d.seats ? ` ${d.seats} ที่นั่ง` : ''}
+                                    </span>
+                                    <span className="text-slate-300">•</span>
+                                    <span>
+                                      เส้นทาง: <strong>{d.routes || '—'}</strong>
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-slate-500">
+                                    <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800">โทร {d.phone}</span>
+                                    <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800">ยื่นสมัคร {d.submittedAt}</span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => setActiveView('operators')}
-                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">forward_to_inbox</span>
-                                <span>ขอดูเอกสารเพิ่ม</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setActiveView('operators')}
-                                className="px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">rule</span>
-                                <span>ตรวจทานละเอียด</span>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Driver Entry 3 */}
-                          <div className="p-5 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center text-sm font-bold text-slate-800 dark:text-slate-200">
-                                ชัย
-                              </div>
-                              <div className="flex flex-col gap-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-xs sm:text-sm font-bold text-slate-950 dark:text-white">นายชัยวัฒน์ ศรีสุข (ภูเก็ต ทัวร์ สเตชั่น)</span>
-                                  <span className="px-2 py-0.2 bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono text-[10px]">
-                                    ID: FLEET-PKT-002
-                                  </span>
-                                  <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] text-[11px] font-bold flex items-center gap-1 border border-emerald-200">
-                                    <span className="material-symbols-outlined text-[12px]">verified</span> เอกสารนิติบุคคลครบสมบูรณ์
-                                  </span>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-                                  <span className="flex items-center gap-1 text-slate-900 dark:text-white font-medium">
-                                    <span className="material-symbols-outlined text-[16px] text-slate-400">directions_bus</span>
-                                    มินิบัส VIP 20 ที่นั่ง (Hino Liesse II)
-                                  </span>
-                                  <span className="text-slate-300">•</span>
-                                  <span>ประจำสถานี: <strong>ภูเก็ต - พังงา - กระบี่</strong></span>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-slate-500">
-                                  <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800">ใบอนุญาตประกอบการขนส่ง 30-7788</span>
-                                  <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800">ใบกำกับภาษี ภ.พ.20</span>
-                                  <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800">ตรวจสภาพรถรอบ 6 เดือน: ผ่าน</span>
-                                </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {d.status === 'pending' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleApprove(d.id)}
+                                    className="px-4 py-2 bg-[#06c755] hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                                  >
+                                    <span className="material-symbols-outlined text-[16px]">check</span>
+                                    <span>อนุมัติผู้ขับขี่</span>
+                                  </button>
+                                )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => setActiveView('operators')}
-                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">visibility</span>
-                                <span>ตรวจเอกสาร</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleApprove('FLEET-PKT-002')}
-                                className="px-4 py-2 bg-[#06c755] hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                              >
-                                <span className="material-symbols-outlined text-[16px]">check</span>
-                                <span>อนุมัติฟลีท</span>
-                              </button>
-                            </div>
-                          </div>
+                          ))}
+                          {visibleDriverLeads.length === 0 && (
+                            <div className="p-5 text-xs text-slate-500">ยังไม่มีใบสมัครคนขับในสถานะนี้</div>
+                          )}
                         </div>
 
                         {/* Pagination footer */}
                         <div className="px-5 py-3 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-                          <span className="text-slate-500">แสดง 3 จาก {driverLeads.length || 12} รายการที่รอการตรวจสอบคัดกรอง</span>
+                          <span className="text-slate-500">แสดง {Math.min(3, visibleDriverLeads.length)} จาก {visibleDriverLeads.length} รายการในสถานะนี้</span>
                           <button
                             type="button"
                             onClick={() => setActiveView('operators')}
@@ -751,7 +671,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                           </div>
                           <div className="flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700">
                             <span className="w-2 h-2 rounded-full bg-[#06c755]"></span>
-                            <span>Active {boardPosts.length || 42} ประกาศ</span>
+                            <span>Active {openBoardCount} ประกาศ</span>
                           </div>
                         </div>
 
@@ -767,179 +687,75 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-900 dark:text-slate-200">
-                              {/* Row 1 */}
-                              <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                            {boardPosts.slice(0, 4).map((post) => (
+                              <tr key={post.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                                 <td className="py-3.5 px-4">
                                   <div className="flex flex-col">
                                     <div className="flex items-center gap-1.5 font-bold">
-                                      <span>ทริปสัมมนาประจำปี BKK ➔ เขาใหญ่</span>
-                                      <span className="px-1.5 py-0.2 bg-[#0d1c32] text-white text-[10px]">Corporate</span>
+                                      <span>{post.title}</span>
+                                      {post.category === 'corporate' && (
+                                        <span className="px-1.5 py-0.2 bg-[#0d1c32] text-white text-[10px]">Corporate</span>
+                                      )}
                                     </div>
-                                    <span className="text-[11px] text-slate-400 font-mono mt-0.5">TB-2025-0891 • 14-16 พ.ย. 2568 (3 วัน 2 คืน)</span>
+                                    <span className="text-[11px] text-slate-400 font-mono mt-0.5">
+                                      {post.id} • {post.date} ({post.days} วัน)
+                                    </span>
                                   </div>
                                 </td>
                                 <td className="py-3.5 px-4">
-                                  <span className="font-semibold block">คุณกุลธิดา (บจก. เอสซี อินโฟเทค)</span>
-                                  <span className="text-[11px] text-slate-400">ผู้โดยสาร 45 คน</span>
+                                  <span className="font-semibold block">{post.authorName}</span>
+                                  <span className="text-[11px] text-slate-400">ผู้โดยสาร {post.seats} คน</span>
                                 </td>
                                 <td className="py-3.5 px-4">
-                                  <span className="font-bold block">รถตู้ VIP 4 คัน</span>
-                                  <span className="text-[#06c755] font-mono font-bold">฿42,000 (เหมาคัน)</span>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] font-bold text-[11px] inline-flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[13px]">handshake</span> จับคู่สำเร็จ
+                                  <span className="font-bold block">{post.vehicleLabel || '—'}</span>
+                                  <span className="text-[#06c755] font-mono font-bold">
+                                    {post.price > 0 ? `฿${post.price.toLocaleString()}` : 'ตกลงราคาภายหลัง'}
                                   </span>
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  {post.acceptedQuoteId ? (
+                                    <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] font-bold text-[11px] inline-flex items-center gap-1">
+                                      <span className="material-symbols-outlined text-[13px]">handshake</span> จับคู่สำเร็จ
+                                    </span>
+                                  ) : post.isClosed ? (
+                                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 font-bold text-[11px] inline-flex items-center gap-1">
+                                      <span className="material-symbols-outlined text-[13px]">block</span> ปิดรับงาน
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 font-bold text-[11px] inline-flex items-center gap-1">
+                                      <span className="material-symbols-outlined text-[13px]">hourglass_empty</span> รอคนขับเสนอราคา ({post.quoteCount || 0})
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="py-3.5 px-4 text-right">
                                   <button
                                     type="button"
                                     onClick={() => setActiveView('board')}
-                                    className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer mr-1"
+                                    className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
                                     title="ดูรายละเอียดข้อความดีลตรง"
                                   >
                                     <span className="material-symbols-outlined text-[16px]">forum</span>
                                   </button>
-                                  <button
-                                    type="button"
-                                    className="p-1.5 bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-600 transition-colors cursor-pointer"
-                                    title="ระงับประกาศต้องสงสัย"
-                                  >
-                                    <span className="material-symbols-outlined text-[16px]">block</span>
-                                  </button>
                                 </td>
                               </tr>
-
-                              {/* Row 2 */}
-                              <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                                <td className="py-3.5 px-4">
-                                  <div className="flex flex-col">
-                                    <div className="flex items-center gap-1.5 font-bold">
-                                      <span>ทัวร์บุญไหว้พระ 9 วัด อยุธยา</span>
-                                      <span className="px-1.5 py-0.2 bg-[#fef3c7] text-[#d97706] text-[10px]">Leisure</span>
-                                    </div>
-                                    <span className="text-[11px] text-slate-400 font-mono mt-0.5">TB-2025-0894 • 18 ต.ค. 2568 (วันเดย์ทริป)</span>
-                                  </div>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="font-semibold block">คุณประวิทย์ มั่งมี</span>
-                                  <span className="text-[11px] text-slate-400">ผู้โดยสาร 8 คน</span>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="font-bold block">Commuter VIP 1 คัน</span>
-                                  <span className="text-[#06c755] font-mono font-bold">฿3,500</span>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="px-2 py-0.5 bg-slate-100 text-slate-600 font-bold text-[11px] inline-flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[13px]">hourglass_empty</span> รอคนขับเสนอราคา
-                                  </span>
-                                </td>
-                                <td className="py-3.5 px-4 text-right">
-                                  <button
-                                    type="button"
-                                    onClick={() => setActiveView('board')}
-                                    className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer mr-1"
-                                    title="ดูรายละเอียดข้อความดีลตรง"
-                                  >
-                                    <span className="material-symbols-outlined text-[16px]">forum</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="p-1.5 bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-600 transition-colors cursor-pointer"
-                                    title="ระงับประกาศต้องสงสัย"
-                                  >
-                                    <span className="material-symbols-outlined text-[16px]">block</span>
-                                  </button>
+                            ))}
+                            {boardPosts.length === 0 && (
+                              <tr>
+                                <td colSpan={5} className="py-6 px-4 text-center text-xs text-slate-500">
+                                  ยังไม่มีประกาศบนกระดานงาน
                                 </td>
                               </tr>
-
-                              {/* Row 3 */}
-                              <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                                <td className="py-3.5 px-4">
-                                  <div className="flex flex-col">
-                                    <div className="flex items-center gap-1.5 font-bold">
-                                      <span>ทริปถ่ายภาพล่าหมอก เชียงดาว - ดอยอินทนนท์</span>
-                                      <span className="px-1.5 py-0.2 bg-[#0d1c32] text-white text-[10px]">Caravan</span>
-                                    </div>
-                                    <span className="text-[11px] text-slate-400 font-mono mt-0.5">TB-2025-0899 • 22-25 ต.ค. 2568 (4 วัน 3 คืน)</span>
-                                  </div>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="font-semibold block">ชมรมช่างภาพสารคดีไทย</span>
-                                  <span className="text-[11px] text-slate-400">ผู้โดยสาร 16 คน</span>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="font-bold block">SUV 4x4 / VIP Van 2 คัน</span>
-                                  <span className="text-[#06c755] font-mono font-bold">฿28,000</span>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] font-bold text-[11px] inline-flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[13px]">navigation</span> กำลังเดินทาง
-                                  </span>
-                                </td>
-                                <td className="py-3.5 px-4 text-right">
-                                  <button
-                                    type="button"
-                                    onClick={() => setActiveView('board')}
-                                    className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer mr-1"
-                                    title="ติดตามพิกัด GPS สด"
-                                  >
-                                    <span className="material-symbols-outlined text-[16px]">location_on</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="p-1.5 bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-600 transition-colors cursor-pointer"
-                                    title="ระงับประกาศต้องสงสัย"
-                                  >
-                                    <span className="material-symbols-outlined text-[16px]">block</span>
-                                  </button>
-                                </td>
-                              </tr>
-
-                              {/* Row 4 (Flagged Suspicious) */}
-                              <tr className="bg-rose-50/50 dark:bg-rose-950/30 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors">
-                                <td className="py-3.5 px-4">
-                                  <div className="flex flex-col">
-                                    <div className="flex items-center gap-1.5 font-bold text-rose-600">
-                                      <span className="material-symbols-outlined text-[16px]">flag</span>
-                                      <span>[ต้องสงสัย] รับส่งด่วนข้ามด่านชายแดนแม่สอด</span>
-                                    </div>
-                                    <span className="text-[11px] text-slate-400 font-mono mt-0.5">TB-2025-0902 • วันนี้ (ด่วนพิเศษ)</span>
-                                  </div>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="font-bold block">User_Unverified_994</span>
-                                  <span className="text-[11px] text-rose-600 font-bold">IP ตรวจพบนอกอาณาเขต</span>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="font-bold block">ไม่ระบุรุ่น</span>
-                                  <span className="text-rose-600 font-mono font-bold">฿15,000 โอนสด</span>
-                                </td>
-                                <td className="py-3.5 px-4">
-                                  <span className="px-2 py-0.5 bg-rose-600 text-white font-bold text-[11px] inline-flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[13px]">gavel</span> ระบบกักตรวจ AI Flagged
-                                  </span>
-                                </td>
-                                <td className="py-3.5 px-4 text-right">
-                                  <button
-                                    type="button"
-                                    onClick={() => alert('ระงับประกาศนี้และส่งคำขอตรวจสอบความปลอดภัยไปยังฝ่ายกฎหมายเรียบร้อยแล้ว')}
-                                    className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer"
-                                  >
-                                    ระงับทันที
-                                  </button>
-                                </td>
-                              </tr>
-                            </tbody>
+                            )}
+                          </tbody>
                           </table>
                         </div>
 
                         <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
                           <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1">
                             <span className="material-symbols-outlined text-[16px] text-[#06c755]">security</span>
-                            ระบบป้องกันการฟอกเงินและข้อกำหนดขนส่งทางบกทำงานแบบ Real-time ตลอด 24 ชม.
+                            จัดการและตรวจสอบประกาศทั้งหมดได้ที่แท็บกระดานงาน TripBoard
                           </span>
-                          <span className="text-slate-400 font-mono text-[11px]">TripDee Integrity Filter v4.2.1</span>
+                          <span className="text-slate-400 font-mono text-[11px]">{boardPosts.length} ประกาศในระบบ</span>
                         </div>
                       </div>
                     </div>
@@ -956,67 +772,41 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                             </h3>
                           </div>
                           <span className="px-2 py-0.5 bg-[#0d1c32] text-white font-mono text-[10px] font-bold">
-                            4 ACTIVE
+                            {sponsors.length} ACTIVE
                           </span>
                         </div>
 
                         {/* Sponsor Metric Bar */}
                         <div className="p-4 bg-slate-50/50 dark:bg-slate-800/40 grid grid-cols-2 gap-2 text-center border-b border-slate-200 dark:border-slate-800">
                           <div className="bg-white dark:bg-slate-900 p-2.5 border border-slate-200 dark:border-slate-700">
-                            <span className="text-[10px] text-slate-400 uppercase font-semibold">Impression รวม</span>
-                            <div className="text-lg font-bold text-slate-950 dark:text-white font-mono mt-0.5">38,420</div>
+                            <span className="text-[10px] text-slate-400 uppercase font-semibold">สปอนเซอร์ทั้งหมด</span>
+                            <div className="text-lg font-bold text-slate-950 dark:text-white font-mono mt-0.5">{sponsors.length}</div>
                           </div>
                           <div className="bg-white dark:bg-slate-900 p-2.5 border border-slate-200 dark:border-slate-700">
-                            <span className="text-[10px] text-slate-400 uppercase font-semibold">Click-Through (CTR)</span>
-                            <div className="text-lg font-bold text-[#06c755] font-mono mt-0.5">4.82%</div>
+                            <span className="text-[10px] text-slate-400 uppercase font-semibold">หมวดหมู่</span>
+                            <div className="text-lg font-bold text-[#06c755] font-mono mt-0.5">{new Set(sponsors.map((s) => s.category)).size}</div>
                           </div>
                         </div>
 
                         {/* Brand Slot List */}
                         <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800 p-4 gap-2.5 text-xs">
-                          <div className="flex items-center justify-between pt-1">
-                            <div className="flex flex-col">
+                        {sponsors.map((sp) => (
+                          <div key={sp.id} className="flex items-start justify-between gap-3 pt-1">
+                            <div className="flex flex-col min-w-0">
                               <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
-                                <span>The Connect Chiang Mai</span>
-                                <span className="w-2 h-2 rounded-full bg-[#06c755]" title="Active"></span>
+                                <span className="truncate">{sp.title}</span>
+                                <span className="w-2 h-2 rounded-full bg-[#06c755] shrink-0" title="Active"></span>
                               </div>
-                              <span className="text-[11px] text-slate-500">Banner หัวทริปภาคเหนือ • สัญญา 6 เดือน</span>
+                              <span className="text-[11px] text-slate-500">
+                                {sp.categoryLabel}
+                                {sp.tagline ? ` • ${sp.tagline}` : ''}
+                              </span>
                             </div>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white">฿45,000/ด.</span>
                           </div>
-
-                          <div className="flex items-center justify-between pt-2">
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
-                                <span>Ran-Tong Elephant Camp</span>
-                                <span className="w-2 h-2 rounded-full bg-[#06c755]" title="Active"></span>
-                              </div>
-                              <span className="text-[11px] text-slate-500">Official Ecotourism Partner • สัญญา 1 ปี</span>
-                            </div>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white">฿60,000/ด.</span>
-                          </div>
-
-                          <div className="flex items-center justify-between pt-2">
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
-                                <span>Vespa Adventures TH</span>
-                                <span className="w-2 h-2 rounded-full bg-[#06c755]" title="Active"></span>
-                              </div>
-                              <span className="text-[11px] text-slate-500">หน้าค้นหารถคาราวานร่วม • สัญญา 3 เดือน</span>
-                            </div>
-                            <span className="font-mono font-bold text-slate-900 dark:text-white">฿25,000/ด.</span>
-                          </div>
-
-                          <div className="flex items-center justify-between pt-2">
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
-                                <span>Sukjai Thai Cooking</span>
-                                <span className="w-2 h-2 rounded-full bg-[#d97706]" title="Expiring"></span>
-                              </div>
-                              <span className="text-[11px] text-[#d97706] font-semibold">สัญญาหมดอายุใน 4 วัน (รอต่อสัญญา)</span>
-                            </div>
-                            <span className="font-mono font-bold text-slate-400">฿18,500/ด.</span>
-                          </div>
+                        ))}
+                        {sponsors.length === 0 && (
+                          <div className="pt-1 text-xs text-slate-500">ยังไม่มีสปอนเซอร์ในระบบ</div>
+                        )}
                         </div>
 
                         <div className="p-4 pt-0">
@@ -1040,35 +830,12 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                               ความปลอดภัยระบบ & PDPA Logs
                             </h3>
                           </div>
-                          <span className="text-[10px] text-slate-400 font-mono">ISO 27001</span>
+                          <span className="text-[10px] text-slate-400 font-mono">{sponsors.length} รายการ</span>
                         </div>
 
                         <div className="p-4 flex flex-col gap-3 text-xs">
-                          <div className="flex items-start gap-2.5">
-                            <div className="w-2 h-2 rounded-full bg-[#06c755] mt-1.5 shrink-0"></div>
-                            <div className="flex flex-col">
-                              <span className="font-bold text-slate-900 dark:text-white">Admin user_01 อนุมัติใบกำกับภาษีเต็มรูป</span>
-                              <span className="text-[11px] text-slate-500">ผู้รับ: บมจ. สยาม อินโนเวชั่น (INV-2025-0812)</span>
-                              <span className="text-[10px] text-slate-400 font-mono mt-0.5">14:18 น. • ผ่านสิทธิ์ 2FA สมบูรณ์</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-start gap-2.5">
-                            <div className="w-2 h-2 rounded-full bg-[#d97706] mt-1.5 shrink-0"></div>
-                            <div className="flex flex-col">
-                              <span className="font-bold text-[#d97706]">คำขอลบบัญชีตามสิทธิ์ PDPA (1 รายการ)</span>
-                              <span className="text-[11px] text-slate-500">ID: USR-DEL-29401 (ครบกำหนดพิจารณาใน 48 ชม.)</span>
-                              <span className="text-[10px] text-slate-400 font-mono mt-0.5">11:05 น. • เจ้าหน้าที่ DPO กำลังดำเนินการ</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-start gap-2.5">
-                            <div className="w-2 h-2 rounded-full bg-rose-600 mt-1.5 shrink-0"></div>
-                            <div className="flex flex-col">
-                              <span className="font-bold text-rose-600">ตรวจจับความพยายามล็อกอินผิดปกติ</span>
-                              <span className="text-[11px] text-slate-500">IP: 182.232.14.90 พยายามเข้าถึง Admin API Port</span>
-                              <span className="text-[10px] text-slate-400 font-mono mt-0.5">09:42 น. • ไฟร์วอลล์บล็อกถาวร (IP Blacklisted)</span>
-                            </div>
+                          <div className="text-xs text-slate-500">
+                            ยังไม่มีบันทึกกิจกรรมในระบบ
                           </div>
                         </div>
 
@@ -1095,14 +862,14 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                       {/* Quick Platform Stats Snapshot */}
                       <div className="bg-slate-950 text-white p-5 border border-slate-800 flex flex-col gap-2">
                         <div className="flex items-center justify-between text-xs text-slate-400">
-                          <span className="uppercase tracking-wider font-semibold">สรุปค่าใช้จ่ายฟลีทเฉลี่ย</span>
+                          <span className="uppercase tracking-wider font-semibold">ราคาเฉลี่ยที่ประกาศ</span>
                           <span className="material-symbols-outlined text-[18px] text-[#fea619]">query_stats</span>
                         </div>
                         <div className="text-2xl font-bold font-mono text-white">
-                          ฿3,850 <span className="text-xs text-slate-400 font-normal">/ คัน / วัน</span>
+                          {avgCityRate !== null ? `฿${avgCityRate.toLocaleString()}` : '—'} <span className="text-xs text-slate-400 font-normal">/ คัน / วัน (ราคาในเมือง)</span>
                         </div>
                         <p className="text-xs text-slate-400 leading-relaxed">
-                          อัตราพึงพอใจของผู้ใช้บริการโดยรวม 99.4% จากแบบสำรวจ 1,420 ใบประเมินในรอบ 30 วันที่ผ่านมา
+                          คำนวณจากราคาโซนในเมืองของรถที่ลงประกาศไว้จริง {cityRates.length} คัน
                         </p>
                       </div>
                     </div>
@@ -1143,7 +910,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
             {activeView === 'sponsors' && (
               <div className="p-4 sm:p-6">
                 <AdminSponsorTab
-                  sponsors={sponsors.length > 0 ? sponsors : SPONSORS}
+                  sponsors={sponsors}
                   onRefresh={refreshAll}
                   getSponsorClickCount={getSponsorClickCount}
                   onOpenReport={setReportSponsor}
@@ -1160,11 +927,11 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                       <span className="material-symbols-outlined text-[24px] text-slate-950 dark:text-white">shield</span>
                       <div>
                         <h2 className="text-lg font-bold text-slate-950 dark:text-white">ศูนย์ตรวจสอบความปลอดภัย & PDPA Compliance</h2>
-                        <p className="text-xs text-slate-500">บันทึกการเข้าถึงข้อมูล Audit Trail ตามมาตรฐาน ISO/IEC 27001 และ พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล</p>
+                        <p className="text-xs text-slate-500">บันทึกการเข้าถึงข้อมูล Audit Trail ตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล</p>
                       </div>
                     </div>
                     <span className="px-2.5 py-1 bg-[#e8f9ee] text-[#06c755] text-xs font-bold border border-emerald-200">
-                      PDPA ENGINE ACTIVE
+                      PDPA
                     </span>
                   </div>
 
@@ -1174,14 +941,13 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
                       <div className="flex items-center gap-3">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#d97706]"></span>
                         <div className="flex flex-col text-xs">
-                          <span className="font-bold text-slate-900 dark:text-white">คำขอลบบัญชีคนขับ ID: USR-DEL-29401 (นายสมควร ใจหาญ)</span>
-                          <span className="text-slate-500">เหตุผล: ยุติการให้บริการรถตู้ • วันที่ยื่นคำขอ: 29 ก.ย. 2568 (ครบกำหนดภายใน 48 ชม.)</span>
+                          <span className="font-bold text-slate-900 dark:text-white">ยังไม่มีคำขอลบหรือทำลายข้อมูล</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => alert('ยืนยันการทำลายข้อมูลผู้ใช้ USR-DEL-29401 และบันทึก Audit Trail เรียบร้อย')}
+                          onClick={() => alert('ยืนยันการทำลายข้อมูลและบันทึก Audit Trail เรียบร้อย')}
                           className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors cursor-pointer"
                         >
                           อนุมัติทำลายข้อมูล
@@ -1207,15 +973,15 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({ isOpen, onCl
               <span className="hidden md:inline text-slate-300">•</span>
               <span className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">policy</span>
-                Audit Trail ISO/IEC 27001
+                Audit Trail
               </span>
             </div>
             <div className="flex items-center gap-2 font-mono text-[11px]">
               <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
-                BUILD: v3.14.2-PROD
+                BUILD: v0.1.0
               </span>
               <span className="px-2 py-0.5 bg-[#e8f9ee] text-[#06c755] border border-emerald-300 font-bold">
-                ALL SYSTEMS ONLINE
+                ข้อมูลจริงจากระบบ
               </span>
             </div>
           </div>
