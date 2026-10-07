@@ -230,8 +230,13 @@ export async function POST(req: NextRequest) {
     const saved = await saveVehicle(newVehicleData);
     return NextResponse.json({ success: true, vehicle: saved });
   } catch (err) {
+    console.error('[TripDee Vehicles] Failed to create vehicle:', err);
     return NextResponse.json(
-      { error: 'Failed to create vehicle', details: String(err) },
+      {
+        error:
+          'บันทึกรถไม่สำเร็จ เนื่องจากฐานข้อมูลปฏิเสธข้อมูลที่ส่งไป กรุณากรอกข้อมูลให้ครบและลองใหม่อีกครั้ง',
+        details: String(err),
+      },
       { status: 500 }
     );
   }

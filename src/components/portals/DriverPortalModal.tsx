@@ -200,6 +200,10 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
       setSaveError('กรุณากรอกหัวข้อรุ่นรถสำหรับแสดงผลหน้าเว็บ');
       return;
     }
+    if (!(driverDisplayName || nickname.trim())) {
+      setSaveError('กรุณากรอกชื่อคนขับ');
+      return;
+    }
 
     setIsSaving(true);
     setSaveSuccess(false);

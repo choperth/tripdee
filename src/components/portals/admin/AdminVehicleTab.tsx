@@ -195,11 +195,17 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
       rating: Number(formData.get('rating')) || 0,
       isVerified: formData.get('isVerified') === 'true',
       zoneRates: {
-        city: Number(formData.get('rate_city')) || 0,
-        midHill: Number(formData.get('rate_midHill')) || 0,
-        highHill: Number(formData.get('rate_highHill')) || 0,
-        crossProvince: Number(formData.get('rate_cross')) || 0,
-      } as Record<ZoneId, number>,
+        ...(Number(formData.get('rate_city')) > 0 ? { city: Number(formData.get('rate_city')) } : {}),
+        ...(Number(formData.get('rate_midHill')) > 0
+          ? { midHill: Number(formData.get('rate_midHill')) }
+          : {}),
+        ...(Number(formData.get('rate_highHill')) > 0
+          ? { highHill: Number(formData.get('rate_highHill')) }
+          : {}),
+        ...(Number(formData.get('rate_cross')) > 0
+          ? { crossProvince: Number(formData.get('rate_cross')) }
+          : {}),
+      } as Partial<Record<ZoneId, number>>,
       description: formData.get('description') as string,
     };
 

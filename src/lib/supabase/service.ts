@@ -825,17 +825,17 @@ function toVehicleRowPayload(vehicle: Vehicle): Record<string, unknown> {
     driver_whatsapp: vehicle.driverWhatsapp || null,
     driver_wechat: vehicle.driverWechat || null,
     driver_kakao: vehicle.driverKakao || null,
-    languages: vehicle.languages,
+    languages: vehicle.languages?.length ? vehicle.languages : ['th'],
     rating: vehicle.rating,
     review_count: vehicle.reviewCount,
     is_verified: vehicle.isVerified,
-    images: vehicle.images,
-    zone_rates: vehicle.zoneRates || null,
+    images: vehicle.images ?? [],
+    zone_rates: vehicle.zoneRates ?? {},
     rate_note: vehicle.rateNote || null,
-    location: vehicle.location,
+    location: vehicle.location || '',
     region: vehicle.region || 'north',
-    popular_routes: vehicle.popularRoutes,
-    amenities: vehicle.amenities,
+    popular_routes: vehicle.popularRoutes ?? [],
+    amenities: vehicle.amenities ?? [],
     description: vehicle.description,
     plate_type: vehicle.plateType || null,
     plate_number: vehicle.plateNumber || null,
@@ -866,17 +866,17 @@ function toVehicleColumnUpdates(updates: Partial<Vehicle>): Record<string, unkno
   if (updates.driverWhatsapp !== undefined) out.driver_whatsapp = updates.driverWhatsapp;
   if (updates.driverWechat !== undefined) out.driver_wechat = updates.driverWechat;
   if (updates.driverKakao !== undefined) out.driver_kakao = updates.driverKakao;
-  if (updates.languages !== undefined) out.languages = updates.languages;
+  if (updates.languages !== undefined) out.languages = updates.languages?.length ? updates.languages : ['th'];
   if (updates.rating !== undefined) out.rating = updates.rating;
   if (updates.reviewCount !== undefined) out.review_count = updates.reviewCount;
   if (updates.isVerified !== undefined) out.is_verified = updates.isVerified;
-  if (updates.images !== undefined) out.images = updates.images;
-  if (updates.zoneRates !== undefined) out.zone_rates = updates.zoneRates;
+  if (updates.images !== undefined) out.images = updates.images ?? [];
+  if (updates.zoneRates !== undefined) out.zone_rates = updates.zoneRates ?? {};
   if (updates.rateNote !== undefined) out.rate_note = updates.rateNote;
-  if (updates.location !== undefined) out.location = updates.location;
+  if (updates.location !== undefined) out.location = updates.location || '';
   if (updates.region !== undefined) out.region = updates.region;
-  if (updates.popularRoutes !== undefined) out.popular_routes = updates.popularRoutes;
-  if (updates.amenities !== undefined) out.amenities = updates.amenities;
+  if (updates.popularRoutes !== undefined) out.popular_routes = updates.popularRoutes ?? [];
+  if (updates.amenities !== undefined) out.amenities = updates.amenities ?? [];
   if (updates.description !== undefined) out.description = updates.description;
   if (updates.plateType !== undefined) out.plate_type = updates.plateType;
   if (updates.plateNumber !== undefined) out.plate_number = updates.plateNumber;

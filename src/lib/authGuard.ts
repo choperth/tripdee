@@ -136,7 +136,11 @@ export async function createSessionToken(input: {
     expiresAt: now + SESSION_TTL_SECONDS,
   };
   const body = base64Url(new TextEncoder().encode(JSON.stringify(session)));
-  const sig = await hmac(body, getSessionSecret());
+  const secret = getSessionSecret();
+  if (!secret) {
+    throw new Error('No session signing secret configured (set SESSION_SECRET)');
+  }
+  const sig = await hmac(body, secret);
   return { token: `${body}.${sig}`, session };
 }
 
@@ -146,12 +150,14 @@ export async function createSessionToken(input: {
  */
 export async function verifySessionToken(token: string | undefined): Promise<DriverSession | null> {
   if (!token) return null;
+  const secret = getSessionSecret();
+  if (!secret) return null;
   const dot = token.lastIndexOf('.');
   if (dot <= 0) return null;
 
   const body = token.slice(0, dot);
   const sig = token.slice(dot + 1);
-  const expected = await hmac(body, getSessionSecret());
+  const expected = await hmac(body, secret);
   if (!timingSafeEqual(sig, expected)) return null;
 
   try {
