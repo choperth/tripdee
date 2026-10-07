@@ -28,6 +28,7 @@ import {
   Landmark,
 } from 'lucide-react';
 import { BookingConfirmationSheet, BookingSheetData } from '@/components/BookingConfirmationSheet';
+import { VEHICLE_TIER_META } from '@/lib/b2b';
 import { DangerZone } from '@/components/portals/DangerZone';
 
 interface CustomerPortalModalProps {
@@ -468,6 +469,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
                           <h4 className="text-sm sm:text-base font-bold leading-snug">{q.route}</h4>
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                             ระยะเวลา: {q.totalDays} วัน | ผู้โดยสาร: {q.passengers} |{' '}
+                            {VEHICLE_TIER_META[q.vehicleTier].shortLabel} {q.carCount} คัน |{' '}
                             {q.needsTaxInvoice ? 'ออกใบกำกับภาษีเต็มรูปแบบ (หัก ณ ที่จ่าย 3%)' : t('pcus.total')}
                           </p>
                           <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">

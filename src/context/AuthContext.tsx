@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { isMockDataEnabled } from '@/lib/mockConfig';
 import { getSupabase } from '@/lib/supabase/client';
+import type { VehicleTier } from '@/lib/b2b';
 
 export type UserRole = 'driver' | 'customer' | 'admin';
 
@@ -51,6 +52,10 @@ export interface QuotationRecord {
   estimatedPrice: number;
   status: 'pending' | 'confirmed' | 'completed';
   needsTaxInvoice: boolean;
+  /** Same tier keys as QuotationLead / quotations.vehicle_tier */
+  vehicleTier: VehicleTier;
+  /** Same car count as QuotationLead.carCount */
+  carCount: number;
 }
 
 interface AuthContextType {
@@ -134,6 +139,8 @@ const INITIAL_QUOTATIONS: QuotationRecord[] = [
     estimatedPrice: 12600,
     status: 'confirmed',
     needsTaxInvoice: true,
+    vehicleTier: 'standard_vip',
+    carCount: 2,
   },
   {
     id: 'QT-2026-002',
@@ -145,6 +152,8 @@ const INITIAL_QUOTATIONS: QuotationRecord[] = [
     estimatedPrice: 2200,
     status: 'completed',
     needsTaxInvoice: true,
+    vehicleTier: 'standard_vip',
+    carCount: 1,
   },
 ];
 

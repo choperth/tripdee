@@ -134,6 +134,8 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
         passengers,
         estimatedPrice,
         needsTaxInvoice: formData.needsTaxInvoice,
+        vehicleTier: formData.vehicleTier,
+        carCount,
       });
 
       // Save lead into B2B quotation pipeline (admin portal + partner matching)
