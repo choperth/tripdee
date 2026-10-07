@@ -8,12 +8,15 @@ export interface DriverPortalModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialTab?: 'profile' | 'perks' | 'jobs' | 'reviews';
+  /** Opens the free vehicle registration flow from inside the sign-in gate. */
+  onOpenRegister?: () => void;
 }
 
 export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
   isOpen,
   onClose,
   initialTab = 'profile',
+  onOpenRegister,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
@@ -37,6 +40,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
           isModal={true}
           onClose={onClose}
           initialTab={initialTab}
+          onOpenRegister={onOpenRegister}
         />
       </div>
     </div>

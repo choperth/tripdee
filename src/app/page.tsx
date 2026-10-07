@@ -416,6 +416,7 @@ export default function HomePage() {
         setActiveTab={setActiveTab}
         onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
+        onOpenDriverEntry={() => setIsDriverPortalOpen(true)}
         onOpenPortal={() => setIsPortalOpen(true)}
       />
       <div aria-hidden="true" className="h-16 shrink-0" />
@@ -889,10 +890,7 @@ export default function HomePage() {
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
-        onOpenRegisterModal={() => {
-          setIsLoginModalOpen(false);
-          setIsRegisterModalOpen(true);
-        }}
+        onOpenDriverEntry={() => setIsDriverPortalOpen(true)}
       />
 
       {((user?.role === 'driver' && isPortalOpen) || isDriverPortalOpen) && (
@@ -901,6 +899,11 @@ export default function HomePage() {
           onClose={() => {
             setIsPortalOpen(false);
             setIsDriverPortalOpen(false);
+          }}
+          onOpenRegister={() => {
+            setIsPortalOpen(false);
+            setIsDriverPortalOpen(false);
+            setIsRegisterModalOpen(true);
           }}
         />
       )}

@@ -2,54 +2,48 @@
 
 import React, { useRef, useState } from 'react';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
-import { useAuth, UserRole } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import {
   X,
   ShieldCheck,
   CarFront,
-  Briefcase,
   MessageCircle,
   ArrowRight,
-  Phone,
   AlertCircle,
   Loader2,
-  UserPlus,
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { isMockDataEnabled } from '@/lib/mockConfig';
-import { Vehicle } from '@/data/mockData';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultRole?: 'driver' | 'customer';
-  onOpenRegisterModal?: () => void;
+  /**
+   * Escape hatch for a driver who lands on the passenger login by mistake.
+   * When provided, a discreet link at the bottom opens the driver centre.
+   */
+  onOpenDriverEntry?: () => void;
 }
 
+/**
+ * Passenger-facing sign-in. Drivers and corporate accounts have their own entry
+ * points (the driver centre in the navbar, and the B2B tab), so this modal
+ * deliberately renders no role switcher.
+ */
 export const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
   onClose,
-  defaultRole = 'driver',
-  onOpenRegisterModal,
+  onOpenDriverEntry,
 }) => {
   const { loginAsDemo, loginWithCredentials, loginWithOAuth } = useAuth();
   const { t } = useLanguage();
-  const [selectedRole, setSelectedRole] = useState<'driver' | 'customer'>(defaultRole || 'driver');
-  // OAuth State
+
   const [oauthLoading, setOauthLoading] = useState<'line' | 'google' | null>(null);
   const [oauthError, setOauthError] = useState('');
 
-  // Real Mode Driver Form State
-  const [driverPhone, setDriverPhone] = useState('');
-  const [isCheckingDriver, setIsCheckingDriver] = useState(false);
-  const [driverError, setDriverError] = useState('');
-
-  // Real Mode Customer Form State
   const [customerName, setCustomerName] = useState('');
   const [customerContact, setCustomerContact] = useState('');
-  const [customerTaxId, setCustomerTaxId] = useState('');
 
-  // Demo direct login fallback form
   const [directName, setDirectName] = useState('');
   const [directPhone, setDirectPhone] = useState('');
   const [demoLoginMethod, setDemoLoginMethod] = useState<'demo' | 'direct'>('demo');
@@ -61,10 +55,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   if (!isOpen) return null;
 
-  const normalizePhone = (p: string) => p.replace(/[^0-9]/g, '');
-
-  const handleDemoLogin = (role: UserRole) => {
-    loginAsDemo(role);
+  const handleDemoLogin = () => {
+    loginAsDemo('customer');
     onClose();
   };
 
@@ -72,7 +64,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     try {
       setOauthLoading(provider);
       setOauthError('');
-      const res = await loginWithOAuth(provider, selectedRole);
+      const res = await loginWithOAuth(provider, 'customer');
       if (!res.success && res.error) {
         setOauthError(res.error);
       }
@@ -150,107 +142,19 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   const handleDemoDirectSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loginWithCredentials(selectedRole, directName, directPhone);
-    onClose();
-  };
-
-  // Real Driver Login (Phone number lookup in /api/vehicles and /api/leads/driver)
-  const handleDriverLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanPhone = normalizePhone(driverPhone);
-    if (cleanPhone.length < 9) {
-      setDriverError(t('auth.driverPhonePh'));
-      return;
-    }
-
-    setDriverError('');
-    setIsCheckingDriver(true);
-
-    try {
-      // 1. First, search active verified vehicles catalog
-      const res = await fetch('/api/vehicles?demo=0');
-      const data = await res.json();
-      const allVehicles: Vehicle[] = data.vehicles || [];
-
-      const match = allVehicles.find((v) => {
-        const p = normalizePhone(v.driverPhone || '');
-        return p.includes(cleanPhone) || cleanPhone.includes(p);
-      });
-
-      if (match) {
-        loginWithCredentials(
-          'driver',
-          match.driverNickname || match.driverName || t('auth.partnerName'),
-          match.driverPhone || driverPhone,
-          {
-            id: match.id,
-            driverNickname: match.driverNickname || match.driverName,
-            vehicleTitle: match.title,
-            vehiclePlate: match.plateNumber,
-            seats: match.seats,
-            isAvailable: match.isAvailable !== false,
-            verificationStatus: match.isVerified ? 'verified' : 'pending',
-          }
-        );
-        onClose();
-        return;
-      }
-
-      // 2. Fallback: Search registered partner leads (including pending review)
-      const leadRes = await fetch('/api/leads/driver');
-      if (leadRes.ok) {
-        const leadData = await leadRes.json();
-        const allLeads = leadData.drivers || [];
-        const leadMatch = allLeads.find((d: { phone?: string }) => {
-          const p = normalizePhone(d.phone || '');
-          return p.includes(cleanPhone) || cleanPhone.includes(p);
-        });
-
-        if (leadMatch) {
-          loginWithCredentials(
-            'driver',
-            leadMatch.nickname || leadMatch.driverName || t('auth.partnerName'),
-            leadMatch.phone || driverPhone,
-            {
-              id: leadMatch.id,
-              driverNickname: leadMatch.nickname || leadMatch.driverName,
-              vehicleTitle: leadMatch.vehicleModel || t('auth.partnerVehicle'),
-              vehiclePlate: leadMatch.plateNumber || t('auth.platePending'),
-              seats: Number(leadMatch.seats) || 9,
-              isAvailable: true,
-              verificationStatus: leadMatch.status === 'verified' ? 'verified' : 'pending',
-            }
-          );
-          onClose();
-          return;
-        }
-      }
-
-      // 3. Neither found
-      setDriverError(t('auth.driverNotFound'));
-    } catch {
-      setDriverError(t('auth.driverVerifyError'));
-    } finally {
-      setIsCheckingDriver(false);
-    }
-  };
-
-  // Real Customer Login
-  const handleCustomerLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    loginWithCredentials('customer', customerName, customerContact, {
-      companyName: customerName,
-      taxId: customerTaxId || undefined,
+    loginWithCredentials('customer', directName, directPhone, {
+      customerType: 'individual',
     });
     onClose();
   };
 
-  const roleTabClass = (role: UserRole) =>
-    `flex flex-1 flex-col items-center gap-1 px-2 py-3 text-xs transition-all cursor-pointer border-r border-slate-200 dark:border-slate-800 last:border-r-0 ${
-      selectedRole === role
-        ? 'bg-white dark:bg-slate-900 text-slate-950 dark:text-white border-t-2 border-t-slate-950 dark:border-t-white font-bold'
-        : 'font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60'
-    }`;
+  const handleCustomerLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    loginWithCredentials('customer', customerName, customerContact, {
+      customerType: 'individual',
+    });
+    onClose();
+  };
 
   const inputClass =
     'w-full h-12 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 text-sm font-semibold text-slate-950 dark:text-white placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-slate-950 dark:focus:border-white focus:ring-2 focus:ring-amber-500/40';
@@ -299,40 +203,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </p>
         </div>
 
-        {/* Role Switcher Tabs (Sharp stretched tabs matching Hero search tabs) */}
-        <div className="mb-5 flex items-stretch border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/50">
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedRole('driver');
-              setOauthError('');
-            }}
-            className={roleTabClass('driver')}
-          >
-            <CarFront className={`h-4 w-4 ${selectedRole === 'driver' ? 'text-amber-500' : ''}`} strokeWidth={2.5} />
-            <span>{t('auth.roleDriver')}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedRole('customer');
-              setOauthError('');
-            }}
-            className={roleTabClass('customer')}
-          >
-            <Briefcase className={`h-4 w-4 ${selectedRole === 'customer' ? 'text-amber-500' : ''}`} strokeWidth={2.5} />
-            <span>{t('auth.roleCustomer')}</span>
-          </button>
-
-        </div>
-
         {/* =========================================================================
-            BRANCH A: DEMO SHOWCASE MODE (?demo=1 or default mock enabled)
+            DEMO SHOWCASE MODE (?demo=1 or mock data enabled)
            ========================================================================= */}
         {isDemo ? (
           <div>
-            {/* Fast 1-Click Demo Section */}
             <div className="mb-5 border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/40 p-4 space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -345,22 +220,19 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
               <button
                 type="button"
-                onClick={() => handleDemoLogin(selectedRole)}
+                onClick={handleDemoLogin}
                 className="flex w-full items-center justify-between bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-3.5 text-left font-bold shadow-sm hover:border-slate-950 dark:hover:border-white transition-all cursor-pointer group"
               >
                 <div className="flex items-center gap-3">
                   <span className="grid h-11 w-11 shrink-0 place-items-center bg-slate-900 text-white dark:bg-white dark:text-slate-950">
-                    {selectedRole === 'driver' && <CarFront className="h-5 w-5" strokeWidth={2.5} />}
-                    {selectedRole === 'customer' && <Briefcase className="h-5 w-5" strokeWidth={2.5} />}
+                    <MessageCircle className="h-5 w-5" strokeWidth={2.5} />
                   </span>
                   <div>
                     <p className="text-sm font-bold text-slate-950 dark:text-white">
-                      {selectedRole === 'driver' && t('auth.demoDriverName')}
-                      {selectedRole === 'customer' && t('auth.demoCustName')}
+                      {t('auth.demoCustName')}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {selectedRole === 'driver' && t('auth.demoDriverDesc')}
-                      {selectedRole === 'customer' && t('auth.demoCustDesc')}
+                      {t('auth.demoCustDesc')}
                     </p>
                   </div>
                 </div>
@@ -368,10 +240,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               </button>
             </div>
 
-            {/* Social / Direct Login Options in Demo */}
             {renderOAuthButtons()}
 
-            {/* Direct Phone/Email Toggle */}
             <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-center">
               {demoLoginMethod === 'demo' ? (
                 <button
@@ -414,10 +284,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   </div>
 
                   <div className="flex gap-2 pt-1">
-                    <button
-                      type="submit"
-                      className="flex-1 h-12 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black border border-amber-600 transition-all active:scale-[0.99] cursor-pointer"
-                    >
+                    <button type="submit" className={primaryCtaClass}>
                       {t('auth.submit')}
                     </button>
                     <button
@@ -434,182 +301,79 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
         ) : (
           /* =========================================================================
-              BRANCH B: REAL DATA AUTHENTIC MODE (?demo=0 or production)
+              PRODUCTION MODE — passengers only
              ========================================================================= */
           <div className="space-y-4">
-            {/* 1. Driver Login Form */}
-            {selectedRole === 'driver' && (
-              <div className="space-y-4">
-                <div className="border border-amber-300 dark:border-amber-700/60 bg-amber-50/70 dark:bg-amber-950/20 p-3.5">
-                  <p className="text-xs font-black text-slate-900 dark:text-white mb-1">
-                    เข้าสู่ระบบหรือลงทะเบียนคนขับใหม่ด้วยคลิกเดียว
-                  </p>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                    ทั้งคนขับเดิมและคนขับใหม่ สามารถกดเข้าสู่ระบบผ่าน LINE หรือ Google ได้ทันที ระบบจะผูกข้อมูลรถและโปรไฟล์ของท่านเข้าด้วยกันโดยอัตโนมัติ
-                  </p>
-                </div>
+            {renderOAuthButtons()}
 
-                {renderOAuthButtons()}
-
-                <div className="relative my-3 text-center">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200 dark:border-slate-800" />
-                  </div>
-                  <span className="relative bg-white dark:bg-slate-900 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    {t('auth.orDivider')}
-                  </span>
-                </div>
-
-                <form onSubmit={handleDriverLogin} className="space-y-4">
-                  <div>
-                    <label htmlFor="driver-phone-input" className={labelClass}>
-                      {t('auth.driverPhoneLabel')}
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <input
-                        id="driver-phone-input"
-                        type="tel"
-                        required
-                        value={driverPhone}
-                        onChange={(e) => setDriverPhone(e.target.value)}
-                        placeholder={t('auth.driverPhonePh')}
-                        className={`${inputClass} tabular-nums pl-10 pr-3.5`}
-                      />
-                    </div>
-                  </div>
-
-                  {driverError && (
-                    <div className="border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-3 text-xs font-semibold text-rose-700 dark:text-rose-300 flex flex-col gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <AlertCircle className="h-4 w-4 shrink-0" />
-                        <span>{driverError}</span>
-                      </div>
-                      {onOpenRegisterModal && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onClose();
-                            onOpenRegisterModal();
-                          }}
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-950 dark:text-white underline pt-1 cursor-pointer"
-                        >
-                          <UserPlus className="h-3.5 w-3.5" />
-                          <span>{t('auth.driverRegisterLink')}</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={isCheckingDriver}
-                    className={primaryCtaClass}
-                  >
-                    {isCheckingDriver ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>{t('auth.driverSearching')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <CarFront className="h-4 w-4" />
-                        <span>{t('auth.submit')}</span>
-                      </>
-                    )}
-                  </button>
-
-                  {onOpenRegisterModal && (
-                    <div className="text-center pt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onClose();
-                          onOpenRegisterModal();
-                        }}
-                        className="text-xs font-bold text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white underline transition-colors cursor-pointer"
-                      >
-                        {t('auth.driverRegisterLink')}
-                      </button>
-                    </div>
-                  )}
-                </form>
+            <div className="relative my-1 text-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200 dark:border-slate-800" />
               </div>
-            )}
+              <span className="relative bg-white dark:bg-slate-900 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                {t('auth.orDivider')}
+              </span>
+            </div>
 
-            {/* 2. Customer Login Form */}
-            {selectedRole === 'customer' && (
-              <div className="space-y-4">
-                {renderOAuthButtons()}
-
-                <div className="relative my-3 text-center">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200 dark:border-slate-800" />
-                  </div>
-                  <span className="relative bg-white dark:bg-slate-900 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    {t('auth.orDivider')}
-                  </span>
-                </div>
-
-                <form onSubmit={handleCustomerLogin} className="space-y-3.5">
-                  <div>
-                    <label htmlFor="customer-name-input" className={labelClass}>
-                      {t('auth.customerCompanyLabel')}
-                    </label>
-                    <input
-                      id="customer-name-input"
-                      type="text"
-                      required
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder={t('auth.customerCompanyPh')}
-                      className={inputClass}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="customer-contact-input" className={labelClass}>
-                      {t('auth.fPhone')}
-                    </label>
-                    <input
-                      id="customer-contact-input"
-                      type="text"
-                      required
-                      value={customerContact}
-                      onChange={(e) => setCustomerContact(e.target.value)}
-                      placeholder={t('auth.fPhonePh')}
-                      className={`${inputClass} tabular-nums`}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="customer-tax-input" className={labelClass}>
-                      {t('auth.customerTaxLabel')}
-                    </label>
-                    <input
-                      id="customer-tax-input"
-                      type="text"
-                      value={customerTaxId}
-                      onChange={(e) => setCustomerTaxId(e.target.value)}
-                      placeholder={t('auth.customerTaxPh')}
-                      className={`${inputClass} tabular-nums`}
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className={`${primaryCtaClass} mt-2`}
-                  >
-                    <Briefcase className="h-4 w-4" />
-                    <span>{t('auth.submit')}</span>
-                  </button>
-                </form>
+            <form onSubmit={handleCustomerLogin} className="space-y-3.5">
+              <div>
+                <label htmlFor="customer-name-input" className={labelClass}>
+                  {t('auth.customerNameLabel')}
+                </label>
+                <input
+                  id="customer-name-input"
+                  type="text"
+                  required
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder={t('auth.customerNamePh')}
+                  className={inputClass}
+                />
               </div>
-            )}
 
+              <div>
+                <label htmlFor="customer-contact-input" className={labelClass}>
+                  {t('auth.fPhone')}
+                </label>
+                <input
+                  id="customer-contact-input"
+                  type="text"
+                  required
+                  value={customerContact}
+                  onChange={(e) => setCustomerContact(e.target.value)}
+                  placeholder={t('auth.fPhonePh')}
+                  className={`${inputClass} tabular-nums`}
+                />
+              </div>
+
+              <button type="submit" className={`${primaryCtaClass} mt-2`}>
+                <ArrowRight className="h-4 w-4" />
+                <span>{t('auth.submit')}</span>
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Driver escape hatch — rendered only when the host page can open the driver centre */}
+        {onOpenDriverEntry && (
+          <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <CarFront className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
+            <span>{t('auth.driverPrompt')}</span>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenDriverEntry();
+              }}
+              className="font-bold text-slate-950 dark:text-white underline hover:no-underline transition-colors cursor-pointer"
+            >
+              {t('auth.driverPromptCta')}
+            </button>
           </div>
         )}
       </div>
     </div>
   );
 };
+
+export default LoginModal;

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Vehicle, Sponsor, VEHICLES } from '@/data/mockData';
 import { isMockDataEnabled } from '@/lib/mockConfig';
 import { Navbar } from '@/components/Navbar';
@@ -29,6 +29,15 @@ export default function VehicleDetailPage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'missing'>('loading');
   const [isLoginOpen, setIsLoginOpen] = useState<boolean>(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState<boolean>(false);
+
+  const router = useRouter();
+  // This page has no driver console of its own, so the driver entry navigates
+  // to the dedicated driver centre.
+  const openDriverCentre = () => {
+    setIsLoginOpen(false);
+    setIsRegisterOpen(false);
+    router.push('/driver');
+  };
 
   useEffect(() => {
     let active = true;
@@ -71,7 +80,7 @@ export default function VehicleDetailPage() {
   if (status === 'loading' || !vehicle) {
     return (
       <div className="flex min-h-dvh flex-col bg-paper font-body text-ink">
-        <Navbar onOpenLoginModal={() => setIsLoginOpen(true)} />
+        <Navbar onOpenLoginModal={() => setIsLoginOpen(true)} onOpenDriverEntry={openDriverCentre} />
         <div aria-hidden="true" className="h-16 shrink-0" />
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 py-16 text-center">
           {status === 'loading' ? (
@@ -95,10 +104,7 @@ export default function VehicleDetailPage() {
         <LoginModal
           isOpen={isLoginOpen}
           onClose={() => setIsLoginOpen(false)}
-          onOpenRegisterModal={() => {
-            setIsLoginOpen(false);
-            setIsRegisterOpen(true);
-          }}
+          onOpenDriverEntry={openDriverCentre}
         />
         <DriverRegisterModal isOpen={isRegisterOpen} onClose={() => setIsRegisterOpen(false)} vehicles={allVehicles} />
       </div>
@@ -107,7 +113,7 @@ export default function VehicleDetailPage() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-paper font-body text-ink">
-      <Navbar onOpenLoginModal={() => setIsLoginOpen(true)} />
+      <Navbar onOpenLoginModal={() => setIsLoginOpen(true)} onOpenDriverEntry={openDriverCentre} />
       <div aria-hidden="true" className="h-16 shrink-0" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 sm:px-6 py-6">
         <VehicleDetailView
@@ -121,10 +127,7 @@ export default function VehicleDetailPage() {
       <LoginModal
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
-        onOpenRegisterModal={() => {
-          setIsLoginOpen(false);
-          setIsRegisterOpen(true);
-        }}
+        onOpenDriverEntry={openDriverCentre}
       />
       <DriverRegisterModal isOpen={isRegisterOpen} onClose={() => setIsRegisterOpen(false)} vehicles={allVehicles} />
     </div>

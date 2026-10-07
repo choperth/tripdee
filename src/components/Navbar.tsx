@@ -20,6 +20,11 @@ interface NavbarProps {
   setActiveTab?: (tab: string) => void;
   onOpenRegisterModal?: () => void;
   onOpenLoginModal?: () => void;
+  /**
+   * Opens the driver centre. The entry is rendered only when this is provided,
+   * so pages that have no driver destination do not show a dead button.
+   */
+  onOpenDriverEntry?: () => void;
   onOpenPortal?: () => void;
 }
 
@@ -28,6 +33,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab = () => {},
   onOpenRegisterModal = () => {},
   onOpenLoginModal = () => {},
+  onOpenDriverEntry,
   onOpenPortal = () => {},
 }) => {
   const { user } = useAuth();
@@ -232,6 +238,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="hidden sm:block shrink-0">
               <LanguageSwitcher />
             </div>
+
+            {/* Driver centre — a separate, clearly labelled entry so the passenger login stays unambiguous */}
+            {onOpenDriverEntry && (
+              <button
+                type="button"
+                onClick={onOpenDriverEntry}
+                aria-label={t('nav.driverCenter')}
+                title={t('nav.driverCenter')}
+                className="hidden md:inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:border-slate-950 dark:hover:border-white transition-all rounded-none shrink-0 cursor-pointer"
+              >
+                <CarFront className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                <span className="text-[11px] sm:text-xs">{t('nav.driverCenter')}</span>
+              </button>
+            )}
 
             {/* User Login/Portal */}
             {user ? (
@@ -458,6 +478,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </button>
                   )}
 
+
+                  {onOpenDriverEntry && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onOpenDriverEntry();
+                      }}
+                      className="w-full h-10 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-white rounded-none text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <CarFront className="w-4 h-4" />
+                      <span>{t('nav.driverCenter')}</span>
+                    </button>
+                  )}
 
                   {user?.role !== 'driver' && (
                     <button

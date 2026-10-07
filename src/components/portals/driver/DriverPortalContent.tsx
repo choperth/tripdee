@@ -4,7 +4,7 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { X, Check, AlertCircle, RefreshCw } from 'lucide-react';
+import { X, Check, AlertCircle, RefreshCw, CarFront, Loader2, MessageCircle, Phone } from 'lucide-react';
 import { compressImage } from '@/lib/imageCompression';
 import { fetchVehicleReviews, calculateReviewStats, Review } from '@/lib/reviewsStore';
 import { Vehicle } from '@/data/mockData';
@@ -15,6 +15,8 @@ export interface DriverPortalContentProps {
   isModal?: boolean;
   onClose?: () => void;
   initialTab?: 'profile' | 'perks' | 'jobs' | 'reviews';
+  /** Opens the free vehicle registration flow for drivers who have no account yet. */
+  onOpenRegister?: () => void;
 }
 
 type TabType = 'profile' | 'perks' | 'jobs' | 'reviews';
@@ -23,9 +25,18 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   isModal = false,
   onClose = () => {},
   initialTab = 'profile',
+  onOpenRegister,
 }) => {
-  const { user, toggleDriverAvailability, updateDriverProfile, logout, deleteAccount } = useAuth();
-  const { locale } = useLanguage();
+  const {
+    user,
+    toggleDriverAvailability,
+    updateDriverProfile,
+    logout,
+    deleteAccount,
+    loginWithOAuth,
+    loginWithCredentials,
+  } = useAuth();
+  const { t, locale } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -33,6 +44,12 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [showECardModal, setShowECardModal] = useState(false);
+
+  // Driver sign-in gate state (only used while no driver is signed in)
+  const [gatePhone, setGatePhone] = useState('');
+  const [isCheckingDriver, setIsCheckingDriver] = useState(false);
+  const [gateError, setGateError] = useState('');
+  const [gateOauthLoading, setGateOauthLoading] = useState<'line' | 'google' | null>(null);
 
   // Form states initialized from user.
   // No demo fallbacks: a brand-new driver must start from a blank form, not
@@ -178,28 +195,240 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   );
   const reviewStats = useMemo(() => calculateReviewStats(reviewsForVehicle), [reviewsForVehicle]);
 
+  const normalizePhone = (p: string) => p.replace(/[^0-9]/g, '');
+
+  const handleGateOAuth = async (provider: 'line' | 'google') => {
+    try {
+      setGateOauthLoading(provider);
+      setGateError('');
+      const res = await loginWithOAuth(provider, 'driver');
+      if (!res.success && res.error) setGateError(res.error);
+    } catch (err: unknown) {
+      setGateError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setGateOauthLoading(null);
+    }
+  };
+
+  // Drivers who registered before OAuth existed can still sign in by the phone
+  // number attached to their vehicle or partner lead.
+  const handleGatePhoneLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanPhone = normalizePhone(gatePhone);
+    if (cleanPhone.length < 9) {
+      setGateError(t('auth.driverPhonePh'));
+      return;
+    }
+
+    setGateError('');
+    setIsCheckingDriver(true);
+
+    try {
+      const res = await fetch('/api/vehicles?demo=0');
+      const data = await res.json();
+      const allVehicles: Vehicle[] = data.vehicles || [];
+      const match = allVehicles.find((v) => {
+        const p = normalizePhone(v.driverPhone || '');
+        return p.length > 0 && (p.includes(cleanPhone) || cleanPhone.includes(p));
+      });
+
+      if (match) {
+        loginWithCredentials(
+          'driver',
+          match.driverNickname || match.driverName || t('auth.partnerName'),
+          match.driverPhone || gatePhone,
+          {
+            id: match.id,
+            driverNickname: match.driverNickname || match.driverName,
+            vehicleTitle: match.title,
+            vehiclePlate: match.plateNumber,
+            seats: match.seats,
+            isAvailable: match.isAvailable !== false,
+            verificationStatus: match.isVerified ? 'verified' : 'pending',
+          }
+        );
+        return;
+      }
+
+      const leadRes = await fetch('/api/leads/driver');
+      if (leadRes.ok) {
+        const leadData = await leadRes.json();
+        const allLeads = leadData.drivers || [];
+        const leadMatch = allLeads.find((d: { phone?: string }) => {
+          const p = normalizePhone(d.phone || '');
+          return p.length > 0 && (p.includes(cleanPhone) || cleanPhone.includes(p));
+        });
+
+        if (leadMatch) {
+          loginWithCredentials(
+            'driver',
+            leadMatch.nickname || leadMatch.driverName || t('auth.partnerName'),
+            leadMatch.phone || gatePhone,
+            {
+              id: leadMatch.id,
+              driverNickname: leadMatch.nickname || leadMatch.driverName,
+              vehicleTitle: leadMatch.vehicleModel || t('auth.partnerVehicle'),
+              vehiclePlate: leadMatch.plateNumber || t('auth.platePending'),
+              seats: Number(leadMatch.seats) || 9,
+              isAvailable: true,
+              verificationStatus: leadMatch.status === 'verified' ? 'verified' : 'pending',
+            }
+          );
+          return;
+        }
+      }
+
+      setGateError(t('auth.driverNotFound'));
+    } catch {
+      setGateError(t('auth.driverVerifyError'));
+    } finally {
+      setIsCheckingDriver(false);
+    }
+  };
+
   if (!user) {
     return (
-      <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none max-w-md mx-auto my-12 shadow-sm">
-        <span className="material-symbols-outlined text-[48px] text-amber-500 mb-2">lock</span>
-        <h2 className="text-base font-bold text-slate-950 dark:text-white mb-1">กรุณาเข้าสู่ระบบ</h2>
-        <p className="text-xs text-slate-500 mb-4">เข้าสู่ระบบบัญชีคนขับเพื่อจัดการข้อมูล ยานพาหนะ และคิวงานของคุณ</p>
-        {isModal ? (
+      <div className="p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none max-w-lg mx-auto my-12 shadow-sm">
+        <div className="text-center mb-6">
+          <span className="material-symbols-outlined text-[44px] text-amber-500">badge</span>
+          <h2 className="text-lg font-black text-slate-950 dark:text-white mt-1">
+            {t('drvGate.title')}
+          </h2>
+          <p className="text-xs text-slate-500 mt-1 leading-relaxed">{t('drvGate.desc')}</p>
+        </div>
+
+        <div className="space-y-2.5">
+          {gateError && (
+            <div className="border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-3 text-xs font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{gateError}</span>
+            </div>
+          )}
+
           <button
             type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold rounded-none cursor-pointer transition-colors"
+            disabled={!!gateOauthLoading}
+            onClick={() => handleGateOAuth('line')}
+            className="flex w-full h-12 items-center justify-center gap-2 bg-[#06C755] px-4 text-sm font-black text-white transition-all hover:bg-[#05B04B] active:scale-[0.99] disabled:opacity-60 cursor-pointer"
           >
-            ปิดหน้าต่าง
+            {gateOauthLoading === 'line' ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{t('auth.connecting')}</span>
+              </>
+            ) : (
+              <>
+                <MessageCircle className="h-5 w-5 fill-white" />
+                <span>{t('auth.lineLogin')}</span>
+              </>
+            )}
           </button>
-        ) : (
-          <Link
-            href="/"
-            className="inline-flex px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold rounded-none transition-colors"
+
+          <button
+            type="button"
+            disabled={!!gateOauthLoading}
+            onClick={() => handleGateOAuth('google')}
+            className="flex w-full h-12 items-center justify-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-4 text-sm font-bold text-slate-800 dark:text-slate-200 transition-all hover:border-slate-950 dark:hover:border-white active:scale-[0.99] disabled:opacity-60 cursor-pointer"
           >
-            กลับหน้าหลัก
-          </Link>
-        )}
+            {gateOauthLoading === 'google' ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{t('auth.connecting')}</span>
+              </>
+            ) : (
+              <>
+                <svg className="h-4.5 w-4.5" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                  />
+                </svg>
+                <span>{t('auth.googleLogin')}</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        <div className="relative my-4 text-center">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200 dark:border-slate-800" />
+          </div>
+          <span className="relative bg-white dark:bg-slate-900 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            {t('drvGate.orPhone')}
+          </span>
+        </div>
+
+        <form onSubmit={handleGatePhoneLogin} className="space-y-3">
+          <div className="relative">
+            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="tel"
+              required
+              value={gatePhone}
+              onChange={(e) => setGatePhone(e.target.value)}
+              placeholder={t('auth.driverPhonePh')}
+              aria-label={t('auth.driverPhoneLabel')}
+              className="w-full h-12 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 pl-10 pr-3.5 text-sm font-semibold text-slate-950 dark:text-white placeholder:text-slate-400 tabular-nums focus:outline-none focus:border-slate-950 dark:focus:border-white"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isCheckingDriver}
+            className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-black border border-amber-600 flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+          >
+            {isCheckingDriver ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{t('auth.driverSearching')}</span>
+              </>
+            ) : (
+              <>
+                <CarFront className="h-4 w-4" />
+                <span>{t('auth.submit')}</span>
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center gap-3">
+          {onOpenRegister && (
+            <button
+              type="button"
+              onClick={onOpenRegister}
+              className="text-xs font-bold text-emerald-700 dark:text-emerald-400 underline hover:no-underline transition-colors cursor-pointer"
+            >
+              {t('auth.driverRegisterLink')}
+            </button>
+          )}
+          {isModal ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold rounded-none cursor-pointer transition-colors"
+            >
+              ปิดหน้าต่าง
+            </button>
+          ) : (
+            <Link
+              href="/"
+              className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white underline transition-colors"
+            >
+              กลับหน้าหลัก
+            </Link>
+          )}
+        </div>
       </div>
     );
   }
