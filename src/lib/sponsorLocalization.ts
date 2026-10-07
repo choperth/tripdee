@@ -229,9 +229,26 @@ export const SPONSOR_TRANSLATIONS: Record<string, Partial<Record<Locale, Localiz
   },
 };
 
+/**
+ * Catalogue rows live in `public.sponsors` under descriptive ids (sp-connect,
+ * sp-vespa, ...) because `isMockSponsorId` strips `sp-<1..22>` in production.
+ * They reuse the translations authored for the demo ids in mockData.
+ */
+const SPONSOR_TRANSLATION_ALIASES: Record<string, string> = {
+  'sp-rantong': 'sp-5',
+  'sp-vespa': 'sp-6',
+  'sp-connect': 'sp-7',
+  'sp-baan-thip': 'sp-8',
+  'sp-baan-sri-dha': 'sp-9',
+  'sp-lanna-apartment': 'sp-10',
+  'sp-baan-sri-dha-yoga': 'sp-11',
+  'sp-sukjai': 'sp-12',
+};
+
 export function getLocalizedSponsor(sponsor: Sponsor, locale: Locale): Sponsor {
   if (locale === 'th') return sponsor;
-  const trans = SPONSOR_TRANSLATIONS[sponsor.id]?.[locale];
+  const key = SPONSOR_TRANSLATION_ALIASES[sponsor.id] || sponsor.id;
+  const trans = SPONSOR_TRANSLATIONS[key]?.[locale];
   if (!trans) return sponsor;
   return {
     ...sponsor,
