@@ -440,6 +440,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             {/* 1. Driver Login Form */}
             {selectedRole === 'driver' && (
               <div className="space-y-4">
+                <div className="border border-amber-300 dark:border-amber-700/60 bg-amber-50/70 dark:bg-amber-950/20 p-3.5">
+                  <p className="text-xs font-black text-slate-900 dark:text-white mb-1">
+                    เข้าสู่ระบบหรือลงทะเบียนคนขับใหม่ด้วยคลิกเดียว
+                  </p>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                    ทั้งคนขับเดิมและคนขับใหม่ สามารถกดเข้าสู่ระบบผ่าน LINE หรือ Google ได้ทันที ระบบจะผูกข้อมูลรถและโปรไฟล์ของท่านเข้าด้วยกันโดยอัตโนมัติ
+                  </p>
+                </div>
+
                 {renderOAuthButtons()}
 
                 <div className="relative my-3 text-center">

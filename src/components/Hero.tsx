@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
+import { ENABLE_QR_PAYMENT } from '@/lib/constants';
 
 const MONTHS: Record<string, string[]> = {
   th: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
@@ -185,7 +186,7 @@ export const Hero: React.FC<HeroProps> = ({
             </div>
             <div className="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-3 py-1">
               <span className="material-symbols-outlined text-sky-400 text-[15px]">receipt</span>
-              <span>{t('hero.trust3')}</span>
+              <span>{ENABLE_QR_PAYMENT ? t('hero.trust3') : t('hero.trust3_direct')}</span>
             </div>
           </div>
         </div>

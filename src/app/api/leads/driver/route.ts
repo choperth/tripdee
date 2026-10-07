@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchDriverLeads, saveDriverLead, verifyDriverLead, updateDriverLead, deleteDriverLead } from '@/lib/supabase/service';
 import { validateHoneypot } from '@/lib/honeypot';
-import { verifyAdminAccess, unauthorizedAdminResponse } from '@/lib/authGuard';
+import { verifyAdminAccess, unauthorizedAdminResponse, getDriverSession } from '@/lib/authGuard';
 
 export async function GET(req: NextRequest) {
   // Security (CWE-200 / PDPA): Driver registration list contains driver names, phone numbers, and documents.
@@ -51,7 +51,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const session = await getDriverSession(req);
+    const ownerId =
+      (session && session.role === 'driver' ? session.userId : undefined) ||
+      (body.ownerId && typeof body.ownerId === 'string' ? body.ownerId.trim() : undefined);
+
     const newDriver = await saveDriverLead({
+      ownerId,
       driverName: String(body.driverName || body.nickname).trim(),
       nickname: String(body.nickname).trim(),
       phone: String(body.phone).trim(),

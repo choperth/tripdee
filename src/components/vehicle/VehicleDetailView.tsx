@@ -31,6 +31,7 @@ import { VehicleReviewsSection } from '@/components/reviews/VehicleReviewsSectio
 import { DriverSmartECardModal } from '@/components/cards/DriverSmartECardModal';
 import { formatLineLink, buildVehicleLineMessage } from '@/lib/contactUtils';
 import { DepositPaymentModal } from '@/components/payment/DepositPaymentModal';
+import { ENABLE_QR_PAYMENT } from '@/lib/constants';
 
 export interface VehicleDetailViewProps {
   vehicle: Vehicle;
@@ -806,15 +807,17 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                   </span>
                 </div>
 
-                {/* ChillPay Instant Deposit CTA Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowDepositModal(true)}
-                  className="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-none text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs transition-colors active:scale-[0.98] cursor-pointer border border-amber-500"
-                >
-                  <span className="material-symbols-outlined text-[17px]">verified</span>
-                  <span>{t('vc.depositCta')}</span>
-                </button>
+                {/* ChillPay Instant Deposit CTA Button (Hidden when ENABLE_QR_PAYMENT is false) */}
+                {ENABLE_QR_PAYMENT && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDepositModal(true)}
+                    className="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-none text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs transition-colors active:scale-[0.98] cursor-pointer border border-amber-500"
+                  >
+                    <span className="material-symbols-outlined text-[17px]">verified</span>
+                    <span>{t('vc.depositCta')}</span>
+                  </button>
+                )}
 
                 <div className="space-y-2">
                   <a
@@ -1023,7 +1026,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
       )}
 
       {/* ChillPay Deposit Payment Modal */}
-      {showDepositModal && (
+      {ENABLE_QR_PAYMENT && showDepositModal && (
         <DepositPaymentModal
           vehicle={vehicle}
           isOpen={showDepositModal}

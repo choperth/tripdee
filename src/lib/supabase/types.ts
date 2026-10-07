@@ -124,6 +124,7 @@ export type Database = {
           can_issue_tax_invoice: boolean | null;
           business_type: 'company' | 'individual' | null;
           created_at: string;
+          owner_id?: string | null;
         };
         Insert: {
           id?: string;
@@ -143,6 +144,7 @@ export type Database = {
           can_issue_tax_invoice?: boolean | null;
           business_type?: 'company' | 'individual' | null;
           created_at?: string;
+          owner_id?: string | null;
         };
         Update: {
           id?: string;
@@ -162,6 +164,7 @@ export type Database = {
           can_issue_tax_invoice?: boolean | null;
           business_type?: 'company' | 'individual' | null;
           created_at?: string;
+          owner_id?: string | null;
         };
         Relationships: [];
       };

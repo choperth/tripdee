@@ -706,6 +706,42 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
             </button>
           </div>
 
+          {/* New Driver Onboarding Guide Banner */}
+          {!ownVehicle && !vehicleId && (
+            <div className="bg-sky-50 dark:bg-sky-950/40 border border-sky-300 dark:border-sky-800 p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs relative">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 bg-sky-600 text-white flex items-center justify-center shrink-0 font-black text-sm">
+                  1
+                </div>
+                <div className="flex flex-col">
+                  <h2 className="text-base sm:text-lg text-slate-950 dark:text-sky-100 font-bold">
+                    เข้าสู่ระบบเรียบร้อยแล้ว! ขั้นตอนถัดไป: บันทึกข้อมูลรถของท่าน
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-700 dark:text-sky-200/90 mt-1 leading-relaxed">
+                    บัญชี {user.id.startsWith('line_') ? 'LINE' : user.id.startsWith('google_') ? 'Google' : 'คนขับ'} ของท่านเชื่อมต่อแล้ว กรุณากรอกรุ่นรถ เบอร์โทร และรูปถ่ายในแท็บด้านล่าง แล้วกด &quot;บันทึกข้อมูล&quot; เพื่อส่งให้ทีมงานตรวจสอบและเปิดรับงาน
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Pending Approval Status Banner */}
+          {approvalStatus === 'pending' && (
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-[24px] text-amber-600 shrink-0">hourglass_top</span>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-950 dark:text-amber-100">
+                    ข้อมูลรถอยู่ระหว่างการตรวจสอบโดยผู้ดูแลระบบ
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-amber-300/80 mt-0.5">
+                    ทีมงานกำลังตรวจสอบเอกสารและข้อมูลรถ เมื่ออนุมัติแล้ว รถของท่านจะแสดงบนหน้าเว็บไซต์และระบบค้นหาทันที
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ============================================================== */}
           {/* 3. Master Navigation Tab Switcher (Geometric Bauhaus Strict Line) */}
           {/* ============================================================== */}

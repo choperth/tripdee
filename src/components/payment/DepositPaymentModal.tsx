@@ -21,6 +21,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { BookingConfirmationSheet, BookingSheetData } from '@/components/BookingConfirmationSheet';
+import { ENABLE_QR_PAYMENT } from '@/lib/constants';
 
 interface DepositPaymentModalProps {
   vehicle: Vehicle | null;
@@ -208,7 +209,7 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
     }
   }, [qrPayload]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !ENABLE_QR_PAYMENT) return null;
 
   const vehicleName = vehicle ? vehicleTitle(vehicle, locale) : 'รถตู้ VIP TripDee';
 

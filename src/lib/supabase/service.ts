@@ -336,6 +336,7 @@ export async function fetchDriverLeads(reqUrl?: string): Promise<DriverLead[]> {
         routes: row.routes || '',
         submittedAt: row.created_at,
         status: row.status,
+        ownerId: row.owner_id || undefined,
       }));
   } catch (err) {
     console.warn('[TripDee Supabase] Error fetching driver leads, using fallback:', err);
@@ -344,6 +345,7 @@ export async function fetchDriverLeads(reqUrl?: string): Promise<DriverLead[]> {
 }
 
 export async function saveDriverLead(lead: {
+  ownerId?: string;
   driverName: string;
   nickname: string;
   phone: string;
@@ -369,6 +371,7 @@ export async function saveDriverLead(lead: {
       .from('driver_leads')
       .insert({
         id: localLead.id,
+        owner_id: lead.ownerId || null,
         driver_name: lead.driverName,
         nickname: lead.nickname,
         phone: lead.phone,
@@ -419,6 +422,7 @@ export async function saveDriverLead(lead: {
     if (data) {
       return {
         id: data.id,
+        ownerId: data.owner_id || lead.ownerId || undefined,
         driverName: data.driver_name,
         nickname: data.nickname,
         phone: data.phone,
@@ -530,6 +534,7 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
         routes: updatedLead.routes || '',
         submittedAt: updatedLead.created_at,
         status: 'verified',
+        ownerId: updatedLead.owner_id || undefined,
       };
       newVehicle = convertLeadToVehicle(leadObj);
       const approvedList = getApprovedVehicles();
@@ -569,6 +574,8 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
         can_issue_tax_invoice: newVehicle.canIssueTaxInvoice ?? null,
         business_type: newVehicle.businessType || null,
         is_available: newVehicle.isAvailable ?? true,
+        owner_id: newVehicle.ownerId || null,
+        approval_status: 'approved' as const,
       };
 
       const upsertRes = await supabase.from('vehicles').upsert(fullVehicleData);
@@ -598,6 +605,8 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
           popular_routes: newVehicle.popularRoutes || [],
           amenities: newVehicle.amenities || [],
           description: newVehicle.description,
+          owner_id: newVehicle.ownerId || null,
+          approval_status: 'approved' as const,
         };
         await supabase.from('vehicles').upsert(baseVehicleData);
       }

@@ -800,7 +800,7 @@ export const DriverBusinessCardView: React.FC<DriverBusinessCardViewProps> = ({
                 </div>
 
                 <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                  {calendarCells.map((cell) =>
+                  {calendarCells.map((cell, idx) =>
                     cell ? (
                       <div
                         key={cell.iso}
@@ -826,7 +826,7 @@ export const DriverBusinessCardView: React.FC<DriverBusinessCardViewProps> = ({
                         </span>
                       </div>
                     ) : (
-                      <div key={`pad-${cell}`} className="p-2.5 bg-slate-50/50" />
+                      <div key={`pad-${idx}`} className="p-2.5 bg-slate-50/50" />
                     )
                   )}
                 </div>

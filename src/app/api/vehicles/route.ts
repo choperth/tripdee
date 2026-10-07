@@ -7,8 +7,10 @@ import {
   deleteVehicle,
   reviewVehicle,
   isVehicleOwnershipSupported,
+  fetchDriverLeads,
 } from '@/lib/supabase/service';
 import { Vehicle } from '@/data/mockData';
+import { convertLeadToVehicle } from '@/lib/leadsStore';
 import {
   verifyAdminAccess,
   unauthorizedAdminResponse,
@@ -84,6 +86,32 @@ export async function GET(req: NextRequest) {
         includeUnapproved: true,
         ownerId: session.userId,
       });
+
+      // If no vehicle in the vehicles catalog yet, check if there is an unapproved lead in driver_leads
+      if (owned.length === 0) {
+        try {
+          const leads = await fetchDriverLeads();
+          const cleanPhone = session.email ? session.email.replace(/\D/g, '') : '';
+          const pendingLead = leads.find(
+            (l) =>
+              l.ownerId === session.userId ||
+              (cleanPhone && cleanPhone.length >= 9 && l.phone && l.phone.replace(/\D/g, '').includes(cleanPhone))
+          );
+          if (pendingLead) {
+            const converted = convertLeadToVehicle(pendingLead);
+            converted.approvalStatus = pendingLead.status === 'verified' ? 'approved' : 'pending';
+            converted.ownerId = session.userId;
+            return NextResponse.json({
+              success: true,
+              total: 1,
+              vehicles: [converted],
+            });
+          }
+        } catch (leadErr) {
+          console.warn('[TripDee API] Error checking pending driver leads for scope=mine:', leadErr);
+        }
+      }
+
       return NextResponse.json({
         success: true,
         total: owned.length,
@@ -112,9 +140,13 @@ export async function GET(req: NextRequest) {
     const referer = req.headers.get('referer') || undefined;
     const targetUrl = url.search ? req.url : (referer || req.url);
     const vehicles = await fetchVehicles(targetUrl);
+    const driverCount = new Set(
+      vehicles.map((v) => (v.driverPhone || '').replace(/\D/g, '') || v.driverName || v.id).filter(Boolean)
+    ).size;
     return NextResponse.json({
       success: true,
       total: vehicles.length,
+      driverCount,
       vehicles,
     });
   } catch (err) {

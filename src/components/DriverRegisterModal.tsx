@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useLanguage } from '@/context/LanguageContext';
@@ -15,12 +15,15 @@ import {
   Upload,
   Sparkles,
   Lock,
+  MessageCircle,
 } from 'lucide-react';
 import { VEHICLE_CATEGORY_GROUPS } from '@/data/vehicleModels';
+import type { Vehicle } from '@/data/mockData';
 
 interface DriverRegisterModalProps {
   isOpen: boolean;
   onClose: () => void;
+  vehicles?: Vehicle[];
 }
 
 const AMENITY_KEYS = [
@@ -32,14 +35,72 @@ const AMENITY_KEYS = [
   'reg.amCharge',
 ] as const;
 
-export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen, onClose }) => {
+export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
+  isOpen,
+  onClose,
+  vehicles,
+}) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
   const { t } = useLanguage();
-  const { loginWithCredentials } = useAuth();
+  const { user, loginWithCredentials, loginWithOAuth, updateDriverProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [fetchedVehicles, setFetchedVehicles] = useState<Vehicle[]>([]);
+
+  useEffect(() => {
+    if (vehicles && vehicles.length > 0) return;
+    if (!isOpen) return;
+
+    let cancelled = false;
+    fetch('/api/vehicles')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        if (Array.isArray(data.vehicles)) {
+          setFetchedVehicles(data.vehicles);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, vehicles]);
+
+  const activeVehicles = vehicles && vehicles.length > 0 ? vehicles : fetchedVehicles;
+
+  const fleetStats = useMemo(() => {
+    if (!activeVehicles || activeVehicles.length === 0) return null;
+
+    const driverSet = new Set<string>();
+    activeVehicles.forEach((v) => {
+      const key = (v.driverPhone || '').replace(/\D/g, '') || v.driverName || v.id;
+      if (key) driverSet.add(key);
+    });
+
+    const count = driverSet.size || activeVehicles.length;
+
+    const regionSet = new Set(activeVehicles.map((v) => v.region).filter(Boolean));
+    const hubs: { code: string; label: string }[] = [];
+    if (regionSet.has('north')) hubs.push({ code: 'CNX', label: 'เชียงใหม่' });
+    if (regionSet.has('central')) hubs.push({ code: 'BKK', label: 'กรุงเทพฯ' });
+    if (regionSet.has('south')) hubs.push({ code: 'HKT', label: 'ภูเก็ต' });
+    if (regionSet.has('east')) hubs.push({ code: 'PTY', label: 'พัทยา' });
+    if (regionSet.has('isan')) hubs.push({ code: 'KOR', label: 'อีสาน' });
+
+    return {
+      driverCount: count,
+      vehicleCount: activeVehicles.length,
+      hubs: hubs.length > 0 ? hubs : [
+        { code: 'CNX', label: 'เชียงใหม่' },
+        { code: 'BKK', label: 'กรุงเทพฯ' },
+        { code: 'HKT', label: 'ภูเก็ต' },
+      ],
+    };
+  }, [activeVehicles]);
 
   const [formData, setFormData] = useState({
     serviceType: 'with_driver' as 'with_driver' | 'self_drive',
@@ -92,6 +153,27 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
     });
   }, [isOpen]);
 
+  // Autofill from active logged-in driver session
+  useEffect(() => {
+    if (!isOpen || !user || user.role !== 'driver') return;
+    setFormData((prev) => ({
+      ...prev,
+      driverName: prev.driverName || user.name || '',
+      nickname: prev.nickname || user.driverNickname || user.name || '',
+      phone: prev.phone || (user.emailOrPhone && !user.emailOrPhone.includes('@') ? user.emailOrPhone : ''),
+      lineId: prev.lineId || user.lineId || '',
+      whatsapp: prev.whatsapp || user.whatsapp || '',
+      wechat: prev.wechat || user.wechat || '',
+      kakao: prev.kakao || user.kakao || '',
+      vehicleModel:
+        prev.vehicleModel === 'Toyota Commuter' && user.vehicleTitle
+          ? user.vehicleTitle
+          : prev.vehicleModel,
+      plateNumber: prev.plateNumber || user.vehiclePlate || '',
+      seats: user.seats ? String(user.seats) : prev.seats,
+    }));
+  }, [isOpen, user]);
+
   if (!isOpen) return null;
 
   const toggleAmenity = (amenity: string) => {
@@ -139,6 +221,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          ownerId: user?.id || undefined,
           driverName: formData.driverName.trim(),
           nickname: finalNickname,
           phone: formData.phone.trim(),
@@ -170,21 +253,35 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
       const resData = await res.json().catch(() => ({}));
       const leadId = resData.lead?.id || `drv-${Date.now()}`;
 
-      // Automatically log the driver in so their portal is immediately ready
-      loginWithCredentials(
-        'driver',
-        finalNickname,
-        formData.phone.trim(),
-        {
-          id: leadId,
+      // If user is already logged in as driver, update their profile; otherwise log them in
+      if (user && user.role === 'driver') {
+        updateDriverProfile({
           driverNickname: finalNickname,
           vehicleTitle: finalModel,
           vehiclePlate: formData.plateNumber.trim() || undefined,
           seats: Number(formData.seats) || 9,
-          isAvailable: true,
+          lineId: formData.lineId.trim() || undefined,
+          whatsapp: formData.whatsapp.trim() || undefined,
+          wechat: formData.wechat.trim() || undefined,
+          kakao: formData.kakao.trim() || undefined,
           verificationStatus: 'pending',
-        }
-      );
+        });
+      } else {
+        loginWithCredentials(
+          'driver',
+          finalNickname,
+          formData.phone.trim(),
+          {
+            id: leadId,
+            driverNickname: finalNickname,
+            vehicleTitle: finalModel,
+            vehiclePlate: formData.plateNumber.trim() || undefined,
+            seats: Number(formData.seats) || 9,
+            isAvailable: true,
+            verificationStatus: 'pending',
+          }
+        );
+      }
 
       setSubmitted(true);
     } catch (err) {
@@ -306,15 +403,27 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] text-slate-300 font-bold uppercase tracking-wider">พันธมิตรคนขับ</span>
                 <span className="bg-emerald-500/20 text-emerald-300 text-[11px] px-2 py-0.5 border border-emerald-500/30 font-bold">
-                  {t('reg.proofCount')}
+                  {fleetStats && fleetStats.driverCount > 0
+                    ? t('reg.proofCount', { count: fleetStats.driverCount })
+                    : t('reg.proofFallback')}
                 </span>
               </div>
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-800 text-[11px] font-mono text-slate-400">
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-[#06C755]" />CNX เชียงใหม่</span>
-                <span>•</span>
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-[#06C755]" />BKK กรุงเทพฯ</span>
-                <span>•</span>
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-[#06C755]" />HKT ภูเก็ต</span>
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800 text-[11px] font-mono text-slate-400">
+                {(
+                  fleetStats?.hubs || [
+                    { code: 'CNX', label: 'เชียงใหม่' },
+                    { code: 'BKK', label: 'กรุงเทพฯ' },
+                    { code: 'HKT', label: 'ภูเก็ต' },
+                  ]
+                ).map((hub: { code: string; label: string }, idx: number) => (
+                  <React.Fragment key={hub.code}>
+                    {idx > 0 && <span>•</span>}
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-[#06C755]" />
+                      {hub.code} {hub.label}
+                    </span>
+                  </React.Fragment>
+                ))}
               </div>
             </div>
           </div>
@@ -445,6 +554,73 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({ isOpen
                 {/* STEP 1: Personal & Service Hub Info */}
                 {currentStep === 1 && (
                   <div className="space-y-4 animate-fade-in">
+                    {/* 1-Click Social Connect Bar (Bauhaus Unified Account Binding) */}
+                    {user && user.role === 'driver' ? (
+                      <div className="border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-emerald-600 text-white flex items-center justify-center font-black text-sm shrink-0">
+                            ✓
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                                เชื่อมต่อบัญชีคนขับแล้ว
+                              </span>
+                              <span className="text-[10px] bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100 px-1.5 py-0.5 font-bold">
+                                {user.id.startsWith('line_') ? 'LINE' : user.id.startsWith('google_') ? 'Google' : 'TripDee'}
+                              </span>
+                            </div>
+                            <p className="text-sm font-black text-slate-950 dark:text-white">
+                              {user.name} {user.emailOrPhone ? `(${user.emailOrPhone})` : ''}
+                            </p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              ข้อมูลรถจะถูกผูกกับบัญชีนี้โดยอัตโนมัติ เพื่อให้ท่านเข้าสู่ระบบและจัดการงานได้ทันที
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-black text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-center shrink-0">
+                          พร้อมผูกข้อมูลรถ
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 p-4">
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                            เข้าสู่ระบบหรือเชื่อมต่อด่วนด้วย LINE / Google (แนะนำ)
+                          </span>
+                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/40">
+                            1-Click
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">
+                          เชื่อมต่อ LINE เพื่อรับแจ้งเตือนงานหรือ Google เพื่อซิงค์ข้อมูล — ระบบจะช่วยดึงชื่อและรูปโปรไฟล์ให้อัตโนมัติ ไม่ต้องจำรหัสผ่าน
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <button
+                            type="button"
+                            onClick={() => loginWithOAuth('line', 'driver')}
+                            className="h-10 px-3 bg-[#06C755] hover:bg-[#05B04B] text-white text-xs font-black flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                          >
+                            <MessageCircle className="h-4 w-4 fill-white" />
+                            <span>เชื่อมต่อด้วย LINE</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => loginWithOAuth('google', 'driver')}
+                            className="h-10 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white hover:border-slate-950 dark:hover:border-white text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                          >
+                            <svg className="h-4 w-4" viewBox="0 0 24 24">
+                              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z" />
+                              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
+                              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+                            </svg>
+                            <span>เชื่อมต่อด้วย Google</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">

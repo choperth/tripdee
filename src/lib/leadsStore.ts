@@ -38,6 +38,7 @@ export interface QuotationLead {
 
 export interface DriverLead {
   id: string;
+  ownerId?: string;
   driverName: string;
   nickname: string;
   phone: string;
@@ -147,6 +148,8 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
     canIssueTaxInvoice: Boolean(lead.canIssueTaxInvoice),
     businessType: lead.businessType || (isYellow ? 'company' : 'individual'),
     isAvailable: true,
+    ownerId: lead.ownerId || undefined,
+    approvalStatus: 'approved',
   };
 }
 
@@ -340,6 +343,7 @@ export function getAllDriverLeads(): DriverLead[] {
 }
 
 export function addDriverLead(lead: {
+  ownerId?: string;
   driverName: string;
   nickname: string;
   phone: string;

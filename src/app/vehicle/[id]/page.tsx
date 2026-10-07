@@ -100,7 +100,7 @@ export default function VehicleDetailPage() {
             setIsRegisterOpen(true);
           }}
         />
-        <DriverRegisterModal isOpen={isRegisterOpen} onClose={() => setIsRegisterOpen(false)} />
+        <DriverRegisterModal isOpen={isRegisterOpen} onClose={() => setIsRegisterOpen(false)} vehicles={allVehicles} />
       </div>
     );
   }
@@ -126,7 +126,7 @@ export default function VehicleDetailPage() {
           setIsRegisterOpen(true);
         }}
       />
-      <DriverRegisterModal isOpen={isRegisterOpen} onClose={() => setIsRegisterOpen(false)} />
+      <DriverRegisterModal isOpen={isRegisterOpen} onClose={() => setIsRegisterOpen(false)} vehicles={allVehicles} />
     </div>
   );
 }

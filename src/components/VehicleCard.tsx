@@ -11,6 +11,7 @@ import { getUpcomingBusyRanges, toISODateString } from '@/lib/availabilityUtils'
 import { formatLineLink, buildVehicleLineMessage } from '@/lib/contactUtils';
 
 import { DepositPaymentModal } from '@/components/payment/DepositPaymentModal';
+import { ENABLE_QR_PAYMENT } from '@/lib/constants';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -259,18 +260,20 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
               </div>
             </div>
 
-            {/* Instant Deposit Booking CTA Button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDepositModal(true);
-              }}
-              className="w-full mb-2 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs sm:text-sm py-2 px-3 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border border-amber-500"
-            >
-              <span className="material-symbols-outlined text-[16px] text-slate-950">verified</span>
-              <span>{t('vc.depositCta')}</span>
-            </button>
+            {/* Instant Deposit Booking CTA Button (Hidden when ENABLE_QR_PAYMENT is false) */}
+            {ENABLE_QR_PAYMENT && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDepositModal(true);
+                }}
+                className="w-full mb-2 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs sm:text-sm py-2 px-3 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border border-amber-500"
+              >
+                <span className="material-symbols-outlined text-[16px] text-slate-950">verified</span>
+                <span>{t('vc.depositCta')}</span>
+              </button>
+            )}
 
             <div className="grid grid-cols-2 gap-2">
               {/* Call CTA - matching attached image: white bg, border, teal call icon, "โทรตรง" */}
@@ -320,7 +323,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
       </div>
 
       {/* ChillPay Deposit Payment Modal */}
-      {showDepositModal && (
+      {ENABLE_QR_PAYMENT && showDepositModal && (
         <DepositPaymentModal
           vehicle={vehicle}
           isOpen={showDepositModal}
