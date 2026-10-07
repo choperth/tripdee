@@ -118,8 +118,8 @@ export default function AdminConsolePage() {
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const pin = passwordInput.trim();
-    const expectedPin = process.env.NEXT_PUBLIC_ADMIN_PIN || 'tripdee2026';
-    if (pin === expectedPin) {
+    const expectedPin = process.env.NEXT_PUBLIC_ADMIN_PIN;
+    if (expectedPin && pin === expectedPin) {
       localStorage.setItem('td-admin-token', pin);
       setAdminToken(pin);
       setIsAdminAuthenticated(true);

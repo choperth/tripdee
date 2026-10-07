@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export function verifyAdminAccess(req: NextRequest): boolean {
   const adminSecret = getAdminSecret();
+  // No configured secret means no admin access. Never fall back to a known value.
+  if (!adminSecret) return false;
 
   // 1. Check Bearer token in Authorization header
   const authHeader = req.headers.get('authorization');
@@ -63,7 +65,7 @@ export interface DriverSession {
 }
 
 function getAdminSecret(): string {
-  return process.env.ADMIN_SECRET_KEY || process.env.NEXT_PUBLIC_ADMIN_PIN || 'tripdee2026';
+  return process.env.ADMIN_SECRET_KEY || process.env.NEXT_PUBLIC_ADMIN_PIN || '';
 }
 
 /**
