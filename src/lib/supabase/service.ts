@@ -15,7 +15,15 @@
 import { getSupabase } from './client';
 import { Database, Booking } from './types';
 import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, SPONSORS, ZoneId, BoardQuote } from '@/data/mockData';
-import { isMockDataEnabled, isExcludedTestVehicle, isExcludedTestDriver } from '@/lib/mockConfig';
+import {
+  isMockDataEnabled,
+  isExcludedTestVehicle,
+  isExcludedTestDriver,
+  isMockVehicleId,
+  isMockPostId,
+  isMockSponsorId,
+} from '@/lib/mockConfig';
+export { isMockVehicleId, isMockPostId, isMockSponsorId };
 import {
   QuotationLead,
   DriverLead,
@@ -61,31 +69,6 @@ type DynamicTableQuery = {
   update: (values: Record<string, unknown>) => { eq: (col: string, val: string) => Promise<unknown> };
 };
 
-// Mock Data ID Detectors to prevent mock leakage into production mode (?demo=0)
-const mockVehicleIdSet = new Set(VEHICLES.map((v) => v.id));
-const mockPostIdSet = new Set(BOARD_POSTS.map((p) => p.id));
-const mockSponsorIdSet = new Set(SPONSORS.map((s) => s.id));
-
-export function isMockVehicleId(id: string): boolean {
-  if (isExcludedTestVehicle(id)) return true;
-  if (mockVehicleIdSet.has(id)) return true;
-  if (/^v-([1-9]|1[0-9]|2[0-9])b?$/.test(id)) return true;
-  if (id.startsWith('v-sd-')) return true;
-  if (id.startsWith('v-mock-')) return true;
-  return false;
-}
-
-export function isMockPostId(id: string): boolean {
-  if (mockPostIdSet.has(id)) return true;
-  if (/^b-([1-9]|1[0-9])$/.test(id)) return true;
-  return false;
-}
-
-export function isMockSponsorId(id: string): boolean {
-  if (mockSponsorIdSet.has(id)) return true;
-  if (/^sp-([1-9]|1[0-9])$/.test(id)) return true;
-  return false;
-}
 
 // In-memory deleted board posts tracking to ensure instant UI sync across all modes
 const deletedBoardPostIds: string[] = [];

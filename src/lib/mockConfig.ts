@@ -115,12 +115,15 @@ export function isMockVehicleId(id: string): boolean {
   return false;
 }
 
-/** Check if board post ID is one of the built-in mock posts (b-1 to b-22) */
+/** Check if board post ID is one of the built-in mock posts (b-1 to b-22, b-khaoyai, b-inthanon, b-mock-*) */
 export function isMockPostId(id: string): boolean {
+  if (id === 'b-khaoyai' || id === 'b-inthanon') return true;
+  if (id.startsWith('b-mock-')) return true;
   return /^b-([1-9]|1[0-9]|2[0-2])$/.test(id);
 }
 
-/** Check if sponsor ID is one of the built-in mock sponsors (sp-1 to sp-22) */
+/** Check if sponsor ID is one of the built-in mock sponsors (sp-1 to sp-22, sp-mock-*) */
 export function isMockSponsorId(id: string): boolean {
+  if (id.startsWith('sp-mock-')) return true;
   return /^sp-([1-9]|1[0-9]|2[0-2])$/.test(id);
 }

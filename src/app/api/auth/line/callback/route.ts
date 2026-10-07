@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSessionToken, withSessionCookie } from '@/lib/authGuard';
+import { createSessionToken, withSessionCookie, getOrigin } from '@/lib/authGuard';
 
 interface UserProfilePayload {
   id: string;
@@ -10,20 +10,6 @@ interface UserProfilePayload {
   lineId?: string;
   isAvailable?: boolean;
   verificationStatus?: 'verified' | 'pending' | 'unverified';
-}
-
-function getOrigin(req: NextRequest): string {
-  const forwardedHost = req.headers.get('x-forwarded-host');
-  const forwardedProto = req.headers.get('x-forwarded-proto') || 'https';
-  if (forwardedHost) {
-    return `${forwardedProto}://${forwardedHost}`;
-  }
-  const host = req.headers.get('host');
-  if (host) {
-    const proto = host.includes('localhost') ? 'http' : 'https';
-    return `${proto}://${host}`;
-  }
-  return new URL(req.url).origin;
 }
 
 export async function GET(req: NextRequest) {

@@ -25,30 +25,6 @@ export function formatWhatsAppLink(rawPhone?: string, message?: string): string 
   return url.toString();
 }
 
-/**
- * Checks if a phone number appears to be an international number
- * (e.g. starts with + or non-Thai country code)
- */
-export function isInternationalPhone(phone?: string): boolean {
-  if (!phone) return false;
-  const trimmed = phone.trim();
-  if (trimmed.startsWith('+')) return true;
-  const digits = trimmed.replace(/\D/g, '');
-  return digits.length > 8 && !digits.startsWith('0');
-}
-
-/**
- * Clean phone number for display with country code or standard format
- */
-export function formatInternationalDisplay(phone?: string): string {
-  if (!phone) return '';
-  const trimmed = phone.trim();
-  if (trimmed.startsWith('+')) return trimmed;
-  if (trimmed.startsWith('0') && trimmed.length === 10) {
-    return `${trimmed.slice(0, 3)}-${trimmed.slice(3, 6)}-${trimmed.slice(6)}`;
-  }
-  return trimmed;
-}
 
 /**
  * Builds an inquiry message for a vehicle listing on TripDee

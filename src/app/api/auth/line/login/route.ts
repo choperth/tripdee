@@ -1,18 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-function getOrigin(req: NextRequest): string {
-  const forwardedHost = req.headers.get('x-forwarded-host');
-  const forwardedProto = req.headers.get('x-forwarded-proto') || 'https';
-  if (forwardedHost) {
-    return `${forwardedProto}://${forwardedHost}`;
-  }
-  const host = req.headers.get('host');
-  if (host) {
-    const proto = host.includes('localhost') ? 'http' : 'https';
-    return `${proto}://${host}`;
-  }
-  return new URL(req.url).origin;
-}
+import { getOrigin } from '@/lib/authGuard';
 
 export async function GET(req: NextRequest) {
   const origin = getOrigin(req);

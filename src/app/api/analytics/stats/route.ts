@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerAnalyticsSummary, resetServerAnalytics } from '@/lib/serverAnalyticsStore';
+import { verifyAdminAccess, unauthorizedAdminResponse } from '@/lib/authGuard';
 
 export async function GET() {
   const summary = getServerAnalyticsSummary();
@@ -10,6 +11,10 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     if (body?.action === 'reset') {
@@ -33,7 +38,11 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
+  if (!verifyAdminAccess(req)) {
+    return unauthorizedAdminResponse();
+  }
+
   const fresh = resetServerAnalytics();
   return NextResponse.json({
     success: true,
