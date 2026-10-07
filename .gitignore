@@ -47,6 +47,7 @@ next-env.d.ts
 .grok/
 .hallmark/
 .impeccable/
+.commandcode/
 
 # design exports & temporary assets
 stitch_tripdee_ui_redesign_system*
