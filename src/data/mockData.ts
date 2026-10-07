@@ -28,15 +28,15 @@ export interface Vehicle {
   rating: number;
   reviewCount: number;
   isVerified: boolean;
-  images: string[];
+  images?: string[];
   /** อัตราค่าเช่าพร้อมคนขับต่อวัน แยกตามโซนปลายทาง */
-  zoneRates: Record<ZoneId, number>;
+  zoneRates?: Partial<Record<ZoneId, number>>;
   /** หมายเหตุราคาเฉพาะคัน (ถ้ามี) */
   rateNote?: string;
   location: string;
   region?: 'north' | 'central' | 'south' | 'east' | 'isan';
-  popularRoutes: string[];
-  amenities: string[];
+  popularRoutes?: string[];
+  amenities?: string[];
   description: string;
   /** ประเภทป้ายทะเบียน: yellow = ป้ายเหลือง 30 ขนส่งสาธารณะ, blue = ป้ายฟ้า ส่วนบุคคล */
   plateType?: 'yellow' | 'blue';

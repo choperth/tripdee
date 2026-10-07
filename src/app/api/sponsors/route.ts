@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       categoryLabel: String(body.categoryLabel || 'ที่พักแนะนำพันธมิตร').trim(),
       tagline: String(body.tagline || '').trim(),
       badgeText: String(body.badgeText || 'สิทธิพิเศษลูกค้า TripDee').trim(),
-      image: String(body.image || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80').trim(),
+      image: String(body.image || '').trim(),
       link: String(body.link || 'https://line.me').trim(),
       discountText: String(body.discountText || 'ส่วนลดพิเศษเมื่อเดินทางกับ TripDee').trim(),
       location: String(body.location || 'เชียงใหม่').trim(),

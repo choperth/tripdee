@@ -587,16 +587,18 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
                         {vehicle?.driverName} ({vehicle?.driverNickname || 'คนขับ'})
                       </strong>
                     </p>
-                    <p className="flex items-center gap-1.5">
-                      <span className="text-slate-500">เบอร์โทรตรง:</span>{' '}
-                      <a
-                        href={`tel:${vehicle?.driverPhone}`}
-                        className="font-mono font-black text-emerald-700 dark:text-emerald-400 underline flex items-center gap-1 text-sm"
-                      >
-                        <Phone className="w-3.5 h-3.5" />
-                        {vehicle?.driverPhone || '081-234-5678'}
-                      </a>
-                    </p>
+                    {vehicle?.driverPhone && (
+                      <p className="flex items-center gap-1.5">
+                        <span className="text-slate-500">เบอร์โทรตรง:</span>{' '}
+                        <a
+                          href={`tel:${vehicle.driverPhone}`}
+                          className="font-mono font-black text-emerald-700 dark:text-emerald-400 underline flex items-center gap-1 text-sm"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          {vehicle.driverPhone}
+                        </a>
+                      </p>
+                    )}
                     {vehicle?.driverLine && (
                       <p>
                         <span className="text-slate-500">LINE คนขับ:</span>{' '}

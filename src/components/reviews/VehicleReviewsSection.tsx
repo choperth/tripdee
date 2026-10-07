@@ -59,7 +59,6 @@ export const VehicleReviewsSection: React.FC<VehicleReviewsSectionProps> = ({
   // rather than a fabricated score and histogram.
   useEffect(() => {
     let cancelled = false;
-    setIsLoadingReviews(true);
     fetchVehicleReviews(vehicle.id).then((loaded) => {
       if (!cancelled) {
         setReviews(loaded);

@@ -519,7 +519,7 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
                 <label className="font-bold text-ink block mb-1">{t('padm.fImage')}</label>
                 <input
                   name="image"
-                  defaultValue={editingSponsor?.image || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80'}
+                  defaultValue={editingSponsor?.image || ''}
                   className="w-full p-2 rounded-none bg-paper border border-rule text-ink font-mono"
                 />
               </div>

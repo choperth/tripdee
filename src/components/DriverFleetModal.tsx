@@ -39,7 +39,10 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
   const leadVehicle = fleetVehicles[0];
   const publicDriverName = driverName || getPublicDriverName(leadVehicle.driverName, leadVehicle.driverNickname);
   const locationText = vehicleLocation(leadVehicle, locale);
-  const rating = leadVehicle.rating || 5.0;
+  const rating =
+    typeof leadVehicle.rating === 'number' && leadVehicle.rating > 0 && leadVehicle.reviewCount > 0
+      ? leadVehicle.rating
+      : null;
   const reviewCount = fleetVehicles.reduce((acc, v) => acc + (v.reviewCount || 0), 0);
 
   const handleCall = (v: Vehicle) => {
@@ -118,9 +121,17 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
             <span>{t('fleet.trustNote')}</span>
           </div>
           <div className="flex items-center gap-1 text-amber-500 shrink-0 font-bold">
-            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-            <span>{rating}</span>
-            <span className="text-ink-muted dark:text-slate-400 text-xs font-normal">({t('detail.reviews', { n: reviewCount })})</span>
+            {rating !== null ? (
+              <>
+                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                <span>{rating}</span>
+                <span className="text-ink-muted dark:text-slate-400 text-xs font-normal">({t('detail.reviews', { n: reviewCount })})</span>
+              </>
+            ) : (
+              <span className="text-ink-muted dark:text-slate-400 text-xs font-normal">
+                {t('detail.noReviews')}
+              </span>
+            )}
           </div>
         </div>
 
@@ -129,7 +140,7 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fleetVehicles.map((vehicle) => {
               const isSelfDrive = vehicle.rentalType === 'self_drive' || (vehicle.type !== 'van' && vehicle.rentalType !== 'with_driver');
-              const basePrice = vehicle.zoneRates?.city || (isSelfDrive ? 1200 : 1900);
+              const basePrice = vehicle.zoneRates?.city ?? null;
 
               return (
                 <div
@@ -139,13 +150,21 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
                   <div>
                     {/* Thumbnail Image */}
                     <div className="relative h-40 w-full overflow-hidden bg-navy-deep group cursor-pointer" onClick={() => { onSelectVehicleDetail(vehicle); onClose(); }}>
-                      <Image
-                        src={vehicle.images[0]}
-                        alt={vehicleTitle(vehicle, locale)}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 360px"
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                      {vehicle.images?.[0] ? (
+                        <Image
+                          src={vehicle.images[0]}
+                          alt={vehicleTitle(vehicle, locale)}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 360px"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full grid place-items-center">
+                          <span className="material-symbols-outlined text-slate-600 text-[32px]">
+                            directions_car
+                          </span>
+                        </div>
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/80 via-transparent to-transparent" />
                       <div className="absolute top-2 left-2 flex items-center gap-1">
                         <span className="px-2 py-0.5 rounded bg-navy-deep/90 text-white text-[11px] font-bold">
@@ -162,9 +181,15 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
                         )}
                       </div>
                       <div className="absolute bottom-2 left-3 right-3 text-white">
-                        <span className="text-xs font-bold text-amber-300">
-                          {t('fleet.fromPrice', { price: basePrice.toLocaleString() })}
-                        </span>
+                        {basePrice !== null ? (
+                          <span className="text-xs font-bold text-amber-300">
+                            {t('fleet.fromPrice', { price: basePrice.toLocaleString() })}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-bold text-amber-300">
+                            {t('vehicle.priceOnRequest')}
+                          </span>
+                        )}
                       </div>
                     </div>
 

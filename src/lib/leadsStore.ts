@@ -77,20 +77,19 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
 
   const popularRoutes = lead.routes
     ? lead.routes.split(/[,/•]+/).map((r) => r.trim()).filter(Boolean)
-    : ['ตัวเมือง', 'สนามบิน'];
+    : [];
 
   const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
   const cleanLine = lead.lineId
     ? lead.lineId.startsWith('http')
       ? lead.lineId
       : `https://line.me/ti/p/~${lead.lineId}`
-    : 'https://line.me';
-  const defaultWhatsapp = cleanPhone ? `https://wa.me/66${cleanPhone.replace(/^0/, '')}` : undefined;
+    : '';
   const whatsappUrl = lead.whatsapp
     ? lead.whatsapp.startsWith('http')
       ? lead.whatsapp
       : `https://wa.me/${lead.whatsapp.replace(/[^0-9]/g, '')}`
-    : defaultWhatsapp;
+    : undefined;
 
   const languages: ('th' | 'en' | 'zh' | 'ko')[] = ['th'];
   if (lead.whatsapp) languages.push('en');
@@ -133,24 +132,16 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
     driverKakao: lead.kakao ? lead.kakao.trim() : undefined,
     languages: Array.from(new Set(languages)),
     region,
-    rating: 5.0,
-    reviewCount: 1,
-    isVerified: true,
-    images: [
-      'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80',
-    ],
-    zoneRates: { city: 1900, midHill: 2100, highHill: 2300, crossProvince: 2700 },
-    rateNote: 'คนขับผ่านการยืนยันตัวตน TripDee Verified เรียบร้อยแล้ว',
+    rating: 0,
+    reviewCount: 0,
+    isVerified: false,
+    images: [],
+    zoneRates: undefined,
+    rateNote: undefined,
     location: lead.routes || 'บริการทั่วไทย',
-    popularRoutes: popularRoutes.length > 0 ? popularRoutes : ['ตัวเมือง', 'สนามบิน'],
-    amenities: [
-      'ตรวจสภาพรถและประวัติคนขับแล้ว 100%',
-      'ใบขับขี่สาธารณะถูกต้อง',
-      'ประกันภัยคุ้มครองผู้โดยสาร',
-      'แอร์เย็นฉ่ำ สภาพรถใหม่สะอาด',
-    ],
-    description: `บริการรถพร้อมคนขับ โดย ${lead.driverName} (${lead.nickname}) ยานพาหนะ ${lead.vehicleModel} ชำนาญเส้นทาง ${lead.routes} ผ่านการตรวจสอบเอกสารและอนุมัติตรา TripDee Verified พร้อมให้บริการลูกค้าทันที`,
+    popularRoutes,
+    amenities: [],
+    description: `บริการรถพร้อมคนขับ โดย ${lead.driverName} (${lead.nickname}) ยานพาหนะ ${lead.vehicleModel}${lead.routes ? ` ชำนาญเส้นทาง ${lead.routes}` : ''}`,
     plateType: lead.plateType || (isYellow ? 'yellow' : 'blue'),
     plateNumber: lead.plateNumber || undefined,
     canIssueTaxInvoice: Boolean(lead.canIssueTaxInvoice),

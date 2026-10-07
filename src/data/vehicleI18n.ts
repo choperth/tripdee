@@ -425,7 +425,7 @@ export function vehicleAmenities(v: Pick<Vehicle, 'id' | 'amenities'>, locale: L
     const en = VEHICLE_EN[v.id]?.amenities;
     if (en) return en;
   }
-  return v.amenities;
+  return v.amenities ?? [];
 }
 
 export function vehicleDescription(

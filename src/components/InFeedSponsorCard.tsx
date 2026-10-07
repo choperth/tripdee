@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { Sponsor, SPONSORS } from '@/data/mockData';
+import { Sponsor } from '@/data/mockData';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { getLocalizedSponsor } from '@/lib/sponsorLocalization';
@@ -24,11 +24,9 @@ export const InFeedSponsorCard: React.FC<InFeedSponsorCardProps> = ({
   const { trackSponsor, trackCall } = useAnalytics();
   const { t, locale } = useLanguage();
 
-  // Resolve sponsor list: custom array -> default all SPONSORS -> fallback single sponsor
   const rawList = React.useMemo(() => {
-    if (customSponsors && customSponsors.length > 0) return customSponsors;
-    if (rawSponsor) return [rawSponsor];
-    return SPONSORS;
+    if (customSponsors) return customSponsors;
+    return rawSponsor ? [rawSponsor] : [];
   }, [customSponsors, rawSponsor]);
 
   const sponsorsList = React.useMemo(() => {
@@ -142,6 +140,8 @@ export const InFeedSponsorCard: React.FC<InFeedSponsorCardProps> = ({
     }, interval);
     return () => clearInterval(timer);
   }, [isPaused, N, interval, handleNext]);
+
+  if (!currentSponsor) return null;
 
   return (
     <aside

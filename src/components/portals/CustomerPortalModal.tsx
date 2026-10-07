@@ -653,7 +653,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
                               id="cus-personal-phone"
                               type="tel"
                               required
-                              placeholder="081-234-5678"
+                              placeholder="08x-xxx-xxxx"
                               value={personalPhone}
                               onChange={(e) => setPersonalPhone(e.target.value)}
                               className={`${inputCls} pl-10`}

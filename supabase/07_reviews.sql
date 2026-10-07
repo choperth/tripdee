@@ -31,8 +31,8 @@ create index if not exists idx_reviews_created_at on public.reviews(created_at d
 
 -- ---------------------------------------------------------------------------
 -- Recompute the vehicle's cached rating / review_count from real reviews.
--- A vehicle with no reviews keeps rating 5.0 but review_count 0, which the UI
--- renders as "no reviews yet" rather than as a score.
+-- A vehicle with no reviews is stored as rating 0 / review_count 0 so it can
+-- never present a perfect score it has not earned.
 -- ---------------------------------------------------------------------------
 create or replace function public.refresh_vehicle_rating(target_vehicle_id text)
 returns void
@@ -48,21 +48,25 @@ begin
      where vehicle_id = target_vehicle_id;
 
     update public.vehicles
-       set rating = coalesce(avg_rating, 5.0),
+       set rating = coalesce(avg_rating, 0),
            review_count = coalesce(total, 0)
      where id = target_vehicle_id;
 end;
 $$;
 
--- Backfill: vehicles that were never rated should not display a 5.0 star score.
+-- Backfill: vehicles with no reviews must not carry an unearned star score.
 update public.vehicles
-   set review_count = 0
+   set rating = 0,
+       review_count = 0
  where review_count is null or review_count = 0;
 
 -- ---------------------------------------------------------------------------
 -- Row Level Security
---   Anyone may read reviews and submit one (rate-limited at the app layer).
---   Only service_role may edit or delete, i.e. moderation is server-side.
+--   Anyone may read reviews. Nothing else is granted to anon/authenticated:
+--   all writes go through /api/reviews on the service role key, which is the
+--   only place that can derive `verified_trip` from a paid booking and attach
+--   `driver_reply`. Leaving insert open to the anon key would let anyone post
+--   a self-declared verified review or a forged driver reply.
 -- ---------------------------------------------------------------------------
 alter table public.reviews enable row level security;
 

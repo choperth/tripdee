@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
-import { VEHICLES, SPONSORS, Vehicle } from '@/data/mockData';
+import { VEHICLES, Vehicle, Sponsor } from '@/data/mockData';
 import { isMockDataEnabled, isMockEnvEnabled, isMockVehicleId, isExcludedTestVehicle } from '@/lib/mockConfig';
 import { Navbar } from '@/components/Navbar';
 import { LiveTickerRibbon } from '@/components/LiveTickerRibbon';
@@ -110,6 +110,7 @@ export default function HomePage() {
   );
   const isDemo = isClient && isMockDataEnabled();
   const [vehicles, setVehicles] = useState<Vehicle[]>(() => (isMockEnvEnabled() ? VEHICLES : []));
+  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [demoBannerDismissed, setDemoBannerDismissed] = useState<boolean>(false);
 
   const loadVehicles = useCallback(() => {
@@ -154,6 +155,29 @@ export default function HomePage() {
     window.addEventListener('tripdee-vehicles-updated', handleUpdate);
     return () => window.removeEventListener('tripdee-vehicles-updated', handleUpdate);
   }, [loadVehicles]);
+
+  useEffect(() => {
+    let active = true;
+    const loadSponsors = () => {
+      fetch('/api/sponsors' + window.location.search)
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to load sponsors');
+          return res.json();
+        })
+        .then((data) => {
+          if (active) setSponsors(Array.isArray(data.sponsors) ? data.sponsors : []);
+        })
+        .catch(() => {
+          if (active) setSponsors([]);
+        });
+    };
+    loadSponsors();
+    window.addEventListener('tripdee-sponsors-updated', loadSponsors);
+    return () => {
+      active = false;
+      window.removeEventListener('tripdee-sponsors-updated', loadSponsors);
+    };
+  }, []);
 
   useEffect(() => {
     const handlePlateFilter = (e: Event) => {
@@ -243,7 +267,7 @@ export default function HomePage() {
       const matchesZone =
         selectedZone === 'all' ||
         matchesRegion ||
-        vehicle.popularRoutes.some((r) => r.includes(selectedZone)) ||
+        (vehicle.popularRoutes ?? []).some((r) => r.includes(selectedZone)) ||
         vehicle.location.includes(selectedZone);
       const matchesSeats =
         selectedSeats === 'all'
@@ -269,7 +293,7 @@ export default function HomePage() {
         keyword === '' ||
         vehicle.title.toLowerCase().includes(keyword) ||
         vehicle.description.toLowerCase().includes(keyword) ||
-        vehicle.amenities.some((a) => a.toLowerCase().includes(keyword)) ||
+        (vehicle.amenities ?? []).some((a) => a.toLowerCase().includes(keyword)) ||
         (vehicle.driverNickname && vehicle.driverNickname.toLowerCase().includes(keyword)) ||
         (vehicle.driverName && vehicle.driverName.toLowerCase().includes(keyword));
 
@@ -335,8 +359,8 @@ export default function HomePage() {
   const hasFilters = selectedZone !== 'all' || selectedSeats !== 'all' || searchKeyword !== '' || plateFilter !== 'all';
 
   const hotelStays = useMemo(
-    () => SPONSORS.filter((s) => s.category === 'hotel').map((s) => getLocalizedSponsor(s, locale)),
-    [locale]
+    () => sponsors.filter((s) => s.category === 'hotel').map((s) => getLocalizedSponsor(s, locale)),
+    [sponsors, locale]
   );
 
   const navigateToSection = useCallback(
@@ -696,10 +720,13 @@ export default function HomePage() {
               {filteredVehicles.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredVehicles.map((vehicle, index) => {
-                    const showInFeedAd =
+                    const showInFeedAd = sponsors.length > 0 && (
                       (index === 2 && filteredVehicles.length >= 3) ||
-                      ((index + 1) % 6 === 0 && index < filteredVehicles.length - 1);
-                    const sponsorIndex = (index === 2 ? 0 : Math.floor(index / 6) + 1) % SPONSORS.length;
+                      ((index + 1) % 6 === 0 && index < filteredVehicles.length - 1)
+                    );
+                    const sponsorIndex = sponsors.length > 0
+                      ? (index === 2 ? 0 : Math.floor(index / 6) + 1) % sponsors.length
+                      : 0;
 
                     return (
                       <React.Fragment key={vehicle.id}>
@@ -711,7 +738,7 @@ export default function HomePage() {
                         />
                         {showInFeedAd && (
                           <div className="col-span-1 md:col-span-2 lg:col-span-3 my-1">
-                            <InFeedSponsorCard sponsors={SPONSORS} initialIndex={sponsorIndex} />
+                            <InFeedSponsorCard sponsors={sponsors} initialIndex={sponsorIndex} />
                           </div>
                         )}
                       </React.Fragment>
@@ -831,6 +858,7 @@ export default function HomePage() {
 
       <VehicleDetailModal
         vehicle={selectedVehicleDetail}
+        sponsors={sponsors}
         onClose={() => setSelectedVehicleDetail(null)}
         allVehicles={vehicles}
         onSelectVehicle={(v) => setSelectedVehicleDetail(v)}

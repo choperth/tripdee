@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
-import { Vehicle, STANDARD_TERMS, SPONSORS } from '@/data/mockData';
+import { Vehicle, Sponsor, STANDARD_TERMS } from '@/data/mockData';
 import {
   vehicleTitle,
   vehicleLocation,
@@ -36,6 +36,7 @@ interface VehicleDetailModalProps {
   vehicle: Vehicle | null;
   onClose: () => void;
   allVehicles?: Vehicle[];
+  sponsors?: Sponsor[];
   onSelectVehicle?: (vehicle: Vehicle) => void;
 }
 
@@ -43,6 +44,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
   vehicle,
   onClose,
   allVehicles,
+  sponsors = [],
   onSelectVehicle,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -152,17 +154,15 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
 
   if (!vehicle) return null;
 
-  const basePrice = vehicle.zoneRates?.city || (isSelfDrive ? 1200 : 1900);
+  const basePrice = vehicle.zoneRates?.city ?? null;
+  const hasRating = typeof vehicle.rating === 'number' && vehicle.rating > 0 && vehicle.reviewCount > 0;
   const publicName = getPublicDriverName(vehicle.driverName, vehicle.driverNickname);
   const title = vehicleTitle(vehicle, locale);
   const location = vehicleLocation(vehicle, locale);
   const amenities = vehicleAmenities(vehicle, locale);
   const description = vehicleDescription(vehicle, locale);
   const shortLocation = location.split('/')[0].trim();
-  const galleryImages =
-    vehicle.images && vehicle.images.length > 0
-      ? vehicle.images
-      : ['https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80'];
+  const galleryImages = Array.isArray(vehicle.images) ? vehicle.images.filter(Boolean) : [];
   return (
     <div
       className="fixed inset-0 z-400 flex items-center justify-center overflow-y-auto bg-navy-deep/75 backdrop-blur-sm p-3 sm:p-4 animate-fade-in"
@@ -256,9 +256,11 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     star
                   </span>
                   <strong className="text-navy-deep dark:text-white font-body-medium group-hover:underline">
-                    {vehicle.rating}
+                    {hasRating ? vehicle.rating : '—'}
                   </strong>
-                  <span className="group-hover:underline">{t('detail.reviews', { n: vehicle.reviewCount })}</span>
+                  <span className="group-hover:underline">
+                    {hasRating ? t('detail.reviews', { n: vehicle.reviewCount }) : t('detail.noReviews')}
+                  </span>
                 </a>
                 <span>•</span>
                 <span className="flex items-center gap-space-2xs">
@@ -308,7 +310,9 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Photo Gallery Bento Layout (Stitch Signature 5-photo bento) */}
+          {/* Photo Gallery Bento Layout. Only real uploads are shown; a vehicle
+              with no photos gets an honest placeholder instead of stock imagery. */}
+          {galleryImages.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-space-sm rounded-2xl overflow-hidden shadow-sm">
             {/* Large Feature Photo */}
             <div className="col-span-2 md:col-span-2 md:row-span-2 relative h-56 sm:h-64 md:h-[380px] bg-navy-deep group overflow-hidden">
@@ -326,7 +330,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                   {t('detail.cabinCaption', { n: vehicle.seats })}
                 </span>
                 <p className="font-title-card text-title-card font-bold text-surface">
-                  {publicName} • {t('detail.safetyChecked')}
+                  {publicName}
                 </p>
               </div>
             </div>
@@ -388,6 +392,17 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
               </div>
             </div>
           </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 p-space-lg text-center">
+              <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 text-[32px]">
+                photo_library
+              </span>
+              <p className="text-sm font-bold text-slate-950 dark:text-white mt-2">
+                {t('detail.noPhotosTitle')}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">{t('detail.noPhotosDesc')}</p>
+            </div>
+          )}
 
           {/* Main Content & Sticky Rail (8 Cols left, 4 Cols right) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-start">
@@ -564,33 +579,25 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-subtle dark:divide-slate-800">
-                      <tr>
-                        <td className="p-space-sm font-bold text-navy-deep dark:text-white">
-                          {t('detail.zoneLine', { no: 1, label: t('zone.city.label') })}
-                        </td>
-                        <td className="p-space-sm text-ink-secondary dark:text-slate-400">{t('vdm.routeCity')}</td>
-                        <td className="p-space-sm text-right font-bold text-blue-action">
-                          ฿{(vehicle.zoneRates?.city || 1900).toLocaleString()}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="p-space-sm font-bold text-navy-deep dark:text-white">
-                          {t('detail.zoneLine', { no: 2, label: t('zone.midHill.label') })}
-                        </td>
-                        <td className="p-space-sm text-ink-secondary dark:text-slate-400">{t('vdm.routeMid')}</td>
-                        <td className="p-space-sm text-right font-bold text-blue-action">
-                          ฿{(vehicle.zoneRates?.midHill || 2100).toLocaleString()}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="p-space-sm font-bold text-navy-deep dark:text-white">
-                          {t('detail.zoneLine', { no: 3, label: t('zone.highHill.label') })}
-                        </td>
-                        <td className="p-space-sm text-ink-secondary dark:text-slate-400">{t('vdm.routeHigh')}</td>
-                        <td className="p-space-sm text-right font-bold text-blue-action">
-                          ฿{(vehicle.zoneRates?.highHill || 2300).toLocaleString()}
-                        </td>
-                      </tr>
+                      {(
+                        [
+                          { key: 'city' as const, label: t('zone.city.label'), route: t('vdm.routeCity') },
+                          { key: 'midHill' as const, label: t('zone.midHill.label'), route: t('vdm.routeMid') },
+                          { key: 'highHill' as const, label: t('zone.highHill.label'), route: t('vdm.routeHigh') },
+                        ]
+                      )
+                        .filter((row) => Number(vehicle.zoneRates?.[row.key]) > 0)
+                        .map((row, idx) => (
+                          <tr key={row.key}>
+                            <td className="p-space-sm font-bold text-navy-deep dark:text-white">
+                              {t('detail.zoneLine', { no: idx + 1, label: row.label })}
+                            </td>
+                            <td className="p-space-sm text-ink-secondary dark:text-slate-400">{row.route}</td>
+                            <td className="p-space-sm text-right font-bold text-blue-action">
+                              ฿{Number(vehicle.zoneRates![row.key]).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
@@ -629,7 +636,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm pt-1">
                     {companionVehicles.map((comp) => {
                       const compIsSelfDrive = comp.rentalType === 'self_drive' || (comp.type !== 'van' && comp.rentalType !== 'with_driver');
-                      const compBasePrice = comp.zoneRates?.city || (compIsSelfDrive ? 1200 : 1900);
+                      const compBasePrice = comp.zoneRates?.city ?? null;
 
                       return (
                         <div
@@ -638,13 +645,21 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                         >
                           <div>
                             <div className="relative h-28 w-full rounded-lg overflow-hidden bg-navy-deep mb-2">
-                              <Image
-                                src={comp.images[0]}
-                                alt={comp.title}
-                                fill
-                                sizes="(max-width: 640px) 100vw, 250px"
-                                className="object-cover"
-                              />
+                              {comp.images?.[0] ? (
+                                <Image
+                                  src={comp.images[0]}
+                                  alt={comp.title}
+                                  fill
+                                  sizes="(max-width: 640px) 100vw, 250px"
+                                  className="object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full grid place-items-center">
+                                  <span className="material-symbols-outlined text-slate-600 text-[28px]">
+                                    directions_car
+                                  </span>
+                                </div>
+                              )}
                               <div className="absolute top-1.5 left-1.5 flex items-center gap-1">
                                 <span className="px-1.5 py-0.5 rounded bg-navy-deep/90 text-white text-[10px] font-bold">
                                   {t('vehicle.seats', { n: comp.seats })}
@@ -665,16 +680,22 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                               {comp.title}
                             </h3>
                             <p className="text-xs text-ink-muted dark:text-slate-400 truncate mb-2">
-                              {comp.amenities.slice(0, 2).join(' • ')}
+                              {(comp.amenities ?? []).slice(0, 2).join(' • ')}
                             </p>
                           </div>
 
                           <div className="pt-2 border-t border-border-subtle/70 dark:border-slate-800 flex items-center justify-between">
                             <div>
                               <span className="text-[10px] text-ink-muted dark:text-slate-400 block">{t('detail.fromPrice')}</span>
-                              <span className="text-xs font-bold text-blue-action dark:text-blue-400">
-                                ฿{compBasePrice.toLocaleString()}{t('vehicle.perDay')}
-                              </span>
+                              {compBasePrice !== null ? (
+                                <span className="text-xs font-bold text-blue-action dark:text-blue-400">
+                                  ฿{compBasePrice.toLocaleString()}{t('vehicle.perDay')}
+                                </span>
+                              ) : (
+                                <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                                  {t('vehicle.priceOnRequest')}
+                                </span>
+                              )}
                             </div>
 
                             <button
@@ -706,10 +727,18 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     {t('vehicle.priceFrom')}
                   </span>
                   <div className="flex items-baseline gap-1">
-                    <span className="font-price-headline text-[32px] font-black text-navy-deep dark:text-white leading-tight">
-                      ฿{basePrice.toLocaleString()}
-                    </span>
-                    <span className="text-body-base text-ink-muted dark:text-slate-400">{t('vehicle.perDay')}</span>
+                    {basePrice !== null ? (
+                      <>
+                        <span className="font-price-headline text-[32px] font-black text-navy-deep dark:text-white leading-tight">
+                          ฿{basePrice.toLocaleString()}
+                        </span>
+                        <span className="text-body-base text-ink-muted dark:text-slate-400">{t('vehicle.perDay')}</span>
+                      </>
+                    ) : (
+                      <span className="font-price-headline text-[24px] font-black text-amber-600 dark:text-amber-400 leading-tight">
+                        {t('vehicle.priceOnRequest')}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-bold text-body-subtext">
@@ -725,7 +754,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                       className="text-xs text-ink-muted hover:text-blue-action dark:text-slate-400 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer font-medium transition-colors"
                     >
                       <span className="material-symbols-outlined text-[14px] text-amber-accent">star</span>
-                      <span>{vehicle.rating} ({vehicle.reviewCount})</span>
+                      <span>{hasRating ? `${vehicle.rating} (${vehicle.reviewCount})` : t('detail.noReviews')}</span>
                     </a>
                   </div>
                 </div>
@@ -916,7 +945,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
 
                 {/* Traveler Partner Perk Sponsor Box */}
                 {(() => {
-                  const rawSponsor = SPONSORS.find((s) => s.category === 'insurance') || SPONSORS.find((s) => s.targetAudience === 'traveler' || s.targetAudience === 'all') || SPONSORS[0];
+                  const rawSponsor = sponsors.find((s) => s.category === 'insurance') || sponsors.find((s) => s.targetAudience === 'traveler' || s.targetAudience === 'all') || sponsors[0];
                   if (!rawSponsor) return null;
                   const perkSponsor = getLocalizedSponsor(rawSponsor, locale);
                   return (

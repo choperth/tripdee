@@ -1,44 +1,14 @@
 'use client';
 
-import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { useAnalytics } from '@/context/AnalyticsContext';
-import {
-  X,
-  Phone,
-  MessageSquare,
-  Star,
-  Check,
-  AlertCircle,
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Trash2,
-  Upload,
-  Image as ImageIcon,
-  ShieldCheck,
-  Sparkles,
-  Award,
-  Inbox,
-  LogOut,
-  Save,
-  Clock,
-  CarFront,
-  Users,
-  Luggage,
-  Gavel,
-  RefreshCw,
-  ExternalLink,
-} from 'lucide-react';
+import { X, Check, AlertCircle, RefreshCw } from 'lucide-react';
 import { compressImage } from '@/lib/imageCompression';
-import {
-  toISODateString,
-  generateDateRange,
-  getBangkokTodayIso,
-} from '@/lib/availabilityUtils';
+import { fetchVehicleReviews, calculateReviewStats, Review } from '@/lib/reviewsStore';
+import { Vehicle } from '@/data/mockData';
+import { toISODateString, generateDateRange } from '@/lib/availabilityUtils';
 
 interface DriverPortalModalProps {
   isOpen: boolean;
@@ -54,14 +24,12 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
   initialTab = 'profile',
 }) => {
   const { user, toggleDriverAvailability, updateDriverProfile, logout, deleteAccount } = useAuth();
-  const { t, locale } = useLanguage();
-  const { trackCall } = useAnalytics();
+  const { locale } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [featuredRequested, setFeaturedRequested] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   // Form states initialized from user.
@@ -91,9 +59,50 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
 
   /** Id of the driver's own vehicle row, once we have loaded it. */
   const [vehicleId, setVehicleId] = useState<string>('');
+  /** The driver's own vehicle record, the source of truth for the KPI rail. */
+  const [ownVehicle, setOwnVehicle] = useState<Vehicle | null>(null);
   /** pending = submitted, awaiting admin review; approved = live on the site. */
   const [approvalStatus, setApprovalStatus] = useState<'pending' | 'approved' | 'rejected' | ''>('');
   const [loadError, setLoadError] = useState('');
+  const isAvailable = ownVehicle?.isAvailable !== false;
+  const isListed = approvalStatus === 'approved' && isAvailable;
+  const [isTogglingAvailability, setIsTogglingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState('');
+
+  /**
+   * Availability has to reach the server: customers read `is_available` from
+   * the vehicles table, so a localStorage-only toggle left paused drivers
+   * visible in search results while the UI claimed they were hidden.
+   */
+  const handleToggleAvailability = async () => {
+    const next = !isAvailable;
+    setAvailabilityError('');
+    setIsTogglingAvailability(true);
+    try {
+      if (vehicleId) {
+        const res = await fetch('/api/vehicles', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: vehicleId, isAvailable: next }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.vehicle) {
+          throw new Error(data.error || 'บันทึกสถานะไม่สำเร็จ');
+        }
+        setOwnVehicle(data.vehicle);
+        setApprovalStatus(data.vehicle.approvalStatus || '');
+      } else {
+        // No vehicle submitted yet, so there is nothing to publish a state to.
+        throw new Error('กรุณาบันทึกข้อมูลรถก่อนจึงจะเปลี่ยนสถานะการรับงานได้');
+      }
+      toggleDriverAvailability();
+      window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
+    } catch (err) {
+      setAvailabilityError((err as Error).message);
+    } finally {
+      setIsTogglingAvailability(false);
+    }
+  };
 
   // Calendar Interval Form states
   const [intervalStart, setIntervalStart] = useState('');
@@ -109,48 +118,71 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
   const fileInputRef2 = useRef<HTMLInputElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
-  // Load this driver's own vehicle row on open. This is the source of truth;
-  // localStorage only holds a convenience cache for offline rendering.
-  const loadOwnVehicle = useCallback(async () => {
-    setLoadError('');
-    try {
-      const res = await fetch('/api/vehicles?scope=mine');
-      if (!res.ok) {
-        // No signed session (e.g. demo login) — fall back to the cached profile.
-        return;
-      }
-      const data = await res.json();
-      const mine = Array.isArray(data.vehicles) ? data.vehicles[0] : null;
-      if (!mine) return;
-
-      setVehicleId(mine.id);
-      setApprovalStatus(mine.approvalStatus || '');
-      setNickname(mine.driverNickname || mine.driverName || '');
-      setPhone(mine.driverPhone || '');
-      setLineId(mine.driverLine || '');
-      setWhatsapp(mine.driverWhatsapp || '');
-      setWechat(mine.driverWechat || '');
-      setKakao(mine.driverKakao || '');
-      setVehicleTitle(mine.title || '');
-      setVehiclePlate(mine.plateNumber || '');
-      setSeats(mine.seats || 9);
-      setImages(Array.isArray(mine.images) ? mine.images : []);
-      setBusyDates(Array.isArray(mine.busyDates) ? mine.busyDates : []);
-    } catch (err) {
-      setLoadError('โหลดข้อมูลรถจากเซิร์ฟเวอร์ไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ');
-      console.warn('[TripDee] Failed to load own vehicle:', err);
-    }
-  }, []);
-
+  const userId = user?.id;
   useEffect(() => {
-    if (!isOpen || !user) return;
-    loadOwnVehicle();
-  }, [isOpen, user, loadOwnVehicle]);
+    if (!isOpen || !userId) return;
+    const controller = new AbortController();
+    const loadOwnVehicle = async () => {
+      try {
+        const res = await fetch('/api/vehicles?scope=mine', { signal: controller.signal });
+        if (!res.ok) throw new Error('โหลดข้อมูลรถจากเซิร์ฟเวอร์ไม่สำเร็จ');
+        const data = await res.json();
+        if (controller.signal.aborted) return;
+        setLoadError('');
+        const mine: Vehicle | undefined = Array.isArray(data.vehicles) ? data.vehicles[0] : undefined;
+        setVehicleId(mine?.id || '');
+        setOwnVehicle(mine || null);
+        setApprovalStatus(mine?.approvalStatus || '');
+        if (!mine) return;
+
+        setNickname(mine.driverNickname || mine.driverName || '');
+        setPhone(mine.driverPhone || '');
+        setLineId(mine.driverLine || '');
+        setWhatsapp(mine.driverWhatsapp || '');
+        setWechat(mine.driverWechat || '');
+        setKakao(mine.driverKakao || '');
+        setVehicleTitle(mine.title || '');
+        setVehiclePlate(mine.plateNumber || '');
+        setSeats(mine.seats || 9);
+        setImages(Array.isArray(mine.images) ? mine.images : []);
+        setBusyDates(Array.isArray(mine.busyDates) ? mine.busyDates : []);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        setVehicleId('');
+        setOwnVehicle(null);
+        setApprovalStatus('');
+        setLoadError('โหลดข้อมูลรถจากเซิร์ฟเวอร์ไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อหรือเข้าสู่ระบบใหม่');
+        console.warn('[TripDee] Failed to load own vehicle:', err);
+      }
+    };
+    void loadOwnVehicle();
+    return () => controller.abort();
+  }, [isOpen, userId]);
+
+  // Reviews for this vehicle, so the KPI rail shows a real score or nothing.
+  const [ownReviews, setOwnReviews] = useState<Review[]>([]);
+  useEffect(() => {
+    if (!isOpen || !vehicleId) return;
+    let cancelled = false;
+    fetchVehicleReviews(vehicleId).then((loaded) => {
+      if (cancelled) return;
+      setOwnReviews(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, vehicleId]);
+  const reviewsForVehicle = useMemo(
+    () => ownReviews.filter((review) => review.vehicleId === vehicleId),
+    [ownReviews, vehicleId]
+  );
+  const reviewStats = useMemo(() => calculateReviewStats(reviewsForVehicle), [reviewsForVehicle]);
 
   if (!isOpen || !user) return null;
 
-  // Driver Meta
-  const driverCode = `TD-VN-${(user.id || '50821').replace(/[^0-9]/g, '').slice(-5) || '50821'}`;
+  // Driver Meta. The code is derived from the vehicle id so it is stable; there
+  // is no separately issued driver code in the database yet.
+  const driverCode = `TD-VN-${(ownVehicle?.id || user.id || '').replace(/[^0-9]/g, '').slice(-5) || 'NEW'}`;
   const driverDisplayName = user.name || '';
   const driverNick = nickname || user.driverNickname || '';
 
@@ -170,6 +202,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
     }
 
     setIsSaving(true);
+    setSaveSuccess(false);
     setSaveError('');
 
     try {
@@ -203,10 +236,13 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
         return;
       }
 
-      if (data.vehicle?.id) {
-        setVehicleId(data.vehicle.id);
-        setApprovalStatus(data.vehicle.approvalStatus || 'pending');
+      if (!data.vehicle?.id) {
+        setSaveError('บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        return;
       }
+      setVehicleId(data.vehicle.id);
+      setOwnVehicle(data.vehicle);
+      setApprovalStatus(data.vehicle.approvalStatus || '');
 
       // Mirror into the local profile so the navbar and portal header render
       // correctly without another round trip.
@@ -344,11 +380,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
             {/* Live Node & Close Action */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1 text-slate-600 dark:text-slate-300 text-xs">
-                <span className="w-2 h-2 rounded-full bg-[#06C755] animate-pulse"></span>
-                <span className="hidden sm:inline">ระบบออนไลน์: คลาวด์ซิงก์เรียลไทม์</span>
-                <span className="sm:hidden">ออนไลน์ 24 ชม.</span>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
-                <span className="font-mono text-slate-500 dark:text-slate-400">CNX-SVR-04</span>
+                <span>{loadError ? 'ไม่สามารถโหลดข้อมูลรถได้' : 'ข้อมูลรถอัปเดตเมื่อบันทึกสำเร็จ'}</span>
               </div>
 
               <button
@@ -380,9 +412,11 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                   <span className="material-symbols-outlined text-[32px] text-[#d6e3ff]">
                     airport_shuttle
                   </span>
-                  <div className="absolute -bottom-1 -right-1 bg-[#06C755] text-white w-5 h-5 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[12px] font-bold">check</span>
-                  </div>
+                  {approvalStatus === 'approved' && (
+                    <div className="absolute -bottom-1 -right-1 bg-[#06C755] text-white w-5 h-5 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[12px] font-bold">check</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Driver Meta */}
@@ -391,10 +425,12 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                     <h1 className="text-lg sm:text-xl font-bold text-slate-950 dark:text-white truncate">
                       {driverDisplayName} ({driverNick})
                     </h1>
-                    <span className="inline-flex items-center gap-1 bg-[#E8F9EE] text-[#06C755] px-2 py-0.5 text-[11px] font-bold tracking-wider border border-emerald-200 dark:border-emerald-800">
-                      <span className="material-symbols-outlined text-[13px]">verified</span>
-                      VERIFIED PARTNER
-                    </span>
+                    {approvalStatus === 'approved' && (
+                      <span className="inline-flex items-center gap-1 bg-[#E8F9EE] text-[#06C755] px-2 py-0.5 text-[11px] font-bold tracking-wider border border-emerald-200 dark:border-emerald-800">
+                        <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                        รถผ่านการอนุมัติ
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-600 dark:text-slate-400">
@@ -406,7 +442,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                       <span className="material-symbols-outlined text-[15px] text-slate-400">
                         location_on
                       </span>
-                      จุดประจำ: ท่าอากาศยานนานาชาติเชียงใหม่ (CNX) / ภาคเหนือตอนบน
+                      พื้นที่ให้บริการ: {ownVehicle?.location || 'ยังไม่มีข้อมูลพื้นที่'}
                     </span>
                   </div>
                 </div>
@@ -420,35 +456,47 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                   </span>
                   <span
                     className={`text-xs font-bold ${
-                      user.isAvailable !== false ? 'text-[#06C755]' : 'text-slate-500'
+                      isAvailable ? 'text-[#06C755]' : 'text-slate-500'
                     }`}
                   >
-                    {user.isAvailable !== false
-                      ? 'พร้อมรับงานทันที 24 ชม.'
-                      : 'พักงานชั่วคราว (ไม่แสดงผล)'}
+                    {isTogglingAvailability
+                      ? 'กำลังบันทึก...'
+                      : !ownVehicle
+                        ? 'ยังไม่มีข้อมูลรถที่บันทึกไว้'
+                        : !isAvailable
+                          ? 'พักงานชั่วคราว'
+                          : isListed
+                            ? 'พร้อมรับงาน (แสดงในผลค้นหา)'
+                            : 'พร้อมรับงาน (รออนุมัติรถก่อนแสดงผล)'}
                   </span>
+                  {availabilityError && (
+                    <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 mt-0.5">
+                      {availabilityError}
+                    </span>
+                  )}
                 </div>
                 <button
                   type="button"
-                  aria-pressed={user.isAvailable !== false}
-                  onClick={toggleDriverAvailability}
-                  className={`relative inline-flex h-8 w-16 items-center transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer ${
-                    user.isAvailable !== false ? 'bg-[#06C755]' : 'bg-slate-400 dark:bg-slate-600'
+                  aria-pressed={isAvailable}
+                  onClick={handleToggleAvailability}
+                  disabled={isTogglingAvailability || !ownVehicle}
+                  className={`relative inline-flex h-8 w-16 items-center transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 cursor-pointer disabled:opacity-60 ${
+                    isAvailable ? 'bg-[#06C755]' : 'bg-slate-400 dark:bg-slate-600'
                   }`}
                   title="คลิกเพื่อสลับสถานะ ว่าง/พักงาน"
                 >
                   <span
                     className={`inline-block h-6 w-6 transform bg-white transition-transform shadow-xs ${
-                      user.isAvailable !== false ? 'translate-x-9' : 'translate-x-1'
+                      isAvailable ? 'translate-x-9' : 'translate-x-1'
                     }`}
                   />
                 </button>
               </div>
             </div>
 
-            {/* 4 KPI Metrics Monolithic Rail */}
+            {/* KPI rail — every figure is derived from real records */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-6">
-              {/* KPI 1 */}
+              {/* Rating, from the reviews table */}
               <div className="bg-[#F8FAFC] dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
                 <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-semibold">
                   <span>คะแนนรีวิวคนขับ</span>
@@ -457,72 +505,116 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                   </span>
                 </div>
                 <div className="mt-2 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
-                    4.96
-                  </span>
-                  <span className="text-[#D97706] text-xs font-bold">★★★★★</span>
+                  {reviewStats && reviewStats.totalReviews > 0 ? (
+                    <>
+                      <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
+                        {reviewStats.averageRating?.toFixed(1)}
+                      </span>
+                      <span className="text-[#D97706] text-xs font-bold">
+                        {'★'.repeat(Math.round(reviewStats.averageRating ?? 0))}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-xl font-bold font-mono text-slate-400 dark:text-slate-500">
+                      —
+                    </span>
+                  )}
                 </div>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  อิงจากผู้โดยสารจริง 128 ทริป
+                  {reviewStats && reviewStats.totalReviews > 0
+                    ? `จากรีวิว ${reviewStats.totalReviews} รายการ`
+                    : 'ยังไม่มีรีวิวจากผู้โดยสาร'}
                 </span>
               </div>
 
-              {/* KPI 2 */}
+              {/* Availability, from the vehicle record */}
               <div className="bg-[#F8FAFC] dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
                 <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-semibold">
-                  <span>การตอบกลับเฉลี่ย</span>
+                  <span>สถานะรับงาน</span>
                   <span className="material-symbols-outlined text-[18px] text-[#06C755]">
                     bolt
                   </span>
                 </div>
                 <div className="mt-2 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
-                    &lt; 3
+                  <span
+                    className={`text-2xl font-bold font-mono ${
+                      isAvailable ? 'text-[#06C755]' : 'text-slate-500'
+                    }`}
+                  >
+                    {ownVehicle ? (isAvailable ? 'พร้อม' : 'พัก') : '—'}
                   </span>
-                  <span className="text-xs font-semibold text-slate-500">นาที</span>
+                  <span className="text-xs font-semibold text-slate-500">งาน</span>
                 </div>
-                <span className="text-[11px] text-[#06C755] font-semibold mt-1">
-                  ⚡ สถิติตอบไวมากระดับเหรียญทอง
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  {isListed ? 'แสดงในผลการค้นหาของลูกค้า' : 'ยังไม่แสดงในผลการค้นหา'}
                 </span>
               </div>
 
-              {/* KPI 3 */}
+              {/* Day rates, from zone_rates */}
               <div className="bg-[#F8FAFC] dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
                 <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-semibold">
-                  <span>ยอดเข้าชมรถ (30 วัน)</span>
+                  <span>ค่าบริการเริ่มต้น</span>
                   <span className="material-symbols-outlined text-[18px] text-slate-400">
                     trending_up
                   </span>
                 </div>
                 <div className="mt-2 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
-                    1,420
-                  </span>
-                  <span className="text-[11px] text-[#06C755] font-bold bg-[#E8F9EE] px-1.5 py-0.2">
-                    +24%
-                  </span>
+                  {ownVehicle?.zoneRates?.city ? (
+                    <>
+                      <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
+                        ฿{ownVehicle.zoneRates.city.toLocaleString()}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-500">/วัน</span>
+                    </>
+                  ) : (
+                    <span className="text-xl font-bold font-mono text-amber-600 dark:text-amber-400">
+                      ยังไม่ระบุ
+                    </span>
+                  )}
                 </div>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  ผู้ค้นหาเจาะจงโซนเชียงใหม่
+                  อัตราโซนในเมืองที่บันทึกไว้ (อาจเป็นค่าเริ่มต้นของระบบ)
                 </span>
               </div>
 
-              {/* KPI 4 */}
               <div className="bg-[#F8FAFC] dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
                 <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-semibold">
-                  <span>ค่าบริการแพลตฟอร์ม</span>
+                  <span>สถานะรถบนเว็บไซต์</span>
                   <span className="material-symbols-outlined text-[18px] text-slate-950 dark:text-slate-200">
                     savings
                   </span>
                 </div>
                 <div className="mt-2 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
-                    ฿0
+                  <span
+                    className={`text-lg font-bold font-mono ${
+                      approvalStatus === 'approved'
+                        ? 'text-[#06C755]'
+                        : approvalStatus === 'rejected'
+                          ? 'text-rose-600'
+                          : 'text-amber-600 dark:text-amber-400'
+                    }`}
+                  >
+                    {approvalStatus === 'approved'
+                      ? 'อนุมัติแล้ว'
+                      : approvalStatus === 'rejected'
+                        ? 'ไม่ผ่าน'
+                        : approvalStatus === 'pending'
+                          ? 'รออนุมัติ'
+                          : ownVehicle
+                            ? 'ไม่ทราบสถานะ'
+                            : 'ยังไม่ส่ง'}
                   </span>
-                  <span className="text-xs font-bold text-[#06C755]">ฟรีตลอดชีพ</span>
                 </div>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  รับเงินสดตรงจากผู้โดยสาร 100%
+                  {approvalStatus === 'approved'
+                    ? isAvailable
+                      ? 'แสดงบนหน้าเว็บไซต์แล้ว'
+                      : 'พักงาน ไม่แสดงในผลค้นหา'
+                    : approvalStatus === 'pending'
+                      ? 'รอผู้ดูแลระบบอนุมัติ'
+                      : approvalStatus === 'rejected'
+                        ? 'ไม่แสดงบนหน้าเว็บไซต์'
+                        : 'ยังไม่มีสถานะการอนุมัติ'}
                 </span>
               </div>
             </div>
@@ -539,15 +631,15 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <h2 className="text-base sm:text-lg text-slate-950 dark:text-amber-100 font-bold">
-                    สถานะ: ได้รับคัดเลือกเป็น &apos;รถแนะนำ&apos; (Featured TOP RATED)
+                    {ownVehicle?.isVerified && approvalStatus === 'approved'
+                      ? 'รถคันนี้ได้รับสถานะรถแนะนำ'
+                      : 'สถานะรถแนะนำ: ยังไม่ปรากฏในข้อมูลรถ'}
                   </h2>
-                  <span className="bg-[#D97706] text-white font-mono text-[10px] font-bold px-2 py-0.5 tracking-wider uppercase">
-                    ACTIVE
-                  </span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-700 dark:text-amber-200/90 mt-1 leading-relaxed">
-                  รถตู้ของคุณมีตราดาวทองแนะนำ ช่วยเพิ่มความน่าเชื่อถือ ลูกค้าติดต่อเฉลี่ยเพิ่มขึ้น
-                  3-5 เท่า พร้อมสิทธิ์ติดอันดับผลลัพธ์แรกสุดบนหน้าค้นหารถภาคเหนือ
+                  {ownVehicle?.isVerified && approvalStatus === 'approved'
+                    ? 'สถานะรถแนะนำได้รับการกำหนดโดยผู้ดูแลระบบ'
+                    : 'การอนุมัติรถและสถานะรถแนะนำเป็นคนละขั้นตอน ผู้ดูแลระบบเป็นผู้กำหนดสถานะรถแนะนำ'}
                 </p>
               </div>
             </div>
@@ -556,7 +648,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
               onClick={() => setActiveTab('perks')}
               className="inline-flex items-center gap-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 transition-colors shrink-0 self-stretch md:self-auto justify-center cursor-pointer"
             >
-              <span>ดูสิทธิประโยชน์</span>
+              <span>ดูรายละเอียดสถานะ</span>
               <span className="material-symbols-outlined text-[16px]">chevron_right</span>
             </button>
           </div>
@@ -590,7 +682,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
               <span className="material-symbols-outlined text-[18px] text-[#D97706]">
                 workspace_premium
               </span>
-              <span>สิทธิประโยชน์รถแนะนำ</span>
+              <span>สถานะรถแนะนำ</span>
             </button>
 
             <button
@@ -604,9 +696,6 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
             >
               <span className="material-symbols-outlined text-[18px]">inbox</span>
               <span>กล่องงานลูกค้า</span>
-              <span className="bg-[#D97706] text-white font-mono text-[10px] font-bold px-1.5 py-0.5 leading-none">
-                2 งานใหม่
-              </span>
             </button>
 
             <button
@@ -848,9 +937,6 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                           <span>ป้ายทะเบียนรถ (ตรวจสอบมาตรฐานกรมการขนส่ง)</span>
                           <span className="text-rose-600">*</span>
                         </span>
-                        <span className="text-[11px] text-[#06C755] bg-[#E8F9EE] px-2 py-0.5 font-bold">
-                          ✓ ป้ายเหลืองถูกต้อง 100%
-                        </span>
                       </label>
                       <input
                         id="driver-plate"
@@ -895,12 +981,6 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                         <span className="flex items-center gap-1">
                           <span>เบอร์โทรติดต่อตรง (ลูกค้ากดโทรออกทันที)</span>
                           <span className="text-rose-600">*</span>
-                        </span>
-                        <span className="text-[11px] text-[#06C755] flex items-center gap-0.5 font-bold">
-                          <span className="material-symbols-outlined text-[13px]">
-                            check_circle
-                          </span>
-                          ตรวจสอบเบอร์แล้ว
                         </span>
                       </label>
                       <div className="relative flex items-center">
@@ -1013,7 +1093,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                   </div>
                   <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-slate-400">
                     <span className="w-2 h-2 rounded-full bg-[#06C755]"></span>
-                    <span>ซิงก์ตรงกับผลการค้นหาของลูกค้าทันที</span>
+                    <span>บันทึกลงฐานข้อมูลเมื่อกดบันทึกการแก้ไขทั้งหมด</span>
                   </div>
                 </div>
 
@@ -1026,15 +1106,14 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                     {busyDates.length === 0 ? (
                       <>
                         <strong className="font-bold">ขณะนี้ไม่มีคิวติดงาน</strong> —
-                        รถของคุณเปิดสถานะว่างพร้อมรับงานทุกวัน 24 ชั่วโมง
-                        (ลูกค้าบน TripDee สามารถกดติดต่อจองคิวทริปของคุณได้ตลอดเวลา)
+                         ยังไม่มีวันที่ระบุติดงานในปฏิทิน กดบันทึกเพื่ออัปเดตข้อมูลรถ
                       </>
                     ) : (
                       <>
                         <strong className="font-bold">
                           ขณะนี้มีคิวติดงาน {busyDates.length} วัน
                         </strong>{' '}
-                        — ระบบซิงก์ผลการค้นหากับลูกค้าเพื่อแจ้งเตือนล่วงหน้า และป้องกันการจองซ้อนทับ
+                         — กดบันทึกเพื่ออัปเดตวันที่ติดงานในข้อมูลรถ
                       </>
                     )}
                   </p>
@@ -1169,7 +1248,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                               <span className="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]"></span>
                             </div>
                             <span className="block mt-1 text-[10px] text-[#ba1a1a] dark:text-rose-300 font-semibold truncate">
-                              ติดคิว (เชียงราย)
+                              ติดงาน
                             </span>
                           </div>
                         );
@@ -1192,7 +1271,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                               </span>
                             </div>
                             <span className="block mt-1 text-[10px] text-[#06C755] font-bold">
-                              ● ว่างพร้อมรับ
+                               ● ยังไม่ระบุติดงาน
                             </span>
                           </div>
                         );
@@ -1251,99 +1330,92 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold text-[#D97706] uppercase tracking-wider mb-1">
                     <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
-                    <span>TripDee Verified Partner Program</span>
+                     <span>สถานะข้อมูลรถ</span>
                   </div>
                   <h3 className="text-xl font-bold text-slate-950 dark:text-white">
-                    สิทธิประโยชน์พิเศษสำหรับสถานะ &apos;รถแนะนำยอดนิยม&apos; (TOP RATED)
+                    ข้อมูลสถานะรถแนะนำ
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-                    การได้รับเลือกเป็นรถแนะนำช่วยเพิ่มโอกาสในการถูกเลือกจากลูกค้าบุคคลและองค์กรธุรกิจ
-                    B2B สูงสุดถึง 400%
+                    {ownVehicle?.isVerified && approvalStatus === 'approved'
+                      ? 'รถคันนี้ได้รับสถานะรถแนะนำจากผู้ดูแลระบบ'
+                      : 'ยังไม่ปรากฏสถานะรถแนะนำในข้อมูลรถที่โหลด'}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                    <div className="w-8 h-8 bg-slate-950 text-white flex items-center justify-center font-bold">
-                      1
-                    </div>
-                    <h4 className="text-sm font-bold text-slate-950 dark:text-white">
-                      อันดับแรกบนผลการค้นหา
-                    </h4>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                      ระบบจะจัดอันดับรถของคุณให้อยู่ในโซนหน้าแรก เมื่อลูกค้าค้นหารถในเขตเชียงใหม่
-                      ลำพูน และแม่ฮ่องสอน
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                    <div className="w-8 h-8 bg-slate-950 text-white flex items-center justify-center font-bold">
-                      2
-                    </div>
-                    <h4 className="text-sm font-bold text-slate-950 dark:text-white">
-                      ตราสัญลักษณ์ดาวทองการันตี
-                    </h4>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                      เพิ่มความมั่นใจให้ผู้โดยสาร ลูกค้าองค์กร และเอเจนซีท่องเที่ยวต่างชาติ
-                      ด้วยตราดาวทองรับรองมาตรฐาน
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                    <div className="w-8 h-8 bg-slate-950 text-white flex items-center justify-center font-bold">
-                      3
-                    </div>
-                    <h4 className="text-sm font-bold text-slate-950 dark:text-white">
-                      รับงานสัมมนาองค์กร B2B
-                    </h4>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                      สิทธิ์เข้าร่วมกองคาราวานทริปสัมมนาบริษัท และงานประชุมนานาชาติของพันธมิตร
-                      TripDee
-                    </p>
-                  </div>
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    สถานะรถแนะนำไม่ได้รับประกันอันดับในผลการค้นหา จำนวนลูกค้าที่ติดต่อ หรือการได้รับงาน
+                  </p>
                 </div>
 
                 <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
                   <h4 className="text-sm font-bold text-slate-950 dark:text-white mb-3">
-                    สถานะการตรวจสอบเอกสารเพื่อรักษาสิทธิ์ (Verification Checklist)
+                     ข้อมูลและสถานะที่บันทึกในระบบ
                   </h4>
                   <div className="space-y-2.5">
                     {[
+                      ownVehicle?.plateType
+                        ? {
+                             title: 'ประเภทป้ายทะเบียนที่บันทึกไว้',
+                             status: `ป้าย${ownVehicle.plateType === 'yellow' ? 'เหลือง' : 'ฟ้า'}`,
+                            valid: ownVehicle.plateNumber
+                              ? `ทะเบียน ${ownVehicle.plateNumber}`
+                              : 'ยังไม่ได้กรอกหมายเลขทะเบียน',
+                          }
+                        : null,
+                      ownVehicle?.canIssueTaxInvoice
+                        ? {
+                            title: 'ออกใบกำกับภาษี/ใบเสร็จรับเงินได้',
+                            status: 'เปิดให้ออกเอกสาร',
+                            valid: 'รองรับการเบิกจ่ายขององค์กร',
+                          }
+                        : null,
                       {
-                        title: '1. ประกันภัยชั้น 1 คุ้มครองผู้โดยสาร และ พ.ร.บ.',
-                        status: 'ผ่านการตรวจสอบแล้ว (Active)',
-                        valid: 'คุ้มครองถึง 31 ธ.ค. 2569',
+                        title: 'สถานะการอนุมัติโดยผู้ดูแลระบบ',
+                        status:
+                          approvalStatus === 'approved'
+                            ? 'อนุมัติแล้ว'
+                            : approvalStatus === 'rejected'
+                              ? 'ยังไม่ผ่านการอนุมัติ'
+                              : approvalStatus === 'pending'
+                                ? 'รอการตรวจสอบ'
+                                : 'ยังไม่ทราบสถานะ',
+                        valid:
+                          approvalStatus === 'approved' && isAvailable
+                            ? 'รถของคุณแสดงบนหน้าเว็บไซต์'
+                            : 'ข้อมูลจะยังไม่แสดงบนหน้าเว็บ',
                       },
+                      reviewStats && reviewStats.totalReviews > 0
+                        ? {
+                            title: 'ความพึงพอใจจากผู้โดยสารจริง',
+                            status: `${reviewStats.averageRating?.toFixed(1)} / 5.0`,
+                            valid: `จากรีวิว ${reviewStats.totalReviews} รายการ`,
+                          }
+                        : null,
                       {
-                        title: '2. ป้ายทะเบียนรถยนต์สาธารณะ (ป้ายเหลือง 30 หรือ 36)',
-                        status: 'ผ่านการตรวจสอบแล้ว (Active)',
-                        valid: 'ตรงตามมาตรฐานกรมการขนส่งทางบก',
+                        title: 'ประกันภัยชั้น 1 (พ.ร.บ.)',
+                        status: 'ยังไม่ได้บันทึกข้อมูล',
+                         valid: 'ยังไม่รองรับการแนบเอกสารในหน้านี้',
                       },
-                      {
-                        title: '3. การตรวจสภาพความปลอดภัย (ถังดับเพลิง, ค้อนทุบกระจก, GPS)',
-                        status: 'ผ่านเกณฑ์มาตรฐานความปลอดภัย',
-                        valid: 'ตรวจรอบล่าสุด ก.ย. 2569',
-                      },
-                      {
-                        title: '4. มาตรฐานบริการดีเด่น ปลอดกลิ่นบุหรี่ 100%',
-                        status: 'ผ่านการรับรอง (100% Smoke-Free)',
-                        valid: 'ประเมินจากรีวิวผู้โดยสารจริง',
-                      },
-                    ].map((item, idx) => (
+                    ]
+                      .filter((item): item is { title: string; status: string; valid: string } =>
+                        Boolean(item)
+                      )
+                      .map((item, idx) => (
                       <div
                         key={idx}
                         className="p-3 bg-[#F8FAFC] dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#06C755]">
-                            check_circle
-                          </span>
-                          <span className="text-xs font-bold text-slate-900 dark:text-white">
-                            {item.title}
-                          </span>
+                           <span className="material-symbols-outlined text-[18px] text-slate-500">
+                             info
+                           </span>
+                           <span className="text-xs font-bold text-slate-900 dark:text-white">
+                             {item.title}
+                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-xs">
-                          <span className="font-semibold text-[#06C755]">{item.status}</span>
+                           <span className="font-semibold text-slate-700 dark:text-slate-200">{item.status}</span>
                           <span className="text-slate-400">·</span>
                           <span className="text-slate-500 font-mono text-[11px]">{item.valid}</span>
                         </div>
@@ -1352,25 +1424,9 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-2">
-                  {featuredRequested ? (
-                    <div className="p-3 bg-[#E8F9EE] text-[#06C755] font-bold text-xs border border-emerald-300">
-                      ✓ ส่งคำขออัปเดตเอกสารไปยังทีมงานเรียบร้อยแล้ว (จะดำเนินการภายใน 24 ชม.)
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFeaturedRequested(true);
-                        setTimeout(() => setFeaturedRequested(false), 5000);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">upload_file</span>
-                      <span>ส่งเอกสารเพิ่มเติม / ตรวจสอบรอบใหม่</span>
-                    </button>
-                  )}
-                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  ยังไม่สามารถส่งเอกสารหรือขอตรวจสอบสถานะรถแนะนำผ่านหน้านี้ได้
+                </p>
               </div>
             </div>
           )}
@@ -1379,150 +1435,17 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
           {/* TAB 3: กล่องงานลูกค้า (Incoming Leads & Jobs Feed) */}
           {/* ============================================================== */}
           {activeTab === 'jobs' && (
-            <div className="space-y-4">
-              <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-950 dark:text-white">
-                    กล่องข้อความและคิวงานใหม่จากผู้โดยสาร
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    งานติดต่อตรงจากลูกค้าที่ค้นหาและเจาะจงเลือกรถของคุณ — ดีลตรง 100% ไม่ผ่านคนกลาง
-                  </p>
-                </div>
-                <span className="font-mono text-xs bg-[#E8F9EE] text-[#06C755] font-bold px-2 py-1 border border-emerald-200">
-                  2 งานรอการติดต่อ
-                </span>
-              </div>
-
-              {/* Job Card 1 */}
-              <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-slate-950 text-white text-[10px] font-bold px-2 py-0.5">
-                      B2B สัมมนาองค์กร
-                    </span>
-                    <span className="text-xs font-bold text-slate-950 dark:text-white">
-                      บจก. ทีซีที อินเตอร์เทรด (ติดต่อ: คุณศิริพร)
-                    </span>
-                  </div>
-                  <span className="text-xs font-mono text-slate-500">15 นาทีที่แล้ว</span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">เส้นทางเดินทาง:</span>
-                    <span className="font-bold text-slate-900 dark:text-white">
-                      เชียงใหม่ - เชียงราย (3 วัน 2 คืน)
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">ช่วงเวลาเดินทาง:</span>
-                    <span className="font-bold text-slate-900 dark:text-white">
-                      15 - 17 ต.ค. 2569 (8 ท่าน)
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">งบประมาณที่ลูกค้าเสนอ:</span>
-                    <span className="font-bold text-[#D97706] text-sm">฿10,500 สุทธิ</span>
-                  </div>
-                </div>
-
-                <p className="text-xs text-slate-600 dark:text-slate-300 bg-[#F8FAFC] dark:bg-slate-800/40 p-2.5 border border-slate-200 dark:border-slate-700">
-                  &quot;ต้องการรถตู้ VIP 9 ที่นั่ง เบาะนวดไฟฟ้า คนขับชำนาญเส้นทางดอยแม่สลอง
-                  และต้องการใบกำกับภาษีเต็มรูปแบบสำหรับเบิกจ่ายบริษัท&quot;
-                </p>
-
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span className="material-symbols-outlined text-[16px] text-[#06C755]">
-                      verified
-                    </span>
-                    <span>ลูกค้าผ่านการยืนยันเบอร์โทรศัพท์แล้ว</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href="tel:0891234567"
-                      onClick={() =>
-                        trackCall({
-                          targetType: 'driver_job',
-                          targetId: 'job-b2b-01',
-                          targetTitle: 'B2B บจก. ทีซีที อินเตอร์เทรด',
-                          phoneNumber: '0891234567',
-                        })
-                      }
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">call</span>
-                      <span>โทรคุยรายละเอียด (089-123-4567)</span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* Job Card 2 */}
-              <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-[#D97706] text-white text-[10px] font-bold px-2 py-0.5">
-                      ทริปท่องเที่ยวส่วนตัว
-                    </span>
-                    <span className="text-xs font-bold text-slate-950 dark:text-white">
-                      คุณธนากร และครอบครัว (5 ท่าน)
-                    </span>
-                  </div>
-                  <span className="text-xs font-mono text-slate-500">45 นาทีที่แล้ว</span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">เส้นทางเดินทาง:</span>
-                    <span className="font-bold text-slate-900 dark:text-white">
-                      สนามบินเชียงใหม่ - ม่อนแจ่ม - แม่กำปอง
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">ช่วงเวลาเดินทาง:</span>
-                    <span className="font-bold text-slate-900 dark:text-white">
-                      22 - 23 ต.ค. 2569 (2 วัน 1 คืน)
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">งบประมาณที่ลูกค้าเสนอ:</span>
-                    <span className="font-bold text-[#D97706] text-sm">฿4,800 สุทธิ</span>
-                  </div>
-                </div>
-
-                <p className="text-xs text-slate-600 dark:text-slate-300 bg-[#F8FAFC] dark:bg-slate-800/40 p-2.5 border border-slate-200 dark:border-slate-700">
-                  &quot;มีเด็ก 1 คน และผู้สูงอายุ ต้องการคนขับใจเย็น ขับรถนุ่มนวล
-                  กระเป๋าเดินทางใบใหญ่ 4 ใบ&quot;
-                </p>
-
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span className="material-symbols-outlined text-[16px] text-[#06C755]">
-                      verified
-                    </span>
-                    <span>ลูกค้ากดค้นหาเจาะจงรถตู้ VIP พี่ชัย</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href="tel:0819876543"
-                      onClick={() =>
-                        trackCall({
-                          targetType: 'driver_job',
-                          targetId: 'job-fam-02',
-                          targetTitle: 'ทริปครอบครัว คุณธนากร',
-                          phoneNumber: '0819876543',
-                        })
-                      }
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">call</span>
-                      <span>โทรติดต่อผู้โดยสาร (081-987-6543)</span>
-                    </a>
-                  </div>
-                </div>
-              </div>
+            <div className="p-10 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+              <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 text-[36px]">
+                inbox
+              </span>
+              <h3 className="text-sm font-bold text-slate-950 dark:text-white">
+                กล่องงานลูกค้ายังไม่พร้อมใช้งาน
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                ขณะนี้ยังไม่มีระบบส่งคำขอจากลูกค้าเข้ากล่องงานคนขับโดยตรง
+                ลูกค้าสามารถติดต่อคุณผ่านช่องทางที่ระบุในข้อมูลรถเมื่อรถได้รับการอนุมัติและแสดงบนเว็บไซต์
+              </p>
             </div>
           )}
 
@@ -1538,65 +1461,81 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
                       ผลคะแนนและความคิดเห็นจากผู้โดยสารจริง
                     </h3>
                     <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                      คะแนนทั้งหมดรวบรวมจากผู้โดยสารที่ทำการจองและใช้บริการผ่านระบบ TripDee
+                       คะแนนคำนวณจากรีวิวที่บันทึกไว้สำหรับรถคันนี้ ผู้โดยสารที่ยืนยันการเดินทางจะแสดงป้ายกำกับแยกต่างหาก
                     </p>
                   </div>
-                  <div className="flex items-baseline gap-2 bg-[#F8FAFC] dark:bg-slate-800 p-3 border border-slate-200 dark:border-slate-700 shrink-0">
-                    <span className="text-3xl font-extrabold font-mono text-slate-950 dark:text-white">
-                      4.96
-                    </span>
-                    <span className="text-xs text-slate-500 font-medium">/ 5.0 (128 รีวิว)</span>
-                  </div>
+                  {reviewStats && reviewStats.totalReviews > 0 ? (
+                    <div className="flex items-baseline gap-2 bg-[#F8FAFC] dark:bg-slate-800 p-3 border border-slate-200 dark:border-slate-700 shrink-0">
+                      <span className="text-3xl font-extrabold font-mono text-slate-950 dark:text-white">
+                        {reviewStats.averageRating?.toFixed(1)}
+                      </span>
+                      <span className="text-xs text-slate-500 font-medium">
+                        / 5.0 ({reviewStats.totalReviews} รีวิว)
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-baseline gap-2 bg-[#F8FAFC] dark:bg-slate-800 p-3 border border-slate-200 dark:border-slate-700 shrink-0">
+                      <span className="text-xl font-extrabold font-mono text-slate-400">
+                        —
+                      </span>
+                      <span className="text-xs text-slate-500 font-medium">ยังไม่มีรีวิว</span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="space-y-4">
-                  {[
-                    {
-                      author: 'คุณณัฐพล รัตนกุล',
-                      trip: 'ทริปครอบครัว เชียงใหม่ - ดอยอินทนนท์',
-                      date: '24 ก.ย. 2569',
-                      score: '5.0',
-                      text: 'พี่ชัยขับรถดีมากครับ สุภาพ นุ่มนวล นั่งสบายไม่เวียนหัวเลย รถสะอาดมาก แอร์เย็นเจี๊ยบ เบาะนวดไฟฟ้าทำงานสมบูรณ์แบบ แนะนำเลยครับสำหรับใครที่จะพาครอบครัวมาเที่ยวเชียงใหม่',
-                    },
-                    {
-                      author: 'Khun Sarah & Group (Singapore)',
-                      trip: 'Chiang Mai City & Chiang Rai Highlights (3 Days)',
-                      date: '18 ก.ย. 2569',
-                      score: '5.0',
-                      text: 'Surachai was our driver for 3 full days. Exceptional service, always punctual, extremely safe driving through mountain curves. Great local lunch recommendations too! 10/10.',
-                    },
-                    {
-                      author: 'คุณวรัญญา (ฝ่ายจัดซื้อ บจก. พีแอนด์ที)',
-                      trip: 'รับรองคณะผู้บริหารญี่ปุ่น งานประชุมนานาชาติ',
-                      date: '10 ก.ย. 2569',
-                      score: '5.0',
-                      text: 'เช่าเหมารถตู้ 2 คัน รับรองคณะผู้บริหาร รถสวยตรงปก ป้ายเหลืองถูกต้องตามระเบียบบริษัท ออกใบกำกับภาษีได้สะดวกรวดเร็วมากค่ะ',
-                    },
-                  ].map((rev, idx) => (
-                    <div
-                      key={idx}
-                      className="p-4 bg-[#F8FAFC] dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-2"
-                    >
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900 dark:text-white">
-                            {rev.author}
-                          </span>
-                          <span className="text-slate-400">·</span>
-                          <span className="text-slate-500">{rev.trip}</span>
+                {!reviewStats || reviewStats.totalReviews === 0 ? (
+                  <div className="p-10 text-center space-y-2">
+                    <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 text-[36px]">
+                      rate_review
+                    </span>
+                    <p className="text-sm font-bold text-slate-950 dark:text-white">
+                      ยังไม่มีรีวิวสำหรับรถของคุณ
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      รีวิวจากผู้โดยสารจะปรากฏที่นี่เมื่อมีการเขียนรีวิวจริงบนเว็บไซต์
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reviewsForVehicle.map((rev) => (
+                      <div
+                        key={rev.id}
+                        className="p-4 bg-[#F8FAFC] dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-2"
+                      >
+                        <div className="flex items-center justify-between text-xs gap-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-bold text-slate-900 dark:text-white truncate">
+                              {rev.authorName}
+                            </span>
+                            {rev.verifiedTrip && (
+                              <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold shrink-0">
+                                ผู้โดยสารจริง
+                              </span>
+                            )}
+                            {rev.tripRoute && (
+                              <>
+                                <span className="text-slate-400">·</span>
+                                <span className="text-slate-500 truncate">{rev.tripRoute}</span>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 font-mono font-bold text-[#D97706] shrink-0">
+                            <span>★</span>
+                            <span>{rev.rating.toFixed(1)}</span>
+                            {rev.travelDate && (
+                              <span className="text-slate-400 font-normal ml-2">
+                                {rev.travelDate}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 font-mono font-bold text-[#D97706]">
-                          <span>★</span>
-                          <span>{rev.score}</span>
-                          <span className="text-slate-400 font-normal ml-2">{rev.date}</span>
-                        </div>
+                        <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                          &quot;{rev.comment}&quot;
+                        </p>
                       </div>
-                      <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                        &quot;{rev.text}&quot;
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1606,17 +1545,17 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
           {/* ============================================================== */}
           <div className="bg-white dark:bg-slate-900 p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-[#06C755] text-[22px]">
-                cloud_done
-              </span>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-slate-950 dark:text-white">
-                  การเปลี่ยนแปลงล่าสุดถูกบันทึกชั่วคราวแล้ว
+                <span className="material-symbols-outlined text-slate-500 text-[22px]">
+                  save
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  กดบันทึกเพื่อให้อัปเดตสถานะขึ้นเว็บไซต์จริงและแอปพลิเคชันทันที
-                </span>
-              </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-slate-950 dark:text-white">
+                    การแก้ไขข้อมูลรถจะถูกส่งเมื่อกดบันทึก
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    การแก้ไขรถที่อนุมัติแล้วจะต้องรอการตรวจสอบใหม่ก่อนแสดงบนเว็บไซต์
+                  </span>
+                </div>
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
@@ -1703,7 +1642,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
               {saveSuccess && approvalStatus === 'approved' && (
                 <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold px-3 py-2">
                   <Check className="h-4 w-4 shrink-0" />
-                  <span>บันทึกแล้ว และรถของคุณได้รับการอนุมัติแล้ว (แสดงบนหน้าเว็บ)</span>
+                  <span>บันทึกแล้ว รถได้รับการอนุมัติ{isAvailable ? 'และพร้อมแสดงบนเว็บไซต์' : ' แต่กำลังพักงาน'}</span>
                 </div>
               )}
             </div>

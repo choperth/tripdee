@@ -183,7 +183,7 @@ export type Database = {
           review_count: number;
           is_verified: boolean;
           images: string[];
-          zone_rates: Record<ZoneId, number>;
+          zone_rates: Partial<Record<ZoneId, number>> | null;
           rate_note: string | null;
           location: string;
           region: string;
@@ -222,7 +222,7 @@ export type Database = {
           review_count?: number;
           is_verified?: boolean;
           images: string[];
-          zone_rates: Record<ZoneId, number>;
+          zone_rates: Partial<Record<ZoneId, number>> | null;
           rate_note?: string | null;
           location: string;
           region?: string;
@@ -261,7 +261,7 @@ export type Database = {
           review_count?: number;
           is_verified?: boolean;
           images?: string[];
-          zone_rates?: Record<ZoneId, number>;
+          zone_rates?: Partial<Record<ZoneId, number>> | null;
           rate_note?: string | null;
           location?: string;
           region?: string;

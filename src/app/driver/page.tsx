@@ -45,26 +45,18 @@ export default function DriverDashboardPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   // Form states initialized from user or demo
-  const [nickname, setNickname] = useState(user?.driverNickname || 'พี่ชัย รถตู้เชียงใหม่');
-  const [phone, setPhone] = useState(user?.emailOrPhone || '081-234-5678');
-  const [lineId, setLineId] = useState(user?.lineId || '@chaivan_cnx');
-  const [whatsapp, setWhatsapp] = useState(user?.whatsapp || '+66812345678');
-  const [wechat, setWechat] = useState(user?.wechat || 'chaicnx_van');
-  const [kakao, setKakao] = useState(user?.kakao || 'chaivan_cnx');
-  const [vehicleTitle, setVehicleTitle] = useState(
-    user?.vehicleTitle ||
-      'Toyota Commuter VIP 9 ที่นั่ง เบาะนวดไฟฟ้าพร้อมระบบแอร์ไมโครบัส และเครื่องเสียงคาราโอเกะพร้อมจอ Android'
-  );
-  const [vehiclePlate, setVehiclePlate] = useState(
-    user?.vehiclePlate || 'นข-8899 เชียงใหม่ (ป้ายเหลือง 30)'
-  );
+  const [nickname, setNickname] = useState(user?.driverNickname || '');
+  const [phone, setPhone] = useState(user?.emailOrPhone || '');
+  const [lineId, setLineId] = useState(user?.lineId || '');
+  const [whatsapp, setWhatsapp] = useState(user?.whatsapp || '');
+  const [wechat, setWechat] = useState(user?.wechat || '');
+  const [kakao, setKakao] = useState(user?.kakao || '');
+  const [vehicleTitle, setVehicleTitle] = useState(user?.vehicleTitle || '');
+  const [vehiclePlate, setVehiclePlate] = useState(user?.vehiclePlate || '');
   const [seats, setSeats] = useState(user?.seats || 9);
 
   // Images state
-  const defaultImages = [
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuAS93Lp5tyiq38Q_n22TpfbbKacX038jBbYwO5RuyZUQztVRvefnvBxCjnr5tOWW_NYriItTmR_eAbeU03VGReHeAPlhd3_pn2VagF9BopeuhwROEM4B7fGxbacwxTQ3XndDHkoIy82Ab4N2KosofEc-H2pRCciI_-oJDN8s2N3aJLzGnKOfhr_hVRG5gOkx13aoVuELco9uUYLxm4Yyi65VWzDqBDiBtfEVUr5GAb-d1nTeNHTg9ZJ3A',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuBr0Jnx4Zp38sVSSSh605OCALpmCVZRB2A2Z2-__1MqJJs-g7BRiRwWVpH2h-3EGisOuCseR7gESRLtly9jGmInYdr82IEiTFDfRa5KUbto1gUaJrEWyJNPCD8iX5zPd3c9BVyJ7eZLnjDAqUdtVwRyzkyZXpne9RMCfO8X9hvZOJ4UVaUb-lDKkMiV2xcUDuFcR9k7iFO7tjIl9z4RY-rskAdQ0Pqfs4UiIzk53nth-Pgn0Jfxwzn2NA',
-  ];
+  const defaultImages: string[] = [];
 
   const [images, setImages] = useState<string[]>(() => {
     if (Array.isArray(user?.images) && user.images.length > 0) {
@@ -73,10 +65,7 @@ export default function DriverDashboardPage() {
     return defaultImages;
   });
 
-  const [photoMeta, setPhotoMeta] = useState<Record<number, { name: string; size: string }>>({
-    0: { name: 'cnx-commuter-exterior.jpg', size: '2.4 MB' },
-    1: { name: 'vip-cabin-seats.jpg', size: '3.1 MB' },
-  });
+  const [photoMeta, setPhotoMeta] = useState<Record<number, { name: string; size: string }>>({});
 
   // Busy Dates state
   const [busyDates, setBusyDates] = useState<string[]>(() => {
@@ -101,9 +90,9 @@ export default function DriverDashboardPage() {
   const fileInputRef2 = useRef<HTMLInputElement>(null);
 
   // Driver Meta
-  const driverCode = `TD-VN-${(user?.id || '50821').replace(/[^0-9]/g, '').slice(-5) || '50821'}`;
-  const driverDisplayName = user?.name || 'นายสุรชัย ใจดี';
-  const driverNick = nickname || user?.driverNickname || 'พี่ชัย รถตู้เชียงใหม่';
+  const driverCode = user?.id ? `TD-VN-${user.id.replace(/[^0-9]/g, '').slice(-5)}` : '';
+  const driverDisplayName = user?.name || '';
+  const driverNick = nickname || user?.driverNickname || '';
   const isAvailable = user?.isAvailable !== false;
 
   // Profile Save
@@ -333,12 +322,11 @@ export default function DriverDashboardPage() {
                   </div>
                   <div className="mt-2 flex items-baseline gap-1.5">
                     <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
-                      4.96
+                      —
                     </span>
-                    <span className="text-[#D97706] text-xs font-bold">★★★★★</span>
                   </div>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                    อิงจากผู้โดยสารจริง 128 ทริป
+                    ยังไม่มีรีวิวจากผู้โดยสาร
                   </span>
                 </div>
 
@@ -1235,140 +1223,15 @@ export default function DriverDashboardPage() {
                       งานติดต่อตรงจากลูกค้าที่ค้นหาและเจาะจงเลือกรถของคุณ — ดีลตรง 100% ไม่ผ่านคนกลาง
                     </p>
                   </div>
-                  <span className="font-mono text-xs bg-[#E8F9EE] text-[#06C755] font-bold px-2 py-1 border border-emerald-200">
-                    2 งานรอการติดต่อ
+                  <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold px-2 py-1 border border-slate-200 dark:border-slate-700">
+                    0 งานรอการติดต่อ
                   </span>
                 </div>
 
-                {/* Job Card 1 */}
-                <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-slate-950 text-white text-[10px] font-bold px-2 py-0.5">
-                        B2B สัมมนาองค์กร
-                      </span>
-                      <span className="text-xs font-bold text-slate-950 dark:text-white">
-                        บจก. ทีซีที อินเตอร์เทรด (ติดต่อ: คุณศิริพร)
-                      </span>
-                    </div>
-                    <span className="text-xs font-mono text-slate-500">15 นาทีที่แล้ว</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                    <div>
-                      <span className="text-slate-400 block text-[11px]">เส้นทางเดินทาง:</span>
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        เชียงใหม่ - เชียงราย (3 วัน 2 คืน)
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[11px]">ช่วงเวลาเดินทาง:</span>
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        15 - 17 ต.ค. 2569 (8 ท่าน)
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[11px]">งบประมาณที่ลูกค้าเสนอ:</span>
-                      <span className="font-bold text-[#D97706] text-sm">฿10,500 สุทธิ</span>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-slate-600 dark:text-slate-300 bg-[#F8FAFC] dark:bg-slate-800/40 p-2.5 border border-slate-200 dark:border-slate-700">
-                    &quot;ต้องการรถตู้ VIP 9 ที่นั่ง เบาะนวดไฟฟ้า คนขับชำนาญเส้นทางดอยแม่สลอง
-                    และต้องการใบกำกับภาษีเต็มรูปแบบสำหรับเบิกจ่ายบริษัท&quot;
-                  </p>
-
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <span className="material-symbols-outlined text-[16px] text-[#06C755]">
-                        verified
-                      </span>
-                      <span>ลูกค้าผ่านการยืนยันเบอร์โทรศัพท์แล้ว</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <a
-                        href="tel:0891234567"
-                        onClick={() =>
-                          trackCall({
-                            targetType: 'driver_job',
-                            targetId: 'job-b2b-01',
-                            targetTitle: 'B2B บจก. ทีซีที อินเตอร์เทรด',
-                            phoneNumber: '0891234567',
-                          })
-                        }
-                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[15px]">call</span>
-                        <span>โทรคุยรายละเอียด (089-123-4567)</span>
-                      </a>
-                    </div>
-                  </div>
+                <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 shadow-xs text-xs sm:text-sm text-slate-500">
+                  ยังไม่มีงานใหม่จากผู้โดยสาร
                 </div>
 
-                {/* Job Card 2 */}
-                <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-[#D97706] text-white text-[10px] font-bold px-2 py-0.5">
-                        ทริปท่องเที่ยวส่วนตัว
-                      </span>
-                      <span className="text-xs font-bold text-slate-950 dark:text-white">
-                        คุณธนากร และครอบครัว (5 ท่าน)
-                      </span>
-                    </div>
-                    <span className="text-xs font-mono text-slate-500">45 นาทีที่แล้ว</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                    <div>
-                      <span className="text-slate-400 block text-[11px]">เส้นทางเดินทาง:</span>
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        สนามบินเชียงใหม่ - ม่อนแจ่ม - แม่กำปอง
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[11px]">ช่วงเวลาเดินทาง:</span>
-                      <span className="font-bold text-slate-900 dark:text-white">
-                        22 - 23 ต.ค. 2569 (2 วัน 1 คืน)
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[11px]">งบประมาณที่ลูกค้าเสนอ:</span>
-                      <span className="font-bold text-[#D97706] text-sm">฿4,800 สุทธิ</span>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-slate-600 dark:text-slate-300 bg-[#F8FAFC] dark:bg-slate-800/40 p-2.5 border border-slate-200 dark:border-slate-700">
-                    &quot;มีเด็ก 1 คน และผู้สูงอายุ ต้องการคนขับใจเย็น ขับรถนุ่มนวล
-                    กระเป๋าเดินทางใบใหญ่ 4 ใบ&quot;
-                  </p>
-
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <span className="material-symbols-outlined text-[16px] text-[#06C755]">
-                        verified
-                      </span>
-                      <span>ลูกค้ากดค้นหาเจาะจงรถตู้ VIP พี่ชัย</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <a
-                        href="tel:0819876543"
-                        onClick={() =>
-                          trackCall({
-                            targetType: 'driver_job',
-                            targetId: 'job-fam-02',
-                            targetTitle: 'ทริปครอบครัว คุณธนากร',
-                            phoneNumber: '0819876543',
-                          })
-                        }
-                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[15px]">call</span>
-                        <span>โทรติดต่อผู้โดยสาร (081-987-6543)</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
 
@@ -1387,59 +1250,14 @@ export default function DriverDashboardPage() {
                     </div>
                     <div className="flex items-baseline gap-2 bg-[#F8FAFC] dark:bg-slate-800 p-3 border border-slate-200 dark:border-slate-700 shrink-0">
                       <span className="text-3xl font-extrabold font-mono text-slate-950 dark:text-white">
-                        4.96
+                        —
                       </span>
-                      <span className="text-xs text-slate-500 font-medium">/ 5.0 (128 รีวิว)</span>
+                      <span className="text-xs text-slate-500 font-medium">ยังไม่มีรีวิว</span>
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    {[
-                      {
-                        author: 'คุณณัฐพล รัตนกุล',
-                        trip: 'ทริปครอบครัว เชียงใหม่ - ดอยอินทนนท์',
-                        date: '24 ก.ย. 2569',
-                        score: '5.0',
-                        text: 'พี่ชัยขับรถดีมากครับ สุภาพ นุ่มนวล นั่งสบายไม่เวียนหัวเลย รถสะอาดมาก แอร์เย็นเจี๊ยบ เบาะนวดไฟฟ้าทำงานสมบูรณ์แบบ แนะนำเลยครับสำหรับใครที่จะพาครอบครัวมาเที่ยวเชียงใหม่',
-                      },
-                      {
-                        author: 'Khun Sarah & Group (Singapore)',
-                        trip: 'Chiang Mai City & Chiang Rai Highlights (3 Days)',
-                        date: '18 ก.ย. 2569',
-                        score: '5.0',
-                        text: 'Surachai was our driver for 3 full days. Exceptional service, always punctual, extremely safe driving through mountain curves. Great local lunch recommendations too! 10/10.',
-                      },
-                      {
-                        author: 'คุณวรัญญา (ฝ่ายจัดซื้อ บจก. พีแอนด์ที)',
-                        trip: 'รับรองคณะผู้บริหารญี่ปุ่น งานประชุมนานาชาติ',
-                        date: '10 ก.ย. 2569',
-                        score: '5.0',
-                        text: 'เช่าเหมารถตู้ 2 คัน รับรองคณะผู้บริหาร รถสวยตรงปก ป้ายเหลืองถูกต้องตามระเบียบบริษัท ออกใบกำกับภาษีได้สะดวกรวดเร็วมากค่ะ',
-                      },
-                    ].map((rev, idx) => (
-                      <div
-                        key={idx}
-                        className="p-4 bg-[#F8FAFC] dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-2"
-                      >
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-slate-900 dark:text-white">
-                              {rev.author}
-                            </span>
-                            <span className="text-slate-400">·</span>
-                            <span className="text-slate-500">{rev.trip}</span>
-                          </div>
-                          <div className="flex items-center gap-1 font-mono font-bold text-[#D97706]">
-                            <span>★</span>
-                            <span>{rev.score}</span>
-                            <span className="text-slate-400 font-normal ml-2">{rev.date}</span>
-                          </div>
-                        </div>
-                        <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                          &quot;{rev.text}&quot;
-                        </p>
-                      </div>
-                    ))}
+                  <div className="p-4 bg-[#F8FAFC] dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-500">
+                    ยังไม่มีรีวิวจากผู้โดยสารที่จองและใช้บริการผ่านระบบ TripDee
                   </div>
                 </div>
               </div>

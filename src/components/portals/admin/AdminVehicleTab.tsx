@@ -192,13 +192,13 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
       isAvailable: formData.get('isAvailable') !== 'false',
       rentalType: (formData.get('rentalType') as 'with_driver' | 'self_drive') || (formData.get('type') === 'van' ? 'with_driver' : 'self_drive'),
       transmission: (formData.get('transmission') as 'auto' | 'manual') || 'auto',
-      rating: Number(formData.get('rating')) || 5.0,
+      rating: Number(formData.get('rating')) || 0,
       isVerified: formData.get('isVerified') === 'true',
       zoneRates: {
-        city: Number(formData.get('rate_city')) || 1900,
-        midHill: Number(formData.get('rate_midHill')) || 2100,
-        highHill: Number(formData.get('rate_highHill')) || 2300,
-        crossProvince: Number(formData.get('rate_cross')) || 2700,
+        city: Number(formData.get('rate_city')) || 0,
+        midHill: Number(formData.get('rate_midHill')) || 0,
+        highHill: Number(formData.get('rate_highHill')) || 0,
+        crossProvince: Number(formData.get('rate_cross')) || 0,
       } as Record<ZoneId, number>,
       description: formData.get('description') as string,
     };
@@ -865,7 +865,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                   type="number"
                   min={500}
                   step={100}
-                  defaultValue={editingVehicle?.zoneRates?.city || 1900}
+                  defaultValue={editingVehicle?.zoneRates?.city ?? ''}
                   required
                   className="w-full p-2 rounded-none bg-card border border-rule text-ink"
                 />
@@ -878,7 +878,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
                     name="rating"
                     type="number"
                     step="0.1"
-                    defaultValue={editingVehicle?.rating || 5.0}
+                    defaultValue={editingVehicle?.rating ?? 0}
                     className="w-full p-2 rounded-none bg-paper border border-rule text-ink"
                   />
                 </div>

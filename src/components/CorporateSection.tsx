@@ -107,10 +107,13 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
   const passengerEstimate = `${budget.carCount * 9} ${t('corp.paxUnit', { n: budget.carCount })}`;
 
   const totalVehicles = vehicles.length;
+  const ratedVehicles = vehicles.filter(
+    (v) => typeof v.rating === 'number' && v.rating > 0 && v.reviewCount > 0
+  );
   const avgRating =
-    totalVehicles > 0
-      ? (vehicles.reduce((sum, v) => sum + (v.rating || 5.0), 0) / totalVehicles).toFixed(1)
-      : '4.9';
+    ratedVehicles.length > 0
+      ? (ratedVehicles.reduce((sum, v) => sum + (v.rating as number), 0) / ratedVehicles.length).toFixed(1)
+      : null;
 
   const setCarCount = (raw: string) => {
     const n = Number(raw.replace(/[^0-9]/g, ''));
@@ -346,13 +349,15 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
             <div className="flex items-center gap-6 pt-1 font-mono">
               <div>
                 <span className="text-2xl font-black text-white block">
-                  {totalVehicles > 0 ? `${totalVehicles}+` : '500+'}
+                  {totalVehicles > 0 ? `${totalVehicles}` : '—'}
                 </span>
                 <span className="text-[11px] text-slate-400 font-sans">{t('corp.statFleet')}</span>
               </div>
               <div className="h-8 w-px bg-slate-700"></div>
               <div>
-                <span className="text-2xl font-black text-amber-400 block">{avgRating} ★</span>
+                <span className="text-2xl font-black text-amber-400 block">
+                  {avgRating !== null ? `${avgRating} ★` : '—'}
+                </span>
                 <span className="text-[11px] text-slate-400 font-sans">{t('corp.statOrgRating')}</span>
               </div>
               <div className="h-8 w-px bg-slate-700"></div>

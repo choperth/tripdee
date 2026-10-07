@@ -65,11 +65,14 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
 
   const isSelfDrive = vehicle.rentalType === 'self_drive' || (vehicle.type !== 'van' && vehicle.rentalType !== 'with_driver');
   const rates = vehicle.zoneRates ? Object.values(vehicle.zoneRates).filter((r): r is number => typeof r === 'number' && r > 0) : [];
-  const minRate = rates.length > 0 ? Math.min(...rates) : (isSelfDrive ? 1200 : 1800);
-  const maxRate = rates.length > 0 ? Math.max(...rates) : (isSelfDrive ? 1800 : 2500);
-  const priceDisplay = minRate < maxRate
-    ? `฿${minRate.toLocaleString()} - ${maxRate.toLocaleString()}`
-    : `฿${minRate.toLocaleString()}`;
+  const minRate = rates.length > 0 ? Math.min(...rates) : null;
+  const maxRate = rates.length > 0 ? Math.max(...rates) : null;
+  const priceDisplay =
+    minRate === null || maxRate === null
+      ? t('vehicle.priceOnRequest')
+      : minRate < maxRate
+        ? `฿${minRate.toLocaleString()} - ${maxRate.toLocaleString()}`
+        : `฿${minRate.toLocaleString()}`;
   const publicName = getPublicDriverName(vehicle.driverName, vehicle.driverNickname);
   const title = vehicleTitle(vehicle, locale);
   const location = vehicleLocation(vehicle, locale);
@@ -98,13 +101,21 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
             className="w-full h-full relative block text-left cursor-pointer"
             aria-label={t('vehicle.detailAria', { title })}
           >
-            <Image
-              src={vehicle.images[0]}
-              alt={title}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
-            />
+            {vehicle.images?.[0] ? (
+              <Image
+                src={vehicle.images[0]}
+                alt={title}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
+              />
+            ) : (
+              <div className="w-full h-full grid place-items-center bg-slate-100 dark:bg-slate-800">
+                <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 text-[36px]">
+                  directions_car
+                </span>
+              </div>
+            )}
 
             {/* Top-left Badges */}
             <div className="absolute top-2 left-2 flex flex-wrap gap-1 pointer-events-none">

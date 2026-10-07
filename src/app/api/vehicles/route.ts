@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
       driverWechat: body.driverWechat ? String(body.driverWechat).trim() : undefined,
       driverKakao: body.driverKakao ? String(body.driverKakao).trim() : undefined,
       languages: Array.isArray(body.languages) ? body.languages : ['th'],
-      rating: Number(body.rating) || 5.0,
+      rating: Number(body.rating) || 0,
       reviewCount: Number(body.reviewCount) || 0,
       // A driver cannot feature their own vehicle; only an admin sets this.
       isVerified: isAdmin ? Boolean(body.isVerified) : false,
@@ -212,27 +212,15 @@ export async function POST(req: NextRequest) {
             : body.rentalType || 'self_drive',
       transmission: body.transmission === 'manual' ? 'manual' : 'auto',
       busyDates: Array.isArray(body.busyDates) ? body.busyDates : undefined,
-      images:
-        Array.isArray(body.images) && body.images.length > 0
-          ? body.images
-          : ['https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80'],
-      zoneRates: body.zoneRates || {
-        city: 1900,
-        midHill: 2100,
-        highHill: 2300,
-        crossProvince: 2700,
-      },
+      images: Array.isArray(body.images) ? body.images.filter(Boolean) : [],
+      zoneRates: body.zoneRates || undefined,
       rateNote: body.rateNote ? String(body.rateNote).trim() : undefined,
       location: String(body.location || 'เชียงใหม่และใกล้เคียง').trim(),
       region: body.region || 'north',
-      popularRoutes:
-        Array.isArray(body.popularRoutes) && body.popularRoutes.length > 0
-          ? body.popularRoutes
-          : ['ตัวเมือง', 'สนามบิน'],
-      amenities:
-        Array.isArray(body.amenities) && body.amenities.length > 0
-          ? body.amenities
-          : ['แอร์เย็นฉ่ำ สภาพรถใหม่สะอาด', 'ตรวจสภาพรถและประวัติคนขับแล้ว 100%'],
+      popularRoutes: Array.isArray(body.popularRoutes)
+        ? body.popularRoutes.filter(Boolean)
+        : [],
+      amenities: Array.isArray(body.amenities) ? body.amenities.filter(Boolean) : [],
       description: String(body.description || '').trim(),
       ownerId,
       approvalStatus,

@@ -52,8 +52,8 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
   const [canIssueTaxInvoice, setCanIssueTaxInvoice] = useState(false);
   const [driverPhone, setDriverPhone] = useState('');
   const [driverLine, setDriverLine] = useState('');
-  const [cityRate, setCityRate] = useState(1900);
-  const [highHillRate, setHighHillRate] = useState(2300);
+  const [cityRate, setCityRate] = useState<number | ''>('');
+  const [highHillRate, setHighHillRate] = useState<number | ''>('');
   const [images, setImages] = useState<string[]>([]);
   const [busyDates, setBusyDates] = useState<string[]>([]);
 
@@ -66,8 +66,8 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
       setCanIssueTaxInvoice(Boolean(v.canIssueTaxInvoice));
       setDriverPhone(v.driverPhone || '');
       setDriverLine(v.driverLine || '');
-      setCityRate(v.zoneRates?.city || 1900);
-      setHighHillRate(v.zoneRates?.highHill || 2300);
+      setCityRate(v.zoneRates?.city ?? '');
+      setHighHillRate(v.zoneRates?.highHill ?? '');
       setImages(Array.isArray(v.images) ? v.images : []);
       setBusyDates(Array.isArray(v.busyDates) ? v.busyDates : []);
     }
@@ -226,14 +226,14 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                 driverPhone: lead.phone,
                 driverLine: lead.lineId || '',
                 languages: ['th' as const],
-                rating: 5.0,
+                rating: 0,
                 reviewCount: 0,
-                isVerified: lead.status === 'verified',
-                images: ['https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80'],
-                zoneRates: { city: 1900, midHill: 2100, highHill: 2300, crossProvince: 2700 },
+                isVerified: false,
+                images: [],
+                zoneRates: undefined,
                 location: lead.routes || t('dss.locationFallback'),
-                popularRoutes: [t('dss.routeCity'), t('dss.routeAirport')],
-                amenities: [t('dss.amenityVerified')],
+                popularRoutes: [],
+                amenities: [],
                 description: t('dss.leadDescription', {
                   name: lead.driverName,
                   status: lead.status === 'verified' ? t('dss.statusVerified') : t('dss.statusPending'),
@@ -284,9 +284,9 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
         images: images.length > 0 ? images : undefined,
         busyDates,
         zoneRates: {
-          ...(selectedVehicle.zoneRates || { city: 1900, midHill: 2100, highHill: 2300, crossProvince: 2700 }),
-          city: Number(cityRate) || 1900,
-          highHill: Number(highHillRate) || 2300,
+          ...(selectedVehicle.zoneRates || {}),
+          ...(cityRate !== '' ? { city: Number(cityRate) } : {}),
+          ...(highHillRate !== '' ? { highHill: Number(highHillRate) } : {}),
         },
       };
 
@@ -765,10 +765,12 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                   </div>
                   <div className="mt-space-sm flex items-baseline justify-between">
                     <span className="font-price-headline text-price-headline text-navy-deep dark:text-white">
-                      {selectedVehicle.rating || '4.96'} <span className="text-amber-accent font-bold">★</span>
+                      {selectedVehicle.rating > 0 ? selectedVehicle.rating : '—'} <span className="text-amber-accent font-bold">★</span>
                     </span>
                     <span className="font-label-badge text-label-badge text-ink-muted dark:text-slate-400">
-                      {t('dss.reviewsFrom', { n: selectedVehicle.reviewCount || 48 })}
+                      {selectedVehicle.reviewCount > 0
+                        ? t('dss.reviewsFrom', { n: selectedVehicle.reviewCount })
+                        : t('detail.noReviews')}
                     </span>
                   </div>
                 </div>
@@ -887,7 +889,7 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                       type="number"
                       step={100}
                       value={cityRate}
-                      onChange={(e) => setCityRate(Number(e.target.value))}
+                      onChange={(e) => setCityRate(e.target.value === '' ? '' : Number(e.target.value))}
                       className="w-full h-11 px-3 bg-paper-elevated dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base border border-border-subtle focus:outline-none focus:ring-2 focus:ring-blue-action"
                     />
                   </div>
@@ -900,7 +902,7 @@ export const DriverSelfServiceModal: React.FC<DriverSelfServiceModalProps> = ({
                       type="number"
                       step={100}
                       value={highHillRate}
-                      onChange={(e) => setHighHillRate(Number(e.target.value))}
+                      onChange={(e) => setHighHillRate(e.target.value === '' ? '' : Number(e.target.value))}
                       className="w-full h-11 px-3 bg-paper-elevated dark:bg-slate-800 dark:text-white rounded-xl text-body-base font-body-base border border-border-subtle focus:outline-none focus:ring-2 focus:ring-blue-action"
                     />
                   </div>

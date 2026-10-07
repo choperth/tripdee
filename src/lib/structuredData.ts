@@ -19,7 +19,6 @@ export function getStructuredData() {
       'แพลตฟอร์มศูนย์รวมรถตู้พร้อมคนขับ รถเช่าขับเอง SUV และที่พักแนะนำในจังหวัดเชียงใหม่ ติดต่อคนขับตรง ไม่บวกค่านายหน้า ปลอดภัย ตรวจสอบเอกสารคนขับทุกคน พร้อมบริการลูกค้าองค์กรและออกใบกำกับภาษีเต็มรูปแบบ',
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+66-81-234-5678',
       contactType: 'customer service',
       areaServed: 'TH',
       availableLanguage: ['Thai', 'English', 'Chinese'],
@@ -41,11 +40,8 @@ export function getStructuredData() {
     '@type': 'TravelAgency',
     '@id': `${BASE_URL}/#localbusiness`,
     name: 'TripDee รถตู้พร้อมคนขับ เชียงใหม่ & ที่พักคุณภาพ',
-    image:
-      'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80',
+    image: `${BASE_URL}/logo.png`,
     url: BASE_URL,
-    telephone: '+66-81-234-5678',
-    priceRange: '฿1,800 - ฿3,500',
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Chiang Mai',

@@ -48,7 +48,7 @@ export interface BookingSheetData {
   isVerified: boolean;
   canIssueTaxInvoice?: boolean;
   // Financial terms
-  dailyRate: number;
+  dailyRate: number | null;
   totalPrice: number;
   depositAmount: number;
   remainingAmount: number;
@@ -86,10 +86,10 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
     }).format(new Date())
   );
 
-  const rateFromVehicle = vehicle?.zoneRates?.city || 1900;
+  const rateFromVehicle = vehicle?.zoneRates?.city ?? null;
   const daysDefault = initialData?.totalDays || 2;
   const dailyRateDefault = initialData?.dailyRate || rateFromVehicle;
-  const totalCalculated = dailyRateDefault * daysDefault;
+  const totalCalculated = dailyRateDefault !== null && dailyRateDefault !== undefined ? dailyRateDefault * daysDefault : 0;
   const depositDefault = initialData?.depositAmount !== undefined ? initialData.depositAmount : Math.round(totalCalculated * 0.3);
 
   const [data, setData] = useState<BookingSheetData>(() => ({
@@ -109,15 +109,15 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
       (vehicle ? vehiclePopularRoutes(vehicle, locale).join(' - ') || t('sheet.dRoute') : t('sheet.dRoute')),
     driverName: vehicle?.driverName || initialData?.driverName || t('sheet.dDriverName'),
     driverNickname: vehicle?.driverNickname || initialData?.driverNickname || t('sheet.dDriverNick'),
-    driverPhone: vehicle?.driverPhone || initialData?.driverPhone || '081-234-5678',
-    driverLine: vehicle?.driverLine || initialData?.driverLine || 'https://line.me',
+    driverPhone: vehicle?.driverPhone || initialData?.driverPhone || '',
+    driverLine: vehicle?.driverLine || initialData?.driverLine || '',
     vehicleTitle:
       (vehicle ? vehicleTitle(vehicle, locale) : '') || initialData?.vehicleTitle || t('sheet.dVehicle'),
     plateNumber: vehicle?.plateNumber || initialData?.plateNumber || t('sheet.dPlate'),
     plateType: vehicle?.plateType || initialData?.plateType || 'yellow',
-    isVerified: vehicle ? Boolean(vehicle.isVerified) : true,
-    canIssueTaxInvoice: vehicle?.canIssueTaxInvoice ?? initialData?.canIssueTaxInvoice ?? true,
-    dailyRate: dailyRateDefault,
+    isVerified: vehicle ? Boolean(vehicle.isVerified) : Boolean(initialData?.isVerified),
+    canIssueTaxInvoice: vehicle?.canIssueTaxInvoice ?? initialData?.canIssueTaxInvoice ?? false,
+    dailyRate: dailyRateDefault ?? null,
     totalPrice: initialData?.totalPrice || totalCalculated,
     depositAmount: depositDefault,
     remainingAmount: (initialData?.totalPrice || totalCalculated) - depositDefault,
@@ -131,9 +131,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
   const [isEditing, setIsEditing] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const handleRateOrDaysChange = (days: number, rate: number) => {
-    const total = days * rate;
-    const deposit = Math.round(total * 0.3);
+  const handleRateOrDaysChange = (days: number, rate: number | null) => {
+    const total = rate !== null ? days * rate : 0;
+    const deposit = rate !== null ? Math.round(total * 0.3) : 0;
     setData((prev) => ({
       ...prev,
       totalDays: days,
@@ -169,7 +169,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
       '',
       t('sheet.cpMoneyHead'),
       t('sheet.cpRate', {
-        rate: data.dailyRate.toLocaleString(),
+        rate: data.dailyRate !== null ? data.dailyRate.toLocaleString() : t('sheet.dRateMissing'),
         days: String(data.totalDays),
         total: data.totalPrice.toLocaleString(),
       }),
@@ -306,8 +306,10 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 id="sheet-daily-rate"
                 type="number"
                 min="0"
-                value={data.dailyRate}
-                onChange={(e) => handleRateOrDaysChange(data.totalDays, Number(e.target.value) || 0)}
+                value={data.dailyRate ?? ''}
+                onChange={(e) =>
+                  handleRateOrDaysChange(data.totalDays, e.target.value === '' ? null : Number(e.target.value))
+                }
                 className="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 font-medium"
               />
             </div>
@@ -546,13 +548,15 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
           <div className="p-4 bg-slate-50/50 space-y-2.5 text-xs">
             <div className="flex justify-between items-center py-1 border-b border-slate-200">
               <span className="text-slate-600">
-                {t('sheet.rateLine', {
-                  days: String(data.totalDays),
-                  rate: data.dailyRate.toLocaleString(),
-                })}
+                {data.dailyRate !== null
+                  ? t('sheet.rateLine', {
+                      days: String(data.totalDays),
+                      rate: data.dailyRate.toLocaleString(),
+                    })
+                  : t('sheet.rateMissing')}
               </span>
               <span className="font-extrabold text-slate-900 text-sm">
-                ฿{data.totalPrice.toLocaleString()}
+                {data.dailyRate !== null ? `฿${data.totalPrice.toLocaleString()}` : '—'}
               </span>
             </div>
 
