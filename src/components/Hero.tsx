@@ -198,7 +198,7 @@ export const Hero: React.FC<HeroProps> = ({
             <button
               type="button"
               onClick={() => handleTabChange('van')}
-              className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-bold text-xs border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 cursor-pointer ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 font-bold text-xs border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 cursor-pointer ${
                 activeTab === 'van'
                   ? 'bg-white dark:bg-slate-900 text-slate-950 dark:text-white border-t-2 border-t-slate-950 dark:border-t-white'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-850'
@@ -210,7 +210,7 @@ export const Hero: React.FC<HeroProps> = ({
             <button
               type="button"
               onClick={() => handleTabChange('suv_driver')}
-              className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-semibold text-xs border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 cursor-pointer ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 font-semibold text-xs border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 cursor-pointer ${
                 activeTab === 'suv_driver'
                   ? 'bg-white dark:bg-slate-900 text-slate-950 dark:text-white border-t-2 border-t-slate-950 dark:border-t-white font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-850'
@@ -222,7 +222,7 @@ export const Hero: React.FC<HeroProps> = ({
             <button
               type="button"
               onClick={() => handleTabChange('car')}
-              className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-semibold text-xs border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 cursor-pointer ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 font-semibold text-xs border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 cursor-pointer ${
                 activeTab === 'car'
                   ? 'bg-white dark:bg-slate-900 text-slate-950 dark:text-white border-t-2 border-t-slate-950 dark:border-t-white font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-850'
@@ -234,7 +234,7 @@ export const Hero: React.FC<HeroProps> = ({
             <button
               type="button"
               onClick={() => handleTabChange('corporate')}
-              className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-semibold text-xs border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 cursor-pointer ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 font-semibold text-xs border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 cursor-pointer ${
                 activeTab === 'corporate'
                   ? 'bg-white dark:bg-slate-900 text-slate-950 dark:text-white border-t-2 border-t-slate-950 dark:border-t-white font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-850'
@@ -248,7 +248,7 @@ export const Hero: React.FC<HeroProps> = ({
               onClick={() => {
                 document.getElementById('tripboard')?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="flex items-center gap-2 px-4 sm:px-6 py-3 font-semibold text-xs text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-850 transition-all shrink-0 cursor-pointer"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2.5 font-semibold text-xs text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-850 transition-all shrink-0 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">groups</span>
               <span>{t('hero.tabBoard')}</span>
@@ -276,7 +276,6 @@ export const Hero: React.FC<HeroProps> = ({
                   value={selectedZone}
                   onChange={(e) => {
                     setSelectedZone(e.target.value);
-                    scrollToResults();
                   }}
                   className="bg-transparent font-bold text-slate-900 dark:text-white text-xs sm:text-sm md:text-base focus:ring-0 focus:outline-none cursor-pointer w-full p-0 border-0 appearance-none pr-6"
                 >
@@ -395,7 +394,6 @@ export const Hero: React.FC<HeroProps> = ({
                   value={selectedSeats}
                   onChange={(e) => {
                     setSelectedSeats(e.target.value);
-                    scrollToResults();
                   }}
                   className="bg-transparent font-bold text-slate-900 dark:text-white text-xs sm:text-sm md:text-base focus:ring-0 focus:outline-none cursor-pointer w-full p-0 border-0 appearance-none pr-6"
                 >
@@ -467,13 +465,6 @@ export const Hero: React.FC<HeroProps> = ({
                   className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
                 >
                   {t('hero.quickCamry')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => applyQuickFilter('tax')}
-                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300 px-2.5 py-1 font-medium transition-colors rounded-none cursor-pointer text-xs"
-                >
-                  🏢 {t('hero.quickTax')}
                 </button>
               </>
             ) : activeTab === 'car' ? (

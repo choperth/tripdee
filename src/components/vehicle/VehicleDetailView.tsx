@@ -30,6 +30,7 @@ import { getUpcomingBusyRanges } from '@/lib/availabilityUtils';
 import { VehicleReviewsSection } from '@/components/reviews/VehicleReviewsSection';
 import { DriverSmartECardModal } from '@/components/cards/DriverSmartECardModal';
 import { formatLineLink, buildVehicleLineMessage } from '@/lib/contactUtils';
+import { useIsFavorite, toggleFavorite } from '@/lib/favoritesStore';
 import { DepositPaymentModal } from '@/components/payment/DepositPaymentModal';
 import { ENABLE_QR_PAYMENT } from '@/lib/constants';
 
@@ -55,7 +56,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
   const [isPhoneRevealed, setIsPhoneRevealed] = useState<boolean>(false);
   const [showBookingSheet, setShowBookingSheet] = useState<boolean>(false);
   const [showDepositModal, setShowDepositModal] = useState<boolean>(false);
-  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  const isFavorite = useIsFavorite(vehicle.id);
   const [showECardModal, setShowECardModal] = useState<boolean>(false);
   const [sharedToast, setSharedToast] = useState<boolean>(false);
   const [copiedWechat, setCopiedWechat] = useState<boolean>(false);
@@ -159,7 +160,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
   const galleryImages = Array.isArray(vehicle.images) ? vehicle.images.filter(Boolean) : [];
 
   return (
-    <div className="flex flex-col w-full text-ink-primary dark:text-slate-100">
+    <div className="flex flex-col w-full pb-24 lg:pb-0 text-ink-primary dark:text-slate-100">
       {/* Top Header Bar */}
       {isModal ? (
         <div className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-5 py-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
@@ -207,15 +208,16 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setIsBookmarked(!isBookmarked)}
+              onClick={() => toggleFavorite(vehicle.id)}
+              aria-pressed={isFavorite}
               className={`flex h-8 w-8 items-center justify-center rounded-none border transition-colors cursor-pointer ${
-                isBookmarked
-                  ? 'bg-amber-400 text-slate-950 border-amber-500'
+                isFavorite
+                  ? 'bg-rose-600 text-white border-rose-700'
                   : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
-              title="บันทึก"
+              title={isFavorite ? t('vehicle.favoriteRemove') : t('vehicle.favoriteSave')}
             >
-              <Bookmark className={`h-3.5 w-3.5 ${isBookmarked ? 'fill-current' : ''}`} />
+              <Bookmark className={`h-3.5 w-3.5 ${isFavorite ? 'fill-current' : ''}`} />
             </button>
           </div>
         </div>
@@ -312,15 +314,16 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setIsBookmarked(!isBookmarked)}
+              onClick={() => toggleFavorite(vehicle.id)}
+              aria-pressed={isFavorite}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none border text-xs font-bold transition-colors shadow-2xs cursor-pointer ${
-                isBookmarked
-                  ? 'bg-amber-400 text-slate-950 border-amber-500'
+                isFavorite
+                  ? 'bg-rose-600 text-white border-rose-700'
                   : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
-              <Bookmark className="w-4 h-4" />
-              <span>{isBookmarked ? t('detail.saved') : t('detail.save')}</span>
+              <Bookmark className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+              <span>{isFavorite ? t('detail.saved') : t('detail.save')}</span>
             </button>
             <button
               type="button"
@@ -1004,6 +1007,55 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 );
               })()}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Sticky Bottom Contact Bar (mobile & tablet only) */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-3 shadow-lg">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {t('vehicle.priceFrom')}
+            </span>
+            {basePrice !== null ? (
+              <span className="flex items-baseline gap-1">
+                <span className="text-lg font-black font-mono text-slate-950 dark:text-white">
+                  ฿{basePrice.toLocaleString()}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">{t('vehicle.perDay')}</span>
+              </span>
+            ) : (
+              <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                {t('vehicle.priceOnRequest')}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {vehicle.driverPhone && (
+              <a
+                href={`tel:${vehicle.driverPhone}`}
+                onClick={handleDirectCall}
+                className="inline-flex h-11 items-center gap-1.5 rounded-none bg-slate-900 dark:bg-white px-4 text-white dark:text-slate-900 text-xs font-bold border border-slate-900 dark:border-white active:scale-95 transition-transform"
+              >
+                <span className="material-symbols-outlined text-[18px]">call</span>
+                <span>{t('vehicle.directCall')}</span>
+              </a>
+            )}
+            <a
+              href={formatLineLink(vehicle.driverLine, buildVehicleLineMessage(vehicle))}
+              onClick={() => {
+                if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                  navigator.clipboard.writeText(buildVehicleLineMessage(vehicle)).catch(() => {});
+                }
+              }}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-11 items-center gap-1.5 rounded-none bg-[#06C755] hover:bg-[#05b34c] px-4 text-white text-xs font-bold border border-[#06C755] active:scale-95 transition-transform"
+            >
+              <span className="material-symbols-outlined text-[18px]">chat</span>
+              <span>{t('vehicle.lineChat')}</span>
+            </a>
           </div>
         </div>
       </div>

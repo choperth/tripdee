@@ -123,44 +123,54 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
             {/* Top-left Badges */}
             <div className="absolute top-2 left-2 flex flex-wrap gap-1 pointer-events-none">
               {isSelfDrive ? (
-                <span className="bg-indigo-700 text-white text-[10px] font-black px-2 py-0.5 border border-indigo-800 uppercase rounded-none">
+                <span className="bg-indigo-700 text-white text-xs font-black px-2 py-0.5 border border-indigo-800 uppercase rounded-none">
                   🚗 {t('vehicle.selfDrive')}
                 </span>
               ) : vehicle.plateType === 'yellow' ? (
-                <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 border border-amber-500 uppercase rounded-none">
+                <span className="bg-amber-400 text-slate-950 text-xs font-black px-2 py-0.5 border border-amber-500 uppercase rounded-none">
                   🟡 {t('hero.quickYellow')}
                 </span>
               ) : (
-                <span className="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 border border-slate-900 rounded-none">
+                <span className="bg-slate-900 text-white text-xs font-bold px-2 py-0.5 border border-slate-900 rounded-none">
                   {t('vehicle.bluePlate')}
                 </span>
               )}
 
               {vehicle.isVerified && (
-                <span className="bg-slate-900 text-amber-400 text-[10px] font-black px-2 py-0.5 border border-slate-900 uppercase rounded-none">
+                <span className="bg-slate-900 text-amber-400 text-xs font-black px-2 py-0.5 border border-slate-900 uppercase rounded-none">
                   ⭐ {t('hero.verifiedSticker')}
                 </span>
               )}
 
               {vehicle.plateNumber && (
-                <span className="bg-white/95 dark:bg-slate-900/95 text-slate-900 dark:text-slate-200 text-[10px] font-bold px-1.5 py-0.5 border border-slate-300 dark:border-slate-700 rounded-none">
+                <span className="bg-white/95 dark:bg-slate-900/95 text-slate-900 dark:text-slate-200 text-xs font-bold px-1.5 py-0.5 border border-slate-300 dark:border-slate-700 rounded-none">
                   {maskPlateNumber(vehicle.plateNumber)}
                 </span>
               )}
             </div>
 
-            {/* Availability Alert if Busy or Upcoming */}
+            {/* Availability Alert — clear green when free, red when busy */}
             {isBusyToday ? (
-              <div className="absolute bottom-2 left-2 bg-rose-600/90 text-white text-[10px] font-bold px-2 py-0.5 flex items-center gap-1 rounded-none">
+              <div className="absolute bottom-2 left-2 bg-rose-600/90 text-white text-xs font-bold px-2 py-0.5 flex items-center gap-1 rounded-none">
                 <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                 <span>{t('cal.cardBusyToday')}</span>
               </div>
             ) : upcomingRanges.length > 0 ? (
-              <div className="absolute bottom-2 left-2 bg-amber-500/90 text-slate-950 text-[10px] font-bold px-2 py-0.5 flex items-center gap-1 rounded-none">
-                <span className="material-symbols-outlined text-[12px]">event_busy</span>
+              <div className="absolute bottom-2 left-2 bg-amber-500/90 text-slate-950 text-xs font-bold px-2 py-0.5 flex items-center gap-1 rounded-none">
+                <span className="material-symbols-outlined text-[13px]">event_busy</span>
                 <span>{t('cal.cardUpcomingBusy', { range: upcomingRanges[0].label })}</span>
               </div>
-            ) : null}
+            ) : vehicle.isAvailable !== false ? (
+              <div className="absolute bottom-2 left-2 bg-emerald-600/90 text-white text-xs font-bold px-2 py-0.5 flex items-center gap-1 rounded-none">
+                <span className="w-1.5 h-1.5 bg-white rounded-full" />
+                <span>{t('vehicle.availableNow')}</span>
+              </div>
+            ) : (
+              <div className="absolute bottom-2 left-2 bg-slate-700/90 text-white text-xs font-bold px-2 py-0.5 flex items-center gap-1 rounded-none">
+                <span className="material-symbols-outlined text-[13px]">pause_circle</span>
+                <span>{t('vehicle.paused')}</span>
+              </div>
+            )}
           </button>
 
           {/* Save to favourites (heart) — hydration-safe client-only read */}
@@ -196,7 +206,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
               <span className="font-semibold text-slate-600 dark:text-slate-400">
                 {t('vehicle.seats', { n: vehicle.seats })} VIP
               </span>
-              <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1 text-[11px]">
+              <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1 text-xs">
                 <span className="material-symbols-outlined text-[13px]">phone_in_talk</span>
                 <span>{t('vc.direct100')}</span>
               </span>
@@ -253,19 +263,19 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                 <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-slate-200">
                   {amenities[0] ? getAmenityIcon(amenities[0], 0) : 'chair'}
                 </span>
-                <span className="truncate">{amenities[0] || t('vc.amSeatFallback')}</span>
+                <span className="truncate font-semibold">{amenities[0] || t('vc.amSeatFallback')}</span>
               </div>
               <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-none">
                 <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-slate-200">luggage</span>
-                <span className="truncate">{amenities[1] || t('vc.amLuggageFallback')}</span>
+                <span className="truncate font-semibold">{amenities[1] || t('vc.amLuggageFallback')}</span>
               </div>
               <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-none">
                 <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-slate-200">receipt_long</span>
-                <span className="truncate">{vehicle.canIssueTaxInvoice ? t('vc.taxInvoice') : t('vc.receipt')}</span>
+                <span className="truncate font-semibold">{vehicle.canIssueTaxInvoice ? t('vc.taxInvoice') : t('vc.receipt')}</span>
               </div>
               <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-none">
                 <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-slate-200">verified_user</span>
-                <span className="truncate">{t('vc.driverChecked')}</span>
+                <span className="truncate font-semibold">{t('vc.driverChecked')}</span>
               </div>
             </div>
           </div>
@@ -273,7 +283,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
           {/* 3. Price & Action Buttons */}
           <div className="mt-5 pt-3.5 border-t border-slate-200 dark:border-slate-800">
             <div className="flex items-baseline justify-between gap-2 mb-2.5">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                 {t('vehicle.priceFrom')}
               </span>
               <div className="flex items-baseline gap-1 whitespace-nowrap">

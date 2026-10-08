@@ -249,7 +249,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-400 flex items-start sm:items-center justify-center overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-2 sm:p-4 animate-fade-in"
+      className="fixed inset-0 z-400 flex items-start sm:items-center justify-center overflow-hidden bg-slate-950/70 backdrop-blur-sm p-2 sm:p-4 animate-fade-in"
       onClick={onClose}
       role="presentation"
     >
@@ -259,7 +259,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
         aria-modal="true"
         aria-labelledby="customer-portal-title"
         onClick={(e) => e.stopPropagation()}
-        className="relative flex flex-col w-full max-w-6xl max-h-[94vh] overflow-y-auto rounded-none bg-[#f4f6fa] dark:bg-slate-950 border border-slate-300 dark:border-slate-700 shadow-2xl text-slate-900 dark:text-slate-100"
+        className="relative flex flex-col w-full max-w-6xl max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-none bg-[#f4f6fa] dark:bg-slate-950 border border-slate-300 dark:border-slate-700 shadow-2xl text-slate-900 dark:text-slate-100"
       >
         {/* Sticky top bar */}
         <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2 px-4 sm:px-6 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">

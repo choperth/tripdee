@@ -536,19 +536,6 @@ export default function HomePage() {
           </div>
         ) : (
           <div key={activeTab} className="td-panel-enter pb-4 sm:pb-8">
-            {/* TripBoard section — full-bleed dark band per reference design */}
-            <div className="w-[100vw] max-w-none relative left-1/2 -translate-x-1/2">
-              <TripBoard />
-            </div>
-
-            {/* B2B Corporate Caravan Quotation Engine — full-bleed dark band per reference design */}
-            <div className="w-[100vw] max-w-none relative left-1/2 -translate-x-1/2">
-              <CorporateSection vehicles={vehicles} />
-            </div>
-
-            {/* Trusted Community Partners (4 Grid Hairline Cards) */}
-            <TrustedPartnersSection />
-
             {/* Primary Vehicle Catalog & Filter Rail */}
             <section id="results" aria-label={t('home.resultsAria')} className="mt-2 sm:mt-4 scroll-mt-20 sm:scroll-mt-24">
               <SectionHead
@@ -826,6 +813,19 @@ export default function HomePage() {
                 </div>
               )}
             </section>
+
+            {/* TripBoard section — full-bleed dark band, below the fleet catalog */}
+            <div className="w-[100vw] max-w-none relative left-1/2 -translate-x-1/2 mt-8 sm:mt-10">
+              <TripBoard />
+            </div>
+
+            {/* B2B Corporate Caravan Quotation Engine — full-bleed dark band */}
+            <div className="w-[100vw] max-w-none relative left-1/2 -translate-x-1/2">
+              <CorporateSection vehicles={vehicles} />
+            </div>
+
+            {/* Trusted Community Partners (4 Grid Hairline Cards) */}
+            <TrustedPartnersSection />
 
             {/* Member perks — placed after fleet catalog per reference design flow */}
             <MemberPerksSection
