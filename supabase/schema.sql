@@ -62,9 +62,15 @@ create table if not exists public.driver_leads (
     amenities text,
     pickup_location text,
     routes text,
+    owner_id text,
+    price_per_day numeric,
+    description text,
+    images text[],
     status text default 'pending' check (status in ('pending', 'verified', 'rejected')),
     created_at timestamptz default now()
 );
+
+create index if not exists idx_driver_leads_owner_id on public.driver_leads(owner_id);
 
 create index if not exists idx_driver_leads_status on public.driver_leads(status);
 create index if not exists idx_driver_leads_created_at on public.driver_leads(created_at desc);
@@ -322,6 +328,10 @@ alter table public.driver_leads add column if not exists service_type text defau
 alter table public.driver_leads add column if not exists deposit_terms text;
 alter table public.driver_leads add column if not exists amenities text;
 alter table public.driver_leads add column if not exists pickup_location text;
+alter table public.driver_leads add column if not exists owner_id text;
+alter table public.driver_leads add column if not exists price_per_day numeric;
+alter table public.driver_leads add column if not exists description text;
+alter table public.driver_leads add column if not exists images text[];
 
 alter table public.board_posts add column if not exists category text default 'general';
 alter table public.board_posts add column if not exists pin text;
