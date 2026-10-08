@@ -33,6 +33,17 @@ export interface Vehicle {
   zoneRates?: Partial<Record<ZoneId, number>>;
   /** หมายเหตุราคาเฉพาะคัน (ถ้ามี) */
   rateNote?: string;
+  /**
+   * เงื่อนไขบริการที่คนขับกำหนดเอง (เวลาทำงาน/OT/ที่พัก/น้ำมัน).
+   * Serialised into `rateNote` so no Supabase migration is needed; these are
+   * derived fields, not separate columns.
+   */
+  workHoursPerDay?: number;
+  workStart?: string;
+  workEnd?: string;
+  overtimeRatePerHour?: number;
+  overnightStayRate?: number;
+  fuelIncluded?: boolean;
   location: string;
   region?: 'north' | 'central' | 'south' | 'east' | 'isan';
   popularRoutes?: string[];

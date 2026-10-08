@@ -8,6 +8,7 @@ import { X, Check, AlertCircle, RefreshCw, CarFront, Loader2, MessageCircle, Pho
 import { compressImage } from '@/lib/imageCompression';
 import { fetchVehicleReviews, calculateReviewStats, Review } from '@/lib/reviewsStore';
 import { Vehicle } from '@/data/mockData';
+import { DEFAULT_VEHICLE_TERMS, encodeRateNoteWithTerms, parseVehicleTerms } from '@/lib/vehicleTerms';
 import { toISODateString, generateDateRange } from '@/lib/availabilityUtils';
 import { DriverSmartECardModal } from '@/components/cards/DriverSmartECardModal';
 
@@ -36,27 +37,6 @@ const AMENITY_OPTIONS = [
   { id: 'gps', label: 'GPS ติดตามรถ' },
   { id: 'childseat', label: 'คาร์ซีทสำหรับเด็ก' },
 ] as const;
-
-const FUEL_INCLUDED_PREFIX = 'ราคารวมน้ำมัน';
-const FUEL_EXCLUDED_PREFIX = 'ไม่รวมน้ำมัน';
-
-/** Store the fuel policy + toll note inside the free-text rateNote column. */
-function encodeRateNote(included: boolean, note: string): string | undefined {
-  const trimmed = note.trim();
-  if (!included && !trimmed) return undefined;
-  return `${included ? FUEL_INCLUDED_PREFIX : FUEL_EXCLUDED_PREFIX}${trimmed ? ` • ${trimmed}` : ''}`;
-}
-
-function decodeRateNote(rateNote?: string): { included: boolean; note: string } {
-  if (!rateNote) return { included: false, note: '' };
-  if (rateNote.startsWith(FUEL_INCLUDED_PREFIX)) {
-    return { included: true, note: rateNote.slice(FUEL_INCLUDED_PREFIX.length).replace(/^\s*•\s*/, '').trim() };
-  }
-  if (rateNote.startsWith(FUEL_EXCLUDED_PREFIX)) {
-    return { included: false, note: rateNote.slice(FUEL_EXCLUDED_PREFIX.length).replace(/^\s*•\s*/, '').trim() };
-  }
-  return { included: false, note: rateNote.trim() };
-}
 
 export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   isModal = false,
@@ -110,6 +90,12 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   // Fuel policy: whether the quoted day rate already includes fuel/tolls.
   const [fuelIncluded, setFuelIncluded] = useState(false);
   const [fuelNote, setFuelNote] = useState('');
+  // Working hours / OT / overnight-stay terms the driver sets themselves.
+  const [workHoursPerDay, setWorkHoursPerDay] = useState(String(DEFAULT_VEHICLE_TERMS.workHoursPerDay));
+  const [workStart, setWorkStart] = useState(DEFAULT_VEHICLE_TERMS.workStart);
+  const [workEnd, setWorkEnd] = useState(DEFAULT_VEHICLE_TERMS.workEnd);
+  const [overtimeRate, setOvertimeRate] = useState(String(DEFAULT_VEHICLE_TERMS.overtimeRatePerHour));
+  const [overnightRate, setOvernightRate] = useState(String(DEFAULT_VEHICLE_TERMS.overnightStayRate));
 
   // Free-form vehicle description and amenity checklist.
   const [description, setDescription] = useState('');
@@ -210,9 +196,14 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
     setRateMidHill(v.zoneRates?.midHill ? String(v.zoneRates.midHill) : '');
     setRateHighHill(v.zoneRates?.highHill ? String(v.zoneRates.highHill) : '');
     setRateCross(v.zoneRates?.crossProvince ? String(v.zoneRates.crossProvince) : '');
-    const fuel = decodeRateNote(v.rateNote);
-    setFuelIncluded(fuel.included);
-    setFuelNote(fuel.note);
+    const terms = parseVehicleTerms(v);
+    setFuelIncluded(terms.fuelIncluded);
+    setFuelNote(terms.fuelNote);
+    setWorkHoursPerDay(String(terms.workHoursPerDay));
+    setWorkStart(terms.workStart);
+    setWorkEnd(terms.workEnd);
+    setOvertimeRate(String(terms.overtimeRatePerHour));
+    setOvernightRate(String(terms.overnightStayRate));
     setDescription(v.description || '');
     setAmenities(Array.isArray(v.amenities) ? v.amenities : []);
   }, []);
@@ -252,8 +243,13 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
     setRateMidHill('');
     setRateHighHill('');
     setRateCross('');
-    setFuelIncluded(false);
-    setFuelNote('');
+    setFuelIncluded(DEFAULT_VEHICLE_TERMS.fuelIncluded);
+    setFuelNote(DEFAULT_VEHICLE_TERMS.fuelNote);
+    setWorkHoursPerDay(String(DEFAULT_VEHICLE_TERMS.workHoursPerDay));
+    setWorkStart(DEFAULT_VEHICLE_TERMS.workStart);
+    setWorkEnd(DEFAULT_VEHICLE_TERMS.workEnd);
+    setOvertimeRate(String(DEFAULT_VEHICLE_TERMS.overtimeRatePerHour));
+    setOvernightRate(String(DEFAULT_VEHICLE_TERMS.overnightStayRate));
     setDescription('');
     setAmenities([]);
   };
@@ -627,7 +623,17 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
         busyDates,
         description: description.trim() || undefined,
         amenities: amenities.length > 0 ? amenities : undefined,
-        rateNote: encodeRateNote(fuelIncluded, fuelNote),
+        rateNote: encodeRateNoteWithTerms({
+          workHoursPerDay: Number(workHoursPerDay) || DEFAULT_VEHICLE_TERMS.workHoursPerDay,
+          workStart: workStart.trim() || DEFAULT_VEHICLE_TERMS.workStart,
+          workEnd: workEnd.trim() || DEFAULT_VEHICLE_TERMS.workEnd,
+          overtimeRatePerHour:
+            overtimeRate === '' ? DEFAULT_VEHICLE_TERMS.overtimeRatePerHour : Number(overtimeRate),
+          overnightStayRate:
+            overnightRate === '' ? DEFAULT_VEHICLE_TERMS.overnightStayRate : Number(overnightRate),
+          fuelIncluded,
+          fuelNote,
+        }),
         zoneRates: Object.keys(zoneRates).length > 0 ? zoneRates : undefined,
         // A save without an id is a brand-new vehicle — never recycle the first one.
         forceNew: vehicleId ? undefined : true,
@@ -1787,6 +1793,80 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
                     placeholder="หมายเหตุค่าน้ำมัน/ทางด่วน เช่น ค่าน้ำมันคิดตามระยะทางจริง ทางด่วนลูกค้าจ่ายเพิ่ม"
                     className="mt-3 w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
                   />
+                </div>
+
+                {/* Working hours / overtime / overnight stay terms */}
+                <div className="mt-4 p-4 bg-[#F8FAFC] dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+                  <span className="text-xs font-bold text-slate-950 dark:text-white">{t('driver.terms.title')}</span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{t('driver.terms.hint')}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300" htmlFor="terms-workhours">
+                        {t('driver.terms.workHours')}
+                      </label>
+                      <input
+                        id="terms-workhours"
+                        type="text"
+                        inputMode="numeric"
+                        value={workHoursPerDay}
+                        onChange={(e) => setWorkHoursPerDay(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="10"
+                        className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300" htmlFor="terms-ot">
+                        {t('driver.terms.ot')}
+                      </label>
+                      <input
+                        id="terms-ot"
+                        type="text"
+                        inputMode="numeric"
+                        value={overtimeRate}
+                        onChange={(e) => setOvertimeRate(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="200"
+                        className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300" htmlFor="terms-start">
+                        {t('driver.terms.workStart')}
+                      </label>
+                      <input
+                        id="terms-start"
+                        type="time"
+                        value={workStart}
+                        onChange={(e) => setWorkStart(e.target.value)}
+                        className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300" htmlFor="terms-end">
+                        {t('driver.terms.workEnd')}
+                      </label>
+                      <input
+                        id="terms-end"
+                        type="time"
+                        value={workEnd}
+                        onChange={(e) => setWorkEnd(e.target.value)}
+                        className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300" htmlFor="terms-stay">
+                        {t('driver.terms.stay')}
+                      </label>
+                      <input
+                        id="terms-stay"
+                        type="text"
+                        inputMode="numeric"
+                        value={overnightRate}
+                        onChange={(e) => setOvernightRate(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="500"
+                        className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                      />
+                    </div>
+                  </div>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-3">
                   ระบบบันทึกเฉพาะอัตราที่คุณกรอก ช่องที่เว้นว่างจะไม่ถูกบันทึกเป็น 0

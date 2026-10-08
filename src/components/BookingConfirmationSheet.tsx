@@ -3,7 +3,8 @@
 import React, { useState, useRef } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
-import { Vehicle, STANDARD_TERMS } from '@/data/mockData';
+import { Vehicle } from '@/data/mockData';
+import { DEFAULT_VEHICLE_TERMS, parseVehicleTerms } from '@/lib/vehicleTerms';
 import { vehicleTitle, vehiclePopularRoutes } from '@/data/vehicleI18n';
 import {
   Printer,
@@ -91,6 +92,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
   const dailyRateDefault = initialData?.dailyRate || rateFromVehicle;
   const totalCalculated = dailyRateDefault !== null && dailyRateDefault !== undefined ? dailyRateDefault * daysDefault : 0;
   const depositDefault = initialData?.depositAmount !== undefined ? initialData.depositAmount : Math.round(totalCalculated * 0.3);
+  const terms = vehicle ? parseVehicleTerms(vehicle) : DEFAULT_VEHICLE_TERMS;
 
   const [data, setData] = useState<BookingSheetData>(() => ({
     bookingId: initialData?.bookingId || defaultBookingId,
@@ -121,9 +123,15 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
     totalPrice: initialData?.totalPrice || totalCalculated,
     depositAmount: depositDefault,
     remainingAmount: (initialData?.totalPrice || totalCalculated) - depositDefault,
-    fuelTerms: initialData?.fuelTerms || t('sheet.dFuel'),
-    overtimeRate: initialData?.overtimeRate || STANDARD_TERMS.overtimeRatePerHour || 200,
-    overnightRate: initialData?.overnightRate || STANDARD_TERMS.overnightStayRate || 500,
+    fuelTerms:
+      initialData?.fuelTerms ||
+      (terms.fuelIncluded
+        ? `${t('detail.fuelIncluded')}${terms.fuelNote ? ` (${terms.fuelNote})` : ''}`
+        : terms.fuelNote
+          ? `${t('detail.fuelExcluded')} (${terms.fuelNote})`
+          : t('sheet.dFuel')),
+    overtimeRate: initialData?.overtimeRate || terms.overtimeRatePerHour,
+    overnightRate: initialData?.overnightRate || terms.overnightStayRate,
     bankAccountNote: initialData?.bankAccountNote || t('sheet.dBank'),
     specialNotes: initialData?.specialNotes || t('sheet.dSpecial'),
   }));

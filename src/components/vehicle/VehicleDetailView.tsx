@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Vehicle, Sponsor, STANDARD_TERMS } from '@/data/mockData';
+import { Vehicle, Sponsor } from '@/data/mockData';
+import { parseVehicleTerms } from '@/lib/vehicleTerms';
 import {
   vehicleTitle,
   vehicleLocation,
@@ -67,6 +68,9 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
     () => getUpcomingBusyRanges(vehicle.busyDates || [], locale),
     [vehicle.busyDates, locale]
   );
+
+  // Driver-defined service terms, with automatic fallback to the standard defaults.
+  const terms = useMemo(() => parseVehicleTerms(vehicle), [vehicle]);
 
   const isSelfDrive =
     vehicle.rentalType === 'self_drive' ||
@@ -630,12 +634,19 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs text-slate-600 dark:text-slate-400">
                 <div className="p-3 rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
                   <span className="font-bold text-slate-950 dark:text-white block">{t('detail.hoursTitle')}</span>
-                  <p>• {t('detail.termsHours', { h: 10, start: '08:00', end: '18:00', rate: `${STANDARD_TERMS.overtimeRatePerHour} ฿` })}</p>
+                  <p>• {t('detail.termsHours', { h: terms.workHoursPerDay, start: terms.workStart, end: terms.workEnd, rate: `${terms.overtimeRatePerHour} ฿` })}</p>
                 </div>
                 <div className="p-3 rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
                   <span className="font-bold text-slate-950 dark:text-white block">{t('detail.stayTitle')}</span>
-                  <p>• {t('detail.termsStay', { rate: `${STANDARD_TERMS.overnightStayRate} ฿` })}</p>
-                  <p>• {t('terms.fuelNote')}</p>
+                  <p>• {t('detail.termsStay', { rate: `${terms.overnightStayRate} ฿` })}</p>
+                  <p>
+                    •{' '}
+                    {terms.fuelIncluded
+                      ? `${t('detail.fuelIncluded')}${terms.fuelNote ? ` (${terms.fuelNote})` : ''}`
+                      : terms.fuelNote
+                        ? `${t('detail.fuelExcluded')} (${terms.fuelNote})`
+                        : t('terms.fuelNote')}
+                  </p>
                 </div>
               </div>
             </section>

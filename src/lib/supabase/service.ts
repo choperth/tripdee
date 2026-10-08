@@ -15,6 +15,7 @@
 import { getSupabase } from './client';
 import { Database, Booking } from './types';
 import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, SPONSORS, ZoneId, BoardQuote } from '@/data/mockData';
+import { parseVehicleTerms } from '@/lib/vehicleTerms';
 import {
   isMockDataEnabled,
   isExcludedTestVehicle,
@@ -680,6 +681,8 @@ type VehicleRow = {
 
 /** Map a raw `vehicles` row into the app-level `Vehicle` shape. */
 function mapVehicleRow(row: VehicleRow): Vehicle {
+  const rateNote = row.rate_note || undefined;
+  const terms = parseVehicleTerms({ rateNote });
   return {
     id: row.id,
     title: row.title,
@@ -698,7 +701,13 @@ function mapVehicleRow(row: VehicleRow): Vehicle {
     isVerified: Boolean(row.is_verified),
     images: row.images || [],
     zoneRates: row.zone_rates ?? undefined,
-    rateNote: row.rate_note || undefined,
+    rateNote,
+    workHoursPerDay: terms.workHoursPerDay,
+    workStart: terms.workStart,
+    workEnd: terms.workEnd,
+    overtimeRatePerHour: terms.overtimeRatePerHour,
+    overnightStayRate: terms.overnightStayRate,
+    fuelIncluded: terms.fuelIncluded,
     location: row.location,
     region: (row.region as 'north' | 'central' | 'south' | 'east' | 'isan') || 'north',
     popularRoutes: row.popular_routes || [],
@@ -1071,6 +1080,15 @@ export async function updateVehicle(id: string, updates: Partial<Vehicle>): Prom
   if (!target) return null;
 
   const merged: Vehicle = { ...target, ...updates };
+  if (updates.rateNote !== undefined) {
+    const parsed = parseVehicleTerms({ rateNote: updates.rateNote });
+    merged.workHoursPerDay = parsed.workHoursPerDay;
+    merged.workStart = parsed.workStart;
+    merged.workEnd = parsed.workEnd;
+    merged.overtimeRatePerHour = parsed.overtimeRatePerHour;
+    merged.overnightStayRate = parsed.overnightStayRate;
+    merged.fuelIncluded = parsed.fuelIncluded;
+  }
   addApprovedVehicle(merged);
 
   const supabase = getSupabase();
