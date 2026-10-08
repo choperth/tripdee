@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -26,10 +26,14 @@ import {
   KeyRound,
   BadgeCheck,
   Landmark,
+  Heart,
 } from 'lucide-react';
 import { BookingConfirmationSheet, BookingSheetData } from '@/components/BookingConfirmationSheet';
 import { VEHICLE_TIER_META } from '@/lib/b2b';
 import { DangerZone } from '@/components/portals/DangerZone';
+import { getFavoriteVehicleIds, removeFavorite } from '@/lib/favoritesStore';
+import { getMyBoardPosts, SavedUserPost, buildMagicLink } from '@/lib/boardStorage';
+import type { Vehicle } from '@/data/mockData';
 
 interface CustomerPortalModalProps {
   isOpen: boolean;
@@ -37,7 +41,12 @@ interface CustomerPortalModalProps {
   onOpenNewQuote: () => void;
 }
 
-type InnerTab = 'quotes' | 'company' | 'caravans';
+type InnerTab = 'quotes' | 'company' | 'caravans' | 'favorites' | 'board';
+
+interface MyBoardPostView extends SavedUserPost {
+  status?: string;
+  date?: string;
+}
 
 export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
   isOpen,
@@ -46,7 +55,6 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
 }) => {
   const { user, quotations, updateCorporateProfile, updateCustomerProfile, logout, deleteAccount } = useAuth();
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<InnerTab>('quotes');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [sessionVerified, setSessionVerified] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
@@ -54,12 +62,13 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
 
-  // Account Type state: Defaults to corporate if companyName is present, or user's explicit preference
-  const [customerType, setCustomerType] = useState<'individual' | 'corporate'>(() => {
-    if (user?.customerType) return user.customerType;
-    if (user?.companyName && user.companyName.trim().length > 0) return 'corporate';
-    return 'corporate'; // Default to demo corporate or keep current
-  });
+  // Account Type: honour the saved preference, else infer from an existing company
+  // profile, else default to an individual customer.
+  const initialCustomerType: 'individual' | 'corporate' =
+    user?.customerType ??
+    (user?.companyName && user.companyName.trim().length > 0 ? 'corporate' : 'individual');
+  const [customerType, setCustomerType] = useState<'individual' | 'corporate'>(initialCustomerType);
+  const [activeTab, setActiveTab] = useState<InnerTab>(initialCustomerType === 'individual' ? 'favorites' : 'quotes');
 
   // Corporate Profile State
   const [companyName, setCompanyName] = useState(user?.companyName || '');
@@ -76,6 +85,61 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
   );
   const [personalTaxId, setPersonalTaxId] = useState(user?.taxId || '');
 
+  // Individual-only: saved favourite vehicles and the customer's own Trip Board posts.
+  const [allVehicles, setAllVehicles] = useState<Vehicle[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>(() =>
+    typeof window !== 'undefined' ? getFavoriteVehicleIds() : []
+  );
+  const [myPosts, setMyPosts] = useState<MyBoardPostView[]>(() =>
+    typeof window !== 'undefined' ? getMyBoardPosts() : []
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onFavorites = () => setFavoriteIds(getFavoriteVehicleIds());
+    window.addEventListener('tripdee-favorites-updated', onFavorites);
+    return () => window.removeEventListener('tripdee-favorites-updated', onFavorites);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || customerType !== 'individual' || allVehicles.length > 0) return;
+    let cancelled = false;
+    fetch('/api/vehicles')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        if (Array.isArray(data.vehicles)) setAllVehicles(data.vehicles);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, customerType, allVehicles.length]);
+
+  useEffect(() => {
+    if (!isOpen || customerType !== 'individual') return;
+    const posts = getMyBoardPosts();
+    if (posts.length === 0) return;
+    let cancelled = false;
+    fetch('/api/board?includeClosed=true')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data || !Array.isArray(data.posts)) return;
+        const byId = new Map<string, { status?: string; date?: string }>();
+        data.posts.forEach((p: { id: string; status?: string; date?: string }) => byId.set(p.id, p));
+        setMyPosts(posts.map((p) => ({ ...p, status: byId.get(p.id)?.status, date: byId.get(p.id)?.date })));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, customerType]);
+
+  const favoriteVehicles = useMemo(
+    () => allVehicles.filter((v) => favoriteIds.includes(v.id)),
+    [allVehicles, favoriteIds]
+  );
+
   if (!isOpen || !user) return null;
 
   const isAuthenticated = !!user;
@@ -90,11 +154,31 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
     window.dispatchEvent(new CustomEvent('tripdee-open-driver-portal'));
   };
 
+  const handleClosePost = async (post: MyBoardPostView) => {
+    if (typeof window !== 'undefined' && !window.confirm('ยืนยันปิดประกาศหารถนี้?')) return;
+    try {
+      const res = await fetch('/api/board', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'close', id: post.id, pin: post.pin, token: post.viewToken }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || 'ปิดประกาศไม่สำเร็จ');
+        return;
+      }
+      setMyPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, status: 'closed' } : p)));
+    } catch {
+      alert('ปิดประกาศไม่สำเร็จ');
+    }
+  };
+
   const effectiveType = customerType;
   const isCorporate = effectiveType === 'corporate';
 
   const handleSwitchAccountType = (newType: 'individual' | 'corporate') => {
     setCustomerType(newType);
+    setActiveTab(newType === 'individual' ? 'favorites' : 'quotes');
     const updateFn = updateCustomerProfile || updateCorporateProfile;
     updateFn({ customerType: newType });
   };
@@ -151,7 +235,6 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
 
   // ---- Derived enterprise stats (computed from real quotations) ----
   const approvedQuotes = quotations.filter((q) => q.status === 'confirmed' || q.status === 'completed');
-  const pendingQuotes = quotations.filter((q) => q.status === 'pending');
   const billedTotal = approvedQuotes.reduce((sum, q) => sum + q.estimatedPrice, 0);
   const withholding3 = Math.round(billedTotal * 0.03);
   const activeCaravans = quotations.filter((q) => q.status === 'confirmed');
@@ -182,46 +265,54 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
         <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2 px-4 sm:px-6 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2 min-w-0">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-none bg-slate-950 text-amber-400">
-              <Landmark className="h-4.5 w-4.5" strokeWidth={2.5} />
+              {isCorporate ? <Landmark className="h-4.5 w-4.5" strokeWidth={2.5} /> : <User className="h-4.5 w-4.5" strokeWidth={2.5} />}
             </span>
-            <span className="text-xs font-black tracking-wide uppercase">Enterprise Fleet Suite</span>
+            <span className="text-xs font-black tracking-wide uppercase">
+              {isCorporate ? 'Enterprise Fleet Suite' : 'Customer Portal'}
+            </span>
             <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
               <span className="w-1.5 h-1.5 bg-emerald-500" />
               LIVE CONNECTED
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <div className="hidden md:flex items-center gap-2 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1">
-              <span className="grid h-7 w-7 place-items-center rounded-none bg-slate-950 text-white text-[11px] font-black">
-                {companyInitials}
-              </span>
-              <div className="leading-tight">
-                <p className="text-xs font-bold truncate max-w-[160px]">{displayCompany}</p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                  Tax ID: {displayTaxId} · เครดิต ฿85,000
-                </p>
+            {isCorporate && (
+              <div className="hidden md:flex items-center gap-2 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1">
+                <span className="grid h-7 w-7 place-items-center rounded-none bg-slate-950 text-white text-[11px] font-black">
+                  {companyInitials}
+                </span>
+                <div className="leading-tight">
+                  <p className="text-xs font-bold truncate max-w-[160px]">{displayCompany}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                    Tax ID: {displayTaxId}
+                  </p>
+                </div>
               </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setActiveTab('company')}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold hover:border-slate-500 transition-colors cursor-pointer"
-              title={t('pcus.editCompany')}
-            >
-              <Building2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{t('pcus.editCompany')}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onOpenNewQuote();
-              }}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-none bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold border border-amber-600 transition-colors cursor-pointer"
-            >
-              <Plus className="h-3.5 w-3.5" strokeWidth={3} />
-              <span className="hidden sm:inline">{t('pcus.newQuote')}</span>
-            </button>
+            )}
+            {isCorporate && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('company')}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-none border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold hover:border-slate-500 transition-colors cursor-pointer"
+                title={t('pcus.editCompany')}
+              >
+                <Building2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t('pcus.editCompany')}</span>
+              </button>
+            )}
+            {isCorporate && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenNewQuote();
+                }}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-none bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold border border-amber-600 transition-colors cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" strokeWidth={3} />
+                <span className="hidden sm:inline">{t('pcus.newQuote')}</span>
+              </button>
+            )}
             <button
               onClick={onClose}
               aria-label={t('pcus.close')}
@@ -237,7 +328,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
               <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 px-2 py-0.5">
-                Enterprise Fleet Suite 2026
+                {isCorporate ? 'Enterprise Fleet Suite 2026' : 'Customer Portal'}
               </span>
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5">
                 <span className="w-1.5 h-1.5 bg-emerald-500" />
@@ -245,72 +336,75 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
               </span>
             </div>
             <h2 id="customer-portal-title" className="text-xl sm:text-2xl font-black tracking-tight">
-              ศูนย์บริหารจัดการพอร์ตแบบบูรณาการ (Unified Portal)
+              {isCorporate
+                ? 'ศูนย์บริหารจัดการพอร์ตแบบบูรณาการ (Unified Portal)'
+                : 'ศูนย์จัดการข้อมูลลูกค้า (Customer Portal)'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              เข้าถึงระบบควบคุม 3 สิทธิ์หลัก: องค์กรธุรกิจ B2B, ผู้เดินทางส่วนบุคคล และศูนย์คนขับรถที่พันธมิตร
+              {isCorporate
+                ? 'ขอใบเสนอราคา ออกใบกำกับภาษี บันทึกข้อมูลนิติบุคคล และติดตามขบวนรถคาราวาน'
+                : 'จัดการข้อมูลส่วนตัว รถที่บันทึกไว้ และประกาศหารถของคุณใน Trip Board'}
             </p>
           </div>
 
-          {/* 3 role cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Account type toggle — strict individual vs corporate segregation */}
+          <div>
+            <span className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">
+              เลือกประเภทบัญชีของคุณ
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => handleSwitchAccountType('individual')}
+                className={`flex items-center gap-3 p-3 text-left transition-colors cursor-pointer ${
+                  !isCorporate
+                    ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950 shadow-xs'
+                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-slate-400'
+                }`}
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-none bg-white/15 dark:bg-slate-800/20">
+                  <User className="h-4.5 w-4.5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs font-bold">บัญชีบุคคลทั่วไป</span>
+                  <span className="block text-[11px] opacity-80">ทริปส่วนตัว รถที่บันทึกไว้ และประกาศหารถ</span>
+                </span>
+                {!isCorporate && <Check className="h-4 w-4 shrink-0" strokeWidth={3} />}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSwitchAccountType('corporate')}
+                className={`flex items-center gap-3 p-3 text-left transition-colors cursor-pointer ${
+                  isCorporate
+                    ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950 shadow-xs'
+                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-slate-400'
+                }`}
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-none bg-white/15 dark:bg-slate-800/20">
+                  <Building2 className="h-4.5 w-4.5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs font-bold">บัญชีนิติบุคคล / องค์กร</span>
+                  <span className="block text-[11px] opacity-80">ใบกำกับภาษี หัก ณ ที่จ่าย 3% และคาราวาน</span>
+                </span>
+                {isCorporate && <Check className="h-4 w-4 shrink-0" strokeWidth={3} />}
+              </button>
+            </div>
             <button
               type="button"
-              onClick={() => handleSwitchAccountType('corporate')}
-              className={`flex items-center gap-3 p-3.5 rounded-none border text-left transition-colors cursor-pointer ${
-                isCorporate
-                  ? 'bg-white dark:bg-slate-900 border-slate-950 dark:border-white shadow-xs'
-                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-400'
-              }`}
+              onClick={handleOpenDriverPortal}
+              className="mt-2 w-full flex items-center justify-center gap-2 p-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-950 dark:hover:border-white text-xs font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
             >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-none bg-slate-950 text-white">
-                <Building2 className="h-4.5 w-4.5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-xs font-bold">1. บัญชีองค์กร B2B</span>
-                <span className="block text-[11px] text-slate-500 dark:text-slate-400">ใบกำกับภาษี & สัมมนาคาราวาน</span>
-              </span>
-              <span className={`text-[10px] font-black px-2 py-0.5 shrink-0 ${isCorporate ? 'bg-slate-950 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
-                ใช้งานอยู่
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSwitchAccountType('individual')}
-              className={`flex items-center gap-3 p-3.5 rounded-none border text-left transition-colors cursor-pointer ${
-                !isCorporate
-                  ? 'bg-white dark:bg-slate-900 border-slate-950 dark:border-white shadow-xs'
-                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-400'
-              }`}
-            >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                <User className="h-4.5 w-4.5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-xs font-bold">2. ผู้เดินทาง / ลูกค้าบุคคล</span>
-                <span className="block text-[11px] text-slate-500 dark:text-slate-400">ทริปส่วนตัว & คูปองสิทธิพิเศษ</span>
-              </span>
-              <span className={`text-[10px] font-black px-2 py-0.5 shrink-0 ${!isCorporate ? 'bg-slate-950 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
-                {t('pcus.tripsIncoming', { n: pendingQuotes.length })}
-              </span>
-            </button>
-            <button type="button" onClick={handleOpenDriverPortal} className="flex items-center gap-3 p-3.5 rounded-none border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-950 dark:hover:border-white text-left transition-colors cursor-pointer">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                <CarFront className="h-4.5 w-4.5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-xs font-bold">3. พาร์ทเนอร์คนขับ (Driver)</span>
-                <span className="block text-[11px] text-slate-500 dark:text-slate-400">รับงานตรง ไม่ผ่านคนกลาง</span>
-              </span>
-              <span className="text-[10px] font-black px-2 py-0.5 shrink-0 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                คิวว่าง
-              </span>
+              <CarFront className="h-4 w-4" />
+              <span>พาร์ทเนอร์คนขับ (Driver) — รับงานตรง ไม่ผ่านคนกลาง</span>
             </button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
             {/* LEFT: document center + quotes */}
             <div className="lg:col-span-2 space-y-5 min-w-0">
+              {isCorporate && (
+                <>
               {/* Company document center */}
               <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none p-4 sm:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -736,6 +830,281 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
                   </div>
                 </form>
               )}
+                </>
+              )}
+
+              {!isCorporate && (
+                <div className="space-y-5">
+                  {/* Individual tabs */}
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      [
+                        { id: 'favorites', label: `รถที่บันทึกไว้ (${favoriteVehicles.length})`, icon: Heart },
+                        { id: 'board', label: `ประกาศหารถของฉัน (${myPosts.length})`, icon: FileText },
+                        { id: 'company', label: 'ข้อมูลส่วนตัว', icon: User },
+                      ] as { id: InnerTab; label: string; icon: typeof FileText }[]
+                    ).map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-none text-xs font-bold border transition-colors cursor-pointer ${
+                          activeTab === tab.id
+                            ? 'bg-slate-950 text-white border-slate-950 dark:bg-white dark:text-slate-950 dark:border-white'
+                            : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-400'
+                        }`}
+                      >
+                        <tab.icon className="h-3.5 w-3.5" />
+                        <span>{tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* TAB: favorites */}
+                  {activeTab === 'favorites' && (
+                    <div className="space-y-3">
+                      {favoriteVehicles.length === 0 ? (
+                        <div className="text-center py-12 px-4 rounded-none border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 space-y-3">
+                          <div className="w-12 h-12 rounded-none bg-rose-50 dark:bg-rose-950/60 text-rose-500 mx-auto flex items-center justify-center">
+                            <Heart className="w-6 h-6" />
+                          </div>
+                          <h4 className="text-sm font-bold">ยังไม่มีรถที่บันทึกไว้</h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                            กดไอคอนหัวใจบนรถที่คุณสนใจ แล้วรถคันนั้นจะมาแสดงที่นี่เพื่อติดต่อคนขับได้ทันที
+                          </p>
+                        </div>
+                      ) : (
+                        favoriteVehicles.map((v) => (
+                          <div
+                            key={v.id}
+                            className="flex flex-col sm:flex-row gap-3 rounded-none border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3"
+                          >
+                            <div className="w-full sm:w-40 h-28 shrink-0 bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                              {v.images && v.images[0] ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={v.images[0]} alt={v.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full grid place-items-center text-slate-400">
+                                  <CarFront className="h-6 w-6" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-sm font-bold text-slate-900 dark:text-white">{v.title}</h4>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                {v.driverNickname || v.driverName} · {v.seats} ที่นั่ง · {v.location}
+                              </p>
+                              <p className="text-sm font-black text-amber-600 dark:text-amber-400 mt-1">
+                                {v.zoneRates?.city ? `฿${v.zoneRates.city.toLocaleString()} / วัน` : 'สอบถามราคาโดยตรง'}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 mt-2">
+                                {v.driverPhone && (
+                                  <a
+                                    href={`tel:${v.driverPhone.replace(/[^0-9+]/g, '')}`}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-none bg-[#06C755] hover:bg-[#05b04b] text-white text-xs font-bold transition-colors"
+                                  >
+                                    <Phone className="h-3.5 w-3.5" />
+                                    <span>โทรหาคนขับ</span>
+                                  </a>
+                                )}
+                                {v.driverLine && (
+                                  <a
+                                    href={v.driverLine.startsWith('http') ? v.driverLine : `https://line.me/ti/p/~${v.driverLine}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-none border border-[#06C755] text-[#06C755] hover:bg-[#06C755]/10 text-xs font-bold transition-colors"
+                                  >
+                                    <MessageCircle className="h-3.5 w-3.5" />
+                                    <span>แอดไลน์</span>
+                                  </a>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    removeFavorite(v.id);
+                                    setFavoriteIds(getFavoriteVehicleIds());
+                                  }}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-none border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:text-rose-600 text-xs font-bold transition-colors cursor-pointer"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                  <span>นำออก</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {/* TAB: board posts */}
+                  {activeTab === 'board' && (
+                    <div className="space-y-3">
+                      {myPosts.length === 0 ? (
+                        <div className="text-center py-12 px-4 rounded-none border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 space-y-3">
+                          <div className="w-12 h-12 rounded-none bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 mx-auto flex items-center justify-center">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                          <h4 className="text-sm font-bold">ยังไม่มีประกาศหารถของคุณ</h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                            ประกาศที่คุณโพสต์ไว้ใน Trip Board จะมาแสดงที่นี่ พร้อมสถานะและคนขับที่ติดต่อเข้ามา
+                          </p>
+                        </div>
+                      ) : (
+                        myPosts.map((post) => {
+                          const closed = post.status === 'closed' || post.status === 'completed';
+                          return (
+                            <div
+                              key={post.id}
+                              className="rounded-none border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                                  {post.title || 'ประกาศหารถ'}
+                                </h4>
+                                <span
+                                  className={`px-2 py-0.5 text-[11px] font-bold border ${
+                                    closed
+                                      ? 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                                      : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                                  }`}
+                                >
+                                  {closed ? 'ปิดประกาศแล้ว' : 'เปิดรับข้อเสนออยู่'}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {post.date ? `วันเดินทาง: ${post.date} · ` : ''}รหัส: <span className="font-mono">{post.id}</span>
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 pt-1">
+                                <a
+                                  href={buildMagicLink(post.id, post.viewToken)}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-none bg-slate-950 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-950 text-white text-xs font-bold transition-colors"
+                                >
+                                  <FileText className="h-3.5 w-3.5" />
+                                  <span>ดูคนขับที่ติดต่อเข้ามา</span>
+                                </a>
+                                {!closed && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleClosePost(post)}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-none border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-bold transition-colors cursor-pointer"
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                    <span>ปิดประกาศ</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+
+                  {/* TAB: personal profile */}
+                  {activeTab === 'company' && (
+                    <form
+                      onSubmit={handleSaveTaxProfile}
+                      className="rounded-none border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 space-y-4"
+                    >
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                        กรอกข้อมูลติดต่อส่วนตัวเพื่อให้คนขับและทีมงานติดต่อคุณได้สะดวก
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                          <label htmlFor="cus-ind-name" className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                            ชื่อ-นามสกุล
+                          </label>
+                          <input
+                            id="cus-ind-name"
+                            type="text"
+                            required
+                            placeholder="เช่น คุณสมชาย ใจดี"
+                            value={personalName}
+                            onChange={(e) => setPersonalName(e.target.value)}
+                            className={inputCls}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="cus-ind-phone" className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                            เบอร์โทรศัพท์
+                          </label>
+                          <div className="relative">
+                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                              id="cus-ind-phone"
+                              type="tel"
+                              required
+                              placeholder="08x-xxx-xxxx"
+                              value={personalPhone}
+                              onChange={(e) => setPersonalPhone(e.target.value)}
+                              className={`${inputCls} pl-10`}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                          <label htmlFor="cus-ind-line" className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                            LINE ID
+                          </label>
+                          <div className="relative">
+                            <MessageCircle className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
+                            <input
+                              id="cus-ind-line"
+                              type="text"
+                              placeholder="@yourlineid"
+                              value={personalLine}
+                              onChange={(e) => setPersonalLine(e.target.value)}
+                              className={`${inputCls} pl-10`}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label htmlFor="cus-ind-email" className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                            อีเมล (ไม่บังคับ)
+                          </label>
+                          <input
+                            id="cus-ind-email"
+                            type="email"
+                            placeholder="name@example.com"
+                            value={personalEmail}
+                            onChange={(e) => setPersonalEmail(e.target.value)}
+                            className={inputCls}
+                          />
+                        </div>
+                      </div>
+
+                      {saveSuccess && (
+                        <div className="flex items-center gap-2 rounded-none bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 p-3 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                          <Check className="h-4 w-4 shrink-0" strokeWidth={3} />
+                          <span>บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว</span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <button
+                          type="submit"
+                          className="inline-flex items-center justify-center px-6 py-2.5 rounded-none bg-slate-950 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 dark:text-slate-950 text-white text-xs sm:text-sm font-bold transition-colors cursor-pointer"
+                        >
+                          บันทึกข้อมูลส่วนตัว
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            logout();
+                            onClose();
+                          }}
+                          className="flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 transition-colors cursor-pointer hover:underline"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          <span>{t('pcus.logout')}</span>
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
 
               {/* PDPA */}
               <section className="rounded-none border border-red-300 dark:border-red-900 bg-red-50/60 dark:bg-red-950/20 p-4 sm:p-5">
@@ -795,11 +1164,17 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
               </span>
             </div>
             <div className="border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3 space-y-1.5 mb-3">
-              <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{t('pcus.sessionCompany')}</p>
-              <p className="text-sm font-black truncate">{displayCompany}</p>
-              <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">Tax ID: {displayTaxId}</p>
+              <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                {isCorporate ? t('pcus.sessionCompany') : 'บัญชีผู้ใช้งาน'}
+              </p>
+              <p className="text-sm font-black truncate">
+                {isCorporate ? displayCompany : personalName || user.name}
+              </p>
+              <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                {isCorporate ? `Tax ID: ${displayTaxId}` : personalPhone || user.emailOrPhone}
+              </p>
               <span className="inline-block text-[10px] font-black px-2 py-0.5 bg-slate-950 text-white dark:bg-white dark:text-slate-950">
-                B2B Enterprise Corporate
+                {isCorporate ? 'B2B Enterprise Corporate' : 'Individual Customer'}
               </span>
             </div>
             <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1.5 mb-3">
@@ -905,6 +1280,8 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
           </section>
           )}
 
+              {isCorporate && (
+                <>
               {/* Tax compliance */}
               <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none p-4 sm:p-5">
                 <h3 className="text-xs font-black flex items-center gap-1.5 mb-3">
@@ -965,6 +1342,8 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
                   <span>LINE: @tripdee_corp</span>
                 </a>
               </section>
+                </>
+              )}
             </div>
           </div>
         </div>

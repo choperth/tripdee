@@ -80,7 +80,12 @@ export default function VehicleDetailPage() {
   if (status === 'loading' || !vehicle) {
     return (
       <div className="flex min-h-dvh flex-col bg-paper font-body text-ink">
-        <Navbar onOpenLoginModal={() => setIsLoginOpen(true)} onOpenDriverEntry={openDriverCentre} />
+        <Navbar
+          onOpenLoginModal={() => setIsLoginOpen(true)}
+          onOpenRegisterModal={() => setIsRegisterOpen(true)}
+          onOpenDriverEntry={openDriverCentre}
+          onOpenAddVehicle={openDriverCentre}
+        />
         <div aria-hidden="true" className="h-16 shrink-0" />
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 py-16 text-center">
           {status === 'loading' ? (
@@ -113,7 +118,12 @@ export default function VehicleDetailPage() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-paper font-body text-ink">
-      <Navbar onOpenLoginModal={() => setIsLoginOpen(true)} onOpenDriverEntry={openDriverCentre} />
+      <Navbar
+        onOpenLoginModal={() => setIsLoginOpen(true)}
+        onOpenRegisterModal={() => setIsRegisterOpen(true)}
+        onOpenDriverEntry={openDriverCentre}
+        onOpenAddVehicle={openDriverCentre}
+      />
       <div aria-hidden="true" className="h-16 shrink-0" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 sm:px-6 py-6">
         <VehicleDetailView

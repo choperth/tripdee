@@ -334,6 +334,9 @@ export async function fetchDriverLeads(reqUrl?: string): Promise<DriverLead[]> {
         canIssueTaxInvoice: row.can_issue_tax_invoice !== null ? Boolean(row.can_issue_tax_invoice) : undefined,
         businessType: (row.business_type as 'company' | 'individual') || undefined,
         routes: row.routes || '',
+        pricePerDay: row.price_per_day ?? undefined,
+        description: row.description || undefined,
+        images: Array.isArray(row.images) ? row.images : undefined,
         submittedAt: row.created_at,
         status: row.status,
         ownerId: row.owner_id || undefined,
@@ -360,6 +363,9 @@ export async function saveDriverLead(lead: {
   canIssueTaxInvoice?: boolean;
   businessType?: 'company' | 'individual';
   routes: string;
+  pricePerDay?: number;
+  description?: string;
+  images?: string[];
 }): Promise<DriverLead> {
   const localLead = addLocalDriver(lead);
 
@@ -386,6 +392,9 @@ export async function saveDriverLead(lead: {
         can_issue_tax_invoice: lead.canIssueTaxInvoice ?? null,
         business_type: lead.businessType || null,
         routes: lead.routes,
+        price_per_day: lead.pricePerDay ?? null,
+        description: lead.description || null,
+        images: lead.images || null,
         status: 'pending',
       })
       .select()
@@ -437,6 +446,9 @@ export async function saveDriverLead(lead: {
         canIssueTaxInvoice: data.can_issue_tax_invoice !== null && data.can_issue_tax_invoice !== undefined ? Boolean(data.can_issue_tax_invoice) : undefined,
         businessType: (data.business_type as 'company' | 'individual') || undefined,
         routes: data.routes,
+        pricePerDay: data.price_per_day ?? undefined,
+        description: data.description || undefined,
+        images: Array.isArray(data.images) ? data.images : undefined,
         submittedAt: data.created_at,
         status: data.status,
       };

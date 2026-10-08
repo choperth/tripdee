@@ -10,6 +10,8 @@ export interface DriverPortalModalProps {
   initialTab?: 'profile' | 'perks' | 'jobs' | 'reviews';
   /** Opens the free vehicle registration flow from inside the sign-in gate. */
   onOpenRegister?: () => void;
+  /** Lands directly in "add a new fleet vehicle" mode. */
+  initialAddVehicle?: boolean;
 }
 
 export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
@@ -17,6 +19,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
   onClose,
   initialTab = 'profile',
   onOpenRegister,
+  initialAddVehicle = false,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
@@ -41,6 +44,7 @@ export const DriverPortalModal: React.FC<DriverPortalModalProps> = ({
           onClose={onClose}
           initialTab={initialTab}
           onOpenRegister={onOpenRegister}
+          initialAddVehicle={initialAddVehicle}
         />
       </div>
     </div>

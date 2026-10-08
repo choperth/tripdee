@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { VEHICLE_CATEGORY_GROUPS } from '@/data/vehicleModels';
 import type { Vehicle } from '@/data/mockData';
+import { compressImage } from '@/lib/imageCompression';
 
 interface DriverRegisterModalProps {
   isOpen: boolean;
@@ -120,7 +121,13 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
     amenities: ['reg.amWifi', 'reg.amInsurance'] as string[],
     pickupLocation: '',
     depositTerms: '',
+    pricePerDay: '',
+    description: '',
   });
+
+  // Real vehicle photos captured at registration (compressed client-side).
+  const [vehiclePhotos, setVehiclePhotos] = useState<string[]>([]);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   // 3 Mandatory verification files for direct drivers
   const [driverLicenseFile, setDriverLicenseFile] = useState<File | null>(null);
@@ -188,6 +195,29 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
     });
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setPhotoUploading(true);
+    try {
+      const remaining = Math.max(0, 4 - vehiclePhotos.length);
+      const picked = Array.from(files).slice(0, remaining);
+      const compressed = await Promise.all(
+        picked.map((file) => compressImage(file, { maxWidth: 1600, quality: 0.85 }))
+      );
+      setVehiclePhotos((prev) => [...prev, ...compressed.map((r) => r.dataUrl)].slice(0, 4));
+    } catch {
+      // Ignore compression failures — the driver can retry.
+    } finally {
+      setPhotoUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setVehiclePhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleNext = () => {
     if (currentStep === 1) {
       if (!formData.driverName.trim() || !formData.phone.trim() || !formData.lineId.trim()) {
@@ -239,6 +269,9 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
           amenities: formData.amenities.map((key) => t(key as DictKey)).join(', '),
           pickupLocation: formData.pickupLocation,
           depositTerms: formData.depositTerms,
+          pricePerDay: Number(formData.pricePerDay.replace(/[^0-9]/g, '')) || undefined,
+          description: formData.description.trim() || undefined,
+          images: vehiclePhotos.length > 0 ? vehiclePhotos : undefined,
           hp_website: hpWebsite,
           _hp_timestamp: formMountedAt,
         }),
@@ -254,6 +287,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
       const leadId = resData.lead?.id || `drv-${Date.now()}`;
 
       // If user is already logged in as driver, update their profile; otherwise log them in
+      const photoPayload = vehiclePhotos.length > 0 ? vehiclePhotos : undefined;
       if (user && user.role === 'driver') {
         updateDriverProfile({
           driverNickname: finalNickname,
@@ -264,6 +298,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
           whatsapp: formData.whatsapp.trim() || undefined,
           wechat: formData.wechat.trim() || undefined,
           kakao: formData.kakao.trim() || undefined,
+          images: photoPayload,
           verificationStatus: 'pending',
         });
       } else {
@@ -277,6 +312,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
             vehicleTitle: finalModel,
             vehiclePlate: formData.plateNumber.trim() || undefined,
             seats: Number(formData.seats) || 9,
+            images: photoPayload,
             isAvailable: true,
             verificationStatus: 'pending',
           }
@@ -1062,6 +1098,90 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
                             <span className="line-clamp-1">{driverWithCarFile ? driverWithCarFile.name : 'เลือกรูปคู่กับรถ'}</span>
                           </button>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Initial pricing, description & real vehicle photos */}
+                    <div className="space-y-4 pt-3 border-t border-slate-200 dark:border-slate-800">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-ink">
+                            ราคาค่าบริการเริ่มต้น (บาท/วัน)
+                          </label>
+                          <div className="relative flex items-center">
+                            <span className="absolute left-3.5 text-xs font-bold text-slate-500">฿</span>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="เช่น 2000"
+                              value={formData.pricePerDay}
+                              onChange={(e) =>
+                                setFormData({ ...formData, pricePerDay: e.target.value.replace(/[^0-9]/g, '') })
+                              }
+                              className={`${fieldCls} pl-8 font-mono`}
+                            />
+                            <span className="absolute right-3.5 text-[11px] font-semibold text-slate-400">บาท/วัน</span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                            ตั้งราคาโซนในเมืองขั้นต้น ปรับแก้ราคาโซนอื่นได้ในศูนย์คนขับ
+                          </p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-ink">
+                            รายละเอียดจุดเด่นของรถ / ประสบการณ์การขับขี่
+                          </label>
+                          <textarea
+                            rows={3}
+                            placeholder="เช่น รถตู้ VIP เบาะนวด คนขับชำนาญดอยอินทนนท์ พูดภาษาอังกฤษได้"
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            className="w-full px-3.5 py-2.5 rounded-none bg-card border border-rule text-ink text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-2xs resize-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Vehicle photo upload (1-4, compressed client-side) */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-ink">
+                            รูปถ่ายรถจริง (ภายนอก / ภายในเบาะ VIP) 1-4 รูป
+                          </span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {vehiclePhotos.length}/4 รูป
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {vehiclePhotos.map((src, idx) => (
+                            <div key={idx} className="relative group border border-rule bg-card">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={src} alt={`รูปรถ #${idx + 1}`} className="w-full aspect-[4/3] object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePhoto(idx)}
+                                className="absolute top-1.5 right-1.5 w-6 h-6 bg-white/90 dark:bg-slate-900/90 hover:bg-rose-600 hover:text-white text-slate-800 dark:text-slate-200 flex items-center justify-center text-xs cursor-pointer"
+                                title="ลบรูปนี้"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                          {vehiclePhotos.length < 4 && (
+                            <label className="cursor-pointer border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-amber-500 bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center aspect-[4/3] text-center transition-colors">
+                              {photoUploading ? (
+                                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                              ) : (
+                                <Upload className="w-5 h-5 text-slate-400" />
+                              )}
+                              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 mt-1">
+                                + อัปโหลดรูป
+                              </span>
+                              <input type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
+                            </label>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          ระบบบีบอัดรูปอัตโนมัติก่อนบันทึก รูปรถจริงจะแสดงบนหน้าเว็บไซต์เมื่อการสมัครได้รับอนุมัติ
+                        </p>
                       </div>
                     </div>
                   </div>

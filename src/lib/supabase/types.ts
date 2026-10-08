@@ -123,6 +123,9 @@ export type Database = {
           plate_type: 'yellow' | 'blue' | null;
           can_issue_tax_invoice: boolean | null;
           business_type: 'company' | 'individual' | null;
+          price_per_day?: number | null;
+          description?: string | null;
+          images?: string[] | null;
           created_at: string;
           owner_id?: string | null;
         };
@@ -143,6 +146,9 @@ export type Database = {
           plate_type?: 'yellow' | 'blue' | null;
           can_issue_tax_invoice?: boolean | null;
           business_type?: 'company' | 'individual' | null;
+          price_per_day?: number | null;
+          description?: string | null;
+          images?: string[] | null;
           created_at?: string;
           owner_id?: string | null;
         };

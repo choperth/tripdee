@@ -191,9 +191,12 @@ export default function HomePage() {
     return () => window.removeEventListener('tripdee-filter-plate', handlePlateFilter);
   }, []);
   const [isDriverPortalOpen, setIsDriverPortalOpen] = useState<boolean>(false);
+  const [driverAddVehicle, setDriverAddVehicle] = useState<boolean>(false);
 
   useEffect(() => {
-    const handleDriverPortalEvent = () => {
+    const handleDriverPortalEvent = (e: Event) => {
+      const detail = (e as CustomEvent<{ add?: boolean }>).detail;
+      setDriverAddVehicle(Boolean(detail?.add));
       setIsDriverPortalOpen(true);
     };
     window.addEventListener('tripdee-open-driver-portal', handleDriverPortalEvent);
@@ -416,7 +419,14 @@ export default function HomePage() {
         setActiveTab={setActiveTab}
         onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
-        onOpenDriverEntry={() => setIsDriverPortalOpen(true)}
+        onOpenDriverEntry={() => {
+          setDriverAddVehicle(false);
+          setIsDriverPortalOpen(true);
+        }}
+        onOpenAddVehicle={() => {
+          setDriverAddVehicle(true);
+          setIsDriverPortalOpen(true);
+        }}
         onOpenPortal={() => setIsPortalOpen(true)}
       />
       <div aria-hidden="true" className="h-16 shrink-0" />
@@ -890,19 +900,25 @@ export default function HomePage() {
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
-        onOpenDriverEntry={() => setIsDriverPortalOpen(true)}
+        onOpenDriverEntry={() => {
+          setDriverAddVehicle(false);
+          setIsDriverPortalOpen(true);
+        }}
       />
 
       {((user?.role === 'driver' && isPortalOpen) || isDriverPortalOpen) && (
         <DriverPortalModal
           isOpen={isPortalOpen || isDriverPortalOpen}
+          initialAddVehicle={driverAddVehicle}
           onClose={() => {
             setIsPortalOpen(false);
             setIsDriverPortalOpen(false);
+            setDriverAddVehicle(false);
           }}
           onOpenRegister={() => {
             setIsPortalOpen(false);
             setIsDriverPortalOpen(false);
+            setDriverAddVehicle(false);
             setIsRegisterModalOpen(true);
           }}
         />

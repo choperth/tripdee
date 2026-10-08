@@ -54,6 +54,12 @@ export interface DriverLead {
   businessType?: 'company' | 'individual';
   routes: string;
   serviceType?: 'with_driver' | 'self_drive';
+  /** ราคาค่าบริการเริ่มต้นต่อวันที่คนขับกรอกตอนสมัคร (บาท/วัน) */
+  pricePerDay?: number;
+  /** รายละเอียดจุดเด่นของรถ / ประสบการณ์คนขับ ที่กรอกตอนสมัคร */
+  description?: string;
+  /** รูปถ่ายรถจริง (ภายนอก/ภายใน) ที่อัปโหลดตอนสมัคร */
+  images?: string[];
   submittedAt: string;
   status: 'pending' | 'verified' | 'rejected';
 }
@@ -136,13 +142,17 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
     rating: 0,
     reviewCount: 0,
     isVerified: false,
-    images: [],
-    zoneRates: undefined,
+    images: Array.isArray(lead.images) ? lead.images.filter(Boolean) : [],
+    // Only record the starting city rate the driver actually typed; never seed
+    // placeholder zeros for the other zones the form never asked about.
+    zoneRates: lead.pricePerDay && lead.pricePerDay > 0 ? { city: lead.pricePerDay } : undefined,
     rateNote: undefined,
     location: lead.routes || 'บริการทั่วไทย',
     popularRoutes,
     amenities: [],
-    description: `บริการรถพร้อมคนขับ โดย ${lead.driverName} (${lead.nickname}) ยานพาหนะ ${lead.vehicleModel}${lead.routes ? ` ชำนาญเส้นทาง ${lead.routes}` : ''}`,
+    description:
+      lead.description?.trim() ||
+      `บริการรถพร้อมคนขับ โดย ${lead.driverName} (${lead.nickname}) ยานพาหนะ ${lead.vehicleModel}${lead.routes ? ` ชำนาญเส้นทาง ${lead.routes}` : ''}`,
     plateType: lead.plateType || (isYellow ? 'yellow' : 'blue'),
     plateNumber: lead.plateNumber || undefined,
     canIssueTaxInvoice: Boolean(lead.canIssueTaxInvoice),
@@ -358,6 +368,10 @@ export function addDriverLead(lead: {
   canIssueTaxInvoice?: boolean;
   businessType?: 'company' | 'individual';
   routes: string;
+  serviceType?: 'with_driver' | 'self_drive';
+  pricePerDay?: number;
+  description?: string;
+  images?: string[];
 }): DriverLead {
   const db = getDb();
   const newLead: DriverLead = {

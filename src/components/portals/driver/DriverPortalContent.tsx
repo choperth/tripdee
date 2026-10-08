@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { X, Check, AlertCircle, RefreshCw, CarFront, Loader2, MessageCircle, Phone } from 'lucide-react';
+import { X, Check, AlertCircle, RefreshCw, CarFront, Loader2, MessageCircle, Phone, Plus, Pencil } from 'lucide-react';
 import { compressImage } from '@/lib/imageCompression';
 import { fetchVehicleReviews, calculateReviewStats, Review } from '@/lib/reviewsStore';
 import { Vehicle } from '@/data/mockData';
@@ -17,15 +17,53 @@ export interface DriverPortalContentProps {
   initialTab?: 'profile' | 'perks' | 'jobs' | 'reviews';
   /** Opens the free vehicle registration flow for drivers who have no account yet. */
   onOpenRegister?: () => void;
+  /** When true, land directly in "add a new fleet vehicle" mode. */
+  initialAddVehicle?: boolean;
 }
 
 type TabType = 'profile' | 'perks' | 'jobs' | 'reviews';
+
+/** Amenities a driver can tick on their vehicle listing. */
+const AMENITY_OPTIONS = [
+  { id: 'massage_seat', label: 'เบาะนวดไฟฟ้า' },
+  { id: 'wifi', label: 'Wi-Fi ฟรีบนรถ' },
+  { id: 'air_purifier', label: 'เครื่องฟอกอากาศ' },
+  { id: 'usbc', label: 'ที่ชาร์จ Type-C ทุกที่นั่ง' },
+  { id: 'karaoke', label: 'คาราโอเกะ / Smart TV' },
+  { id: 'insurance1', label: 'ประกันภัยชั้น 1' },
+  { id: 'cooler', label: 'ตู้เย็นขนาดเล็ก' },
+  { id: 'luggage', label: 'พื้นที่กระเป๋ากว้าง' },
+  { id: 'gps', label: 'GPS ติดตามรถ' },
+  { id: 'childseat', label: 'คาร์ซีทสำหรับเด็ก' },
+] as const;
+
+const FUEL_INCLUDED_PREFIX = 'ราคารวมน้ำมัน';
+const FUEL_EXCLUDED_PREFIX = 'ไม่รวมน้ำมัน';
+
+/** Store the fuel policy + toll note inside the free-text rateNote column. */
+function encodeRateNote(included: boolean, note: string): string | undefined {
+  const trimmed = note.trim();
+  if (!included && !trimmed) return undefined;
+  return `${included ? FUEL_INCLUDED_PREFIX : FUEL_EXCLUDED_PREFIX}${trimmed ? ` • ${trimmed}` : ''}`;
+}
+
+function decodeRateNote(rateNote?: string): { included: boolean; note: string } {
+  if (!rateNote) return { included: false, note: '' };
+  if (rateNote.startsWith(FUEL_INCLUDED_PREFIX)) {
+    return { included: true, note: rateNote.slice(FUEL_INCLUDED_PREFIX.length).replace(/^\s*•\s*/, '').trim() };
+  }
+  if (rateNote.startsWith(FUEL_EXCLUDED_PREFIX)) {
+    return { included: false, note: rateNote.slice(FUEL_EXCLUDED_PREFIX.length).replace(/^\s*•\s*/, '').trim() };
+  }
+  return { included: false, note: rateNote.trim() };
+}
 
 export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   isModal = false,
   onClose = () => {},
   initialTab = 'profile',
   onOpenRegister,
+  initialAddVehicle = false,
 }) => {
   const {
     user,
@@ -64,6 +102,22 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   const [vehiclePlate, setVehiclePlate] = useState(user?.vehiclePlate || '');
   const [seats, setSeats] = useState(user?.seats || 9);
 
+  // Zone-based day rates the driver sets themselves (baht/day).
+  const [rateCity, setRateCity] = useState('');
+  const [rateMidHill, setRateMidHill] = useState('');
+  const [rateHighHill, setRateHighHill] = useState('');
+  const [rateCross, setRateCross] = useState('');
+  // Fuel policy: whether the quoted day rate already includes fuel/tolls.
+  const [fuelIncluded, setFuelIncluded] = useState(false);
+  const [fuelNote, setFuelNote] = useState('');
+
+  // Free-form vehicle description and amenity checklist.
+  const [description, setDescription] = useState('');
+  const [amenities, setAmenities] = useState<string[]>([]);
+
+  /** True while the driver is composing a brand-new fleet vehicle. */
+  const [isAddingNewVehicle, setIsAddingNewVehicle] = useState(initialAddVehicle);
+
   // Images state
   const [images, setImages] = useState<string[]>(() =>
     Array.isArray(user?.images) ? user.images : []
@@ -80,6 +134,8 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   const [vehicleId, setVehicleId] = useState<string>('');
   /** The driver's own vehicle record, the source of truth for the KPI rail. */
   const [ownVehicle, setOwnVehicle] = useState<Vehicle | null>(null);
+  /** Every vehicle this driver owns, for the fleet switcher. */
+  const [myVehicles, setMyVehicles] = useState<Vehicle[]>([]);
   /** pending = submitted, awaiting admin review; approved = live on the site. */
   const [approvalStatus, setApprovalStatus] = useState<'pending' | 'approved' | 'rejected' | ''>('');
   const [loadError, setLoadError] = useState('');
@@ -136,6 +192,87 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   const fileInputRef2 = useRef<HTMLInputElement>(null);
 
   const userId = user?.id;
+
+  /** Populate every editable form field from a vehicle record. */
+  const applyVehicleToForm = useCallback((v: Vehicle) => {
+    setNickname(v.driverNickname || v.driverName || '');
+    setPhone(v.driverPhone || '');
+    setLineId(v.driverLine || '');
+    setWhatsapp(v.driverWhatsapp || '');
+    setWechat(v.driverWechat || '');
+    setKakao(v.driverKakao || '');
+    setVehicleTitle(v.title || '');
+    setVehiclePlate(v.plateNumber || '');
+    setSeats(v.seats || 9);
+    setImages(Array.isArray(v.images) ? v.images : []);
+    setBusyDates(Array.isArray(v.busyDates) ? v.busyDates : []);
+    setRateCity(v.zoneRates?.city ? String(v.zoneRates.city) : '');
+    setRateMidHill(v.zoneRates?.midHill ? String(v.zoneRates.midHill) : '');
+    setRateHighHill(v.zoneRates?.highHill ? String(v.zoneRates.highHill) : '');
+    setRateCross(v.zoneRates?.crossProvince ? String(v.zoneRates.crossProvince) : '');
+    const fuel = decodeRateNote(v.rateNote);
+    setFuelIncluded(fuel.included);
+    setFuelNote(fuel.note);
+    setDescription(v.description || '');
+    setAmenities(Array.isArray(v.amenities) ? v.amenities : []);
+  }, []);
+
+  /** Switch the dashboard to one of the driver's existing vehicles. */
+  const selectVehicle = (v: Vehicle) => {
+    setIsAddingNewVehicle(false);
+    setSaveSuccess(false);
+    setSaveError('');
+    setVehicleId(v.id);
+    setOwnVehicle(v);
+    setApprovalStatus(v.approvalStatus || '');
+    applyVehicleToForm(v);
+  };
+
+  /** Reset the form so the driver can add another vehicle to the same account. */
+  const startAddNewVehicle = () => {
+    setIsAddingNewVehicle(true);
+    setActiveTab('profile');
+    setSaveSuccess(false);
+    setSaveError('');
+    setVehicleId('');
+    setOwnVehicle(null);
+    setApprovalStatus('');
+    setNickname(user?.driverNickname || user?.name || '');
+    setPhone(user?.emailOrPhone && !user.emailOrPhone.includes('@') ? user.emailOrPhone : phone);
+    setLineId(user?.lineId || '');
+    setWhatsapp(user?.whatsapp || '');
+    setWechat(user?.wechat || '');
+    setKakao(user?.kakao || '');
+    setVehicleTitle('');
+    setVehiclePlate('');
+    setSeats(9);
+    setImages([]);
+    setBusyDates([]);
+    setRateCity('');
+    setRateMidHill('');
+    setRateHighHill('');
+    setRateCross('');
+    setFuelIncluded(false);
+    setFuelNote('');
+    setDescription('');
+    setAmenities([]);
+  };
+
+  // Keep the latest add-vehicle routine reachable from the navbar CTA without
+  // re-subscribing on every keystroke.
+  const startAddNewVehicleRef = useRef(startAddNewVehicle);
+  useEffect(() => {
+    startAddNewVehicleRef.current = startAddNewVehicle;
+  });
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ add?: boolean }>).detail;
+      if (detail?.add) startAddNewVehicleRef.current();
+    };
+    window.addEventListener('tripdee-open-driver-portal', handler);
+    return () => window.removeEventListener('tripdee-open-driver-portal', handler);
+  }, []);
+
   useEffect(() => {
     if (!userId) return;
     const controller = new AbortController();
@@ -146,23 +283,23 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
         const data = await res.json();
         if (controller.signal.aborted) return;
         setLoadError('');
-        const mine: Vehicle | undefined = Array.isArray(data.vehicles) ? data.vehicles[0] : undefined;
-        setVehicleId(mine?.id || '');
-        setOwnVehicle(mine || null);
-        setApprovalStatus(mine?.approvalStatus || '');
-        if (!mine) return;
+        const mine: Vehicle[] = Array.isArray(data.vehicles) ? data.vehicles : [];
+        setMyVehicles(mine);
 
-        setNickname(mine.driverNickname || mine.driverName || '');
-        setPhone(mine.driverPhone || '');
-        setLineId(mine.driverLine || '');
-        setWhatsapp(mine.driverWhatsapp || '');
-        setWechat(mine.driverWechat || '');
-        setKakao(mine.driverKakao || '');
-        setVehicleTitle(mine.title || '');
-        setVehiclePlate(mine.plateNumber || '');
-        setSeats(mine.seats || 9);
-        setImages(Array.isArray(mine.images) ? mine.images : []);
-        setBusyDates(Array.isArray(mine.busyDates) ? mine.busyDates : []);
+        if (initialAddVehicle) {
+          // Arrived via "add fleet vehicle" — keep the form blank for a new car.
+          setVehicleId('');
+          setOwnVehicle(null);
+          setApprovalStatus('');
+          return;
+        }
+
+        const first = mine[0];
+        setVehicleId(first?.id || '');
+        setOwnVehicle(first || null);
+        setApprovalStatus(first?.approvalStatus || '');
+        if (!first) return;
+        applyVehicleToForm(first);
       } catch (err) {
         if (controller.signal.aborted) return;
         setVehicleId('');
@@ -174,7 +311,7 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
     };
     void loadOwnVehicle();
     return () => controller.abort();
-  }, [userId]);
+  }, [userId, initialAddVehicle, applyVehicleToForm]);
 
   // Reviews for this vehicle, so the KPI rail shows a real score or nothing.
   const [ownReviews, setOwnReviews] = useState<Review[]>([]);
@@ -463,6 +600,16 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
     setSaveError('');
 
     try {
+      const zoneRates: NonNullable<Vehicle['zoneRates']> = {};
+      const addRate = (key: keyof NonNullable<Vehicle['zoneRates']>, raw: string) => {
+        const n = Number(raw.replace(/[^0-9]/g, ''));
+        if (n > 0) zoneRates[key] = n;
+      };
+      addRate('city', rateCity);
+      addRate('midHill', rateMidHill);
+      addRate('highHill', rateHighHill);
+      addRate('crossProvince', rateCross);
+
       const payload = {
         id: vehicleId || undefined,
         title: vehicleTitle.trim(),
@@ -478,6 +625,12 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
         plateNumber: vehiclePlate.trim() || undefined,
         images: images.length > 0 ? images : undefined,
         busyDates,
+        description: description.trim() || undefined,
+        amenities: amenities.length > 0 ? amenities : undefined,
+        rateNote: encodeRateNote(fuelIncluded, fuelNote),
+        zoneRates: Object.keys(zoneRates).length > 0 ? zoneRates : undefined,
+        // A save without an id is a brand-new vehicle — never recycle the first one.
+        forceNew: vehicleId ? undefined : true,
       };
 
       const res = await fetch('/api/vehicles', {
@@ -500,6 +653,16 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
       setVehicleId(data.vehicle.id);
       setOwnVehicle(data.vehicle);
       setApprovalStatus(data.vehicle.approvalStatus || '');
+      setMyVehicles((prev) => {
+        const idx = prev.findIndex((v) => v.id === data.vehicle.id);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = data.vehicle;
+          return next;
+        }
+        return [data.vehicle, ...prev];
+      });
+      setIsAddingNewVehicle(false);
 
       // Mirror into the local profile so the navbar and portal header render
       // correctly without another round trip.
@@ -665,6 +828,87 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
 
         {/* Main Canvas Container */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full flex flex-col gap-6">
+          {/* ============================================================== */}
+          {/* 0. Multi-Vehicle Fleet Switcher */}
+          {/* ============================================================== */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[22px] text-slate-950 dark:text-white">garage</span>
+                <h2 className="text-sm sm:text-base font-bold text-slate-950 dark:text-white">
+                  ฟลีตรถของฉัน ({myVehicles.length} คัน)
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={startAddNewVehicle}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black border border-amber-600 transition-colors cursor-pointer"
+              >
+                <Plus className="h-4 w-4" strokeWidth={3} />
+                <span>เพิ่มรถคันใหม่เข้าฟลีต</span>
+              </button>
+            </div>
+
+            {myVehicles.length === 0 && !isAddingNewVehicle ? (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                ยังไม่มีรถในฟลีต กดปุ่ม “เพิ่มรถคันใหม่เข้าฟลีต” เพื่อเริ่มต้นลงทะเบียนรถคันแรก
+              </p>
+            ) : (
+              <div className="flex gap-3 overflow-x-auto pb-1">
+                {myVehicles.map((v) => {
+                  const active = !isAddingNewVehicle && v.id === vehicleId;
+                  const badge =
+                    v.approvalStatus === 'approved'
+                      ? { label: 'อนุมัติแล้ว', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+                      : v.approvalStatus === 'rejected'
+                        ? { label: 'ไม่ผ่าน', cls: 'bg-rose-50 text-rose-700 border-rose-200' }
+                        : v.approvalStatus === 'pending'
+                          ? { label: 'รอตรวจ', cls: 'bg-amber-50 text-amber-700 border-amber-200' }
+                          : v.isAvailable === false
+                            ? { label: 'พักงาน', cls: 'bg-slate-100 text-slate-600 border-slate-200' }
+                            : { label: 'พร้อม', cls: 'bg-slate-100 text-slate-600 border-slate-200' };
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => selectVehicle(v)}
+                      className={`shrink-0 w-56 text-left p-3 border transition-colors cursor-pointer ${
+                        active
+                          ? 'border-slate-950 dark:border-white bg-slate-50 dark:bg-slate-800'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-slate-400'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-slate-950 dark:text-white truncate">
+                          {v.title || 'ไม่ระบุรุ่นรถ'}
+                        </span>
+                        <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 border ${badge.cls}`}>
+                          {badge.label}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="font-mono">{v.plateNumber || 'ยังไม่ระบุทะเบียน'}</span>
+                        <span>·</span>
+                        <span>{v.seats} ที่นั่ง</span>
+                      </div>
+                      {active && (
+                        <span className="mt-1.5 inline-block text-[10px] font-bold text-slate-950 dark:text-white">
+                          กำลังดูข้อมูลคันนี้
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+                {isAddingNewVehicle && (
+                  <div className="shrink-0 w-56 p-3 border border-dashed border-amber-500 bg-amber-50/60 dark:bg-amber-950/20">
+                    <span className="text-xs font-bold text-amber-700 dark:text-amber-300">+ กำลังเพิ่มรถคันใหม่</span>
+                    <p className="text-[11px] text-slate-500 mt-1">กรอกข้อมูลด้านล่างแล้วกดบันทึกการแก้ไขทั้งหมด</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* ============================================================== */}
           {/* 1. Driver Profile Master Bento Module */}
           {/* ============================================================== */}
@@ -832,19 +1076,30 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
                 </span>
               </div>
 
-              {/* Day rates, from zone_rates */}
+              {/* Day rates, from zone_rates — editable in place */}
               <div className="bg-[#F8FAFC] dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
                 <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-semibold">
                   <span>ค่าบริการเริ่มต้น</span>
-                  <span className="material-symbols-outlined text-[18px] text-slate-400">
-                    trending_up
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('profile');
+                      requestAnimationFrame(() =>
+                        document.getElementById('zone-rates-editor')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      );
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-950 dark:text-white hover:underline cursor-pointer"
+                    title="แก้ไขอัตราค่าบริการตามโซน"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    <span>แก้ไข</span>
+                  </button>
                 </div>
                 <div className="mt-2 flex items-baseline gap-1.5">
-                  {ownVehicle?.zoneRates?.city ? (
+                  {Number(rateCity.replace(/[^0-9]/g, '')) > 0 ? (
                     <>
                       <span className="text-2xl font-bold font-mono text-slate-950 dark:text-white">
-                        ฿{ownVehicle.zoneRates.city.toLocaleString()}
+                        ฿{Number(rateCity.replace(/[^0-9]/g, '')).toLocaleString()}
                       </span>
                       <span className="text-xs font-semibold text-slate-500">/วัน</span>
                     </>
@@ -855,7 +1110,7 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
                   )}
                 </div>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  อัตราโซนในเมืองที่บันทึกไว้ (อาจเป็นค่าเริ่มต้นของระบบ)
+                  แตะ “แก้ไข” เพื่อตั้งราคาแยกตามโซนเส้นทาง
                 </span>
               </div>
 
@@ -1394,7 +1649,148 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
                       </span>
                     </div>
                   </div>
+
+                  {/* Vehicle description & amenities — full width */}
+                  <div className="lg:col-span-2 flex flex-col gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+                        htmlFor="driver-description"
+                      >
+                        รายละเอียดตัวรถ / ประสบการณ์คนขับ / มาตรฐานการบริการ
+                      </label>
+                      <textarea
+                        id="driver-description"
+                        rows={4}
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="เช่น รถตู้ VIP 9 ที่นั่ง เบาะนวดไฟฟ้า คนขับชำนาญดอยอินทนนท์กว่า 10 ปี สื่อสารภาษาอังกฤษได้"
+                        className="w-full p-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        สิ่งอำนวยความสะดวกบนรถ (เลือกได้หลายรายการ)
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {AMENITY_OPTIONS.map((a) => {
+                          const checked = amenities.includes(a.label);
+                          return (
+                            <button
+                              key={a.id}
+                              type="button"
+                              onClick={() =>
+                                setAmenities((prev) =>
+                                  prev.includes(a.label) ? prev.filter((x) => x !== a.label) : [...prev, a.label]
+                                )
+                              }
+                              className={`px-3 py-1.5 text-xs font-semibold border transition-colors flex items-center gap-1.5 cursor-pointer ${
+                                checked
+                                  ? 'bg-slate-950 text-white border-slate-950 dark:bg-white dark:text-slate-950'
+                                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:border-slate-500'
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-[15px]">
+                                {checked ? 'check_circle' : 'add'}
+                              </span>
+                              {a.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 </form>
+              </section>
+
+              {/* 5b. Zone Rates & Fuel Policy Editor */}
+              <section
+                id="zone-rates-editor"
+                className="bg-white dark:bg-slate-900 p-6 shadow-xs border border-slate-200 dark:border-slate-800 scroll-mt-24"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-slate-950 dark:text-white text-[22px]">
+                      payments
+                    </span>
+                    <h2 className="text-base sm:text-lg font-bold text-slate-950 dark:text-white">
+                      ตั้งราคาค่าบริการตามโซนและเส้นทาง
+                    </h2>
+                  </div>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    กำหนดราคาเองได้ 100% โดยไม่ต้องรอแอดมิน
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
+                  {[
+                    { id: 'rate-city', label: 'ราคาเหมารายวันในเมือง (บาท/วัน)', value: rateCity, set: setRateCity, ph: 'เช่น 2000' },
+                    { id: 'rate-midhill', label: 'เส้นทางดอยระดับกลาง (ม่อนแจ่ม, แม่กำปอง)', value: rateMidHill, set: setRateMidHill, ph: 'เช่น 2200' },
+                    { id: 'rate-highhill', label: 'เส้นทางดอยสูง/ลาดชัน (ดอยอินทนนท์, อ่างขาง)', value: rateHighHill, set: setRateHighHill, ph: 'เช่น 2500' },
+                    { id: 'rate-cross', label: 'เส้นทางข้ามจังหวัด (เชียงใหม่-เชียงราย/แม่ฮ่องสอน)', value: rateCross, set: setRateCross, ph: 'เช่น 2800' },
+                  ].map((f) => (
+                    <div key={f.id} className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300" htmlFor={f.id}>
+                        {f.label}
+                      </label>
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3.5 text-xs font-bold text-slate-500">฿</span>
+                        <input
+                          id={f.id}
+                          type="text"
+                          inputMode="numeric"
+                          value={f.value}
+                          placeholder={f.ph}
+                          onChange={(e) => f.set(e.target.value.replace(/[^0-9]/g, ''))}
+                          className="w-full h-12 pl-8 pr-16 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                        />
+                        <span className="absolute right-3.5 text-[11px] font-semibold text-slate-400">บาท/วัน</span>
+                      </div>
+                      {Number(f.value) > 0 && (
+                        <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                          ฿{Number(f.value).toLocaleString()} / วัน
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Fuel policy + toll note */}
+                <div className="mt-6 p-4 bg-[#F8FAFC] dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+                  <span className="text-xs font-bold text-slate-950 dark:text-white">นโยบายค่าน้ำมัน</span>
+                  <div className="flex flex-wrap items-center gap-4 mt-2.5">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="fuel_policy"
+                        checked={fuelIncluded}
+                        onChange={() => setFuelIncluded(true)}
+                        className="accent-slate-950"
+                      />
+                      <span>ราคารวมน้ำมัน</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="fuel_policy"
+                        checked={!fuelIncluded}
+                        onChange={() => setFuelIncluded(false)}
+                        className="accent-slate-950"
+                      />
+                      <span>ไม่รวมน้ำมัน</span>
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    value={fuelNote}
+                    onChange={(e) => setFuelNote(e.target.value)}
+                    placeholder="หมายเหตุค่าน้ำมัน/ทางด่วน เช่น ค่าน้ำมันคิดตามระยะทางจริง ทางด่วนลูกค้าจ่ายเพิ่ม"
+                    className="mt-3 w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-3">
+                  ระบบบันทึกเฉพาะอัตราที่คุณกรอก ช่องที่เว้นว่างจะไม่ถูกบันทึกเป็น 0
+                </p>
               </section>
 
               {/* 6. Real-time Live Availability Calendar Module */}

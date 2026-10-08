@@ -9,6 +9,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { getUpcomingBusyRanges, toISODateString } from '@/lib/availabilityUtils';
 import { formatLineLink, buildVehicleLineMessage } from '@/lib/contactUtils';
+import { useIsFavorite, toggleFavorite } from '@/lib/favoritesStore';
 
 import { DepositPaymentModal } from '@/components/payment/DepositPaymentModal';
 import { ENABLE_QR_PAYMENT } from '@/lib/constants';
@@ -24,6 +25,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
   const { t, locale } = useLanguage();
   const { trackCall } = useAnalytics();
   const [copiedWechat, setCopiedWechat] = React.useState(false);
+  const isFavorite = useIsFavorite(vehicle.id);
 
   const [showDepositModal, setShowDepositModal] = React.useState(false);
   const todayIso = React.useMemo(() => toISODateString(new Date()), []);
@@ -159,6 +161,30 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                 <span>{t('cal.cardUpcomingBusy', { range: upcomingRanges[0].label })}</span>
               </div>
             ) : null}
+          </button>
+
+          {/* Save to favourites (heart) — hydration-safe client-only read */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(vehicle.id);
+            }}
+            aria-pressed={isFavorite}
+            aria-label={isFavorite ? t('vehicle.favoriteRemove') : t('vehicle.favoriteSave')}
+            title={isFavorite ? t('vehicle.favoriteRemove') : t('vehicle.favoriteSave')}
+            className={`absolute top-2 right-2 z-10 grid h-9 w-9 place-items-center rounded-none border shadow-xs transition-colors cursor-pointer ${
+              isFavorite
+                ? 'bg-rose-600 border-rose-700 text-white'
+                : 'bg-white/90 dark:bg-slate-900/90 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:text-rose-600'
+            }`}
+          >
+            <span
+              className="material-symbols-outlined text-[20px]"
+              style={{ fontVariationSettings: isFavorite ? "'FILL' 1" : "'FILL' 0" }}
+            >
+              favorite
+            </span>
           </button>
         </div>
 

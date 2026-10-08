@@ -72,6 +72,12 @@ export async function POST(req: NextRequest) {
       canIssueTaxInvoice: Boolean(body.canIssueTaxInvoice),
       businessType: body.businessType === 'company' ? 'company' : 'individual',
       routes: String(body.routes || 'เชียงใหม่และใกล้เคียง').trim(),
+      pricePerDay:
+        Number.isFinite(Number(body.pricePerDay)) && Number(body.pricePerDay) > 0
+          ? Number(body.pricePerDay)
+          : undefined,
+      description: body.description ? String(body.description).trim() : undefined,
+      images: Array.isArray(body.images) ? body.images.filter(Boolean).slice(0, 4) : undefined,
     });
 
     return NextResponse.json({

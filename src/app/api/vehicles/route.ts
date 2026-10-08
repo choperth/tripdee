@@ -202,9 +202,10 @@ export async function POST(req: NextRequest) {
     const ownerId = isAdmin ? (body.ownerId || undefined) : session!.userId;
 
     // Reuse an existing vehicle for this owner rather than creating duplicates
-    // on every save.
+    // on every save — unless the driver explicitly adds another fleet vehicle.
+    const wantsNewVehicle = body.forceNew === true;
     let newId = typeof body.id === 'string' && body.id ? body.id : '';
-    if (!newId && ownerId) {
+    if (!newId && ownerId && !wantsNewVehicle) {
       const existing = await fetchVehicles(undefined, {
         includeUnapproved: true,
         ownerId,
@@ -212,7 +213,7 @@ export async function POST(req: NextRequest) {
       newId = existing[0]?.id || '';
     }
     if (!newId) {
-      newId = `v-${ownerId || 'custom'}-${Date.now().toString().slice(-6)}`.replace(/[^a-zA-Z0-9_-]/g, '');
+      newId = `v-${ownerId || 'custom'}-${Date.now().toString().slice(-6)}${wantsNewVehicle ? `-${Math.random().toString(36).slice(2, 5)}` : ''}`.replace(/[^a-zA-Z0-9_-]/g, '');
     }
 
     const newVehicleData: Vehicle = {
