@@ -2347,7 +2347,6 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
                     <p className="font-bold">บันทึกแล้ว รอผู้ดูแลระบบอนุมัติ</p>
                     <p className="mt-0.5 text-amber-800 dark:text-amber-300/90">
                       ข้อมูลรถของคุณจะยังไม่แสดงบนหน้าเว็บจนกว่าแอดมินจะตรวจสอบและอนุมัติ
-                      หลังจากแก้ไขข้อมูลรถที่ได้รับการอนุมัติแล้ว ระบบจะส่งกลับมารอตรวจใหม่อีกครั้ง
                     </p>
                   </div>
                 </div>
@@ -2356,7 +2355,7 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
               {saveSuccess && approvalStatus === 'approved' && (
                 <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold px-3 py-2">
                   <Check className="h-4 w-4 shrink-0" />
-                  <span>บันทึกแล้ว รถได้รับการอนุมัติ{isAvailable ? 'และพร้อมแสดงบนเว็บไซต์' : ' แต่กำลังพักงาน'}</span>
+                  <span>บันทึกแล้ว อัปเดตข้อมูลขึ้นหน้าเว็บทันที{isAvailable ? '' : ' (รถกำลังอยู่ในสถานะพักงาน)'}</span>
                 </div>
               )}
             </div>

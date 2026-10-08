@@ -332,14 +332,12 @@ export async function PUT(req: NextRequest) {
     }
 
     const patches = pickDriverFields(body);
-    // Editing an approved vehicle sends it back for review rather than
-    // silently changing what customers already see.
-    const resendForReview = existing.approvalStatus === 'approved';
-    const updated = await updateVehicle(String(body.id), {
-      ...patches,
-      ...(resendForReview ? { approvalStatus: 'pending', reviewedAt: undefined, reviewedBy: undefined } : {}),
-    });
-    return NextResponse.json({ success: true, vehicle: updated, resendForReview });
+    // Self-service edits never pull an approved vehicle off the public site:
+    // drivers update price, calendar, details, and photos with zero downtime.
+    // First-time submissions still gate through admin approval in POST, and
+    // admins keep full authority to reject or suspend from the admin console.
+    const updated = await updateVehicle(String(body.id), patches);
+    return NextResponse.json({ success: true, vehicle: updated });
   } catch (err) {
     return NextResponse.json(
       { error: 'Failed to update vehicle', details: String(err) },
