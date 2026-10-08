@@ -11,7 +11,6 @@ import {
   Crown,
   ChevronRight,
   Globe,
-  Plus,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -142,23 +141,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     requestAnimationFrame(tryScroll);
   };
 
-  const isDriver = user?.role === 'driver';
-  const registerVehicleLabel = isDriver ? 'เพิ่มรถเข้าฟลีต' : 'ลงทะเบียนรถ';
-
-  const handleRegisterVehicle = () => {
-    setMenuOpen(false);
-    if (isDriver) {
-      // Drivers add another car inside their own fleet dashboard.
-      if (onOpenAddVehicle) {
-        onOpenAddVehicle();
-      } else {
-        window.dispatchEvent(new CustomEvent('tripdee-open-driver-portal', { detail: { add: true } }));
-      }
-    } else {
-      onOpenRegisterModal();
-    }
-  };
-
   return (
     <header className={`fixed top-0 left-0 right-0 w-full z-[160] bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 transition-shadow ${scrolled ? 'shadow-xs' : ''}`}>
       <nav aria-label={t('nav.main')} className="w-full">
@@ -259,18 +241,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="hidden sm:block shrink-0">
               <LanguageSwitcher />
             </div>
-
-            {/* Vehicle registration CTA — one click for owners & drivers */}
-            <button
-              type="button"
-              onClick={handleRegisterVehicle}
-              aria-label={registerVehicleLabel}
-              title={registerVehicleLabel}
-              className="hidden md:inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-black bg-amber-500 hover:bg-amber-400 text-slate-950 border border-amber-600 transition-all rounded-none shrink-0 cursor-pointer"
-            >
-              <Plus className="h-4 w-4 sm:h-3.5 sm:w-3.5" strokeWidth={3} />
-              <span className="text-[11px] sm:text-xs">{registerVehicleLabel}</span>
-            </button>
 
             {/* Driver centre — a separate, clearly labelled entry so the passenger login stays unambiguous */}
             {onOpenDriverEntry && (
@@ -483,20 +453,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 {/* 4. Action / Driver Buttons */}
                 <div className="border-t border-slate-200 dark:border-slate-800 pt-3 space-y-2">
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <span className="material-symbols-outlined text-[16px] text-slate-500">directions_car</span>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      สำหรับเจ้าของรถ / คนขับ
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleRegisterVehicle}
-                    className="w-full h-11 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-none text-xs font-black flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" strokeWidth={3} />
-                    <span>+ {registerVehicleLabel}</span>
-                  </button>
                   {user ? (
                     <button
                       type="button"
