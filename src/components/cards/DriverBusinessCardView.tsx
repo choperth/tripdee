@@ -180,7 +180,7 @@ export const DriverBusinessCardView: React.FC<DriverBusinessCardViewProps> = ({
     if (typeof window !== 'undefined') {
       return `${window.location.origin}/driver/card?id=${encodeURIComponent(vehicle.id)}`;
     }
-    return `https://tripdee.co/driver/card?id=${encodeURIComponent(vehicle.id)}`;
+    return `https://www.tripdeeth.com/driver/card?id=${encodeURIComponent(vehicle.id)}`;
   }, [vehicle.id]);
 
   // A real, scannable code pointing directly to this driver's digital card.

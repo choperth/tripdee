@@ -148,7 +148,7 @@ export function buildJobFlexMessage(post: BoardJobPayload, baseUrl: string) {
             },
             {
               type: 'text',
-              text: post.vehicleLabel || `รถตู้ ${post.seats || 9-10} ที่นั่ง`,
+              text: post.vehicleLabel || `รถตู้ ${post.seats || '9-10'} ที่นั่ง`,
               size: 'xs',
               color: '#0F172A',
               weight: 'bold',
@@ -329,7 +329,7 @@ export function buildJobFlexMessage(post: BoardJobPayload, baseUrl: string) {
           color: '#06C755', // LINE Green
           action: {
             type: 'uri',
-            label: isNegotiable ? '⚡ ดูงาน & ยื่นเสนอราคา' : '👀 ดูรายละเอียด & เบอร์ลูกค้า',
+            label: isNegotiable ? '⚡ ดูงาน & เสนอราคา' : '👀 ดูรายละเอียดงาน',
             uri: destinationUrl,
           },
         },
@@ -339,12 +339,12 @@ export function buildJobFlexMessage(post: BoardJobPayload, baseUrl: string) {
                 ? [
                     {
                       type: 'button',
-                      style: 'secondary',
+                      style: 'primary',
                       height: 'sm',
-                      color: '#DCFCE7', // WhatsApp light green
+                      color: '#25D366', // WhatsApp Green
                       action: {
                         type: 'uri',
-                        label: '💬 แชต WhatsApp ลูกค้า',
+                        label: '💬 แชต WhatsApp',
                         uri: formatWhatsAppLink(
                           post.authorWhatsApp,
                           `Hello ${post.authorName}, I saw your trip request "${post.title}" on TripDee.`
@@ -359,11 +359,10 @@ export function buildJobFlexMessage(post: BoardJobPayload, baseUrl: string) {
                       type: 'button',
                       style: 'secondary',
                       height: 'sm',
-                      color: '#F1F5F9',
                       action: {
                         type: 'uri',
-                        label: `📞 โทรตรง: ${post.authorPhone}`,
-                        uri: `tel:${post.authorPhone}`,
+                        label: '📞 โทรหาลูกค้า',
+                        uri: `tel:${post.authorPhone.replace(/\D/g, '')}`,
                       },
                     },
                   ]
@@ -414,7 +413,7 @@ export async function sendLineBoardJobNotification(post: BoardJobPayload): Promi
 }> {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   const targetId = process.env.LINE_DRIVER_GROUP_ID;
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tripdee.co';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tripdeeth.com';
 
   if (!token || !targetId) {
     console.debug('[LINE Dispatch] Skipped: LINE_CHANNEL_ACCESS_TOKEN or LINE_DRIVER_GROUP_ID is not configured');

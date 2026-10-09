@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { POPULAR_ROUTES } from '@/data/mockData';
 import { fetchVehicles } from '@/lib/supabase/service';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tripdee.co';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tripdeeth.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const currentDate = new Date();

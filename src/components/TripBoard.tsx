@@ -159,7 +159,13 @@ export const TripBoard: React.FC = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data.posts && Array.isArray(data.posts)) {
-          setPosts(data.posts);
+          setPosts((prev) => {
+            const incomingIds = new Set(data.posts.map((p: BoardPost) => p.id));
+            const pendingRecent = prev.filter(
+              (p) => !incomingIds.has(p.id) && !isMockPostId(p.id)
+            );
+            return [...pendingRecent, ...data.posts];
+          });
         }
       })
       .catch((err) => console.debug('Failed to fetch board posts:', err));
@@ -341,6 +347,7 @@ export const TripBoard: React.FC = () => {
       const serverPost = data?.post || post;
       const finalToken = serverPost.viewToken || generatedToken;
       saveMyBoardPost(serverPost.id, finalToken, serverPost.pin, serverPost.title);
+      setPosts((prev) => prev.map((p) => (p.id === post.id ? serverPost : p)));
       setCreatedMagicLinkPost({
         id: serverPost.id,
         title: serverPost.title,

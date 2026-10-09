@@ -210,7 +210,7 @@ export async function sendDriverNotification(driver: DriverLeadPayload) {
 
 export async function sendBoardJobNotification(post: BoardJobPayload) {
   const results: { channel: string; ok: boolean }[] = [];
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://tripdee.co';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tripdeeth.com';
   const isCorporate = post.category === 'corporate';
   const isNegotiable = Boolean(post.isNegotiable || post.price <= 0);
   const priceDisplay = isNegotiable

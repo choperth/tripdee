@@ -27,7 +27,7 @@ const notoThai = Noto_Sans_Thai({
   weight: ["400", "600", "700", "800"],
   display: "swap",
 });
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tripdee.co';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tripdeeth.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

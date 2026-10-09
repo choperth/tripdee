@@ -68,7 +68,7 @@ export function isMyBoardPost(postId: string): boolean {
 }
 
 export function buildMagicLink(postId: string, token: string): string {
-  if (typeof window === 'undefined') return `https://tripdee.co/?quotePost=${postId}&token=${token}`;
+  if (typeof window === 'undefined') return `https://www.tripdeeth.com/?quotePost=${postId}&token=${token}#tripboard`;
   const origin = window.location.origin;
   return `${origin}/?quotePost=${encodeURIComponent(postId)}&token=${encodeURIComponent(token)}#tripboard`;
 }

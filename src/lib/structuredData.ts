@@ -4,7 +4,7 @@
  */
 
 import { OFFICIAL_LINE_URL } from '@/lib/constants';
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tripdee.co';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tripdeeth.com';
 
 export function getStructuredData() {
   const organizationSchema = {

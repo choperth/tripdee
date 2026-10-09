@@ -65,14 +65,19 @@ import { AnalyticsEvent } from '@/lib/analytics';
 import { recordServerAnalyticsEvent } from '@/lib/serverAnalyticsStore';
 import { isBoardPostExpired } from '@/lib/availabilityUtils';
 
-// Type-safe helper for dynamic table updates
+// Type-safe helper for dynamic table updates and schema probing
 type DynamicTableQuery = {
   update: (values: Record<string, unknown>) => { eq: (col: string, val: string) => Promise<unknown> };
+  select: (cols: string) => { limit: (count: number) => Promise<{ data?: unknown; error?: { message: string } | null }> };
+  insert: (values: Record<string, unknown>) => { select: () => { single: () => Promise<{ data: unknown; error: { code?: string; message: string } | null }> } };
 };
 
 
 // In-memory deleted board posts tracking to ensure instant UI sync across all modes
 const deletedBoardPostIds: string[] = [];
+
+// In-memory active board posts store ensuring zero post-loss across all storage states
+const localBoardPosts: BoardPost[] = [];
 
 // In-memory quotes store for board posts
 const localBoardQuotes: BoardQuote[] = [
@@ -1164,6 +1169,133 @@ export async function reviewVehicle(
 // 4. BOARD POSTS SERVICE
 // ==============================================================================
 
+export const OPTIONAL_BOARD_COLUMNS = [
+  'category',
+  'pin',
+  'view_token',
+  'is_closed',
+  'is_negotiable',
+  'max_quotes',
+  'quote_count',
+  'accepted_quote_id',
+  'author_whatsapp',
+  'author_wechat',
+] as const;
+
+type OptionalBoardColumn = (typeof OPTIONAL_BOARD_COLUMNS)[number];
+
+const OPTIONAL_BOARD_COLUMN_GROUPS: OptionalBoardColumn[][] = [
+  ['category', 'pin', 'view_token'],
+  ['is_closed', 'is_negotiable'],
+  ['max_quotes', 'quote_count', 'accepted_quote_id'],
+  ['author_whatsapp', 'author_wechat'],
+];
+
+let boardColumnSupportPromise: Promise<Set<string>> | null = null;
+
+async function getSupportedBoardColumns(): Promise<Set<string>> {
+  if (boardColumnSupportPromise) return boardColumnSupportPromise;
+
+  boardColumnSupportPromise = (async () => {
+    const supabase = getSupabase();
+    if (!supabase) return new Set<string>();
+    const supported = new Set<string>();
+    try {
+      for (const group of OPTIONAL_BOARD_COLUMN_GROUPS) {
+        const { error } = await (supabase.from('board_posts') as unknown as DynamicTableQuery)
+          .select(group.join(','))
+          .limit(1);
+        if (!error) group.forEach((c) => supported.add(c));
+      }
+    } catch (err) {
+      console.warn('[TripDee Supabase] Board column probe failed, assuming base schema:', err);
+    }
+    return supported;
+  })();
+
+  return boardColumnSupportPromise;
+}
+
+function filterToSupportedBoardColumns(
+  payload: Record<string, unknown>,
+  supported: Set<string>
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if ((OPTIONAL_BOARD_COLUMNS as readonly string[]).includes(key) && !supported.has(key)) {
+      continue;
+    }
+    out[key] = value;
+  }
+  return out;
+}
+
+export interface BoardMeta {
+  category?: 'general' | 'corporate';
+  pin?: string;
+  viewToken?: string;
+  isClosed?: boolean;
+  isNegotiable?: boolean;
+  maxQuotes?: number;
+  quoteCount?: number;
+  acceptedQuoteId?: string;
+  authorWhatsApp?: string;
+  authorWeChat?: string;
+}
+
+const META_TAG_REGEX = /\[\[td-meta:([^\]]+)\]\]/;
+
+export function encodeBoardMeta(detail: string, meta: BoardMeta): string {
+  const cleanDetail = (detail || '').replace(META_TAG_REGEX, '').trim();
+  const parts: string[] = [];
+  if (meta.category && meta.category !== 'general') parts.push(`cat=${encodeURIComponent(meta.category)}`);
+  if (meta.pin) parts.push(`pin=${encodeURIComponent(meta.pin)}`);
+  if (meta.viewToken) parts.push(`tok=${encodeURIComponent(meta.viewToken)}`);
+  if (meta.isClosed) parts.push(`cls=1`);
+  if (meta.isNegotiable) parts.push(`neg=1`);
+  if (meta.maxQuotes && meta.maxQuotes !== 3) parts.push(`max=${meta.maxQuotes}`);
+  if (meta.quoteCount && meta.quoteCount > 0) parts.push(`qc=${meta.quoteCount}`);
+  if (meta.acceptedQuoteId) parts.push(`aq=${encodeURIComponent(meta.acceptedQuoteId)}`);
+  if (meta.authorWhatsApp) parts.push(`wa=${encodeURIComponent(meta.authorWhatsApp)}`);
+  if (meta.authorWeChat) parts.push(`wc=${encodeURIComponent(meta.authorWeChat)}`);
+
+  if (parts.length === 0) return cleanDetail;
+  const metaTag = `[[td-meta:${parts.join(';')}]]`;
+  return cleanDetail ? `${cleanDetail}\n\n${metaTag}` : metaTag;
+}
+
+export function decodeBoardMeta(rawDetail: string): { cleanDetail: string; meta: BoardMeta } {
+  if (!rawDetail) return { cleanDetail: '', meta: {} };
+  const match = rawDetail.match(META_TAG_REGEX);
+  if (!match) return { cleanDetail: rawDetail, meta: {} };
+
+  const rawPairs = match[1].split(';');
+  const meta: BoardMeta = {};
+
+  for (const pair of rawPairs) {
+    const [k, v] = pair.split('=');
+    if (!k || v === undefined) continue;
+    try {
+      const decoded = decodeURIComponent(v);
+      if (k === 'cat') meta.category = decoded as 'general' | 'corporate';
+      else if (k === 'pin') meta.pin = decoded;
+      else if (k === 'tok') meta.viewToken = decoded;
+      else if (k === 'cls') meta.isClosed = decoded === '1';
+      else if (k === 'neg') meta.isNegotiable = decoded === '1';
+      else if (k === 'max') meta.maxQuotes = Number(decoded) || 3;
+      else if (k === 'qc') meta.quoteCount = Number(decoded) || 0;
+      else if (k === 'aq') meta.acceptedQuoteId = decoded;
+      else if (k === 'wa') meta.authorWhatsApp = decoded;
+      else if (k === 'wc') meta.authorWeChat = decoded;
+    } catch {
+      // Ignore malformed tag pair
+    }
+  }
+
+  const cleanDetail = rawDetail.replace(META_TAG_REGEX, '').trim();
+  return { cleanDetail, meta };
+}
+
 export async function fetchBoardPosts(
   reqUrl?: string,
   options?: { includeClosed?: boolean }
@@ -1183,7 +1315,19 @@ export async function fetchBoardPosts(
       }));
   };
 
+  const getCombinedWithLocal = (dbPosts: BoardPost[]): BoardPost[] => {
+    const dbPostIds = new Set(dbPosts.map((p) => p.id));
+    const activeLocalPosts = localBoardPosts
+      .filter((p) => !deletedBoardPostIds.includes(p.id))
+      .filter((p) => !dbPostIds.has(p.id))
+      .filter((p) => includeClosed || (!p.isClosed && !isBoardPostExpired(p)));
+
+    return [...activeLocalPosts, ...dbPosts];
+  };
+
   if (!supabase) {
+    const combined = getCombinedWithLocal([]);
+    if (combined.length > 0) return combined;
     if (!allowMock) return [];
     return processMockPosts(BOARD_POSTS);
   }
@@ -1195,32 +1339,27 @@ export async function fetchBoardPosts(
       .order('created_at', { ascending: false });
 
     if (error || !data || data.length === 0) {
+      const combined = getCombinedWithLocal([]);
+      if (combined.length > 0) return combined;
       if (!allowMock) return [];
       return processMockPosts(BOARD_POSTS);
     }
 
     const validRows = allowMock ? data : data.filter((row) => !isMockPostId(row.id));
 
-    const mapped = validRows
+    const mapped: BoardPost[] = validRows
       .filter((row) => !deletedBoardPostIds.includes(row.id))
-      .filter((row) => {
-        if (includeClosed) return true;
-        const isExp = isBoardPostExpired({
-          date: row.date,
-          days: row.days,
-          created_at: row.created_at,
-          isClosed: Boolean(row.is_closed),
-        });
-        return !isExp;
-      })
       .map((row) => {
+        const { cleanDetail, meta } = decodeBoardMeta(row.detail || '');
+        const isClosedDb = row.is_closed !== null && row.is_closed !== undefined ? Boolean(row.is_closed) : meta.isClosed;
         const isExp = isBoardPostExpired({
           date: row.date,
           days: row.days,
           created_at: row.created_at,
-          isClosed: Boolean(row.is_closed),
+          isClosed: Boolean(isClosedDb),
         });
-        return {
+
+        const postItem: BoardPost = {
           id: row.id,
           type: row.type as BoardPost['type'],
           title: row.title,
@@ -1233,33 +1372,42 @@ export async function fetchBoardPosts(
           authorName: row.author_name,
           authorPhone: row.author_phone,
           authorLine: row.author_line || '',
-          authorWhatsApp: row.author_whatsapp || undefined,
-          authorWeChat: row.author_wechat || undefined,
+          authorWhatsApp: row.author_whatsapp || meta.authorWhatsApp || undefined,
+          authorWeChat: row.author_wechat || meta.authorWeChat || undefined,
           vehicleLabel: row.vehicle_label || undefined,
-          detail: row.detail || '',
+          detail: cleanDetail,
           postedAt: row.posted_at || 'เมื่อสักครู่',
           isVerified: Boolean(row.is_verified),
-          category: (row.category as 'general' | 'corporate') || 'general',
-          pin: row.pin || undefined,
-          isClosed: Boolean(row.is_closed || isExp),
+          category: (row.category || meta.category || 'general') as 'general' | 'corporate',
+          pin: row.pin || meta.pin || undefined,
+          isClosed: Boolean(isClosedDb || isExp),
           createdAt: row.created_at,
-          isNegotiable: Boolean(row.is_negotiable),
-          maxQuotes: Number(row.max_quotes) || 3,
-          quoteCount: localBoardQuotes.filter((q) => q.postId === row.id).length || Number(row.quote_count) || 0,
-          acceptedQuoteId: row.accepted_quote_id || undefined,
-          viewToken: row.view_token || undefined,
+          isNegotiable: row.is_negotiable !== null && row.is_negotiable !== undefined ? Boolean(row.is_negotiable) : Boolean(meta.isNegotiable),
+          maxQuotes: Number(row.max_quotes ?? meta.maxQuotes ?? 3),
+          quoteCount: localBoardQuotes.filter((q) => q.postId === row.id).length || Number(row.quote_count ?? meta.quoteCount ?? 0),
+          acceptedQuoteId: row.accepted_quote_id || meta.acceptedQuoteId || undefined,
+          viewToken: row.view_token || meta.viewToken || undefined,
         };
+        return postItem;
+      })
+      .filter((post) => {
+        if (includeClosed) return true;
+        return !post.isClosed;
       });
 
-    if (allowMock && mapped.length < 2) {
-      const existingIds = new Set(mapped.map((r) => r.id));
+    const combined = getCombinedWithLocal(mapped);
+
+    if (allowMock && combined.length < 2) {
+      const existingIds = new Set(combined.map((r) => r.id));
       const mockToAdd = processMockPosts(BOARD_POSTS).filter((p) => !existingIds.has(p.id));
-      return [...mapped, ...mockToAdd];
+      return [...combined, ...mockToAdd];
     }
 
-    return mapped;
+    return combined;
   } catch (err) {
     console.warn('[TripDee Supabase] Error fetching board posts:', err);
+    const combined = getCombinedWithLocal([]);
+    if (combined.length > 0) return combined;
     if (!allowMock) return [];
     return processMockPosts(BOARD_POSTS);
   }
@@ -1281,11 +1429,34 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
     viewToken,
   };
 
+  // Always keep in local in-memory storage immediately so it is available across queries
+  const existingIdx = localBoardPosts.findIndex((p) => p.id === newId);
+  if (existingIdx >= 0) {
+    localBoardPosts[existingIdx] = createdPost;
+  } else {
+    localBoardPosts.unshift(createdPost);
+  }
+
   const supabase = getSupabase();
   if (!supabase) return createdPost;
 
   try {
-    const insertPayload: Database['public']['Tables']['board_posts']['Insert'] = {
+    const meta: BoardMeta = {
+      category: createdPost.category,
+      pin: createdPost.pin,
+      viewToken: createdPost.viewToken,
+      isClosed: false,
+      isNegotiable: createdPost.isNegotiable,
+      maxQuotes: createdPost.maxQuotes,
+      quoteCount: 0,
+      authorWhatsApp: createdPost.authorWhatsApp,
+      authorWeChat: createdPost.authorWeChat,
+    };
+    const encodedDetail = encodeBoardMeta(post.detail || '', meta);
+
+    const supported = await getSupportedBoardColumns();
+
+    const fullPayload: Record<string, unknown> = {
       id: newId,
       type: post.type,
       title: post.title,
@@ -1298,10 +1469,8 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
       author_name: post.authorName,
       author_phone: post.authorPhone,
       author_line: post.authorLine,
-      author_whatsapp: post.authorWhatsApp || null,
-      author_wechat: post.authorWeChat || null,
       vehicle_label: post.vehicleLabel || null,
-      detail: post.detail || '',
+      detail: encodedDetail,
       posted_at: 'เมื่อสักครู่',
       is_verified: Boolean(post.isVerified),
       category: post.category || 'general',
@@ -1310,58 +1479,90 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
       is_negotiable: Boolean(post.isNegotiable),
       max_quotes: post.maxQuotes || 3,
       view_token: viewToken,
+      author_whatsapp: post.authorWhatsApp || null,
+      author_wechat: post.authorWeChat || null,
     };
 
-    let { data, error } = await supabase
-      .from('board_posts')
+    const insertPayload = filterToSupportedBoardColumns(fullPayload, supported);
+
+    // Attempt insert with detected supported columns
+    let res = await (supabase.from('board_posts') as unknown as DynamicTableQuery)
       .insert(insertPayload)
       .select()
       .single();
 
-    // Fallback if DB table does not yet have author_whatsapp / author_wechat / view_token columns
-    if (error && (error.message?.includes('author_whatsapp') || error.message?.includes('author_wechat') || error.message?.includes('view_token'))) {
-      delete (insertPayload as Record<string, unknown>).author_whatsapp;
-      delete (insertPayload as Record<string, unknown>).author_wechat;
-      delete (insertPayload as Record<string, unknown>).view_token;
-      const retry = await supabase.from('board_posts').insert(insertPayload).select().single();
-      data = retry.data;
-      error = retry.error;
+    // Fallback if schema cache or probing missed an unsupported column
+    if (res.error) {
+      console.warn('[TripDee Supabase] Primary insert failed:', res.error.message, '- retrying with pure baseline columns');
+      const baselinePayload = {
+        id: newId,
+        type: post.type,
+        title: post.title,
+        zone_id: post.zoneId,
+        date: post.date,
+        days: post.days,
+        seats: post.seats,
+        price: post.price,
+        price_note: post.priceNote || null,
+        author_name: post.authorName,
+        author_phone: post.authorPhone,
+        author_line: post.authorLine,
+        vehicle_label: post.vehicleLabel || null,
+        detail: encodedDetail,
+        posted_at: 'เมื่อสักครู่',
+        is_verified: Boolean(post.isVerified),
+      };
+      res = await (supabase.from('board_posts') as unknown as DynamicTableQuery)
+        .insert(baselinePayload)
+        .select()
+        .single();
     }
 
-    if (error) {
-      console.warn('[TripDee Supabase] Error creating board post:', error.message);
+    if (res.error) {
+      console.warn('[TripDee Supabase] Error creating board post in db:', res.error.message);
       return createdPost;
     }
 
+    const data = res.data as Record<string, unknown> | null;
     if (data) {
-      return {
-        id: data.id,
+      const { cleanDetail, meta: fetchedMeta } = decodeBoardMeta(String(data.detail || ''));
+      const savedPost: BoardPost = {
+        id: String(data.id),
         type: data.type as BoardPost['type'],
-        title: data.title,
+        title: String(data.title),
         zoneId: data.zone_id as ZoneId,
-        date: data.date,
-        days: data.days,
-        seats: data.seats,
+        date: String(data.date),
+        days: Number(data.days) || 1,
+        seats: Number(data.seats) || 1,
         price: Number(data.price) || 0,
-        priceNote: data.price_note || undefined,
-        authorName: data.author_name,
-        authorPhone: data.author_phone,
-        authorLine: data.author_line,
-        authorWhatsApp: data.author_whatsapp || post.authorWhatsApp || undefined,
-        authorWeChat: data.author_wechat || post.authorWeChat || undefined,
-        vehicleLabel: data.vehicle_label || undefined,
-        detail: data.detail || '',
-        postedAt: data.posted_at || 'เมื่อสักครู่',
+        priceNote: data.price_note ? String(data.price_note) : undefined,
+        authorName: String(data.author_name),
+        authorPhone: String(data.author_phone),
+        authorLine: String(data.author_line || ''),
+        authorWhatsApp: (data.author_whatsapp ? String(data.author_whatsapp) : undefined) || fetchedMeta.authorWhatsApp || post.authorWhatsApp,
+        authorWeChat: (data.author_wechat ? String(data.author_wechat) : undefined) || fetchedMeta.authorWeChat || post.authorWeChat,
+        vehicleLabel: data.vehicle_label ? String(data.vehicle_label) : undefined,
+        detail: cleanDetail,
+        postedAt: String(data.posted_at || 'เมื่อสักครู่'),
         isVerified: Boolean(data.is_verified),
-        category: (data.category as 'general' | 'corporate') || 'general',
-        pin: data.pin || undefined,
-        isClosed: Boolean(data.is_closed),
-        createdAt: data.created_at,
-        isNegotiable: Boolean(data.is_negotiable),
-        maxQuotes: Number(data.max_quotes) || 3,
+        category: ((data.category as string) || fetchedMeta.category || 'general') as 'general' | 'corporate',
+        pin: (data.pin ? String(data.pin) : undefined) || fetchedMeta.pin || post.pin,
+        isClosed: Boolean(data.is_closed ?? fetchedMeta.isClosed ?? false),
+        createdAt: String(data.created_at || createdPost.createdAt),
+        isNegotiable: Boolean(data.is_negotiable ?? fetchedMeta.isNegotiable ?? post.isNegotiable),
+        maxQuotes: Number(data.max_quotes ?? fetchedMeta.maxQuotes ?? 3),
         quoteCount: 0,
-        viewToken: data.view_token || viewToken,
+        viewToken: (data.view_token ? String(data.view_token) : undefined) || fetchedMeta.viewToken || viewToken,
       };
+
+      // Keep updated post in local cache
+      const idx = localBoardPosts.findIndex((p) => p.id === savedPost.id);
+      if (idx >= 0) {
+        localBoardPosts[idx] = savedPost;
+      } else {
+        localBoardPosts.unshift(savedPost);
+      }
+      return savedPost;
     }
   } catch (err) {
     console.warn('[TripDee Supabase] Exception saving board post:', err);
@@ -1371,43 +1572,70 @@ export async function saveBoardPost(post: Omit<BoardPost, 'id' | 'postedAt'>): P
 }
 
 export async function updateBoardPost(id: string, updates: Partial<BoardPost>): Promise<BoardPost | null> {
-  const currentPosts = await fetchBoardPosts();
+  const currentPosts = await fetchBoardPosts(undefined, { includeClosed: true });
   const target = currentPosts.find((p) => p.id === id);
   if (!target) return null;
 
   const merged = { ...target, ...updates };
 
+  // Update in local memory cache
+  const localIdx = localBoardPosts.findIndex((p) => p.id === id);
+  if (localIdx >= 0) {
+    localBoardPosts[localIdx] = merged;
+  } else {
+    localBoardPosts.unshift(merged);
+  }
+
   const supabase = getSupabase();
   if (!supabase) return merged;
 
   try {
-    const supabaseUpdates: Record<string, unknown> = {};
-    if (updates.type !== undefined) supabaseUpdates.type = updates.type;
-    if (updates.title !== undefined) supabaseUpdates.title = updates.title;
-    if (updates.zoneId !== undefined) supabaseUpdates.zone_id = updates.zoneId;
-    if (updates.date !== undefined) supabaseUpdates.date = updates.date;
-    if (updates.days !== undefined) supabaseUpdates.days = updates.days;
-    if (updates.seats !== undefined) supabaseUpdates.seats = updates.seats;
-    if (updates.price !== undefined) supabaseUpdates.price = updates.price;
-    if (updates.priceNote !== undefined) supabaseUpdates.price_note = updates.priceNote;
-    if (updates.authorName !== undefined) supabaseUpdates.author_name = updates.authorName;
-    if (updates.authorPhone !== undefined) supabaseUpdates.author_phone = updates.authorPhone;
-    if (updates.authorLine !== undefined) supabaseUpdates.author_line = updates.authorLine;
-    if (updates.authorWhatsApp !== undefined) supabaseUpdates.author_whatsapp = updates.authorWhatsApp;
-    if (updates.authorWeChat !== undefined) supabaseUpdates.author_wechat = updates.authorWeChat;
-    if (updates.vehicleLabel !== undefined) supabaseUpdates.vehicle_label = updates.vehicleLabel;
-    if (updates.detail !== undefined) supabaseUpdates.detail = updates.detail;
-    if (updates.isVerified !== undefined) supabaseUpdates.is_verified = updates.isVerified;
-    if (updates.category !== undefined) supabaseUpdates.category = updates.category;
-    if (updates.pin !== undefined) supabaseUpdates.pin = updates.pin;
-    if (updates.isClosed !== undefined) supabaseUpdates.is_closed = updates.isClosed;
-    if (updates.isNegotiable !== undefined) supabaseUpdates.is_negotiable = updates.isNegotiable;
-    if (updates.maxQuotes !== undefined) supabaseUpdates.max_quotes = updates.maxQuotes;
-    if (updates.quoteCount !== undefined) supabaseUpdates.quote_count = updates.quoteCount;
-    if (updates.acceptedQuoteId !== undefined) supabaseUpdates.accepted_quote_id = updates.acceptedQuoteId;
-    if (updates.viewToken !== undefined) supabaseUpdates.view_token = updates.viewToken;
+    const meta: BoardMeta = {
+      category: merged.category,
+      pin: merged.pin,
+      viewToken: merged.viewToken,
+      isClosed: merged.isClosed,
+      isNegotiable: merged.isNegotiable,
+      maxQuotes: merged.maxQuotes,
+      quoteCount: merged.quoteCount,
+      acceptedQuoteId: merged.acceptedQuoteId,
+      authorWhatsApp: merged.authorWhatsApp,
+      authorWeChat: merged.authorWeChat,
+    };
+    const encodedDetail = encodeBoardMeta(merged.detail || '', meta);
 
-    await (supabase.from('board_posts') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
+    const supported = await getSupportedBoardColumns();
+    const fullUpdates: Record<string, unknown> = {};
+
+    if (updates.type !== undefined) fullUpdates.type = updates.type;
+    if (updates.title !== undefined) fullUpdates.title = updates.title;
+    if (updates.zoneId !== undefined) fullUpdates.zone_id = updates.zoneId;
+    if (updates.date !== undefined) fullUpdates.date = updates.date;
+    if (updates.days !== undefined) fullUpdates.days = updates.days;
+    if (updates.seats !== undefined) fullUpdates.seats = updates.seats;
+    if (updates.price !== undefined) fullUpdates.price = updates.price;
+    if (updates.priceNote !== undefined) fullUpdates.price_note = updates.priceNote;
+    if (updates.authorName !== undefined) fullUpdates.author_name = updates.authorName;
+    if (updates.authorPhone !== undefined) fullUpdates.author_phone = updates.authorPhone;
+    if (updates.authorLine !== undefined) fullUpdates.author_line = updates.authorLine;
+    if (updates.vehicleLabel !== undefined) fullUpdates.vehicle_label = updates.vehicleLabel;
+    fullUpdates.detail = encodedDetail;
+
+    if (updates.isVerified !== undefined) fullUpdates.is_verified = updates.isVerified;
+    if (updates.category !== undefined) fullUpdates.category = updates.category;
+    if (updates.pin !== undefined) fullUpdates.pin = updates.pin;
+    if (updates.isClosed !== undefined) fullUpdates.is_closed = updates.isClosed;
+    if (updates.isNegotiable !== undefined) fullUpdates.is_negotiable = updates.isNegotiable;
+    if (updates.maxQuotes !== undefined) fullUpdates.max_quotes = updates.maxQuotes;
+    if (updates.quoteCount !== undefined) fullUpdates.quote_count = updates.quoteCount;
+    if (updates.acceptedQuoteId !== undefined) fullUpdates.accepted_quote_id = updates.acceptedQuoteId;
+    if (updates.viewToken !== undefined) fullUpdates.view_token = updates.viewToken;
+    if (updates.authorWhatsApp !== undefined) fullUpdates.author_whatsapp = updates.authorWhatsApp;
+    if (updates.authorWeChat !== undefined) fullUpdates.author_wechat = updates.authorWeChat;
+
+    const filteredUpdates = filterToSupportedBoardColumns(fullUpdates, supported);
+
+    await (supabase.from('board_posts') as unknown as DynamicTableQuery).update(filteredUpdates).eq('id', id);
   } catch (err) {
     console.warn('[TripDee Supabase] Exception updating board post:', err);
   }
@@ -1417,6 +1645,10 @@ export async function updateBoardPost(id: string, updates: Partial<BoardPost>): 
 export async function deleteBoardPost(id: string): Promise<boolean> {
   if (!deletedBoardPostIds.includes(id)) {
     deletedBoardPostIds.push(id);
+  }
+  const localIdx = localBoardPosts.findIndex((p) => p.id === id);
+  if (localIdx >= 0) {
+    localBoardPosts.splice(localIdx, 1);
   }
   const supabase = getSupabase();
   if (!supabase) return true;
@@ -1439,7 +1671,7 @@ export async function closeBoardPost(
   inputPin?: string,
   token?: string
 ): Promise<{ success: boolean; message: string }> {
-  const posts = await fetchBoardPosts();
+  const posts = await fetchBoardPosts(undefined, { includeClosed: true });
   const post = posts.find((p) => p.id === id);
   if (!post) {
     return { success: false, message: 'ไม่พบประกาศที่ต้องการปิด หรือประกาศหมดอายุแล้ว' };
@@ -1464,9 +1696,6 @@ export async function closeBoardPost(
   }
 
   await updateBoardPost(id, { isClosed: true });
-  if (!deletedBoardPostIds.includes(id)) {
-    deletedBoardPostIds.push(id);
-  }
 
   return { success: true, message: 'ปิดประกาศเรียบร้อยแล้ว ขอบคุณที่ใช้บริการ TripDee' };
 }
