@@ -165,7 +165,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    if (onSelectZone) onSelectZone('bkk');
+                    if (onSelectZone) onSelectZone('huahin');
                     scrollTo('results');
                   }}
                   className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"
@@ -177,7 +177,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    if (onSelectZone) onSelectZone('bkk');
+                    if (onSelectZone) onSelectZone('central');
                     scrollTo('results');
                   }}
                   className="hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer text-left"

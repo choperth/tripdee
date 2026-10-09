@@ -52,8 +52,19 @@ import { useAuth } from '@/context/AuthContext';
 import { Footer } from '@/components/Footer';
 import { ScrollQualityMonitor } from '@/components/ScrollQualityMonitor';
 import { useLanguage } from '@/context/LanguageContext';
+import type { DictKey } from '@/i18n/dictionaries';
 
 import { SearchX, ArrowRight, X, SlidersHorizontal, RotateCcw, UserPlus, MessageCircle } from 'lucide-react';
+
+/** Human-readable label for each zone filter key, shared with the Hero picker. */
+const ZONE_LABEL_KEYS: Record<string, DictKey> = {
+  north: 'hero.zoneNorth',
+  central: 'hero.zoneCentral',
+  east: 'hero.zoneEastNew',
+  south: 'hero.zoneSouthNew',
+  isan: 'hero.zoneIsanNew',
+  huahin: 'hero.zoneHuahin',
+};
 
 
 
@@ -256,18 +267,20 @@ export default function HomePage() {
           ? ((vehicle.type === 'suv' || vehicle.type === 'car') && vehicle.rentalType === 'with_driver')
           : (vehicle.rentalType === 'self_drive');
       
+      // Zone matching is keyword-based because the dataset only has coarse
+      // regions ('north' | 'central' | ...) while the picker offers finer areas
+      // such as Hua Hin. Match against location and listed routes so a vehicle
+      // that serves an area is still found even if its location string differs.
+      const locationText = `${vehicle.location || ''} ${(vehicle.popularRoutes ?? []).join(' ')}`;
       const matchesRegion =
-        (selectedZone === 'bkk' && (vehicle.region === 'central' || vehicle.location.includes('กรุงเทพ') || vehicle.location.includes('กทม'))) ||
-        (selectedZone === 'north' && (vehicle.region === 'north' || vehicle.location.includes('เชียงใหม่'))) ||
-        (selectedZone === 'east' && (vehicle.region === 'east' || vehicle.location.includes('พัทยา') || vehicle.location.includes('ชลบุรี'))) ||
-        (selectedZone === 'south' && (vehicle.region === 'south' || vehicle.location.includes('ภูเก็ต') || vehicle.location.includes('กระบี่'))) ||
-        (selectedZone === 'isan' && (vehicle.region === 'isan' || vehicle.location.includes('เขาใหญ่') || vehicle.location.includes('โคราช')));
+        (selectedZone === 'central' && (vehicle.region === 'central' || locationText.includes('กรุงเทพ') || locationText.includes('กทม'))) ||
+        (selectedZone === 'north' && (vehicle.region === 'north' || locationText.includes('เชียงใหม่'))) ||
+        (selectedZone === 'east' && (vehicle.region === 'east' || locationText.includes('พัทยา') || locationText.includes('ชลบุรี'))) ||
+        (selectedZone === 'south' && (vehicle.region === 'south' || locationText.includes('ภูเก็ต') || locationText.includes('กระบี่'))) ||
+        (selectedZone === 'isan' && (vehicle.region === 'isan' || locationText.includes('เขาใหญ่') || locationText.includes('โคราช'))) ||
+        (selectedZone === 'huahin' && (locationText.includes('หัวหิน') || locationText.includes('ชะอำ') || locationText.includes('ประจวบ')));
 
-      const matchesZone =
-        selectedZone === 'all' ||
-        matchesRegion ||
-        (vehicle.popularRoutes ?? []).some((r) => r.includes(selectedZone)) ||
-        vehicle.location.includes(selectedZone);
+      const matchesZone = selectedZone === 'all' || matchesRegion;
       const matchesSeats =
         selectedSeats === 'all'
           ? true
@@ -283,7 +296,7 @@ export default function HomePage() {
           ? vehicle.seats === 10
           : selectedSeats === '11-14' || selectedSeats === '13'
           ? vehicle.seats >= 11 && vehicle.seats <= 14
-          : selectedSeats === '20'
+          : selectedSeats === '16-24' || selectedSeats === '20'
           ? vehicle.seats >= 16
           : vehicle.seats === Number(selectedSeats);
 
@@ -368,6 +381,8 @@ export default function HomePage() {
   };
 
   const hasFilters = selectedZone !== 'all' || selectedSeats !== 'all' || searchKeyword !== '' || plateFilter !== 'all';
+  const selectedZoneLabelKey = ZONE_LABEL_KEYS[selectedZone];
+  const selectedZoneLabel = selectedZoneLabelKey ? t(selectedZoneLabelKey) : selectedZone;
 
   const hotelStays = useMemo(
     () => sponsors.filter((s) => s.category === 'hotel').map((s) => getLocalizedSponsor(s, locale)),
@@ -673,7 +688,7 @@ export default function HomePage() {
                   )}
                   {selectedZone !== 'all' && (
                     <span className="inline-flex items-center gap-1.5 rounded-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-2.5 py-0.5 text-xs font-semibold border border-slate-300 dark:border-slate-700">
-                      <span>{t('home.chipZone', { zone: selectedZone })}</span>
+                      <span>{t('home.chipZone', { zone: selectedZoneLabel })}</span>
                       <button
                         type="button"
                         onClick={() => setSelectedZone('all')}
