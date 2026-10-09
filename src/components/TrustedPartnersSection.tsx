@@ -47,8 +47,8 @@ const PARTNERS: Partner[] = [
     logoBg: '#ffffff',
     title: 'The Connect Chiang Mai',
     desc: 'ห้องพักสไตล์โมเดิร์นลอฟท์ เงียบสงบ ใกล้สนามบินเชียงใหม่และเซ็นทรัลแอร์พอร์ต พร้อมคาเฟ่ Coffee Connect และที่จอดรถสะดวกสบาย',
-    perkIcon: 'confirmation_number',
-    perk: 'สมาชิก TripDee ลดเพิ่ม 10%',
+    perkIcon: 'local_cafe',
+    perk: 'คาเฟ่ Coffee Connect ในที่พัก',
     cta: 'ดูข้อมูลที่พัก (Facebook)',
     href: 'https://www.facebook.com/Theconnectchiangmai',
   },
@@ -152,12 +152,12 @@ const PARTNER_TEXT: Record<string, Partial<Record<Locale, PartnerText>>> = {
   connect: {
     en: {
       desc: 'Modern loft-style rooms, quiet, near Chiang Mai airport and Central Airport with Coffee Connect cafe and easy parking',
-      perk: 'TripDee members save an extra 10%',
+      perk: 'On-site Coffee Connect cafe',
       cta: 'View stay info (Facebook)',
     },
     zh: {
       desc: '现代 Loft 风格客房，安静舒适，近清迈机场与中央机场商圈，设 Coffee Connect 咖啡馆与便利停车位',
-      perk: 'TripDee 会员额外 9 折优惠',
+      perk: '酒店内 Coffee Connect 咖啡馆',
       cta: '查看住宿信息（Facebook）',
     },
   },

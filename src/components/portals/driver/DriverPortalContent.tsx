@@ -4,7 +4,7 @@ import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { X, Check, AlertCircle, RefreshCw, CarFront, Loader2, MessageCircle, Phone, Plus, Pencil } from 'lucide-react';
+import { X, Check, AlertCircle, RefreshCw, Loader2, MessageCircle, Plus, Pencil } from 'lucide-react';
 import { compressImage } from '@/lib/imageCompression';
 import { fetchVehicleReviews, calculateReviewStats, Review } from '@/lib/reviewsStore';
 import { Vehicle } from '@/data/mockData';
@@ -52,7 +52,6 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
     logout,
     deleteAccount,
     loginWithOAuth,
-    loginWithCredentials,
   } = useAuth();
   const { t, locale } = useLanguage();
 
@@ -64,8 +63,6 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   const [showECardModal, setShowECardModal] = useState(false);
 
   // Driver sign-in gate state (only used while no driver is signed in)
-  const [gatePhone, setGatePhone] = useState('');
-  const [isCheckingDriver, setIsCheckingDriver] = useState(false);
   const [gateError, setGateError] = useState('');
   const [gateOauthLoading, setGateOauthLoading] = useState<'line' | 'google' | null>(null);
 
@@ -148,7 +145,11 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.vehicle) {
-          throw new Error(data.error || 'บันทึกสถานะไม่สำเร็จ');
+          throw new Error(
+            res.status === 401
+              ? 'เซสชันการเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่ด้วย LINE หรือ Google'
+              : data.error || 'บันทึกสถานะไม่สำเร็จ'
+          );
         }
         setOwnVehicle(data.vehicle);
         setApprovalStatus(data.vehicle.approvalStatus || '');
@@ -275,7 +276,13 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
     const loadOwnVehicle = async () => {
       try {
         const res = await fetch('/api/vehicles?scope=mine', { signal: controller.signal });
-        if (!res.ok) throw new Error('โหลดข้อมูลรถจากเซิร์ฟเวอร์ไม่สำเร็จ');
+        if (!res.ok) {
+          throw new Error(
+            res.status === 401
+              ? 'เซสชันการเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่ด้วย LINE หรือ Google'
+              : 'โหลดข้อมูลรถจากเซิร์ฟเวอร์ไม่สำเร็จ'
+          );
+        }
         const data = await res.json();
         if (controller.signal.aborted) return;
         setLoadError('');
@@ -301,7 +308,10 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
         setVehicleId('');
         setOwnVehicle(null);
         setApprovalStatus('');
-        setLoadError('โหลดข้อมูลรถจากเซิร์ฟเวอร์ไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อหรือเข้าสู่ระบบใหม่');
+        setLoadError(
+          (err as Error).message ||
+            'โหลดข้อมูลรถจากเซิร์ฟเวอร์ไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อหรือเข้าสู่ระบบใหม่'
+        );
         console.warn('[TripDee] Failed to load own vehicle:', err);
       }
     };
@@ -328,8 +338,6 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   );
   const reviewStats = useMemo(() => calculateReviewStats(reviewsForVehicle), [reviewsForVehicle]);
 
-  const normalizePhone = (p: string) => p.replace(/[^0-9]/g, '');
-
   const handleGateOAuth = async (provider: 'line' | 'google') => {
     try {
       setGateOauthLoading(provider);
@@ -343,83 +351,10 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
     }
   };
 
-  // Drivers who registered before OAuth existed can still sign in by the phone
-  // number attached to their vehicle or partner lead.
-  const handleGatePhoneLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanPhone = normalizePhone(gatePhone);
-    if (cleanPhone.length < 9) {
-      setGateError(t('auth.driverPhonePh'));
-      return;
-    }
-
-    setGateError('');
-    setIsCheckingDriver(true);
-
-    try {
-      const res = await fetch('/api/vehicles?demo=0');
-      const data = await res.json();
-      const allVehicles: Vehicle[] = data.vehicles || [];
-      const match = allVehicles.find((v) => {
-        const p = normalizePhone(v.driverPhone || '');
-        return p.length > 0 && (p.includes(cleanPhone) || cleanPhone.includes(p));
-      });
-
-      if (match) {
-        loginWithCredentials(
-          'driver',
-          match.driverNickname || match.driverName || t('auth.partnerName'),
-          match.driverPhone || gatePhone,
-          {
-            id: match.id,
-            driverNickname: match.driverNickname || match.driverName,
-            vehicleTitle: match.title,
-            vehiclePlate: match.plateNumber,
-            seats: match.seats,
-            isAvailable: match.isAvailable !== false,
-            verificationStatus: match.isVerified ? 'verified' : 'pending',
-          }
-        );
-        return;
-      }
-
-      const leadRes = await fetch('/api/leads/driver');
-      if (leadRes.ok) {
-        const leadData = await leadRes.json();
-        const allLeads = leadData.drivers || [];
-        const leadMatch = allLeads.find((d: { phone?: string }) => {
-          const p = normalizePhone(d.phone || '');
-          return p.length > 0 && (p.includes(cleanPhone) || cleanPhone.includes(p));
-        });
-
-        if (leadMatch) {
-          loginWithCredentials(
-            'driver',
-            leadMatch.nickname || leadMatch.driverName || t('auth.partnerName'),
-            leadMatch.phone || gatePhone,
-            {
-              id: leadMatch.id,
-              driverNickname: leadMatch.nickname || leadMatch.driverName,
-              vehicleTitle: leadMatch.vehicleModel || t('auth.partnerVehicle'),
-              vehiclePlate: leadMatch.plateNumber || t('auth.platePending'),
-              seats: Number(leadMatch.seats) || 9,
-              isAvailable: true,
-              verificationStatus: leadMatch.status === 'verified' ? 'verified' : 'pending',
-            }
-          );
-          return;
-        }
-      }
-
-      setGateError(t('auth.driverNotFound'));
-    } catch {
-      setGateError(t('auth.driverVerifyError'));
-    } finally {
-      setIsCheckingDriver(false);
-    }
-  };
-
-  if (!user) {
+  // Drivers sign in through LINE/Google only. The signed session that the
+  // vehicles API requires for writes is minted by those OAuth callbacks; a
+  // phone number cannot establish it and is shown publicly anyway.
+  if (!user || user.role !== 'driver') {
     return (
       <div className="p-6 sm:p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none max-w-lg mx-auto my-12 shadow-sm">
         <div className="text-center mb-6">
@@ -494,46 +429,9 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
           </button>
         </div>
 
-        <div className="relative my-4 text-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200 dark:border-slate-800" />
-          </div>
-          <span className="relative bg-white dark:bg-slate-900 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            {t('drvGate.orPhone')}
-          </span>
-        </div>
-
-        <form onSubmit={handleGatePhoneLogin} className="space-y-3">
-          <div className="relative">
-            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="tel"
-              required
-              value={gatePhone}
-              onChange={(e) => setGatePhone(e.target.value)}
-              placeholder={t('auth.driverPhonePh')}
-              aria-label={t('auth.driverPhoneLabel')}
-              className="w-full h-12 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 pl-10 pr-3.5 text-sm font-semibold text-slate-950 dark:text-white placeholder:text-slate-400 tabular-nums focus:outline-none focus:border-slate-950 dark:focus:border-white"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isCheckingDriver}
-            className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-black border border-amber-600 flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
-          >
-            {isCheckingDriver ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>{t('auth.driverSearching')}</span>
-              </>
-            ) : (
-              <>
-                <CarFront className="h-4 w-4" />
-                <span>{t('auth.submit')}</span>
-              </>
-            )}
-          </button>
-        </form>
+        <p className="mt-4 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 p-3 text-[11px] font-medium leading-relaxed text-slate-600 dark:text-slate-300">
+          {t('drvGate.oauthNote')}
+        </p>
 
         <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center gap-3">
           {onOpenRegister && (
@@ -648,7 +546,11 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setSaveError(data.error || 'บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        setSaveError(
+          res.status === 401
+            ? 'เซสชันการเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่ด้วย LINE หรือ Google'
+            : data.error || 'บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
+        );
         return;
       }
 

@@ -88,6 +88,12 @@ export async function GET(req: NextRequest) {
 
     // A signed-in driver's own view: their vehicle even while still pending.
     const session = await getDriverSession(req);
+    // Nothing is "mine" without a signed-in driver. Without this guard the
+    // request fell through to the public catalog, so the portal silently
+    // loaded another driver's vehicle into the edit form.
+    if (url.searchParams.get('scope') === 'mine' && session?.role !== 'driver') {
+      return unauthorizedDriverResponse();
+    }
     if (session?.role === 'driver' && url.searchParams.get('scope') === 'mine') {
       const owned = await fetchVehicles(undefined, {
         includeUnapproved: true,
@@ -288,7 +294,9 @@ export async function PUT(req: NextRequest) {
   if (!isAdmin) {
     const session = await getDriverSession(req);
     if (session?.role !== 'driver') {
-      return unauthorizedAdminResponse();
+      // Callers reach here as drivers, not admins, so report a driver-facing
+      // error instead of the confusing "Admin access required".
+      return unauthorizedDriverResponse();
     }
   }
 
@@ -360,7 +368,9 @@ export async function DELETE(req: NextRequest) {
   if (!isAdmin) {
     const session = await getDriverSession(req);
     if (session?.role !== 'driver') {
-      return unauthorizedAdminResponse();
+      // Callers reach here as drivers, not admins, so report a driver-facing
+      // error instead of the confusing "Admin access required".
+      return unauthorizedDriverResponse();
     }
   }
 
