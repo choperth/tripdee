@@ -97,8 +97,8 @@ export default function HomePage() {
   const { user } = useAuth();
   const { t, locale } = useLanguage();
   const [activeTab, setActiveTab] = useState<string>('van');
-  const [selectedZone, setSelectedZone] = useState<string>('north');
-  const [selectedSeats, setSelectedSeats] = useState<string>('9');
+  const [selectedZone, setSelectedZone] = useState<string>('all');
+  const [selectedSeats, setSelectedSeats] = useState<string>('all');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const isClient = useSyncExternalStore(
     () => () => {},

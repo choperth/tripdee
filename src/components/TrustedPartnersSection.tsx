@@ -126,8 +126,8 @@ const PARTNERS: Partner[] = [
     title: 'Vespa Adventures Chiang Mai',
     desc: 'นั่งเวสป้าคลาสสิกเที่ยวเชียงใหม่ 5 เส้นทาง City Highlights, Foodie (MICHELIN), วิถีชนบท และชมพระบิณฑบาตยามเช้า มีรถตู้ของกิจกรรมบริการรับ-ส่งฟรีจากโรงแรมในเมืองเชียงใหม่',
     perkIcon: 'redeem',
-    perk: 'สิทธิพิเศษ TripDee: รับส่วนลด 5–10% ทันที',
-    cta: '🎁 รับส่วนลดพิเศษ 10% (มีรถรับส่งฟรี)',
+    perk: 'สิทธิพิเศษ TripDee: รับส่วนลด 5% ทันที',
+    cta: '🎁 รับส่วนลดพิเศษ 5% (มีรถรับส่งฟรี)',
     href: 'https://vespaadventures.com/destination/thailand',
   },
   {
@@ -240,13 +240,13 @@ const PARTNER_TEXT: Record<string, Partial<Record<Locale, PartnerText>>> = {
   vespa: {
     en: {
       desc: 'Tour Chiang Mai by classic Vespa. Free round-trip hotel transfer by activity van included.',
-      perk: 'TripDee Privilege: Get 5–10% Off instantly',
-      cta: '🎁 Claim 10% Discount (Free Hotel Transfer)',
+      perk: 'TripDee Privilege: Get 5% Off instantly',
+      cta: '🎁 Claim 5% Discount (Free Hotel Transfer)',
     },
     zh: {
       desc: '乘坐经典伟士牌游览清迈精华路线。含清迈市区酒店专车免费往返接送。',
-      perk: 'TripDee 特权：立享 5–10% 专属折扣',
-      cta: '🎁 领取 10% 特惠折扣（含免费接送）',
+      perk: 'TripDee 特权：立享 5% 专属折扣',
+      cta: '🎁 领取 5% 特惠折扣（含免费接送）',
     },
   },
   cooking: {
@@ -263,11 +263,20 @@ const PARTNER_TEXT: Record<string, Partial<Record<Locale, PartnerText>>> = {
   },
 };
 
+const PARTNER_PROMO: Record<string, { percent: number; code: string }> = {
+  vespa: { percent: 5, code: 'TRIPDEE5' },
+};
+const DEFAULT_PROMO = { percent: 10, code: 'TRIPDEE10' };
+
 export const TrustedPartnersSection: React.FC = () => {
   const { t, locale } = useLanguage();
   const [activeCategory, setActiveCategory] = useState<PartnerCategory>('all');
   const [selectedPromoPartner, setSelectedPromoPartner] = useState<Partner | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  const promo = selectedPromoPartner
+    ? PARTNER_PROMO[selectedPromoPartner.id] ?? DEFAULT_PROMO
+    : DEFAULT_PROMO;
 
   const baseList = activeCategory === 'all' ? PARTNERS : PARTNERS.filter((p) => p.category === activeCategory);
   const visible = baseList.map((p) => ({ ...p, ...PARTNER_TEXT[p.id]?.[locale] }));
@@ -464,7 +473,7 @@ export const TrustedPartnersSection: React.FC = () => {
                   <span className="material-symbols-outlined text-[18px]">redeem</span>
                 </span>
                 <h3 id="promo-partner-title" className="text-sm font-black text-slate-950 dark:text-white">
-                  สิทธิพิเศษส่วนลด TripDee 10%
+                  สิทธิพิเศษส่วนลด TripDee {promo.percent}%
                 </h3>
               </div>
               <button
@@ -488,22 +497,22 @@ export const TrustedPartnersSection: React.FC = () => {
 
               <div className="p-3 bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700 text-center space-y-1.5">
                 <span className="text-[11px] font-bold text-amber-900 dark:text-amber-200 block">
-                  รหัสโค้ดส่วนลด 10% สำหรับจองกับพาร์ตเนอร์
+                  รหัสโค้ดส่วนลด {promo.percent}% สำหรับจองกับพาร์ตเนอร์
                 </span>
                 <div className="flex items-center justify-center gap-2">
                   <span className="font-mono font-black text-xl tracking-wider text-slate-950 dark:text-amber-300 bg-white dark:bg-slate-900 px-3 py-1 border border-amber-400">
-                    TRIPDEE10
+                    {promo.code}
                   </span>
                   <button
                     type="button"
-                    onClick={() => handleCopyCode('TRIPDEE10')}
+                    onClick={() => handleCopyCode(promo.code)}
                     className="px-2.5 py-1.5 bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-bold transition-colors cursor-pointer"
                   >
                     {copiedCode ? 'คัดลอกแล้ว!' : 'คัดลอกโค้ด'}
                   </button>
                 </div>
                 <p className="text-[10px] text-amber-800 dark:text-amber-300">
-                  แจ้งโค้ดนี้เมื่อติดต่อจองเพื่อรับส่วนลดพิเศษ 10% และรับสิทธิ์รถรับส่งฟรีถึงที่พัก
+                  แจ้งโค้ดนี้เมื่อติดต่อจองเพื่อรับส่วนลดพิเศษ {promo.percent}% และรับสิทธิ์รถรับส่งฟรีถึงที่พัก
                 </p>
               </div>
             </div>
