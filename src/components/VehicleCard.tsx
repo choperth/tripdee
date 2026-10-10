@@ -81,6 +81,9 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
   const location = vehicleLocation(vehicle, locale);
   const amenities = vehicleAmenities(vehicle, locale);
   const shortLocation = location.split('/')[0].trim();
+  const isYellowPlate = vehicle.plateType === 'yellow' || (vehicle.plateNumber ? vehicle.plateNumber.trim().startsWith('3') : false);
+  const hasClass1Insurance = vehicle.insuranceType === 'class1' || (Array.isArray(vehicle.amenities) && vehicle.amenities.some((a) => a.includes('ชั้น 1') || a.toLowerCase().includes('first class')));
+  const isInsured = hasClass1Insurance || vehicle.insuranceType || (Array.isArray(vehicle.amenities) && vehicle.amenities.some((a) => a.includes('ประกัน')));
 
   // Helper icons for amenities
   const getAmenityIcon = (text: string, index: number) => {
@@ -121,29 +124,39 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
             )}
 
             {/* Top-left Badges */}
-            <div className="absolute top-2 left-2 flex flex-wrap gap-1 pointer-events-none">
-              {isSelfDrive ? (
-                <span className="bg-indigo-700 text-white text-xs font-black px-2 py-0.5 border border-indigo-800 uppercase rounded-none">
-                  🚗 {t('vehicle.selfDrive')}
+            {/* Top-left Badges: Yellow Plate 30, Insurance, Self-drive, Verified */}
+            <div className="absolute top-2 left-2 flex flex-wrap items-center gap-1 pointer-events-none max-w-[88%]">
+              {isYellowPlate ? (
+                <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-[11px] font-black px-2 py-0.5 border border-amber-500 rounded-none shadow-xs">
+                  <span className="material-symbols-outlined text-[13px] leading-none">local_taxi</span>
+                  <span>{t('vehicle.plateYellow30Short')}</span>
                 </span>
-              ) : vehicle.plateType === 'yellow' ? (
-                <span className="bg-amber-400 text-slate-950 text-xs font-black px-2 py-0.5 border border-amber-500 uppercase rounded-none">
-                  🟡 {t('hero.quickYellow')}
+              ) : isSelfDrive ? (
+                <span className="inline-flex items-center gap-1 bg-indigo-700 text-white text-[11px] font-black px-2 py-0.5 border border-indigo-800 rounded-none shadow-xs">
+                  <span className="material-symbols-outlined text-[13px] leading-none">key</span>
+                  <span>{t('vehicle.selfDrive')}</span>
                 </span>
               ) : (
-                <span className="bg-slate-900 text-white text-xs font-bold px-2 py-0.5 border border-slate-900 rounded-none">
-                  {t('vehicle.bluePlate')}
+                <span className="inline-flex items-center gap-1 bg-slate-900/90 text-white text-[11px] font-bold px-2 py-0.5 border border-slate-700 rounded-none shadow-xs">
+                  <span>{t('vehicle.bluePlate')}</span>
+                </span>
+              )}
+
+              {isInsured && (
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/90 dark:text-emerald-300 text-[11px] font-bold px-2 py-0.5 border border-emerald-300 dark:border-emerald-700 rounded-none shadow-xs">
+                  <span className="material-symbols-outlined text-[13px] text-emerald-600 dark:text-emerald-400 leading-none">shield_with_heart</span>
+                  <span>{hasClass1Insurance ? t('vehicle.insuranceClass1Short') : t('vehicle.insured')}</span>
                 </span>
               )}
 
               {vehicle.isVerified && (
-                <span className="bg-slate-900 text-amber-400 text-xs font-black px-2 py-0.5 border border-slate-900 uppercase rounded-none">
-                  ⭐ {t('hero.verifiedSticker')}
+                <span className="inline-flex items-center gap-1 bg-slate-900/95 text-amber-400 text-[11px] font-black px-2 py-0.5 border border-slate-700 uppercase rounded-none shadow-xs">
+                  <span>⭐ {t('hero.verifiedSticker')}</span>
                 </span>
               )}
 
               {vehicle.plateNumber && (
-                <span className="bg-white/95 dark:bg-slate-900/95 text-slate-900 dark:text-slate-200 text-xs font-bold px-1.5 py-0.5 border border-slate-300 dark:border-slate-700 rounded-none">
+                <span className="bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-200 text-[11px] font-bold px-1.5 py-0.5 border border-slate-300 dark:border-slate-700 rounded-none shadow-xs">
                   {maskPlateNumber(vehicle.plateNumber)}
                 </span>
               )}
@@ -297,40 +310,33 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
             </div>
 
             {/* Instant Deposit Booking CTA Button (Hidden when ENABLE_QR_PAYMENT is false) */}
-            {ENABLE_QR_PAYMENT && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDepositModal(true);
-                }}
-                className="w-full mb-2 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs sm:text-sm py-2 px-3 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border border-amber-500"
-              >
-                <span className="material-symbols-outlined text-[16px] text-slate-950">verified</span>
-                <span>{t('vc.depositCta')}</span>
-              </button>
-            )}
+            {/* Quick Action Buttons on Card */}
+            <div className="grid grid-cols-12 gap-1.5">
+              {/* Quick Deposit CTA Button */}
+              {ENABLE_QR_PAYMENT && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDepositModal(true);
+                  }}
+                  className="col-span-6 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs sm:text-sm py-2 px-2 transition-all flex items-center justify-center gap-1 cursor-pointer shadow-xs border border-amber-500 active:scale-95 whitespace-nowrap"
+                  title={t('vehicle.bookDepositMobile')}
+                >
+                  <span className="material-symbols-outlined text-[16px] text-slate-950">verified</span>
+                  <span>{t('vehicle.bookDepositShort')}</span>
+                </button>
+              )}
 
-            <div className="grid grid-cols-2 gap-2">
-              {/* Call CTA - matching attached image: white bg, border, teal call icon, "โทรตรง" */}
-              <a
-                href={`tel:${vehicle.driverPhone}`}
-                onClick={() => {
-                  handleCallClick();
-                }}
-                className="inline-flex items-center justify-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-950 dark:text-white font-bold text-xs sm:text-sm py-2 px-2 border border-slate-300 dark:border-slate-700 transition-colors rounded-none cursor-pointer shadow-2xs"
-                title={t('vc.callTitle', { phone: vehicle.driverPhone })}
-              >
-                <span className="material-symbols-outlined text-[15px] text-teal-700 dark:text-teal-400">call</span>
-                <span className="whitespace-nowrap">{t('vehicle.directCall')}</span>
-              </a>
-
-              {/* LINE / WeChat CTA - matching attached image: green bg, white chat icon, "ทัก LINE" */}
+              {/* LINE / WeChat Chat Button */}
               {locale === 'zh' && vehicle.driverWechat ? (
                 <button
                   type="button"
-                  onClick={handleWechatClick}
-                  className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm py-2 px-2 border border-emerald-600 transition-colors rounded-none cursor-pointer shadow-2xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleWechatClick(e);
+                  }}
+                  className={`${ENABLE_QR_PAYMENT ? 'col-span-4' : 'col-span-8'} inline-flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm py-2 px-2 border border-emerald-600 transition-colors rounded-none cursor-pointer shadow-2xs active:scale-95`}
                   title="微信联系司机"
                 >
                   <span className="material-symbols-outlined text-[15px] text-white">chat</span>
@@ -339,18 +345,34 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
               ) : (
                 <a
                   href={formatLineLink(vehicle.driverLine, buildVehicleLineMessage(vehicle))}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (typeof navigator !== 'undefined' && navigator.clipboard) {
                       navigator.clipboard.writeText(buildVehicleLineMessage(vehicle)).catch(() => {});
                     }
                   }}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 bg-[#06C755] hover:bg-[#05b04b] text-white font-bold text-xs sm:text-sm py-2 px-2 border border-[#06C755] transition-colors rounded-none cursor-pointer shadow-2xs"
+                  className={`${ENABLE_QR_PAYMENT ? 'col-span-4' : 'col-span-8'} inline-flex items-center justify-center gap-1 bg-[#06C755] hover:bg-[#05b04b] text-white font-bold text-xs sm:text-sm py-2 px-2 border border-[#06C755] transition-colors rounded-none cursor-pointer shadow-2xs active:scale-95`}
                   title={t('vc.lineTitle')}
                 >
                   <span className="material-symbols-outlined text-[15px] text-white">chat</span>
                   <span className="whitespace-nowrap">{t('vehicle.lineChat')}</span>
+                </a>
+              )}
+
+              {/* Call Button */}
+              {vehicle.driverPhone && (
+                <a
+                  href={`tel:${vehicle.driverPhone}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCallClick();
+                  }}
+                  className={`${ENABLE_QR_PAYMENT ? 'col-span-2' : 'col-span-4'} inline-flex items-center justify-center bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-950 dark:text-white font-bold text-xs sm:text-sm py-2 px-1 border border-slate-300 dark:border-slate-700 transition-colors rounded-none cursor-pointer shadow-2xs active:scale-95`}
+                  title={t('vc.callTitle', { phone: vehicle.driverPhone })}
+                >
+                  <span className="material-symbols-outlined text-[16px] text-teal-700 dark:text-teal-400">call</span>
                 </a>
               )}
             </div>

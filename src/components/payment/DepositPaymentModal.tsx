@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Vehicle } from '@/data/mockData';
 import { vehicleTitle } from '@/data/vehicleI18n';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { generateQrMatrix, renderQrSvgPath } from '@/lib/qrCode';
 import {
@@ -21,6 +22,8 @@ import {
 } from 'lucide-react';
 import { BookingConfirmationSheet, BookingSheetData } from '@/components/BookingConfirmationSheet';
 import { ENABLE_QR_PAYMENT } from '@/lib/constants';
+export type ZoneKey = 'city' | 'midHill' | 'highHill' | 'crossProvince';
+
 interface DepositPaymentModalProps {
   vehicle: Vehicle | null;
   isOpen: boolean;
@@ -28,6 +31,7 @@ interface DepositPaymentModalProps {
   defaultRoute?: string;
   defaultTravelDate?: string;
   defaultTotalDays?: number;
+  selectedZone?: ZoneKey;
 }
 
 export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = (props) => {
@@ -42,29 +46,36 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
   defaultRoute = 'เชียงใหม่ - เชียงราย / แม่กำปอง',
   defaultTravelDate,
   defaultTotalDays = 1,
+  selectedZone,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
   const { locale } = useLanguage();
+  const { user } = useAuth();
 
-  // Form input states
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [customerLine, setCustomerLine] = useState('');
+  // Zero-Friction User Autofill
+  const [customerName, setCustomerName] = useState(() => user?.name || '');
+  const [customerPhone, setCustomerPhone] = useState(
+    () => (user?.emailOrPhone && !user.emailOrPhone.includes('@') ? user.emailOrPhone : '')
+  );
+  const [customerLine, setCustomerLine] = useState(() => user?.lineId || '');
   const [route, setRoute] = useState(defaultRoute);
   const [travelDate, setTravelDate] = useState(
     () => defaultTravelDate || new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10)
   );
   const [totalDays, setTotalDays] = useState<number>(defaultTotalDays);
 
-  // Pricing. The rate must come from the vehicle record: inventing one here
-  // would charge the customer an amount the driver never agreed to.
-  const dailyRate = vehicle?.zoneRates?.city ?? null;
+  // Pricing calculation with Dynamic Zone Pricing
+  const dailyRate =
+    (selectedZone && vehicle?.zoneRates?.[selectedZone]) ??
+    vehicle?.zoneRates?.city ??
+    null;
   const hasValidRate = typeof dailyRate === 'number' && dailyRate > 0;
   const daysCount = Math.max(1, Number(totalDays) || 1);
   const totalPrice = hasValidRate ? dailyRate * daysCount : 0;
   const depositAmount = 100 * daysCount;
   const remainingAmount = Math.max(0, totalPrice - depositAmount);
+
   // Payment flow step: 'form' | 'qr' | 'success'
   const [step, setStep] = useState<'form' | 'qr' | 'success'>('form');
   const [loading, setLoading] = useState(false);
@@ -230,14 +241,16 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
+      <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-fade-in">
         <div
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="deposit-modal-title"
-          className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 w-full max-w-lg shadow-2xl relative my-auto overflow-hidden"
+          className="bg-white dark:bg-slate-900 border-t sm:border border-slate-300 dark:border-slate-800 w-full max-w-lg shadow-2xl relative overflow-hidden rounded-t-2xl sm:rounded-none max-h-[92vh] sm:max-h-[88vh] flex flex-col"
         >
+          {/* Mobile Bottom Sheet Pull Bar Handle */}
+          <div className="w-12 h-1.5 bg-slate-400/50 dark:bg-slate-600 rounded-full mx-auto my-2.5 block sm:hidden shrink-0" aria-hidden="true" />
           {/* Header */}
           <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-800">
             <div className="flex items-center gap-2.5">
@@ -288,8 +301,16 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                   ) : (
                   <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-700 text-[11px]">
                     <div className="flex justify-between items-center text-slate-600 dark:text-slate-300">
-                      <span>ค่าบริการรถมาตรฐาน ({daysCount} วัน):</span>
-                      <span className="font-bold text-slate-900 dark:text-white font-mono">฿{totalPrice.toLocaleString()}</span>
+                      <span>
+                        ค่าบริการรถ ({daysCount} วัน
+                        {selectedZone ? (
+                          <strong className="text-amber-600 dark:text-amber-400">
+                            {' '}• โซน{selectedZone === 'midHill' ? 'ดอยใกล้/แม่ริม' : selectedZone === 'highHill' ? 'ดอยสูง/อ่างขาง' : selectedZone === 'crossProvince' ? 'ข้ามจังหวัด' : 'ในเมือง'}
+                          </strong>
+                        ) : ''}
+                        ):
+                      </span>
+                      <span className="font-bold text-slate-900 dark:text-white font-mono">฿{totalPrice.toLocaleString()} {dailyRate ? `(฿${dailyRate.toLocaleString()}/วัน)` : ''}</span>
                     </div>
                     <div className="flex justify-between items-center text-amber-700 dark:text-amber-400 font-semibold">
                       <span>ค่าบริการระบบ TripDee (ชำระทันทีผ่าน PromptPay เพื่อยืนยันล็อกคิว):</span>
@@ -303,8 +324,14 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                   )}
                 </div>
 
-                {/* Form Inputs */}
+                {/* Form Inputs with Autofill Notification */}
                 <div className="space-y-3 text-xs">
+                  {user && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 p-2 border border-emerald-200 dark:border-emerald-800">
+                      <span className="material-symbols-outlined text-[15px] text-emerald-600">badge</span>
+                      <span>ดึงข้อมูลผู้จองจากบัญชี <strong>{user.name}</strong> อัตโนมัติ</span>
+                    </div>
+                  )}
                   <div>
                     <label htmlFor="customer-name" className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                       ชื่อ-นามสกุล ผู้จอง <span className="text-red-500">*</span>

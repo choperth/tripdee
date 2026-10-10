@@ -57,6 +57,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
   const [isPhoneRevealed, setIsPhoneRevealed] = useState<boolean>(false);
   const [showBookingSheet, setShowBookingSheet] = useState<boolean>(false);
   const [showDepositModal, setShowDepositModal] = useState<boolean>(false);
+  const [selectedZone, setSelectedZone] = useState<'city' | 'midHill' | 'highHill' | 'crossProvince'>('city');
   const isFavorite = useIsFavorite(vehicle.id);
   const [showECardModal, setShowECardModal] = useState<boolean>(false);
   const [sharedToast, setSharedToast] = useState<boolean>(false);
@@ -200,6 +201,10 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
   }, [allVehicles, vehicle, cleanPhone]);
 
   const basePrice = vehicle.zoneRates?.city ?? null;
+  const currentZonePrice =
+    (selectedZone && vehicle.zoneRates?.[selectedZone]) ??
+    vehicle.zoneRates?.city ??
+    basePrice;
   const hasRating = typeof vehicle.rating === 'number' && vehicle.rating > 0 && vehicle.reviewCount > 0;
   const publicName = getPublicDriverName(vehicle.driverName, vehicle.driverNickname);
   const title = vehicleTitle(vehicle, locale);
@@ -651,20 +656,39 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                         { key: 'city' as const, label: t('zone.city.label'), route: t('vdm.routeCity') },
                         { key: 'midHill' as const, label: t('zone.midHill.label'), route: t('vdm.routeMid') },
                         { key: 'highHill' as const, label: t('zone.highHill.label'), route: t('vdm.routeHigh') },
+                        { key: 'crossProvince' as const, label: 'ข้ามจังหวัด / ทางไกล', route: 'ต่างจังหวัด / นอกเขตพื้นที่' },
                       ]
                     )
                       .filter((row) => Number(vehicle.zoneRates?.[row.key]) > 0)
-                      .map((row, idx) => (
-                        <tr key={row.key}>
-                          <td className="p-3 font-bold text-slate-950 dark:text-white">
-                            {t('detail.zoneLine', { no: idx + 1, label: row.label })}
-                          </td>
-                          <td className="p-3 text-slate-600 dark:text-slate-400">{row.route}</td>
-                          <td className="p-3 text-right font-black text-slate-950 dark:text-white font-mono">
-                            ฿{Number(vehicle.zoneRates![row.key]).toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
+                      .map((row, idx) => {
+                        const isSelected = selectedZone === row.key;
+                        return (
+                          <tr
+                            key={row.key}
+                            onClick={() => setSelectedZone(row.key)}
+                            className={`cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-amber-50 dark:bg-amber-950/40 border-l-4 border-l-amber-500 font-bold'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                            }`}
+                          >
+                            <td className="p-3 text-slate-950 dark:text-white">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span>{t('detail.zoneLine', { no: idx + 1, label: row.label })}</span>
+                                {isSelected && (
+                                  <span className="text-[10px] bg-amber-400 text-slate-950 px-1.5 py-0.5 font-black uppercase tracking-wider rounded-none">
+                                    เลือกอยู่
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3 text-slate-600 dark:text-slate-400">{row.route}</td>
+                            <td className="p-3 text-right font-black text-slate-950 dark:text-white font-mono">
+                              ฿{Number(vehicle.zoneRates![row.key]).toLocaleString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
@@ -1069,34 +1093,46 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
       </div>
 
       {/* Mobile Sticky Bottom Contact Bar (mobile & tablet only) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-3 shadow-lg">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-          <div className="min-w-0">
-            <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {t('vehicle.priceFrom')}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
+          <div className="min-w-0 pr-1">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+              {selectedZone === 'midHill' ? 'ดอยใกล้/แม่ริม' : selectedZone === 'highHill' ? 'ดอยสูง/อ่างขาง' : selectedZone === 'crossProvince' ? 'ข้ามจังหวัด' : t('vehicle.priceFrom')}
             </span>
-            {basePrice !== null ? (
+            {currentZonePrice !== null ? (
               <span className="flex items-baseline gap-1">
-                <span className="text-lg font-black font-mono text-slate-950 dark:text-white">
-                  ฿{basePrice.toLocaleString()}
+                <span className="text-base sm:text-lg font-black font-mono text-slate-950 dark:text-white">
+                  ฿{currentZonePrice.toLocaleString()}
                 </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">{t('vehicle.perDay')}</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">{t('vehicle.perDay')}</span>
               </span>
             ) : (
-              <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+              <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
                 {t('vehicle.priceOnRequest')}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Prominent Mobile Deposit Booking Button */}
+            {ENABLE_QR_PAYMENT && (
+              <button
+                type="button"
+                onClick={() => setShowDepositModal(true)}
+                className="inline-flex h-11 items-center justify-center gap-1.5 px-3.5 sm:px-4 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs sm:text-sm rounded-none border border-amber-500 shadow-md active:scale-95 transition-all cursor-pointer whitespace-nowrap"
+              >
+                <span className="material-symbols-outlined text-[18px]">verified</span>
+                <span>{t('vehicle.bookDepositMobile')}</span>
+              </button>
+            )}
             {vehicle.driverPhone && (
               <a
                 href={`tel:${vehicle.driverPhone}`}
                 onClick={handleDirectCall}
-                className="inline-flex h-11 items-center gap-1.5 rounded-none bg-slate-900 dark:bg-white px-4 text-white dark:text-slate-900 text-xs font-bold border border-slate-900 dark:border-white active:scale-95 transition-transform"
+                title={t('vehicle.directCall')}
+                aria-label={t('vehicle.directCall')}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-none bg-slate-900 dark:bg-white text-white dark:text-slate-900 border border-slate-900 dark:border-white active:scale-95 transition-transform shrink-0"
               >
                 <span className="material-symbols-outlined text-[18px]">call</span>
-                <span>{t('vehicle.directCall')}</span>
               </a>
             )}
             <a
@@ -1108,10 +1144,11 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
               }}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-11 items-center gap-1.5 rounded-none bg-[#06C755] hover:bg-[#05b34c] px-4 text-white text-xs font-bold border border-[#06C755] active:scale-95 transition-transform"
+              title={t('vehicle.lineChat')}
+              aria-label={t('vehicle.lineChat')}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-none bg-[#06C755] hover:bg-[#05b34c] text-white border border-[#06C755] active:scale-95 transition-transform shrink-0"
             >
               <span className="material-symbols-outlined text-[18px]">chat</span>
-              <span>{t('vehicle.lineChat')}</span>
             </a>
           </div>
         </div>
@@ -1139,6 +1176,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
         <DepositPaymentModal
           vehicle={vehicle}
           isOpen={showDepositModal}
+          selectedZone={selectedZone}
           onClose={() => setShowDepositModal(false)}
         />
       )}

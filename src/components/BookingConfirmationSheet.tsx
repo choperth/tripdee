@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { Vehicle, PlateType, InsuranceType } from '@/data/mockData';
 import { DEFAULT_VEHICLE_TERMS, parseVehicleTerms } from '@/lib/vehicleTerms';
 import { vehicleTitle, vehiclePopularRoutes } from '@/data/vehicleI18n';
+import { generateQrMatrix, renderQrSvgPath } from '@/lib/qrCode';
 import {
   Printer,
   Copy,
@@ -18,7 +20,6 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
-  FileText,
   DollarSign,
   Users,
 } from 'lucide-react';
@@ -148,7 +149,58 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
 
   const [isEditing, setIsEditing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState<'eticket' | 'sheet'>('eticket');
+  const [calendarDownloaded, setCalendarDownloaded] = useState(false);
 
+  const qrSvgPath = React.useMemo(() => {
+    try {
+      const codeData = `https://www.tripdeeth.com/booking-confirmation?bookingId=${encodeURIComponent(data.bookingId)}`;
+      return renderQrSvgPath(generateQrMatrix(codeData));
+    } catch {
+      return '';
+    }
+  }, [data.bookingId]);
+
+  const handleAddToCalendar = () => {
+    try {
+      const now = new Date();
+      const startDate = new Date(now.getTime() + 86400000 * 2);
+      const startStr = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      const endDate = new Date(startDate.getTime() + 86400000 * (data.totalDays || 1));
+      const endStr = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+      const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//TripDee//TripDee Booking E-Ticket//TH',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        'BEGIN:VEVENT',
+        `UID:${data.bookingId}@tripdeeth.com`,
+        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+        `DTSTART:${startStr}`,
+        `DTEND:${endStr}`,
+        `SUMMARY:🚐 TripDee เดินทาง: ${data.vehicleTitle}`,
+        `DESCRIPTION:การจองรถ TripDee รหัส ${data.bookingId}\\nคนขับ: ${data.driverName} (${data.driverNickname})\\nโทร: ${data.driverPhone}\\nทะเบียน: ${data.plateNumber}\\nจุดนัดรับ: ${data.pickupLocation} เวลา ${data.pickupTime}\\nเส้นทาง: ${data.routeDetails}\\nยอดมัดจำแล้ว: ฿${data.depositAmount.toLocaleString()} บาท\\nยอดคงเหลือจ่ายคนขับ: ฿${data.remainingAmount.toLocaleString()} บาท`,
+        `LOCATION:${data.pickupLocation || 'เชียงใหม่'}`,
+        'STATUS:CONFIRMED',
+        'END:VEVENT',
+        'END:VCALENDAR',
+      ].join('\r\n');
+
+      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.setAttribute('download', `tripdee-${data.bookingId}.ics`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setCalendarDownloaded(true);
+      setTimeout(() => setCalendarDownloaded(false), 3000);
+    } catch (err) {
+      console.error('Error generating calendar file:', err);
+    }
+  };
   const handleRateOrDaysChange = (days: number, rate: number | null) => {
     const total = rate !== null ? days * rate : 0;
     const deposit = rate !== null ? Math.round(total * 0.3) : 0;
@@ -224,15 +276,33 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
   const content = (
     <div className="w-full max-w-4xl mx-auto bg-white text-slate-900 rounded-none shadow-2xl overflow-hidden border border-slate-300 dark:border-slate-800 print:shadow-none print:border-none print:rounded-none print:m-0 print:p-0">
       {/* Screen-only Action Toolbar */}
-      <div className="no-print bg-slate-950 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
-        <div className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-slate-300" />
-          <span className="font-extrabold text-sm tracking-tight">
-            {t('sheet.toolbarTitle')}
-          </span>
-          <span className="rounded-none bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider border border-emerald-500/40">
-            A4 Print-Ready
-          </span>
+      <div className="no-print bg-slate-950 text-white px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-800">
+        {/* View Mode Switcher: E-Ticket vs Formal Sheet */}
+        <div className="flex items-center bg-slate-900 p-0.5 border border-slate-800 rounded-none">
+          <button
+            type="button"
+            onClick={() => setViewMode('eticket')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black transition-all cursor-pointer ${
+              viewMode === 'eticket'
+                ? 'bg-amber-400 text-slate-950 shadow-xs'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            <span>🎫</span>
+            <span>{t('sheet.viewMobilePass')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('sheet')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black transition-all cursor-pointer ${
+              viewMode === 'sheet'
+                ? 'bg-amber-400 text-slate-950 shadow-xs'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            <span>📄</span>
+            <span>{t('sheet.viewFormalSheet')}</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-2">
@@ -275,10 +345,152 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
           )}
         </div>
       </div>
+      {/* View Mode 1: Mobile Pass / Boarding Pass E-Ticket */}
+      <div className={`p-4 sm:p-6 bg-slate-100 dark:bg-slate-950/60 ${viewMode === 'eticket' ? 'block' : 'hidden'} print:hidden`}>
+        <div className="max-w-md mx-auto bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 shadow-xl overflow-hidden rounded-none">
+          {/* Ticket Header Banner */}
+          <div className="bg-slate-950 text-white p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="p-1.5 bg-amber-400 text-slate-950 font-black text-xs">TD</span>
+              <div>
+                <p className="text-[10px] font-mono tracking-wider text-slate-400 uppercase">TripDee Pass</p>
+                <h3 className="font-mono text-sm font-black tracking-tight text-white">{data.bookingId}</h3>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 text-[11px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>{t('sheet.statusConfirmed')}</span>
+            </div>
+          </div>
 
-      {/* Editing Drawer (Screen-only) */}
-      {isEditing && (
-        <div className="no-print bg-slate-50 dark:bg-slate-900 p-5 border-b border-slate-200 dark:border-slate-800 text-xs space-y-4">
+          {/* Vehicle & Driver Segment */}
+          <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 space-y-3">
+            <div className="flex items-center gap-3">
+              {vehicle?.images?.[0] ? (
+                <div className="relative w-16 h-16 rounded-none overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shrink-0">
+                  <Image
+                    src={vehicle.images[0]}
+                    alt={data.vehicleTitle}
+                    fill
+                    sizes="64px"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 grid place-items-center text-slate-400 shrink-0 border border-slate-200 dark:border-slate-700">
+                  <CarFront className="w-8 h-8" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-mono text-xs font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 border border-slate-300 dark:border-slate-700">
+                    {data.plateNumber}
+                  </span>
+                  <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 border border-amber-300 dark:border-amber-800">
+                    {data.plateType === 'yellow' ? 'ป้ายเหลือง 30' : 'ป้ายฟ้า VIP'}
+                  </span>
+                </div>
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate mt-1">
+                  {data.vehicleTitle}
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                  <span>คนขับ: <strong>{data.driverName} ({data.driverNickname})</strong></span>
+                  {data.isVerified && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 inline" />}
+                </p>
+              </div>
+            </div>
+
+            {/* Direct Contact Button */}
+            {data.driverPhone && (
+              <a
+                href={`tel:${data.driverPhone}`}
+                className="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px] text-teal-600">call</span>
+                <span>โทรตรงคนขับ: {data.driverPhone}</span>
+              </a>
+            )}
+          </div>
+
+          {/* Boarding Itinerary Segment */}
+          <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-4 text-xs">
+            <div>
+              <span className="text-[10px] font-mono uppercase text-slate-400 block tracking-wider">Pickup / เวลานัด</span>
+              <p className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">{data.pickupTime}</p>
+              <p className="text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">{data.pickupLocation}</p>
+            </div>
+            <div>
+              <span className="text-[10px] font-mono uppercase text-slate-400 block tracking-wider">Dates / วันเดินทาง</span>
+              <p className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">{data.travelDates}</p>
+              <p className="text-slate-600 dark:text-slate-400 mt-1">({data.totalDays} วัน • {data.passengers})</p>
+            </div>
+            <div className="col-span-2 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700">
+              <span className="text-[10px] font-mono uppercase text-slate-400 block tracking-wider">Route / แผนเส้นทาง</span>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{data.routeDetails}</p>
+            </div>
+          </div>
+
+          {/* Financial Tear-off Stub (Notched Boarding Pass styling) */}
+          <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-800/50 relative">
+            <div className="flex items-center justify-between mb-3 text-xs">
+              <div>
+                <span className="text-[10px] uppercase text-emerald-700 dark:text-emerald-400 font-bold block">มัดจำล็อกคิวแล้ว (Deposit Paid)</span>
+                <span className="text-base font-black font-mono text-emerald-700 dark:text-emerald-400">฿{data.depositAmount.toLocaleString()}</span>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] uppercase text-slate-500 dark:text-slate-400 font-bold block">คงเหลือจ่ายคนขับ (Remaining)</span>
+                <span className="text-base font-black font-mono text-slate-900 dark:text-white">฿{data.remainingAmount.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* QR Code */}
+            {qrSvgPath && (
+              <div className="pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                <div className="text-slate-500 dark:text-slate-400 text-[11px] space-y-0.5">
+                  <p className="font-bold text-slate-900 dark:text-white">สแกนตรวจสอบข้อมูลตั๋ว</p>
+                  <p>แสดงตั๋วนี้ให้คนขับดูในวันเดินทาง</p>
+                </div>
+                <div className="p-1.5 bg-white border border-slate-300 dark:border-slate-700 shrink-0">
+                  <svg
+                    className="w-14 h-14"
+                    viewBox="0 0 100 100"
+                    fill="currentColor"
+                  >
+                    <path d={qrSvgPath} />
+                  </svg>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Action Buttons for E-Ticket */}
+          <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 space-y-2">
+            <button
+              type="button"
+              onClick={handleAddToCalendar}
+              className="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 border border-amber-500 active:scale-98 transition-all cursor-pointer shadow-xs"
+            >
+              <Calendar className="w-4 h-4 text-slate-950" />
+              <span>{calendarDownloaded ? t('sheet.calendarSuccess') : t('sheet.addToCalendar')}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopySummary}
+              className="w-full py-2 px-3 bg-[#06C755] hover:bg-[#05b04b] text-white font-bold text-xs flex items-center justify-center gap-2 border border-[#06C755] active:scale-98 transition-all cursor-pointer shadow-2xs"
+            >
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              <span>{copied ? t('sheet.copied') : t('sheet.copyDriverSummary')}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* View Mode 2: Formal Sheet (Agreement Sheet / PDF Print) */}
+      <div className={viewMode === 'sheet' ? 'block' : 'hidden print:block'}>
+        {/* Editing Drawer (Screen-only) */}
+        {isEditing && (
+          <div className="no-print bg-slate-50 dark:bg-slate-900 p-5 border-b border-slate-200 dark:border-slate-800 text-xs space-y-4">
           <h4 className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-2">
             <Edit3 className="h-4 w-4 text-blue-500" />
             <span>{t('sheet.editHint')}</span>
@@ -706,6 +918,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
           <span>{t('sheet.footer')}</span>
           <span>{t('sheet.pageNote')}</span>
         </div>
+      </div>
       </div>
     </div>
   );
