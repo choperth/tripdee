@@ -1,6 +1,5 @@
 'use client';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import Image from 'next/image';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
@@ -163,22 +162,24 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
   // Autofill from active logged-in driver session
   useEffect(() => {
     if (!isOpen || !user || user.role !== 'driver') return;
-    setFormData((prev) => ({
-      ...prev,
-      driverName: prev.driverName || user.name || '',
-      nickname: prev.nickname || user.driverNickname || user.name || '',
-      phone: prev.phone || (user.emailOrPhone && !user.emailOrPhone.includes('@') ? user.emailOrPhone : ''),
-      lineId: prev.lineId || user.lineId || '',
-      whatsapp: prev.whatsapp || user.whatsapp || '',
-      wechat: prev.wechat || user.wechat || '',
-      kakao: prev.kakao || user.kakao || '',
-      vehicleModel:
-        prev.vehicleModel === 'Toyota Commuter' && user.vehicleTitle
-          ? user.vehicleTitle
-          : prev.vehicleModel,
-      plateNumber: prev.plateNumber || user.vehiclePlate || '',
-      seats: user.seats ? String(user.seats) : prev.seats,
-    }));
+    queueMicrotask(() => {
+      setFormData((prev) => ({
+        ...prev,
+        driverName: prev.driverName || user.name || '',
+        nickname: prev.nickname || user.driverNickname || user.name || '',
+        phone: prev.phone || (user.emailOrPhone && !user.emailOrPhone.includes('@') ? user.emailOrPhone : ''),
+        lineId: prev.lineId || user.lineId || '',
+        whatsapp: prev.whatsapp || user.whatsapp || '',
+        wechat: prev.wechat || user.wechat || '',
+        kakao: prev.kakao || user.kakao || '',
+        vehicleModel:
+          prev.vehicleModel === 'Toyota Commuter' && user.vehicleTitle
+            ? user.vehicleTitle
+            : prev.vehicleModel,
+        plateNumber: prev.plateNumber || user.vehiclePlate || '',
+        seats: user.seats ? String(user.seats) : prev.seats,
+      }));
+    });
   }, [isOpen, user]);
 
   if (!isOpen) return null;

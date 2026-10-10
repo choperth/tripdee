@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { saveSubscription, removeSubscription } from '@/lib/pushService';
 
-const FALLBACK_VAPID_PUBLIC_KEY =
-  'BF78nX6pFnCopBvpmpsHq6iddA33Za6Ipta32Zg4HIw9xKoTFvalivJiOKQFF3zF7_76pJpqctdSV95I7pNyoro';
-
 export async function GET() {
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || FALLBACK_VAPID_PUBLIC_KEY;
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  if (!publicKey) {
+    return NextResponse.json(
+      { success: false, error: 'Push notifications are not configured' },
+      { status: 503 }
+    );
+  }
   return NextResponse.json({
     success: true,
     publicKey,
@@ -17,18 +20,21 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { endpoint, keys, role } = body;
 
-    if (!endpoint || !keys?.p256dh || !keys?.auth) {
+    if (!endpoint || typeof endpoint !== 'string' || !endpoint.startsWith('https://') || !keys?.p256dh || !keys?.auth) {
       return NextResponse.json(
-        { error: 'Missing required subscription fields (endpoint, keys.p256dh, keys.auth)' },
+        { error: 'Missing or invalid required subscription fields (endpoint must be https URL, keys.p256dh, keys.auth)' },
         { status: 400 }
       );
     }
+
+    const validRole: 'driver' | 'customer' | 'admin' =
+      role === 'admin' ? 'admin' : role === 'customer' ? 'customer' : 'driver';
 
     const saved = await saveSubscription({
       endpoint,
       p256dh: keys.p256dh,
       auth: keys.auth,
-      role: role || 'driver',
+      role: validRole,
     });
 
     return NextResponse.json({

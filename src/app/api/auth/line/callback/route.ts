@@ -1,16 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSessionToken, withSessionCookie, getOrigin } from '@/lib/authGuard';
 
-interface UserProfilePayload {
-  id: string;
-  role: 'driver' | 'customer' | 'admin';
-  name: string;
-  emailOrPhone: string;
-  avatar?: string;
-  lineId?: string;
-  isAvailable?: boolean;
-  verificationStatus?: 'verified' | 'pending' | 'unverified';
-}
 
 export async function GET(req: NextRequest) {
   const origin = getOrigin(req);

@@ -5,6 +5,8 @@
  * 2. Driver & Fleet Phone Call button clicks (tel: links)
  */
 
+import { adminHeaders } from '@/lib/adminClient';
+
 export type SponsorClickVariant = 'split' | 'strip' | 'card' | 'footer' | 'sidebar' | 'unknown';
 export type CallTargetType =
   | 'vehicle_card'
@@ -507,10 +509,10 @@ export function resetAnalyticsData(): void {
     /* ignore */
   }
 
-  // Inform server of reset
+  // Inform server of reset (admin-gated, so send the admin auth headers).
   fetch('/api/analytics/stats', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...adminHeaders() },
     body: JSON.stringify({ action: 'reset' }),
   }).catch(() => {});
 }

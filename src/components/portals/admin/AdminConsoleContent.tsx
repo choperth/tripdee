@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { useLanguage } from '@/context/LanguageContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { Vehicle, BoardPost, Sponsor } from '@/data/mockData';
 import { DriverLead, QuotationLead } from '@/lib/leadsStore';
@@ -13,6 +12,7 @@ import { AdminDriverTab } from '@/components/portals/admin/AdminDriverTab';
 import { AdminQuoteTab } from '@/components/portals/admin/AdminQuoteTab';
 import { AdminBoardTab } from '@/components/portals/admin/AdminBoardTab';
 import { AdminSponsorTab } from '@/components/portals/admin/AdminSponsorTab';
+import { isMockDataEnabled } from '@/lib/mockConfig';
 
 type AdminView = 'overview' | 'fleet' | 'bookings' | 'operators' | 'board' | 'sponsors' | 'security';
 
@@ -25,9 +25,8 @@ export const AdminConsoleContent: React.FC<AdminConsoleContentProps> = ({
   isModal = false,
   onClose = () => {},
 }) => {
-  const { user, approveDriverVerification, logout } = useAuth();
-  const { t } = useLanguage();
-  const { summary, getSponsorClickCount } = useAnalytics();
+  const { user, approveDriverVerification } = useAuth();
+  const { getSponsorClickCount, refresh: refreshAnalytics } = useAnalytics();
 
   const [activeView, setActiveView] = useState<AdminView>('overview');
   const [operatorFilter, setOperatorFilter] = useState<'pending' | 'approved' | 'suspended'>('pending');
@@ -36,7 +35,6 @@ export const AdminConsoleContent: React.FC<AdminConsoleContentProps> = ({
   const [telemetryTime, setTelemetryTime] = useState('');
 
   // Admin Authentication State
-  const [adminToken, setAdminToken] = useState<string>('');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [authChecking, setAuthChecking] = useState<boolean>(true);
   const [authError, setAuthError] = useState<string>('');
@@ -59,46 +57,70 @@ export const AdminConsoleContent: React.FC<AdminConsoleContentProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Check admin session on mount
+  // Ask the server whether this browser holds a valid admin session. The admin
+  // secret is server-only, so the client cannot self-authorize. The demo persona
+  // is still honoured, but only while mock/demo mode is enabled.
   useEffect(() => {
-    const savedToken = typeof window !== 'undefined' ? localStorage.getItem('td-admin-token') : null;
-    if (savedToken || user?.role === 'admin') {
-      if (savedToken) setAdminToken(savedToken);
-      setIsAdminAuthenticated(true);
-    }
-    setAuthChecking(false);
+    let cancelled = false;
+    const finish = (authed: boolean) => {
+      if (cancelled) return;
+      if (authed) setIsAdminAuthenticated(true);
+      setAuthChecking(false);
+    };
+    fetch('/api/auth/admin/session')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.authenticated) {
+          finish(true);
+          return;
+        }
+        finish(isMockDataEnabled() && user?.role === 'admin');
+      })
+      .catch(() => finish(isMockDataEnabled() && user?.role === 'admin'));
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
+  const handleAdminLogout = async () => {
+    try {
+      await fetch('/api/auth/admin/session', { method: 'DELETE' });
+    } catch {
+      /* ignore */
+    }
+    setIsAdminAuthenticated(false);
+  };
+
   const refreshAll = useCallback(() => {
-    const token = localStorage.getItem('td-admin-token') || adminToken;
-    if (!token) return;
-
     setIsRefreshing(true);
-    const headers: HeadersInit = token ? { 'x-admin-pin': token, Authorization: `Bearer ${token}` } : {};
 
+    // Admin-gated reads rely on the httpOnly admin session cookie (sent
+    // automatically on same-origin requests), never a client-held secret.
     // scope=admin returns the full fleet including vehicles still awaiting review.
-    const p1 = fetch('/api/vehicles?scope=admin', { headers })
+    const p1 = fetch('/api/vehicles?scope=admin')
       .then((res) => res.json())
       .then((data) => {
         if (data.vehicles && Array.isArray(data.vehicles)) setVehicles(data.vehicles);
       })
       .catch(() => {});
 
-    const p2 = fetch('/api/leads/driver', { headers })
+    const p2 = fetch('/api/leads/driver')
       .then((res) => res.json())
       .then((data) => {
         if (data.drivers && Array.isArray(data.drivers)) setDriverLeads(data.drivers);
       })
       .catch(() => {});
 
-    const p3 = fetch('/api/leads/quote', { headers })
+    const p3 = fetch('/api/leads/quote')
       .then((res) => res.json())
       .then((data) => {
         if (data.quotations && Array.isArray(data.quotations)) setQuoteLeads(data.quotations);
       })
       .catch(() => {});
 
-    const p4 = fetch('/api/board')
+    // includeClosed so moderators can still see, edit, and remove posts that
+    // were auto-closed (travel date passed) or closed by their author.
+    const p4 = fetch('/api/board?includeClosed=true')
       .then((res) => res.json())
       .then((data) => {
         if (data.posts && Array.isArray(data.posts)) setBoardPosts(data.posts);
@@ -112,28 +134,35 @@ export const AdminConsoleContent: React.FC<AdminConsoleContentProps> = ({
       })
       .catch(() => {});
 
-    Promise.allSettled([p1, p2, p3, p4, p5]).finally(() => {
+    Promise.allSettled([p1, p2, p3, p4, p5, refreshAnalytics()]).finally(() => {
       setTimeout(() => setIsRefreshing(false), 600);
     });
-  }, [adminToken, user]);
+  }, [refreshAnalytics]);
 
   useEffect(() => {
-    if (isAdminAuthenticated) {
-      refreshAll();
-    }
+    if (!isAdminAuthenticated) return;
+    const timeout = window.setTimeout(refreshAll, 0);
+    return () => window.clearTimeout(timeout);
   }, [isAdminAuthenticated, refreshAll]);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const pin = passwordInput.trim();
-    const expectedPin = process.env.NEXT_PUBLIC_ADMIN_PIN;
-    if (expectedPin && pin === expectedPin) {
-      localStorage.setItem('td-admin-token', pin);
-      setAdminToken(pin);
-      setIsAdminAuthenticated(true);
-      setAuthError('');
-    } else {
-      setAuthError('รหัสผ่านผู้ดูแลระบบไม่ถูกต้อง');
+    setAuthError('');
+    try {
+      const res = await fetch('/api/auth/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin }),
+      });
+      if (res.ok) {
+        setPasswordInput('');
+        setIsAdminAuthenticated(true);
+      } else {
+        setAuthError('รหัสผ่านผู้ดูแลระบบไม่ถูกต้อง');
+      }
+    } catch {
+      setAuthError('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
     }
   };
   // Render login screen if not authenticated
@@ -216,13 +245,9 @@ export const AdminConsoleContent: React.FC<AdminConsoleContentProps> = ({
       prev.map((d) => (d.id === driverId ? { ...d, status: 'verified' } : d))
     );
     try {
-      const token = localStorage.getItem('td-admin-token') || adminToken;
       await fetch('/api/leads/driver', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'x-admin-pin': token, Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'approve', id: driverId }),
       });
       refreshAll();
@@ -396,8 +421,8 @@ export const AdminConsoleContent: React.FC<AdminConsoleContentProps> = ({
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    logout();
+                  onClick={async () => {
+                    await handleAdminLogout();
                     if (isModal) onClose();
                   }}
                   className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-xs font-bold text-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"

@@ -5,6 +5,8 @@ import { Sponsor } from '@/data/mockData';
 import { Plus, Pencil, Trash2, FileSpreadsheet, Search, Download, RefreshCw, Link2, MousePointerClick, LayoutGrid, BadgeCheck } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
+import { AdminAlert } from './AdminAlert';
+import { adminFetch } from '@/lib/adminClient';
 
 interface AdminSponsorTabProps {
   sponsors: Sponsor[];
@@ -38,6 +40,7 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [deletingSponsor, setDeletingSponsor] = useState<Sponsor | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const clicksOf = (id: string) => getSponsorClickCount(id);
   const totalClicks = sponsors.reduce((sum, s) => sum + clicksOf(s.id), 0);
@@ -67,15 +70,17 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
   const handleDelete = async () => {
     if (!deletingSponsor) return;
     setIsSubmitting(true);
+    setActionError('');
     try {
-      await fetch('/api/sponsors', {
+      await adminFetch('/api/sponsors', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: deletingSponsor.id }),
       });
       setDeletingSponsor(null);
       onRefresh();
     } catch (err) {
+      setDeletingSponsor(null);
+      setActionError((err as Error).message);
       console.error('Error deleting sponsor:', err);
     } finally {
       setIsSubmitting(false);
@@ -103,15 +108,15 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
 
     try {
       const method = editingSponsor ? 'PUT' : 'POST';
-      await fetch('/api/sponsors', {
+      await adminFetch('/api/sponsors', {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(sponsorData),
       });
       setEditingSponsor(null);
       setIsNewModalOpen(false);
       onRefresh();
     } catch (err) {
+      setActionError((err as Error).message);
       console.error('Error saving sponsor:', err);
     } finally {
       setIsSubmitting(false);
@@ -163,6 +168,7 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
 
   return (
     <div className="space-y-4">
+      <AdminAlert message={actionError} onDismiss={() => setActionError('')} />
       {/* Breadcrumb + Title + Actions */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

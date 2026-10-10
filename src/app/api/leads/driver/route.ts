@@ -5,7 +5,7 @@ import { verifyAdminAccess, unauthorizedAdminResponse, getDriverSession } from '
 
 export async function GET(req: NextRequest) {
   // Security (CWE-200 / PDPA): Driver registration list contains driver names, phone numbers, and documents.
-  if (!verifyAdminAccess(req)) {
+  if (!(await verifyAdminAccess(req))) {
     return unauthorizedAdminResponse();
   }
 
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (body.action === 'approve' && body.id) {
-      if (!verifyAdminAccess(req)) {
+      if (!(await verifyAdminAccess(req))) {
         return unauthorizedAdminResponse('Unauthorized: Only administrators can approve driver verification');
       }
       const ok = await verifyDriverLead(String(body.id));
@@ -51,10 +51,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const isAdmin = await verifyAdminAccess(req);
     const session = await getDriverSession(req);
     const ownerId =
-      (session && session.role === 'driver' ? session.userId : undefined) ||
-      (body.ownerId && typeof body.ownerId === 'string' ? body.ownerId.trim() : undefined);
+      session?.role === 'driver'
+        ? session.userId
+        : (isAdmin && typeof body.ownerId === 'string' ? body.ownerId.trim() : undefined);
 
     const newDriver = await saveDriverLead({
       ownerId,
@@ -72,6 +74,10 @@ export async function POST(req: NextRequest) {
       canIssueTaxInvoice: Boolean(body.canIssueTaxInvoice),
       businessType: body.businessType === 'company' ? 'company' : 'individual',
       routes: String(body.routes || 'เชียงใหม่และใกล้เคียง').trim(),
+      serviceType: body.serviceType === 'self_drive' ? 'self_drive' : body.serviceType === 'with_driver' ? 'with_driver' : undefined,
+      depositTerms: body.depositTerms ? String(body.depositTerms).trim() : undefined,
+      amenities: body.amenities ? String(body.amenities).trim() : undefined,
+      pickupLocation: body.pickupLocation ? String(body.pickupLocation).trim() : undefined,
       pricePerDay:
         Number.isFinite(Number(body.pricePerDay)) && Number(body.pricePerDay) > 0
           ? Number(body.pricePerDay)
@@ -94,7 +100,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  if (!verifyAdminAccess(req)) {
+  if (!(await verifyAdminAccess(req))) {
     return unauthorizedAdminResponse();
   }
 
@@ -118,7 +124,7 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!verifyAdminAccess(req)) {
+  if (!(await verifyAdminAccess(req))) {
     return unauthorizedAdminResponse();
   }
 

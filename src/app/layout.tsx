@@ -6,6 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { AnalyticsProvider } from "@/context/AnalyticsContext";
 import { getStructuredData } from "@/lib/structuredData";
+import { SITE_URL } from "@/lib/constants";
 
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
@@ -27,7 +28,7 @@ const notoThai = Noto_Sans_Thai({
   weight: ["400", "600", "700", "800"],
   display: "swap",
 });
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tripdeeth.com';
+const BASE_URL = SITE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

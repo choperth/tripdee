@@ -144,6 +144,11 @@ export function getServerAnalyticsSummary(): AnalyticsSummary {
   return getServerStore();
 }
 
+export function replaceServerAnalyticsSummary(summary: AnalyticsSummary): AnalyticsSummary {
+  globalThis.__tripdee_server_analytics__ = summary;
+  return summary;
+}
+
 export function resetServerAnalytics(): AnalyticsSummary {
   const fresh = createEmptySummary();
   globalThis.__tripdee_server_analytics__ = fresh;

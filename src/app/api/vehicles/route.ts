@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
 
     // Admin console view: needs the full fleet including pending submissions.
     if (url.searchParams.get('scope') === 'admin') {
-      if (!verifyAdminAccess(req)) {
+      if (!(await verifyAdminAccess(req))) {
         return unauthorizedAdminResponse();
       }
       const vehicles = await fetchVehicles(undefined, { includeUnapproved: true });
@@ -136,7 +136,7 @@ export async function GET(req: NextRequest) {
     const singleId = url.searchParams.get('id') || url.searchParams.get('vehicleId');
     if (singleId) {
       const vehicle = await fetchVehicleById(singleId, req.url);
-      const isAdmin = verifyAdminAccess(req);
+      const isAdmin = await verifyAdminAccess(req);
       const isOwner = Boolean(
         session && vehicle?.ownerId && vehicle.ownerId === session.userId
       );
@@ -173,7 +173,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const isAdmin = verifyAdminAccess(req);
+    const isAdmin = await verifyAdminAccess(req);
 
     if (!body.title || !body.driverName || !body.driverPhone) {
       return NextResponse.json(
@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const isAdmin = verifyAdminAccess(req);
+  const isAdmin = await verifyAdminAccess(req);
   if (!isAdmin) {
     const session = await getDriverSession(req);
     if (session?.role !== 'driver') {
@@ -364,7 +364,7 @@ export async function PUT(req: NextRequest) {
 export const PATCH = PUT;
 
 export async function DELETE(req: NextRequest) {
-  const isAdmin = verifyAdminAccess(req);
+  const isAdmin = await verifyAdminAccess(req);
   if (!isAdmin) {
     const session = await getDriverSession(req);
     if (session?.role !== 'driver') {

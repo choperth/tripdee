@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!verifyAdminAccess(req)) {
+  if (!(await verifyAdminAccess(req))) {
     return unauthorizedAdminResponse();
   }
 
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  if (!verifyAdminAccess(req)) {
+  if (!(await verifyAdminAccess(req))) {
     return unauthorizedAdminResponse();
   }
 
@@ -86,7 +86,7 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!verifyAdminAccess(req)) {
+  if (!(await verifyAdminAccess(req))) {
     return unauthorizedAdminResponse();
   }
 

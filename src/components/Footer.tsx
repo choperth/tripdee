@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
-import { OFFICIAL_LINE_URL } from '@/lib/constants';
+import { OFFICIAL_LINE_URL, OFFICIAL_FACEBOOK_URL } from '@/lib/constants';
 
 interface FooterProps {
   onOpenRegisterModal?: () => void;
@@ -220,7 +220,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <a
                   className="inline-flex items-center gap-1.5 hover:text-slate-950 dark:hover:text-white transition-colors"
-                  href="https://web.facebook.com/profile.php?id=61594476213767"
+                  href={OFFICIAL_FACEBOOK_URL}
                   rel="noopener noreferrer"
                   target="_blank"
                 >

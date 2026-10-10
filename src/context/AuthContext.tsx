@@ -75,6 +75,7 @@ interface AuthContextType {
   submitVerificationDocs: (docs: { driverLicense: string; vehicleRegistration: string; idCard: string }) => void;
   approveDriverVerification: (driverId: string) => void;
   quotations: QuotationRecord[];
+  refreshQuotations: () => Promise<void>;
   addQuotation: (q: Omit<QuotationRecord, 'id' | 'date' | 'status'>) => void;
   deleteAccount: () => Promise<void>;
   loginWithOAuth: (
@@ -161,7 +162,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [quotations, setQuotations] = useState<QuotationRecord[]>(INITIAL_QUOTATIONS);
+  const [quotations, setQuotations] = useState<QuotationRecord[]>(() =>
+    isMockDataEnabled() ? INITIAL_QUOTATIONS : []
+  );
 
   const saveUser = useCallback((newUser: UserProfile | null) => {
     setUser(newUser);
@@ -336,10 +339,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         /* ignore */
       }
     }
-    // Clear the signed session cookie too, otherwise the API would still treat
-    // this browser as an authenticated driver.
+    // Clear the signed session cookies too, otherwise the API would still treat
+    // this browser as an authenticated driver/admin.
     try {
       await fetch('/api/auth/session', { method: 'DELETE' });
+    } catch {
+      /* ignore */
+    }
+    try {
+      await fetch('/api/auth/admin/session', { method: 'DELETE' });
+    } catch {
+      /* ignore */
+    }
+    try {
+      localStorage.removeItem('td-admin-token');
     } catch {
       /* ignore */
     }
@@ -382,14 +395,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshQuotations = useCallback(async () => {
+    if (!user || user.role !== 'customer') {
+      setQuotations(isMockDataEnabled() ? INITIAL_QUOTATIONS : []);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/leads/quote', { cache: 'no-store' });
+      if (!response.ok) {
+        if (!isMockDataEnabled()) setQuotations([]);
+        return;
+      }
+      const data: { quotations?: Array<{
+        id: string;
+        submittedAt: string;
+        companyName: string;
+        route: string;
+        totalDays?: number;
+        passengers: string;
+        estimatedPrice: number;
+        status: 'pending' | 'quoted' | 'confirmed' | 'cancelled';
+        needsTaxInvoice: boolean;
+        vehicleTier: VehicleTier;
+        carCount: number;
+      }> } = await response.json();
+      setQuotations((data.quotations || []).map((quote) => ({
+        id: quote.id,
+        date: new Date(quote.submittedAt).toLocaleDateString('th-TH', {
+          day: 'numeric', month: 'short', year: 'numeric',
+        }),
+        companyName: quote.companyName,
+        route: quote.route,
+        totalDays: quote.totalDays ?? 1,
+        passengers: quote.passengers,
+        estimatedPrice: quote.estimatedPrice,
+        status: quote.status === 'quoted' ? 'confirmed' : quote.status === 'cancelled' ? 'completed' : quote.status,
+        needsTaxInvoice: quote.needsTaxInvoice,
+        vehicleTier: quote.vehicleTier,
+        carCount: quote.carCount,
+      })));
+    } catch {
+      if (!isMockDataEnabled()) setQuotations([]);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void refreshQuotations();
+    });
+  }, [refreshQuotations]);
+
   const addQuotation = (q: Omit<QuotationRecord, 'id' | 'date' | 'status'>) => {
+    // Synthetic records are demo-only. Production state is refreshed from the
+    // server after a successful POST, avoiding duplicates and client authority.
+    if (!isMockDataEnabled()) return;
     const newRecord: QuotationRecord = {
       ...q,
-      id: `QT-2026-${String(quotations.length + 1).padStart(3, '0')}`,
+      id: `QT-DEMO-${Date.now()}`,
       date: new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }),
       status: 'pending',
     };
-    setQuotations([newRecord, ...quotations]);
+    setQuotations((current) => [newRecord, ...current]);
   };
 
   const deleteAccount = async () => {
@@ -443,6 +510,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         submitVerificationDocs,
         approveDriverVerification,
         quotations,
+        refreshQuotations,
         addQuotation,
         deleteAccount,
         loginWithOAuth,

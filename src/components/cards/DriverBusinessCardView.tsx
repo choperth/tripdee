@@ -1,33 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useMemo, useEffect } from 'react';
-import {
-  X,
-  Phone,
-  MessageCircle,
-  ExternalLink,
-  Star,
-  QrCode,
-  Download,
-  Copy,
-  Check,
-  Share2,
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  Send,
-  ShieldCheck,
-  Tv,
-  Luggage,
-  Users,
-  Award,
-  ArrowLeft,
-} from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { X, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Vehicle } from '@/data/mockData';
-import { vehicleTitle, vehicleLocation, vehicleAmenities } from '@/data/vehicleI18n';
+import { vehicleTitle, vehicleLocation } from '@/data/vehicleI18n';
 import { getPublicDriverName, maskPlateNumber } from '@/lib/privacy';
-import { formatLineLink } from '@/lib/contactUtils';
+import { formatLineLink, formatWhatsAppLink } from '@/lib/contactUtils';
+import { SITE_URL } from '@/lib/constants';
 import { generateQrMatrix, renderQrSvgPath } from '@/lib/qrCode';
 import { getBangkokTodayIso } from '@/lib/availabilityUtils';
 import { fetchVehicleReviews, Review } from '@/lib/reviewsStore';
@@ -45,7 +25,7 @@ export const DriverBusinessCardView: React.FC<DriverBusinessCardViewProps> = ({
   isModal = false,
   onClose = () => {},
 }) => {
-  const { t, locale } = useLanguage();
+  const { locale } = useLanguage();
   const { trackCall } = useAnalytics();
 
   // Driver meta, straight from the vehicle record.
@@ -101,8 +81,11 @@ export const DriverBusinessCardView: React.FC<DriverBusinessCardViewProps> = ({
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
-  const busyDates = Array.isArray(vehicle.busyDates) ? vehicle.busyDates : [];
-  const busySet = useMemo(() => new Set(busyDates), [vehicle.busyDates]);
+  const busyDates = useMemo(
+    () => (Array.isArray(vehicle.busyDates) ? vehicle.busyDates : []),
+    [vehicle.busyDates]
+  );
+  const busySet = useMemo(() => new Set(busyDates), [busyDates]);
 
   const calendarCells = useMemo(() => {
     const year = calendarMonth.getFullYear();
@@ -176,12 +159,7 @@ export const DriverBusinessCardView: React.FC<DriverBusinessCardViewProps> = ({
     document.body.removeChild(link);
   };
 
-  const publicCardUrl = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      return `${window.location.origin}/driver/card?id=${encodeURIComponent(vehicle.id)}`;
-    }
-    return `https://www.tripdeeth.com/driver/card?id=${encodeURIComponent(vehicle.id)}`;
-  }, [vehicle.id]);
+  const publicCardUrl = `${SITE_URL}/driver/card?id=${encodeURIComponent(vehicle.id)}`;
 
   // A real, scannable code pointing directly to this driver's digital card.
   const qrSvgPath = useMemo(() => {
@@ -487,7 +465,7 @@ export const DriverBusinessCardView: React.FC<DriverBusinessCardViewProps> = ({
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-xs">
                         {vehicle.driverWhatsapp && (
                           <a
-                            href={`https://wa.me/${vehicle.driverWhatsapp.replace(/\D/g, '')}`}
+                            href={formatWhatsAppLink(vehicle.driverWhatsapp)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 font-semibold transition-colors cursor-pointer"

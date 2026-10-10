@@ -46,7 +46,7 @@ const PRINT_CSS = `
 
 export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: propVehicles }) => {
   const { t, locale } = useLanguage();
-  const { addQuotation } = useAuth();
+  const { addQuotation, refreshQuotations } = useAuth();
   const [fetchedVehicles, setFetchedVehicles] = useState<Vehicle[]>(() =>
     isMockEnvEnabled() ? VEHICLES : []
   );
@@ -130,19 +130,8 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
     const estimatedPrice = budget.rentalTotal;
 
     try {
-      addQuotation({
-        companyName: formData.companyName,
-        route: formData.route,
-        totalDays: formData.totalDays,
-        passengers,
-        estimatedPrice,
-        needsTaxInvoice: formData.needsTaxInvoice,
-        vehicleTier: formData.vehicleTier,
-        carCount,
-      });
-
-      // Save lead into B2B quotation pipeline (admin portal + partner matching)
-      await fetch('/api/leads/quote', {
+      // Save lead into B2B quotation pipeline (admin portal + partner matching).
+      const response = await fetch('/api/leads/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -150,6 +139,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
           contactName: formData.contactName.trim() || undefined,
           phone: formData.phone,
           travelDate: formData.travelDate || t('corp.dDateQuote'),
+          totalDays: formData.totalDays,
           route: formData.route,
           passengers,
           needsTaxInvoice: formData.needsTaxInvoice,
@@ -160,8 +150,26 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
           includeInsurance: formData.includeInsurance,
         }),
       });
+      if (!response.ok) {
+        const data: { error?: string } = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to save quotation');
+      }
+
+      addQuotation({
+        companyName: formData.companyName,
+        route: formData.route,
+        totalDays: formData.totalDays,
+        passengers,
+        estimatedPrice,
+        needsTaxInvoice: formData.needsTaxInvoice,
+        vehicleTier: formData.vehicleTier,
+        carCount,
+      });
+      await refreshQuotations();
     } catch (err) {
       console.error('Failed to post quotation:', err);
+      setIsSubmitting(false);
+      return;
     }
 
     try {

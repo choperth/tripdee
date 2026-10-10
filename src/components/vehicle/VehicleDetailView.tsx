@@ -30,7 +30,7 @@ import { CustomerAvailabilitySchedule } from '@/components/CustomerAvailabilityS
 import { getUpcomingBusyRanges } from '@/lib/availabilityUtils';
 import { VehicleReviewsSection } from '@/components/reviews/VehicleReviewsSection';
 import { DriverSmartECardModal } from '@/components/cards/DriverSmartECardModal';
-import { formatLineLink, buildVehicleLineMessage } from '@/lib/contactUtils';
+import { formatLineLink, formatWhatsAppLink, buildVehicleLineMessage } from '@/lib/contactUtils';
 import { useIsFavorite, toggleFavorite } from '@/lib/favoritesStore';
 import { DepositPaymentModal } from '@/components/payment/DepositPaymentModal';
 import { ENABLE_QR_PAYMENT } from '@/lib/constants';
@@ -99,17 +99,10 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
   };
 
   const whatsappUrl = useMemo(() => {
-    if (vehicle.driverWhatsapp && vehicle.driverWhatsapp.trim()) {
-      if (vehicle.driverWhatsapp.startsWith('http')) return vehicle.driverWhatsapp;
-      const clean = vehicle.driverWhatsapp.replace(/\D/g, '');
-      return `https://wa.me/${clean}`;
-    }
-    if (cleanPhone) {
-      const intlPhone = cleanPhone.startsWith('0') ? `66${cleanPhone.slice(1)}` : cleanPhone;
-      return `https://wa.me/${intlPhone}`;
-    }
-    return null;
-  }, [vehicle, cleanPhone]);
+    const target = vehicle.driverWhatsapp?.trim() || cleanPhone;
+    if (!target) return null;
+    return formatWhatsAppLink(target);
+  }, [vehicle.driverWhatsapp, cleanPhone]);
 
   const handleCopyWechat = () => {
     if (vehicle.driverWechat) {

@@ -33,10 +33,8 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab = 'van',
   setActiveTab = () => {},
-  onOpenRegisterModal = () => {},
   onOpenLoginModal = () => {},
   onOpenDriverEntry,
-  onOpenAddVehicle,
   onOpenPortal = () => {},
 }) => {
   const { user } = useAuth();

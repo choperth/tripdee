@@ -16,6 +16,8 @@ import {
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
+import { AdminAlert } from './AdminAlert';
+import { adminFetch } from '@/lib/adminClient';
 
 interface AdminDriverTabProps {
   driverLeads: DriverLead[];
@@ -50,6 +52,7 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
   const [deletingDriver, setDeletingDriver] = useState<DriverLead | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showReference, setShowReference] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const pendingCount = driverLeads.filter((d) => d.status === 'pending').length;
   const verifiedCount = driverLeads.filter((d) => d.status === 'verified').length;
@@ -79,15 +82,17 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
   const handleDelete = async () => {
     if (!deletingDriver) return;
     setIsSubmitting(true);
+    setActionError('');
     try {
-      await fetch('/api/leads/driver', {
+      await adminFetch('/api/leads/driver', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: deletingDriver.id }),
       });
       setDeletingDriver(null);
       onRefresh();
     } catch (err) {
+      setDeletingDriver(null);
+      setActionError((err as Error).message);
       console.error('Error deleting driver lead:', err);
     } finally {
       setIsSubmitting(false);
@@ -115,14 +120,14 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
     };
 
     try {
-      await fetch('/api/leads/driver', {
+      await adminFetch('/api/leads/driver', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
       setEditingDriver(null);
       onRefresh();
     } catch (err) {
+      setActionError((err as Error).message);
       console.error('Error updating driver lead:', err);
     } finally {
       setIsSubmitting(false);
@@ -149,6 +154,7 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
 
   return (
     <div className="space-y-5">
+      <AdminAlert message={actionError} onDismiss={() => setActionError('')} />
       {/* ── Search + Tabs Matrix Panel ─────────────────────────── */}
       <section className="bg-white border border-slate-200">
         <div className="p-3">

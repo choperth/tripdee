@@ -5,7 +5,7 @@
 
 import type { LeadFeeStatus, OrgType, VehicleTier } from '@/lib/b2b';
 import { calcLeadFee, clampCarCount } from '@/lib/b2b';
-
+import { formatLineLink, formatWhatsAppLink } from '@/lib/contactUtils';
 export type { LeadFeeStatus, OrgType, VehicleTier };
 
 export interface QuotationLead {
@@ -32,6 +32,8 @@ export interface QuotationLead {
   leadFeeStatus: LeadFeeStatus;
   /** ค่าจัดหา = carCount * 500 */
   leadFeeAmount: number;
+  customerId?: string | null;
+  totalDays?: number;
   submittedAt: string;
   status: 'pending' | 'quoted' | 'confirmed' | 'cancelled';
 }
@@ -54,6 +56,9 @@ export interface DriverLead {
   businessType?: 'company' | 'individual';
   routes: string;
   serviceType?: 'with_driver' | 'self_drive';
+  depositTerms?: string;
+  amenities?: string;
+  pickupLocation?: string;
   /** ราคาค่าบริการเริ่มต้นต่อวันที่คนขับกรอกตอนสมัคร (บาท/วัน) */
   pricePerDay?: number;
   /** รายละเอียดจุดเด่นของรถ / ประสบการณ์คนขับ ที่กรอกตอนสมัคร */
@@ -86,17 +91,8 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
     ? lead.routes.split(/[,/•]+/).map((r) => r.trim()).filter(Boolean)
     : [];
 
-  const cleanPhone = lead.phone.replace(/[^0-9]/g, '');
-  const cleanLine = lead.lineId
-    ? lead.lineId.startsWith('http')
-      ? lead.lineId
-      : `https://line.me/ti/p/~${lead.lineId}`
-    : '';
-  const whatsappUrl = lead.whatsapp
-    ? lead.whatsapp.startsWith('http')
-      ? lead.whatsapp
-      : `https://wa.me/${lead.whatsapp.replace(/[^0-9]/g, '')}`
-    : undefined;
+  const cleanLine = lead.lineId ? formatLineLink(lead.lineId) : '';
+  const whatsappUrl = lead.whatsapp ? formatWhatsAppLink(lead.whatsapp) : undefined;
 
   const languages: ('th' | 'en' | 'zh' | 'ko')[] = ['th'];
   if (lead.whatsapp) languages.push('en');
@@ -128,7 +124,7 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
           lead.vehicleModel.toLowerCase().includes('benz')
         ? 'car'
         : 'van',
-    rentalType: (lead.serviceType as 'with_driver' | 'self_drive') || 'with_driver',
+    rentalType: lead.serviceType || 'with_driver',
     seats: seatsNum,
     driverName: lead.driverName,
     driverNickname: lead.nickname,
@@ -147,9 +143,11 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
     // placeholder zeros for the other zones the form never asked about.
     zoneRates: lead.pricePerDay && lead.pricePerDay > 0 ? { city: lead.pricePerDay } : undefined,
     rateNote: undefined,
-    location: lead.routes || 'บริการทั่วไทย',
+    location: lead.pickupLocation?.trim() || lead.routes || 'บริการทั่วไทย',
     popularRoutes,
-    amenities: [],
+    amenities: lead.amenities
+      ? lead.amenities.split(',').map((item) => item.trim()).filter(Boolean)
+      : [],
     description:
       lead.description?.trim() ||
       `บริการรถพร้อมคนขับ โดย ${lead.driverName} (${lead.nickname}) ยานพาหนะ ${lead.vehicleModel}${lead.routes ? ` ชำนาญเส้นทาง ${lead.routes}` : ''}`,
@@ -294,6 +292,8 @@ export function addQuotation(lead: {
   includeInsurance?: boolean;
   assignedPartner?: string | null;
   leadFeeStatus?: LeadFeeStatus;
+  customerId?: string | null;
+  totalDays?: number;
 }): QuotationLead {
   const db = getDb();
   const carCount = clampCarCount(lead.carCount);
@@ -369,6 +369,9 @@ export function addDriverLead(lead: {
   businessType?: 'company' | 'individual';
   routes: string;
   serviceType?: 'with_driver' | 'self_drive';
+  depositTerms?: string;
+  amenities?: string;
+  pickupLocation?: string;
   pricePerDay?: number;
   description?: string;
   images?: string[];

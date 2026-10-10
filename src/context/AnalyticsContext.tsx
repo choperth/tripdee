@@ -33,7 +33,7 @@ interface AnalyticsContextType {
   getSponsorClickCount: (sponsorId: string) => number;
   getCallClickCount: (targetId: string) => number;
   resetAnalytics: () => void;
-  refresh: () => void;
+  refresh: () => Promise<void>;
 }
 
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined);
@@ -44,8 +44,16 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return getLocalAnalyticsSummary();
   });
 
-  const refresh = useCallback(() => {
-    setSummary(getLocalAnalyticsSummary());
+  const refresh = useCallback(async () => {
+    try {
+      const response = await fetch('/api/analytics/stats');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json() as { summary?: AnalyticsSummary };
+      if (!data.summary) throw new Error('Missing analytics summary');
+      setSummary(data.summary);
+    } catch {
+      setSummary(getLocalAnalyticsSummary());
+    }
   }, []);
 
   useEffect(() => {

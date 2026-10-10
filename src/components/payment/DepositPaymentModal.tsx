@@ -9,7 +9,6 @@ import { generateQrMatrix, renderQrSvgPath } from '@/lib/qrCode';
 import {
   X,
   QrCode,
-  ShieldCheck,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -22,7 +21,6 @@ import {
 } from 'lucide-react';
 import { BookingConfirmationSheet, BookingSheetData } from '@/components/BookingConfirmationSheet';
 import { ENABLE_QR_PAYMENT } from '@/lib/constants';
-
 interface DepositPaymentModalProps {
   vehicle: Vehicle | null;
   isOpen: boolean;
@@ -32,7 +30,12 @@ interface DepositPaymentModalProps {
   defaultTotalDays?: number;
 }
 
-export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
+export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = (props) => {
+  if (!props.isOpen || !ENABLE_QR_PAYMENT) return null;
+  return <DepositPaymentModalContent {...props} />;
+};
+
+const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
   vehicle,
   isOpen,
   onClose,
@@ -42,7 +45,7 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
-  const { t, locale } = useLanguage();
+  const { locale } = useLanguage();
 
   // Form input states
   const [customerName, setCustomerName] = useState('');
@@ -50,7 +53,7 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
   const [customerLine, setCustomerLine] = useState('');
   const [route, setRoute] = useState(defaultRoute);
   const [travelDate, setTravelDate] = useState(
-    defaultTravelDate || new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10)
+    () => defaultTravelDate || new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10)
   );
   const [totalDays, setTotalDays] = useState<number>(defaultTotalDays);
 
@@ -79,19 +82,6 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
 
   // Post-payment unlocked modal trigger
   const [showConfirmationSheet, setShowConfirmationSheet] = useState(false);
-
-  // Reset states when closed/opened
-  useEffect(() => {
-    if (isOpen) {
-      setStep('form');
-      setLoading(false);
-      setErrorMessage(null);
-      setTimeLeft(900);
-      setShowConfirmationSheet(false);
-      setRoute(defaultRoute);
-      setTotalDays(defaultTotalDays);
-    }
-  }, [isOpen, defaultRoute, defaultTotalDays]);
 
   // Handle countdown
   useEffect(() => {
@@ -209,7 +199,6 @@ export const DepositPaymentModal: React.FC<DepositPaymentModalProps> = ({
     }
   }, [qrPayload]);
 
-  if (!isOpen || !ENABLE_QR_PAYMENT) return null;
 
   const vehicleName = vehicle ? vehicleTitle(vehicle, locale) : 'รถตู้ VIP TripDee';
 

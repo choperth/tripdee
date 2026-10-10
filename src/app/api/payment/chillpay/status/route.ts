@@ -6,9 +6,9 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const bookingId = searchParams.get('bookingId');
 
-    if (!bookingId) {
+    if (!bookingId || !/^[A-Za-z0-9_-]{5,64}$/.test(bookingId)) {
       return NextResponse.json(
-        { success: false, error: 'Missing bookingId query parameter' },
+        { success: false, error: 'Invalid or missing bookingId query parameter' },
         { status: 400 }
       );
     }

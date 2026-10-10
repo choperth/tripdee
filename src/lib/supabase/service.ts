@@ -14,7 +14,7 @@
 
 import { getSupabase } from './client';
 import { Database, Booking } from './types';
-import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, SPONSORS, ZoneId, BoardQuote } from '@/data/mockData';
+import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, ZoneId, BoardQuote } from '@/data/mockData';
 import { parseVehicleTerms } from '@/lib/vehicleTerms';
 import {
   isMockDataEnabled,
@@ -61,8 +61,22 @@ import {
   normalizeOrgType,
   normalizeVehicleTier,
 } from '@/lib/b2b';
-import { AnalyticsEvent } from '@/lib/analytics';
-import { recordServerAnalyticsEvent } from '@/lib/serverAnalyticsStore';
+import {
+  AnalyticsEvent,
+  AnalyticsSummary,
+  CallClickEvent,
+  CallTargetType,
+  SponsorClickEvent,
+  SponsorClickVariant,
+  computeUpdatedSummary,
+  createEmptySummary,
+} from '@/lib/analytics';
+import {
+  getServerAnalyticsSummary,
+  recordServerAnalyticsEvent,
+  replaceServerAnalyticsSummary,
+  resetServerAnalytics,
+} from '@/lib/serverAnalyticsStore';
 import { isBoardPostExpired } from '@/lib/availabilityUtils';
 
 // Type-safe helper for dynamic table updates and schema probing
@@ -120,29 +134,37 @@ function mapQuotationRow(row: QuotationRow): QuotationLead {
     assignedPartner: row.assigned_partner || null,
     leadFeeStatus: normalizeLeadFeeStatus(row.lead_fee_status),
     leadFeeAmount: Number(row.lead_fee_amount) || calcLeadFee(row.car_count),
+    customerId: row.customer_id,
+    totalDays: row.total_days ?? undefined,
     submittedAt: row.created_at,
     status: row.status,
   };
 }
 
-export async function fetchQuotations(reqUrl?: string): Promise<QuotationLead[]> {
+export async function fetchQuotations(
+  reqUrl?: string,
+  options?: { customerId?: string }
+): Promise<QuotationLead[]> {
   const allowMock = isMockDataEnabled(reqUrl);
+  const customerId = options?.customerId;
   const deletedIds = getDeletedQuotationIds();
 
-  // Local store = in-memory fallback + anything persisted before/instead of Supabase.
-  // Mock seed records are only served when mock data is enabled.
+  // Customer reads are always exact-id scoped. Unmatched legacy rows remain
+  // admin-only, including when Supabase is unavailable and local fallback runs.
   const localLeads = getLocalQuotations().filter(
-    (q) => !deletedIds.includes(q.id) && (allowMock || !isMockQuotationId(q.id))
+    (q) =>
+      !deletedIds.includes(q.id) &&
+      (allowMock || !isMockQuotationId(q.id)) &&
+      (!customerId || q.customerId === customerId)
   );
 
   const supabase = getSupabase();
   if (!supabase) return localLeads;
 
   try {
-    const { data, error } = await supabase
-      .from('quotations')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let query = supabase.from('quotations').select('*');
+    if (customerId) query = query.eq('customer_id', customerId);
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error || !data) {
       // Table might not be migrated yet, return local store
@@ -179,6 +201,8 @@ export async function saveQuotation(lead: {
   includeInsurance?: boolean;
   assignedPartner?: string | null;
   leadFeeStatus?: LeadFeeStatus;
+  customerId?: string | null;
+  totalDays?: number;
 }): Promise<QuotationLead> {
   const carCount = clampCarCount(lead.carCount);
   const vehicleTier = lead.vehicleTier ?? 'standard_vip';
@@ -225,6 +249,8 @@ export async function saveQuotation(lead: {
         assigned_partner: assignedPartner,
         lead_fee_status: leadFeeStatus,
         lead_fee_amount: leadFeeAmount,
+        customer_id: lead.customerId ?? null,
+        total_days: lead.totalDays ?? null,
         status: 'pending',
       })
       .select()
@@ -273,6 +299,7 @@ export async function updateQuotation(id: string, updates: Partial<QuotationLead
     if (updates.assignedPartner !== undefined) supabaseUpdates.assigned_partner = updates.assignedPartner;
     if (updates.leadFeeStatus !== undefined) supabaseUpdates.lead_fee_status = updates.leadFeeStatus;
     if (updates.leadFeeAmount !== undefined) supabaseUpdates.lead_fee_amount = updates.leadFeeAmount;
+    if (updates.totalDays !== undefined) supabaseUpdates.total_days = updates.totalDays;
 
     await (supabase.from('quotations') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
   } catch (err) {
@@ -338,8 +365,12 @@ export async function fetchDriverLeads(reqUrl?: string): Promise<DriverLead[]> {
         plateNumber: row.plate_number || undefined,
         plateType: (row.plate_type as 'yellow' | 'blue') || undefined,
         canIssueTaxInvoice: row.can_issue_tax_invoice !== null ? Boolean(row.can_issue_tax_invoice) : undefined,
-        businessType: (row.business_type as 'company' | 'individual') || undefined,
+        businessType: row.business_type || undefined,
         routes: row.routes || '',
+        serviceType: row.service_type || undefined,
+        depositTerms: row.deposit_terms || undefined,
+        amenities: row.amenities || undefined,
+        pickupLocation: row.pickup_location || undefined,
         pricePerDay: row.price_per_day ?? undefined,
         description: row.description || undefined,
         images: Array.isArray(row.images) ? row.images : undefined,
@@ -369,6 +400,10 @@ export async function saveDriverLead(lead: {
   canIssueTaxInvoice?: boolean;
   businessType?: 'company' | 'individual';
   routes: string;
+  serviceType?: 'with_driver' | 'self_drive';
+  depositTerms?: string;
+  amenities?: string;
+  pickupLocation?: string;
   pricePerDay?: number;
   description?: string;
   images?: string[];
@@ -379,7 +414,7 @@ export async function saveDriverLead(lead: {
   if (!supabase) return localLead;
 
   try {
-    let insertResult = await supabase
+    const insertResult = await supabase
       .from('driver_leads')
       .insert({
         id: localLead.id,
@@ -398,6 +433,10 @@ export async function saveDriverLead(lead: {
         can_issue_tax_invoice: lead.canIssueTaxInvoice ?? null,
         business_type: lead.businessType || null,
         routes: lead.routes,
+        service_type: lead.serviceType ?? null,
+        deposit_terms: lead.depositTerms ?? null,
+        amenities: lead.amenities ?? null,
+        pickup_location: lead.pickupLocation ?? null,
         price_per_day: lead.pricePerDay ?? null,
         description: lead.description || null,
         images: lead.images || null,
@@ -405,27 +444,6 @@ export async function saveDriverLead(lead: {
       })
       .select()
       .single();
-
-    // If schema cache error PGRST204 (new column does not exist in db), retry with base schema columns
-    if (insertResult.error && (insertResult.error.code === 'PGRST204' || insertResult.error.message?.includes('column'))) {
-      console.warn('[TripDee Supabase] Retrying driver_leads insert with base schema columns due to schema cache mismatch:', insertResult.error.message);
-      insertResult = await supabase
-        .from('driver_leads')
-        .insert({
-          id: localLead.id,
-          driver_name: lead.driverName,
-          nickname: lead.nickname,
-          phone: lead.phone,
-          line_id: lead.lineId,
-          vehicle_model: lead.vehicleModel,
-          seats: lead.seats,
-          plate_number: lead.plateNumber || null,
-          routes: lead.routes,
-          status: 'pending',
-        })
-        .select()
-        .single();
-    }
 
     const { data, error } = insertResult;
 
@@ -450,8 +468,12 @@ export async function saveDriverLead(lead: {
         plateNumber: data.plate_number || undefined,
         plateType: (data.plate_type as 'yellow' | 'blue') || undefined,
         canIssueTaxInvoice: data.can_issue_tax_invoice !== null && data.can_issue_tax_invoice !== undefined ? Boolean(data.can_issue_tax_invoice) : undefined,
-        businessType: (data.business_type as 'company' | 'individual') || undefined,
+        businessType: data.business_type || undefined,
         routes: data.routes,
+        serviceType: data.service_type || undefined,
+        depositTerms: data.deposit_terms || undefined,
+        amenities: data.amenities || undefined,
+        pickupLocation: data.pickup_location || undefined,
         pricePerDay: data.price_per_day ?? undefined,
         description: data.description || undefined,
         images: Array.isArray(data.images) ? data.images : undefined,
@@ -483,24 +505,17 @@ export async function updateDriverLead(id: string, updates: Partial<DriverLead>)
     if (updates.plateType !== undefined) supabaseUpdates.plate_type = updates.plateType;
     if (updates.canIssueTaxInvoice !== undefined) supabaseUpdates.can_issue_tax_invoice = updates.canIssueTaxInvoice;
     if (updates.businessType !== undefined) supabaseUpdates.business_type = updates.businessType;
-    if (updates.routes) supabaseUpdates.routes = updates.routes;
+    if (updates.routes !== undefined) supabaseUpdates.routes = updates.routes;
+    if (updates.serviceType !== undefined) supabaseUpdates.service_type = updates.serviceType;
+    if (updates.depositTerms !== undefined) supabaseUpdates.deposit_terms = updates.depositTerms;
+    if (updates.amenities !== undefined) supabaseUpdates.amenities = updates.amenities;
+    if (updates.pickupLocation !== undefined) supabaseUpdates.pickup_location = updates.pickupLocation;
+    if (updates.pricePerDay !== undefined) supabaseUpdates.price_per_day = updates.pricePerDay;
+    if (updates.description !== undefined) supabaseUpdates.description = updates.description;
+    if (updates.images !== undefined) supabaseUpdates.images = updates.images;
     if (updates.status) supabaseUpdates.status = updates.status;
 
-    const res = await (supabase.from('driver_leads') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
-    const updateError = (res as { error?: { code?: string; message?: string } })?.error;
-    if (updateError && (updateError.code === 'PGRST204' || updateError.message?.includes('column'))) {
-      const baseLeadKeys = new Set([
-        'driver_name', 'nickname', 'phone', 'line_id', 'vehicle_model', 'seats',
-        'plate_number', 'routes', 'status'
-      ]);
-      const stripped: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(supabaseUpdates)) {
-        if (baseLeadKeys.has(k)) stripped[k] = v;
-      }
-      if (Object.keys(stripped).length > 0) {
-        await (supabase.from('driver_leads') as unknown as DynamicTableQuery).update(stripped).eq('id', id);
-      }
-    }
+    await (supabase.from('driver_leads') as unknown as DynamicTableQuery).update(supabaseUpdates).eq('id', id);
   } catch (err) {
     console.warn('[TripDee Supabase] Exception updating driver lead:', err);
   }
@@ -546,10 +561,23 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
         nickname: updatedLead.nickname,
         phone: updatedLead.phone,
         lineId: updatedLead.line_id || '',
+        whatsapp: updatedLead.whatsapp || undefined,
+        wechat: updatedLead.wechat || undefined,
+        kakao: updatedLead.kakao || undefined,
         vehicleModel: updatedLead.vehicle_model || '',
         seats: String(updatedLead.seats || ''),
         plateNumber: updatedLead.plate_number || undefined,
+        plateType: (updatedLead.plate_type as 'yellow' | 'blue') || undefined,
+        canIssueTaxInvoice: updatedLead.can_issue_tax_invoice !== null && updatedLead.can_issue_tax_invoice !== undefined ? Boolean(updatedLead.can_issue_tax_invoice) : undefined,
+        businessType: updatedLead.business_type || undefined,
         routes: updatedLead.routes || '',
+        serviceType: updatedLead.service_type || undefined,
+        depositTerms: updatedLead.deposit_terms || undefined,
+        amenities: updatedLead.amenities || undefined,
+        pickupLocation: updatedLead.pickup_location || undefined,
+        pricePerDay: updatedLead.price_per_day ?? undefined,
+        description: updatedLead.description || undefined,
+        images: Array.isArray(updatedLead.images) ? updatedLead.images : undefined,
         submittedAt: updatedLead.created_at,
         status: 'verified',
         ownerId: updatedLead.owner_id || undefined,
@@ -567,6 +595,7 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
         id: newVehicle.id,
         title: newVehicle.title,
         type: newVehicle.type,
+        rental_type: newVehicle.rentalType || 'with_driver',
         seats: newVehicle.seats,
         driver_name: newVehicle.driverName,
         driver_nickname: newVehicle.driverNickname,
@@ -1845,9 +1874,8 @@ export async function saveBoardQuote(quote: Omit<BoardQuote, 'id' | 'createdAt'>
         message: newQuote.message || null,
       };
       const { error } = await supabase.from('board_quotes').insert(quotePayload);
-      if (error && error.message?.includes('driver_whatsapp')) {
-        delete (quotePayload as Record<string, unknown>).driver_whatsapp;
-        await supabase.from('board_quotes').insert(quotePayload);
+      if (error) {
+        console.warn('[TripDee Supabase] Error inserting board quote:', error.message);
       }
     } catch (err) {
       console.warn('[TripDee Supabase] Error inserting board quote:', err);
@@ -1905,6 +1933,7 @@ export async function acceptBoardQuote(
           .from('board_quotes')
           .select('*')
           .eq('id', quoteId)
+          .eq('post_id', postId)
           .single();
         if (data) {
           quote = {
@@ -2051,45 +2080,175 @@ export async function deleteSponsor(id: string): Promise<boolean> {
 // 6. ANALYTICS SERVICE
 // ==============================================================================
 
+type AnalyticsRow = Database['public']['Tables']['analytics_events']['Row'];
+
+type AnalyticsMeta = Record<string, unknown>;
+
+const SPONSOR_VARIANTS: readonly SponsorClickVariant[] = [
+  'split',
+  'strip',
+  'card',
+  'footer',
+  'sidebar',
+  'unknown',
+];
+
+const CALL_TARGET_TYPES: readonly CallTargetType[] = [
+  'vehicle_card',
+  'vehicle_detail',
+  'driver_fleet',
+  'trip_board',
+  'sponsor',
+  'admin_fleet',
+  'driver_job',
+  'driver_card',
+  'corporate_quote',
+];
+
+function analyticsMeta(value: AnalyticsRow['meta']): AnalyticsMeta {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as AnalyticsMeta
+    : {};
+}
+
+function metaString(meta: AnalyticsMeta, key: string, fallback = ''): string {
+  return typeof meta[key] === 'string' ? meta[key] : fallback;
+}
+
+function metaBoolean(meta: AnalyticsMeta, key: string, fallback: boolean): boolean {
+  return typeof meta[key] === 'boolean' ? meta[key] : fallback;
+}
+
+function mapAnalyticsRow(row: AnalyticsRow): AnalyticsEvent | null {
+  const meta = analyticsMeta(row.meta);
+  const timestamp = new Date(row.timestamp || row.created_at);
+  if (Number.isNaN(timestamp.getTime())) return null;
+
+  const id = metaString(meta, 'id', `db-${row.id}`);
+  const common = {
+    id,
+    timestamp: timestamp.toISOString(),
+    visitorId: metaString(meta, 'visitorId') || undefined,
+    sessionId: metaString(meta, 'sessionId') || undefined,
+    isUnique: metaBoolean(meta, 'isUnique', true),
+    isSpam: metaBoolean(meta, 'isSpam', false),
+  };
+
+  if (row.event_name === 'sponsor_click' && row.sponsor_id) {
+    const variant = SPONSOR_VARIANTS.includes(row.channel as SponsorClickVariant)
+      ? row.channel as SponsorClickVariant
+      : 'unknown';
+    const event: SponsorClickEvent = {
+      ...common,
+      type: 'sponsor_click',
+      sponsorId: row.sponsor_id,
+      sponsorTitle: metaString(meta, 'sponsorTitle', row.sponsor_id),
+      category: metaString(meta, 'category', 'unknown'),
+      variant,
+      targetUrl: metaString(meta, 'targetUrl'),
+    };
+    return event;
+  }
+
+  if (row.event_name === 'call_click') {
+    const targetTypeValue = metaString(meta, 'targetType', row.channel || '');
+    if (!CALL_TARGET_TYPES.includes(targetTypeValue as CallTargetType)) return null;
+    const targetId = metaString(meta, 'targetId', row.driver_id || '');
+    if (!targetId) return null;
+    const event: CallClickEvent = {
+      ...common,
+      type: 'call_click',
+      targetType: targetTypeValue as CallTargetType,
+      targetId,
+      targetTitle: metaString(meta, 'targetTitle', targetId),
+      phoneNumber: metaString(meta, 'phoneNumber'),
+      driverName: metaString(meta, 'driverName') || undefined,
+    };
+    return event;
+  }
+
+  return null;
+}
+
 export async function logAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
-  // Always update server memory summary
   recordServerAnalyticsEvent(event);
 
   const supabase = getSupabase();
   if (!supabase) return;
 
-  try {
-    const isSponsor = event.type === 'sponsor_click';
-    await supabase.from('analytics_events').insert({
-      event_name: event.type,
-      driver_id: isSponsor ? null : (event.driverName || event.targetId || null),
-      sponsor_id: isSponsor ? event.sponsorId : null,
-      channel: isSponsor ? event.variant : event.targetType,
-      route_id: null,
-      timestamp: new Date(event.timestamp).toISOString(),
-      meta: isSponsor
-        ? {
-            sponsorTitle: event.sponsorTitle,
-            targetUrl: event.targetUrl,
-            visitorId: event.visitorId,
-            sessionId: event.sessionId,
-            isUnique: event.isUnique ?? true,
-            isSpam: event.isSpam ?? false,
-          }
-        : {
-            phoneNumber: event.phoneNumber,
-            targetTitle: event.targetTitle,
-            targetType: event.targetType,
-            visitorId: event.visitorId,
-            sessionId: event.sessionId,
-            isUnique: event.isUnique ?? true,
-            isSpam: event.isSpam ?? false,
-          },
-    });
-  } catch (err) {
-    // Analytics logging should never disrupt user requests
-    console.debug('[TripDee Supabase] Analytics log skipped:', err);
+  const isSponsor = event.type === 'sponsor_click';
+  const { error } = await supabase.from('analytics_events').insert({
+    event_name: event.type,
+    driver_id: isSponsor ? null : event.targetId,
+    sponsor_id: isSponsor ? event.sponsorId : null,
+    channel: isSponsor ? event.variant : event.targetType,
+    route_id: null,
+    timestamp: new Date(event.timestamp).toISOString(),
+    meta: isSponsor
+      ? {
+          id: event.id,
+          sponsorTitle: event.sponsorTitle,
+          category: event.category,
+          targetUrl: event.targetUrl,
+          visitorId: event.visitorId,
+          sessionId: event.sessionId,
+          isUnique: event.isUnique ?? true,
+          isSpam: event.isSpam ?? false,
+        }
+      : {
+          id: event.id,
+          targetId: event.targetId,
+          phoneNumber: event.phoneNumber,
+          targetTitle: event.targetTitle,
+          targetType: event.targetType,
+          driverName: event.driverName,
+          visitorId: event.visitorId,
+          sessionId: event.sessionId,
+          isUnique: event.isUnique ?? true,
+          isSpam: event.isSpam ?? false,
+        },
+  });
+
+  if (error) {
+    throw new Error(`logAnalyticsEvent failed: ${error.message}`);
   }
+}
+
+export async function fetchAnalyticsSummary(): Promise<AnalyticsSummary> {
+  const supabase = getSupabase();
+  if (!supabase) return getServerAnalyticsSummary();
+
+  try {
+    const { data, error } = await supabase
+      .from('analytics_events')
+      .select('*')
+      .order('timestamp', { ascending: true });
+
+    if (error) {
+      console.warn('[TripDee Supabase] Error fetching analytics, using memory:', error.message);
+      return getServerAnalyticsSummary();
+    }
+
+    const summary = (data || []).reduce<AnalyticsSummary>((current, row) => {
+      const event = mapAnalyticsRow(row);
+      return event ? computeUpdatedSummary(current, event) : current;
+    }, createEmptySummary());
+    return replaceServerAnalyticsSummary(summary);
+  } catch (err) {
+    console.warn('[TripDee Supabase] Exception fetching analytics, using memory:', err);
+    return getServerAnalyticsSummary();
+  }
+}
+
+export async function resetAnalyticsEvents(): Promise<AnalyticsSummary> {
+  const supabase = getSupabase();
+  if (supabase) {
+    const { error } = await supabase.from('analytics_events').delete().neq('id', 0);
+    if (error) {
+      throw new Error(`resetAnalyticsEvents failed: ${error.message}`);
+    }
+  }
+  return resetServerAnalytics();
 }
 
 // ==============================================================================
@@ -2207,6 +2366,7 @@ function mapBookingRow(row: BookingRow): Booking {
     isContactUnlocked: row.is_contact_unlocked,
     createdAt: row.created_at,
     paidAt: row.paid_at,
+    completedAt: row.completed_at,
   };
 }
 
@@ -2323,6 +2483,7 @@ export async function updateBookingPayment(
     chillpayTransactionId?: string | null;
     isContactUnlocked?: boolean;
     paidAt?: string | null;
+    completedAt?: string | null;
   }
 ): Promise<Booking | null> {
   const sb = getSupabase();
@@ -2339,6 +2500,9 @@ export async function updateBookingPayment(
       }
       if (updates.paidAt !== undefined) {
         updatePayload.paid_at = updates.paidAt;
+      }
+      if (updates.completedAt !== undefined) {
+        updatePayload.completed_at = updates.completedAt;
       }
       const { data, error } = await sb
         .from('bookings')
@@ -2363,6 +2527,7 @@ export async function updateBookingPayment(
       ...(updates.chillpayTransactionId !== undefined ? { chillpayTransactionId: updates.chillpayTransactionId } : {}),
       ...(updates.isContactUnlocked !== undefined ? { isContactUnlocked: updates.isContactUnlocked } : {}),
       ...(updates.paidAt !== undefined ? { paidAt: updates.paidAt } : {}),
+      ...(updates.completedAt !== undefined ? { completedAt: updates.completedAt } : {}),
     };
     return localBookings[idx];
   }

@@ -2,36 +2,37 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Validates whether the incoming request is authorized as an Admin.
+ *
+ * The admin secret is server-only (`ADMIN_SECRET_KEY`). Browsers never hold it:
+ * the admin console exchanges the entered passphrase for a signed, httpOnly
+ * session cookie via `/api/auth/admin/login`. Programmatic/ops clients may
+ * still authenticate with the raw secret.
+ *
  * Checks for:
- * 1. Authorization: Bearer <ADMIN_PIN>
- * 2. x-admin-pin: <ADMIN_PIN>
- * 3. Cookie: td-admin-token = <ADMIN_PIN>
+ * 1. `Authorization: Bearer <ADMIN_SECRET_KEY>` (server-to-server)
+ * 2. `x-admin-pin` / `x-admin-secret: <ADMIN_SECRET_KEY>` (server-to-server)
+ * 3. A signed admin session cookie
  */
-export function verifyAdminAccess(req: NextRequest): boolean {
+export async function verifyAdminAccess(req: NextRequest): Promise<boolean> {
   const adminSecret = getAdminSecret();
-  // No configured secret means no admin access. Never fall back to a known value.
+  if (adminSecret) {
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      if (timingSafeEqual(authHeader.slice(7).trim(), adminSecret)) return true;
+    }
+    const pinHeader = req.headers.get('x-admin-pin') || req.headers.get('x-admin-secret');
+    if (pinHeader && timingSafeEqual(pinHeader.trim(), adminSecret)) return true;
+  }
+
+  const session = await getAdminSession(req);
+  return session?.role === 'admin';
+}
+
+/** Constant-time check of a candidate admin passphrase against the server secret. */
+export function verifyAdminPin(pin: string): boolean {
+  const adminSecret = getAdminSecret();
   if (!adminSecret) return false;
-
-  // 1. Check Bearer token in Authorization header
-  const authHeader = req.headers.get('authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.slice(7).trim();
-    if (timingSafeEqual(token, adminSecret)) return true;
-  }
-
-  // 2. Check x-admin-pin or x-admin-secret header
-  const pinHeader = req.headers.get('x-admin-pin') || req.headers.get('x-admin-secret');
-  if (pinHeader && timingSafeEqual(pinHeader.trim(), adminSecret)) {
-    return true;
-  }
-
-  // 3. Check admin cookie
-  const cookieToken = req.cookies.get('td-admin-token')?.value;
-  if (cookieToken && timingSafeEqual(cookieToken.trim(), adminSecret)) {
-    return true;
-  }
-
-  return false;
+  return timingSafeEqual((pin || '').trim(), adminSecret);
 }
 
 export function unauthorizedAdminResponse(message = 'Unauthorized: Admin access required'): NextResponse {
@@ -70,7 +71,7 @@ export function getOrigin(req: NextRequest): string {
 export const SESSION_COOKIE = 'td-session';
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
-export type SessionRole = 'driver' | 'customer';
+export type SessionRole = 'driver' | 'customer' | 'admin';
 
 export interface DriverSession {
   /** Auth provider user id, e.g. `google_<sub>` or `line_<userId>`. */
@@ -82,7 +83,8 @@ export interface DriverSession {
 }
 
 function getAdminSecret(): string {
-  return process.env.ADMIN_SECRET_KEY || process.env.NEXT_PUBLIC_ADMIN_PIN || '';
+  // Server-only. Never fall back to a NEXT_PUBLIC_* value — those ship to the browser.
+  return process.env.ADMIN_SECRET_KEY || '';
 }
 
 /**
@@ -220,6 +222,45 @@ export function withSessionCookie(res: NextResponse, token: string): NextRespons
 /** Response that clears the signed session cookie. */
 export function withoutSessionCookie(res: NextResponse): NextResponse {
   res.cookies.set(SESSION_COOKIE, '', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 0,
+  });
+  return res;
+}
+
+// ---------------------------------------------------------------------------
+// Signed admin session (separate cookie from the driver session so an operator
+// signing in does not clobber a driver's identity, and vice versa).
+// ---------------------------------------------------------------------------
+
+export const ADMIN_SESSION_COOKIE = 'td-admin-session';
+
+/** Read and verify the signed admin session attached to a request. */
+export async function getAdminSession(req: NextRequest): Promise<DriverSession | null> {
+  const token = req.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+  if (!token) return null;
+  const session = await verifySessionToken(token);
+  return session && session.role === 'admin' ? session : null;
+}
+
+/** Response that installs the signed admin session cookie. */
+export function withAdminSessionCookie(res: NextResponse, token: string): NextResponse {
+  res.cookies.set(ADMIN_SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: SESSION_TTL_SECONDS,
+  });
+  return res;
+}
+
+/** Response that clears the signed admin session cookie. */
+export function withoutAdminSessionCookie(res: NextResponse): NextResponse {
+  res.cookies.set(ADMIN_SESSION_COOKIE, '', {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',

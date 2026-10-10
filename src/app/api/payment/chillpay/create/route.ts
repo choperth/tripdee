@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createBooking } from '@/lib/supabase/service';
 import { createChillPayPayment, getChillPayConfig } from '@/lib/chillpay';
+import { validateHoneypot } from '@/lib/honeypot';
 
 interface CreatePaymentRequestBody {
   vehicleId?: string;
@@ -19,6 +20,14 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as CreatePaymentRequestBody;
 
+    const hpResult = validateHoneypot(body as unknown as Record<string, unknown>);
+    if (hpResult.isSpam) {
+      console.warn(`[Payment Create Spam Blocked] reason=${hpResult.reason}`);
+      return NextResponse.json(
+        { success: false, error: 'Invalid submission' },
+        { status: 400 }
+      );
+    }
     if (!body.customerName || !body.customerPhone || !body.route || !body.travelDate) {
       return NextResponse.json(
         { success: false, error: 'Missing required booking fields (name, phone, route, date)' },

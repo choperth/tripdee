@@ -5,7 +5,7 @@ import { X, Star, Check, CheckCircle2, User, Phone, Calendar, MapPin, MessageSqu
 import { useLanguage } from '@/context/LanguageContext';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { Vehicle } from '@/data/mockData';
-import { vehicleTitle, vehicleLocation, vehiclePopularRoutes } from '@/data/vehicleI18n';
+import { vehicleTitle, vehicleLocation } from '@/data/vehicleI18n';
 import { getPublicDriverName } from '@/lib/privacy';
 import {
   Review,

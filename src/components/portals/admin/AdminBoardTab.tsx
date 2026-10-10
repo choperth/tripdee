@@ -5,6 +5,8 @@ import { BoardPost, BoardPostType, ZoneId } from '@/data/mockData';
 import { Pencil, Trash2, Search, Star, Download, RefreshCw, ChevronDown, Copy, Check, Phone, MessageCircle, Calendar, Users, Plus } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
+import { AdminAlert } from './AdminAlert';
+import { adminFetch } from '@/lib/adminClient';
 import { isBoardPostExpired } from '@/lib/availabilityUtils';
 import { copyTextToClipboard } from '@/lib/b2b';
 
@@ -13,7 +15,7 @@ interface AdminBoardTabProps {
   onRefresh: () => void;
 }
 
-type BoardTab = 'all' | 'request' | 'share' | 'featured' | 'corporate';
+type BoardTab = 'all' | 'request' | 'share' | 'featured' | 'corporate' | 'closed';
 
 const TYPE_PILL: Record<BoardPostType, string> = {
   request: 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800',
@@ -36,6 +38,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
   const [deletingPost, setDeletingPost] = useState<BoardPost | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copyState, setCopyState] = useState<{ id: string; ok: boolean } | null>(null);
+  const [actionError, setActionError] = useState('');
 
   const countBy = (fn: (p: BoardPost) => boolean) => posts.filter(fn).length;
 
@@ -45,6 +48,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
     { id: 'share', label: 'หาเพื่อนร่วมทริป (Share)', count: countBy((p) => p.type === 'share'), dot: 'bg-blue-500' },
     { id: 'featured', label: 'เฉพาะงานแนะนำ (Featured)', count: countBy((p) => Boolean(p.isVerified)), star: true },
     { id: 'corporate', label: 'งานองค์กร & อบจ. (B2B)', count: countBy((p) => p.category === 'corporate') },
+    { id: 'closed', label: 'ปิด/สิ้นสุดแล้ว', count: countBy((p) => Boolean(p.isClosed) || isBoardPostExpired(p)), dot: 'bg-red-500' },
   ];
 
   const filtered = posts.filter((p) => {
@@ -52,6 +56,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
     if (activeTab === 'share' && p.type !== 'share') return false;
     if (activeTab === 'featured' && !p.isVerified) return false;
     if (activeTab === 'corporate' && p.category !== 'corporate') return false;
+    if (activeTab === 'closed' && !(p.isClosed || isBoardPostExpired(p))) return false;
     const q = searchTerm.trim().toLowerCase();
     if (!q) return true;
     return (
@@ -68,15 +73,16 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
   const sorted = sortMode === 'oldest' ? [...filtered].reverse() : filtered;
 
   const handleToggleVerified = async (post: BoardPost) => {
+    setActionError('');
     try {
-      await fetch('/api/board', {
+      await adminFetch('/api/board', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: post.id, isVerified: !post.isVerified }),
       });
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
     } catch (err) {
+      setActionError((err as Error).message);
       console.error('Error toggling post verified:', err);
     }
   };
@@ -84,16 +90,19 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
   const handleDelete = async () => {
     if (!deletingPost) return;
     setIsSubmitting(true);
+    setActionError('');
     try {
-      await fetch('/api/board', {
+      await adminFetch('/api/board', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: deletingPost.id }),
       });
       setDeletingPost(null);
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
     } catch (err) {
+      // Close the modal so the failure banner is visible, and keep the post.
+      setDeletingPost(null);
+      setActionError((err as Error).message);
       console.error('Error deleting board post:', err);
     } finally {
       setIsSubmitting(false);
@@ -104,6 +113,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
     e.preventDefault();
     if (!editingPost) return;
     setIsSubmitting(true);
+    setActionError('');
     const form = e.currentTarget;
     const formData = new FormData(form);
 
@@ -128,15 +138,15 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
     };
 
     try {
-      await fetch('/api/board', {
+      await adminFetch('/api/board', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
       setEditingPost(null);
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
     } catch (err) {
+      setActionError((err as Error).message);
       console.error('Error updating board post:', err);
     } finally {
       setIsSubmitting(false);
@@ -180,6 +190,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
 
   return (
     <div className="space-y-4">
+      <AdminAlert message={actionError} onDismiss={() => setActionError('')} />
       {/* Breadcrumb + Title + Actions */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

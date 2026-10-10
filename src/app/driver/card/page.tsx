@@ -44,7 +44,7 @@ export default function DriverBusinessCardPage() {
 
     const loadCard = async () => {
       try {
-        let targetId = qId;
+        const targetId = qId;
 
         // If no ID or phone query was provided, check if a logged-in driver is opening their own card
         if (!targetId && !qPhone) {

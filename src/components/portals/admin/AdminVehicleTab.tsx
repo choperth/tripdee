@@ -6,6 +6,8 @@ import { ALL_VEHICLE_MODELS } from '@/data/vehicleModels';
 import { CarFront, Plus, Pencil, Trash2, Search, Star, Download, ChevronDown, ChevronLeft, ChevronRight, Phone, Check, X } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
+import { AdminAlert } from './AdminAlert';
+import { adminFetch } from '@/lib/adminClient';
 
 interface AdminVehicleTabProps {
   vehicles: Vehicle[];
@@ -31,6 +33,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [deletingVehicle, setDeletingVehicle] = useState<Vehicle | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const availableCount = vehicles.filter((v) => v.isAvailable !== false).length;
   const pendingCount = vehicles.filter((v) => v.approvalStatus === 'pending').length;
@@ -99,25 +102,17 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
     URL.revokeObjectURL(url);
   };
 
-  const adminHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem('td-admin-token') || '';
-    return token ? { 'x-admin-pin': token, Authorization: `Bearer ${token}` } : {};
-  };
-
   const handleToggleVerified = async (v: Vehicle) => {
+    setActionError('');
     try {
-      const res = await fetch('/api/vehicles', {
+      await adminFetch('/api/vehicles', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
         body: JSON.stringify({ id: v.id, isVerified: !v.isVerified }),
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'อัปเดตสถานะไม่สำเร็จ');
-      }
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
     } catch (err) {
+      setActionError((err as Error).message);
       console.error('Error toggling verified:', err);
     }
   };
@@ -128,19 +123,16 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
    */
   const handleReview = async (v: Vehicle, decision: 'approved' | 'rejected') => {
     setIsSubmitting(true);
+    setActionError('');
     try {
-      const res = await fetch('/api/vehicles', {
+      await adminFetch('/api/vehicles', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
         body: JSON.stringify({ id: v.id, approvalStatus: decision }),
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'ดำเนินการไม่สำเร็จ');
-      }
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
     } catch (err) {
+      setActionError((err as Error).message);
       console.error('Error reviewing vehicle:', err);
     } finally {
       setIsSubmitting(false);
@@ -150,16 +142,19 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
   const handleDelete = async () => {
     if (!deletingVehicle) return;
     setIsSubmitting(true);
+    setActionError('');
     try {
-      await fetch('/api/vehicles', {
+      await adminFetch('/api/vehicles', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: deletingVehicle.id }),
       });
       setDeletingVehicle(null);
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
     } catch (err) {
+      // Close the modal so the failure banner is visible, and keep the vehicle.
+      setDeletingVehicle(null);
+      setActionError((err as Error).message);
       console.error('Error deleting vehicle:', err);
     } finally {
       setIsSubmitting(false);
@@ -211,21 +206,17 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
 
     try {
       const method = editingVehicle ? 'PUT' : 'POST';
-      const res = await fetch('/api/vehicles', {
+      await adminFetch('/api/vehicles', {
         method,
-        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
         body: JSON.stringify(vehicleData),
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'บันทึกไม่สำเร็จ');
-      }
 
       setEditingVehicle(null);
       setIsNewModalOpen(false);
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
     } catch (err) {
+      setActionError((err as Error).message);
       console.error('Error saving vehicle:', err);
     } finally {
       setIsSubmitting(false);
@@ -237,6 +228,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
 
   return (
     <div className="space-y-4">
+      <AdminAlert message={actionError} onDismiss={() => setActionError('')} />
       {/* Breadcrumb + Title */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

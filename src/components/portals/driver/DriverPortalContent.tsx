@@ -2407,6 +2407,7 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
                       await deleteAccount();
                       if (onClose) onClose();
                       if (!isModal && typeof window !== 'undefined') {
+                        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
                         window.location.href = '/';
                       }
                     }}

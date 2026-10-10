@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     }
     if (isSuccess) {
       // 3. Update database: payment_status = 'paid', is_contact_unlocked = true
-      const updatedBooking = await updateBookingPayment(orderNo, {
+      await updateBookingPayment(orderNo, {
         paymentStatus: 'paid',
         chillpayTransactionId: transactionId || null,
         isContactUnlocked: true,

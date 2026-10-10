@@ -143,18 +143,20 @@ export default function HomePage() {
     const params = new URLSearchParams(window.location.search);
     const authErr = params.get('auth_error');
     const authOk = params.get('auth');
-    if (authErr) {
-      setAuthBanner({ type: 'error', message: `เข้าสู่ระบบไม่สำเร็จ: ${authErr}` });
+    if (!authErr && authOk !== 'success') return;
+
+    queueMicrotask(() => {
+      if (authErr) {
+        setAuthBanner({ type: 'error', message: `เข้าสู่ระบบไม่สำเร็จ: ${authErr}` });
+      } else if (authOk === 'success') {
+        setAuthBanner({ type: 'success', message: 'เข้าสู่ระบบสำเร็จ ยินดีต้อนรับสู่ TripDee' });
+      }
       const url = new URL(window.location.href);
       url.searchParams.delete('auth_error');
-      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
-    } else if (authOk === 'success') {
-      setAuthBanner({ type: 'success', message: 'เข้าสู่ระบบสำเร็จ ยินดีต้อนรับสู่ TripDee' });
-      const url = new URL(window.location.href);
       url.searchParams.delete('auth');
       url.searchParams.delete('role');
       window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
-    }
+    });
   }, []);
 
   useEffect(() => {

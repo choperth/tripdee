@@ -5,6 +5,7 @@ import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { OFFICIAL_LINE_URL } from '@/lib/constants';
+import { formatLineLink } from '@/lib/contactUtils';
 import {
   X,
   Building2,
@@ -909,7 +910,7 @@ export const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
                                 )}
                                 {v.driverLine && (
                                   <a
-                                    href={v.driverLine.startsWith('http') ? v.driverLine : `https://line.me/ti/p/~${v.driverLine}`}
+                                    href={formatLineLink(v.driverLine)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-none border border-[#06C755] text-[#06C755] hover:bg-[#06C755]/10 text-xs font-bold transition-colors"

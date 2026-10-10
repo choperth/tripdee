@@ -139,7 +139,6 @@ export const DriverFleetModal: React.FC<DriverFleetModalProps> = ({
         <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fleetVehicles.map((vehicle) => {
-              const isSelfDrive = vehicle.rentalType === 'self_drive' || (vehicle.type !== 'van' && vehicle.rentalType !== 'with_driver');
               const basePrice = vehicle.zoneRates?.city ?? null;
 
               return (

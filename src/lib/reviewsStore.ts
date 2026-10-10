@@ -7,7 +7,6 @@
  * for every vehicle that had none.
  */
 
-import { Vehicle } from '@/data/mockData';
 
 export interface Review {
   id: string;

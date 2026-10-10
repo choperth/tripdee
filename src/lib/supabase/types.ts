@@ -37,6 +37,7 @@ export interface Booking {
   isContactUnlocked: boolean;
   createdAt: string;
   paidAt?: string | null;
+  completedAt?: string | null;
 }
 
 export type Database = {
@@ -60,6 +61,8 @@ export type Database = {
           assigned_partner: string | null;
           lead_fee_status: LeadFeeStatus;
           lead_fee_amount: number;
+          customer_id: string | null;
+          total_days: number | null;
           status: QuotationStatus;
           created_at: string;
         };
@@ -80,6 +83,8 @@ export type Database = {
           assigned_partner?: string | null;
           lead_fee_status?: LeadFeeStatus;
           lead_fee_amount?: number;
+          customer_id?: string | null;
+          total_days?: number | null;
           status?: QuotationStatus;
           created_at?: string;
         };
@@ -100,6 +105,8 @@ export type Database = {
           assigned_partner?: string | null;
           lead_fee_status?: LeadFeeStatus;
           lead_fee_amount?: number;
+          customer_id?: string | null;
+          total_days?: number | null;
           status?: QuotationStatus;
           created_at?: string;
         };
@@ -123,11 +130,15 @@ export type Database = {
           plate_type: 'yellow' | 'blue' | null;
           can_issue_tax_invoice: boolean | null;
           business_type: 'company' | 'individual' | null;
-          price_per_day?: number | null;
-          description?: string | null;
-          images?: string[] | null;
+          service_type: 'with_driver' | 'self_drive' | null;
+          deposit_terms: string | null;
+          amenities: string | null;
+          pickup_location: string | null;
+          price_per_day: number | null;
+          description: string | null;
+          images: string[] | null;
           created_at: string;
-          owner_id?: string | null;
+          owner_id: string | null;
         };
         Insert: {
           id?: string;
@@ -146,6 +157,10 @@ export type Database = {
           plate_type?: 'yellow' | 'blue' | null;
           can_issue_tax_invoice?: boolean | null;
           business_type?: 'company' | 'individual' | null;
+          service_type?: 'with_driver' | 'self_drive' | null;
+          deposit_terms?: string | null;
+          amenities?: string | null;
+          pickup_location?: string | null;
           price_per_day?: number | null;
           description?: string | null;
           images?: string[] | null;
@@ -169,6 +184,13 @@ export type Database = {
           plate_type?: 'yellow' | 'blue' | null;
           can_issue_tax_invoice?: boolean | null;
           business_type?: 'company' | 'individual' | null;
+          service_type?: 'with_driver' | 'self_drive' | null;
+          deposit_terms?: string | null;
+          amenities?: string | null;
+          pickup_location?: string | null;
+          price_per_day?: number | null;
+          description?: string | null;
+          images?: string[] | null;
           created_at?: string;
           owner_id?: string | null;
         };
@@ -391,11 +413,12 @@ export type Database = {
           driver_name: string;
           driver_phone: string;
           driver_line: string | null;
-          driver_whatsapp?: string | null;
+          driver_whatsapp: string | null;
           vehicle_model: string;
           price: number;
           price_note: string | null;
           message: string | null;
+          is_accepted: boolean;
           created_at: string;
         };
         Insert: {
@@ -409,6 +432,7 @@ export type Database = {
           price: number;
           price_note?: string | null;
           message?: string | null;
+          is_accepted?: boolean;
           created_at?: string;
         };
         Update: {
@@ -422,6 +446,7 @@ export type Database = {
           price?: number;
           price_note?: string | null;
           message?: string | null;
+          is_accepted?: boolean;
           created_at?: string;
         };
         Relationships: [];

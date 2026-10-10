@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { useAuth, UserProfile } from '@/context/AuthContext';
 import { TravelDatePicker } from '@/components/TravelDatePicker';
-import { formatWhatsAppLink } from '@/lib/contactUtils';
+import { formatWhatsAppLink, formatLineLink } from '@/lib/contactUtils';
 import {
   saveMyBoardPost,
   getMyBoardPostToken,
@@ -1963,7 +1963,7 @@ export const TripBoard: React.FC = () => {
                           </a>
                           {quote.driverLine && (
                             <a
-                              href={quote.driverLine.startsWith('http') ? quote.driverLine : `https://line.me/ti/p/~${quote.driverLine}`}
+                              href={formatLineLink(quote.driverLine)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="px-3 py-1.5 bg-line-green hover:bg-line-green-hover text-white rounded-none text-xs font-bold uppercase tracking-wider flex items-center gap-1 transition-all"

@@ -6,6 +6,8 @@ import { Pencil, Trash2, PhoneCall, Search, Download, RefreshCw, Plus, Copy, Che
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
+import { AdminAlert } from './AdminAlert';
+import { adminFetch } from '@/lib/adminClient';
 import type { LeadFeeStatus, OrgType, VehicleTier } from '@/lib/b2b';
 import {
   LEAD_FEE_PER_CAR,
@@ -66,6 +68,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
   const [deletingQuote, setDeletingQuote] = useState<QuotationLead | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copyState, setCopyState] = useState<{ id: string; ok: boolean } | null>(null);
+  const [actionError, setActionError] = useState('');
 
   const countBy = (st: QuotationLead['status']) => quotes.filter((q) => q.status === st).length;
   const actionableCount = countBy('pending') + countBy('quoted');
@@ -89,14 +92,15 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
   });
 
   const handleStatusChange = async (quote: QuotationLead, status: QuotationLead['status']) => {
+    setActionError('');
     try {
-      await fetch('/api/leads/quote', {
+      await adminFetch('/api/leads/quote', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: quote.id, status }),
       });
       onRefresh();
     } catch (err) {
+      setActionError((err as Error).message);
       console.error('Error updating quote status:', err);
     }
   };
@@ -104,15 +108,17 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
   const handleDelete = async () => {
     if (!deletingQuote) return;
     setIsSubmitting(true);
+    setActionError('');
     try {
-      await fetch('/api/leads/quote', {
+      await adminFetch('/api/leads/quote', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: deletingQuote.id }),
       });
       setDeletingQuote(null);
       onRefresh();
     } catch (err) {
+      setDeletingQuote(null);
+      setActionError((err as Error).message);
       console.error('Error deleting quote:', err);
     } finally {
       setIsSubmitting(false);
@@ -133,6 +139,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
       contactName: (formData.get('contactName') as string) || undefined,
       phone: formData.get('phone') as string,
       travelDate: formData.get('travelDate') as string,
+      totalDays: Number(formData.get('totalDays')) || editingQuote.totalDays || 1,
       route: formData.get('route') as string,
       passengers: formData.get('passengers') as string,
       estimatedPrice: Number(formData.get('estimatedPrice')) || 0,
@@ -148,14 +155,14 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
     };
 
     try {
-      await fetch('/api/leads/quote', {
+      await adminFetch('/api/leads/quote', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
       setEditingQuote(null);
       onRefresh();
     } catch (err) {
+      setActionError((err as Error).message);
       console.error('Error updating quote:', err);
     } finally {
       setIsSubmitting(false);
@@ -200,6 +207,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
 
   return (
     <div className="space-y-4">
+      <AdminAlert message={actionError} onDismiss={() => setActionError('')} />
       {/* Breadcrumb + Title + Actions */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -374,7 +382,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                       </span>
                       <span className="text-slate-300">•</span>
                       <span>
-                        วันที่เดินทาง: <strong className="text-slate-800 dark:text-slate-200">{q.travelDate}</strong>
+                        วันที่เดินทาง: <strong className="text-slate-800 dark:text-slate-200">{q.travelDate}{q.totalDays ? ` (${q.totalDays} วัน)` : ''}</strong>
                       </span>
                     </p>
                   </div>
@@ -581,11 +589,21 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
                 </div>
                 <div>
                   <label className="font-bold text-ink block mb-1">{t('padm.fTravelDate')}</label>
-                  <input
-                    name="travelDate"
-                    defaultValue={editingQuote.travelDate}
-                    className={inputClass}
-                  />
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      name="travelDate"
+                      defaultValue={editingQuote.travelDate}
+                      className={`${inputClass} col-span-2`}
+                    />
+                    <input
+                      name="totalDays"
+                      type="number"
+                      min="1"
+                      placeholder="จำนวนวัน"
+                      defaultValue={editingQuote.totalDays || 1}
+                      className={`${inputClass} text-center font-mono`}
+                    />
+                  </div>
                 </div>
               </div>
 

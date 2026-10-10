@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerAnalyticsSummary, resetServerAnalytics } from '@/lib/serverAnalyticsStore';
+import { fetchAnalyticsSummary, resetAnalyticsEvents } from '@/lib/supabase/service';
 import { verifyAdminAccess, unauthorizedAdminResponse } from '@/lib/authGuard';
 
-export async function GET() {
-  const summary = getServerAnalyticsSummary();
+export async function GET(req: NextRequest) {
+  if (!(await verifyAdminAccess(req))) {
+    return unauthorizedAdminResponse();
+  }
+
+  const summary = await fetchAnalyticsSummary();
   return NextResponse.json({
     success: true,
     summary,
@@ -11,14 +15,14 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!verifyAdminAccess(req)) {
+  if (!(await verifyAdminAccess(req))) {
     return unauthorizedAdminResponse();
   }
 
   try {
     const body = await req.json().catch(() => ({}));
     if (body?.action === 'reset') {
-      const fresh = resetServerAnalytics();
+      const fresh = await resetAnalyticsEvents();
       return NextResponse.json({
         success: true,
         message: 'Analytics reset successfully',
@@ -39,14 +43,21 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!verifyAdminAccess(req)) {
+  if (!(await verifyAdminAccess(req))) {
     return unauthorizedAdminResponse();
   }
 
-  const fresh = resetServerAnalytics();
-  return NextResponse.json({
-    success: true,
-    message: 'Analytics cleared',
-    summary: fresh,
-  });
+  try {
+    const fresh = await resetAnalyticsEvents();
+    return NextResponse.json({
+      success: true,
+      message: 'Analytics cleared',
+      summary: fresh,
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { success: false, error: 'Failed to clear analytics', details: String(err) },
+      { status: 500 }
+    );
+  }
 }

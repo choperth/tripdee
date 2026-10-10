@@ -3,8 +3,8 @@
  * Tailored for Google Search, AI Overviews, Perplexity, Claude, and ChatGPT Web Search.
  */
 
-import { OFFICIAL_LINE_URL } from '@/lib/constants';
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tripdeeth.com';
+import { SITE_URL, OFFICIAL_LINE_URL, OFFICIAL_FACEBOOK_URL } from '@/lib/constants';
+const BASE_URL = SITE_URL;
 
 export function getStructuredData() {
   const organizationSchema = {
@@ -25,7 +25,7 @@ export function getStructuredData() {
     },
     sameAs: [
       OFFICIAL_LINE_URL,
-      'https://web.facebook.com/profile.php?id=61594476213767',
+      OFFICIAL_FACEBOOK_URL,
     ],
     address: {
       '@type': 'PostalAddress',

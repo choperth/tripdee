@@ -7,15 +7,28 @@ import {
   normalizeOrgType,
   normalizeVehicleTier,
 } from '@/lib/b2b';
-import { verifyAdminAccess, unauthorizedAdminResponse } from '@/lib/authGuard';
+import { getDriverSession, verifyAdminAccess, unauthorizedAdminResponse } from '@/lib/authGuard';
+import { validateHoneypot } from '@/lib/honeypot';
 
 export async function GET(req: NextRequest) {
-  // Security (CWE-200 / PDPA): Quotation leads contain customer PII and corporate pricing.
-  if (!verifyAdminAccess(req)) {
-    return unauthorizedAdminResponse();
+  // Security (CWE-200 / PDPA): admins see all rows; customers only see rows
+  // stamped with their signed server-side identity. Legacy null rows are admin-only.
+  const isAdmin = await verifyAdminAccess(req);
+  if (isAdmin) {
+    const quotations = await fetchQuotations(req.url);
+    return NextResponse.json({
+      success: true,
+      total: quotations.length,
+      quotations,
+    });
   }
 
-  const quotations = await fetchQuotations();
+  const session = await getDriverSession(req);
+  if (!session || session.role !== 'customer') {
+    return unauthorizedAdminResponse('Unauthorized: Customer or admin access required');
+  }
+
+  const quotations = await fetchQuotations(req.url, { customerId: session.userId });
   return NextResponse.json({
     success: true,
     total: quotations.length,
@@ -27,6 +40,22 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+    // Check Honeypot spam trap
+    const hpResult = validateHoneypot(body);
+    if (hpResult.isSpam) {
+      console.warn(`[Quotation Lead Spam Blocked] reason=${hpResult.reason}, company="${body.companyName}"`);
+      return NextResponse.json({
+        success: true,
+        message: 'บันทึกคำขอใบเสนอราคาเรียบร้อยแล้ว เจ้าหน้าที่จะติดต่อกลับภายใน 15 นาที',
+        lead: {
+          id: `qt-spm-${Date.now().toString().slice(-6)}`,
+          companyName: String(body.companyName || ''),
+        },
+      });
+    }
+
+    const session = await getDriverSession(req);
+    const customerId = session?.role === 'customer' ? session.userId : null;
     if (!body.companyName || !body.phone) {
       return NextResponse.json(
         { error: 'กรุณากรอกชื่อบริษัท/ผู้ติดต่อ และเบอร์โทรศัพท์' },
@@ -50,6 +79,10 @@ export async function POST(req: NextRequest) {
       includeInsurance: body.includeInsurance === undefined ? true : Boolean(body.includeInsurance),
       assignedPartner: body.assignedPartner ? String(body.assignedPartner).trim() : null,
       leadFeeStatus: normalizeLeadFeeStatus(body.leadFeeStatus),
+      customerId,
+      totalDays: Number.isInteger(Number(body.totalDays)) && Number(body.totalDays) >= 1
+        ? Number(body.totalDays)
+        : undefined,
     });
 
     return NextResponse.json({
@@ -66,7 +99,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  if (!verifyAdminAccess(req)) {
+  if (!(await verifyAdminAccess(req))) {
     return unauthorizedAdminResponse();
   }
 
@@ -97,6 +130,12 @@ export async function PUT(req: NextRequest) {
       updates.assignedPartner = body.assignedPartner ? String(body.assignedPartner).trim() : null;
     }
     if (body.leadFeeAmount !== undefined) updates.leadFeeAmount = Number(body.leadFeeAmount) || 0;
+    if (body.totalDays !== undefined) {
+      const parsedDays = Number(body.totalDays);
+      if (Number.isInteger(parsedDays) && parsedDays >= 1) {
+        updates.totalDays = parsedDays;
+      }
+    }
 
     const updated = await updateQuotation(String(body.id), updates);
     if (!updated) {
@@ -113,7 +152,7 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!verifyAdminAccess(req)) {
+  if (!(await verifyAdminAccess(req))) {
     return unauthorizedAdminResponse();
   }
 
