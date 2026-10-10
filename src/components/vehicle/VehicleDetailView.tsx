@@ -387,9 +387,9 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
           </div>
         </div>
 
-        {/* Photo Gallery Bento Layout */}
+        {/* Photo Gallery Bento Layout (Modern Rounded-2xl) */}
         {galleryImages.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 rounded-none border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xs">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-md">
             {/* Large Feature Photo */}
             <div className="col-span-2 md:col-span-2 md:row-span-2 relative h-56 sm:h-64 md:h-[380px] bg-slate-900 group overflow-hidden">
               <Image
@@ -402,7 +402,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
               <div className="absolute bottom-3 left-3 text-white flex flex-col gap-1 pointer-events-none">
-                <span className="bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded-none text-white text-[10px] font-black uppercase tracking-wider w-fit border border-slate-700">
+                <span className="bg-slate-950/80 backdrop-blur-md px-2.5 py-0.5 rounded-full text-white text-[10px] font-bold uppercase tracking-wider w-fit border border-slate-700">
                   {t('detail.cabinCaption', { n: vehicle.seats })}
                 </span>
                 <p className="font-bold text-sm sm:text-base text-white">
@@ -420,7 +420,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 sizes="(max-width: 768px) 100vw, 25vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <span className="absolute top-2 left-2 bg-slate-950/85 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-none border border-slate-700 uppercase">
+              <span className="absolute top-2 left-2 bg-slate-950/85 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-700 uppercase">
                 {t('detail.capKaraoke')}
               </span>
             </div>
@@ -434,7 +434,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 sizes="(max-width: 768px) 100vw, 25vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <span className={`absolute top-2 left-2 text-[10px] px-2 py-0.5 rounded-none font-black border uppercase ${plateBadgeClass}`}>
+              <span className={`absolute top-2 left-2 text-[10px] px-2.5 py-0.5 rounded-full font-black border uppercase ${plateBadgeClass}`}>
                 {vehicle.plateNumber ? maskPlateNumber(vehicle.plateNumber) : t('detail.plateLegal')}
               </span>
             </div>
@@ -448,12 +448,12 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 sizes="(max-width: 768px) 100vw, 25vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <span className="absolute top-2 left-2 bg-slate-950/85 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-none border border-slate-700 uppercase">
+              <span className="absolute top-2 left-2 bg-slate-950/85 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-700 uppercase">
                 {t('detail.capCharge')}
               </span>
             </div>
 
-            {/* Grid Photo 5 with View All overlay */}
+            {/* Grid Photo 5 with View All Button */}
             <div className="relative h-40 md:h-[185px] overflow-hidden group bg-slate-900">
               <Image
                 src={galleryImages[0]}
@@ -462,9 +462,11 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 sizes="(max-width: 768px) 100vw, 25vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-slate-950/60 hover:bg-slate-950/75 transition-colors flex items-center justify-center gap-1.5 text-white font-bold text-xs sm:text-sm">
-                <span className="material-symbols-outlined text-[18px]">photo_library</span>
-                <span>{t('detail.viewAllPhotos', { n: galleryImages.length })}</span>
+              <div className="absolute inset-0 bg-slate-950/50 flex items-center justify-center p-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-950/80 hover:bg-slate-950 text-white font-bold text-xs backdrop-blur-md border border-white/20 transition-all shadow-md">
+                  <span className="material-symbols-outlined text-[16px]">photo_library</span>
+                  <span>{t('detail.viewAllPhotos', { n: galleryImages.length })}</span>
+                </span>
               </div>
             </div>
           </div>
@@ -485,7 +487,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
           {/* Left Column: Specs, Driver Dossier, Amenities, Policies (8 cols) */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             {/* Vehicle Core Highlights */}
-            <section className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-none border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+            <section className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">
@@ -495,13 +497,13 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                     {t('detail.specsTitle')}
                   </h2>
                 </div>
-                <span className="px-3 py-1 rounded-none bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-sm uppercase tracking-wider">
+                <span className="px-3.5 py-1 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-xs uppercase tracking-wider shadow-xs">
                   {t('vehicle.seats', { n: vehicle.seats })}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-none flex flex-col gap-1 border border-slate-200 dark:border-slate-700">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl flex flex-col gap-1 border border-slate-100 dark:border-slate-800">
                   <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[20px]">
                     airline_seat_recline_extra
                   </span>
@@ -534,7 +536,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
             </section>
 
             {/* Driver Dossier & Verified Documents */}
-            <section className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-none border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+            <section className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
               <div className="flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-[20px]">
                   verified_user
@@ -544,13 +546,13 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 </h2>
               </div>
 
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-none border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
                   <div className="relative">
-                    <div className="w-14 h-14 rounded-none bg-slate-900 text-white font-bold flex items-center justify-center text-xl border border-slate-300 dark:border-slate-700">
+                    <div className="w-14 h-14 rounded-full bg-slate-900 text-white font-black flex items-center justify-center text-xl border-2 border-white dark:border-slate-700 shadow-sm overflow-hidden">
                       {publicName.charAt(0)}
                     </div>
-                    <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-none bg-amber-400 flex items-center justify-center text-slate-950 shadow-2xs border border-amber-500">
+                    <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center text-slate-950 shadow-xs border border-white dark:border-slate-800">
                       <Star className="w-3 h-3 fill-slate-950 text-slate-950" />
                     </span>
                   </div>
@@ -561,19 +563,19 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                         {publicName}
                       </h3>
                       {vehicle.isVerified ? (
-                        <span className="px-2 py-0.5 rounded-none bg-slate-900 text-amber-400 font-black text-[10px] border border-slate-900 flex items-center gap-1 uppercase">
+                        <span className="px-2.5 py-0.5 rounded-full bg-slate-900 text-amber-400 font-black text-[10px] border border-slate-900 flex items-center gap-1 uppercase">
                           <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                           <span>{t('detail.featuredBadge')}</span>
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px] border border-slate-200 dark:border-slate-700">
+                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px] border border-slate-200 dark:border-slate-700">
                           {t('detail.standardListing')}
                         </span>
                       )}
                       <button
                         type="button"
                         onClick={() => setShowECardModal(true)}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-none bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300/80 font-bold text-[10px] hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300 font-bold text-[10px] hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors cursor-pointer shadow-2xs"
                       >
                         <QrCode className="w-3 h-3 text-amber-700 dark:text-amber-400" />
                         <span>{t('ecard.btn')}</span>
@@ -635,70 +637,69 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
               </div>
             </section>
 
-            {/* Transparent Pricing Breakdown Table by Zones */}
-            <section className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-none border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
-              <h2 className="text-xl font-bold text-slate-950 dark:text-white">
-                {t('detail.ratesTitle')}
-              </h2>
-
-              <div className="overflow-hidden rounded-none border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-bold uppercase tracking-wider">
-                    <tr>
-                      <th className="p-3">{t('detail.colZone')}</th>
-                      <th className="p-3">{t('detail.colRoute')}</th>
-                      <th className="p-3 text-right">{t('detail.colPrice')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                    {(
-                      [
-                        { key: 'city' as const, label: t('zone.city.label'), route: t('vdm.routeCity') },
-                        { key: 'midHill' as const, label: t('zone.midHill.label'), route: t('vdm.routeMid') },
-                        { key: 'highHill' as const, label: t('zone.highHill.label'), route: t('vdm.routeHigh') },
-                        { key: 'crossProvince' as const, label: 'ข้ามจังหวัด / ทางไกล', route: 'ต่างจังหวัด / นอกเขตพื้นที่' },
-                      ]
-                    )
-                      .filter((row) => Number(vehicle.zoneRates?.[row.key]) > 0)
-                      .map((row, idx) => {
-                        const isSelected = selectedZone === row.key;
-                        return (
-                          <tr
-                            key={row.key}
-                            onClick={() => setSelectedZone(row.key)}
-                            className={`cursor-pointer transition-colors ${
-                              isSelected
-                                ? 'bg-amber-50 dark:bg-amber-950/40 border-l-4 border-l-amber-500 font-bold'
-                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                            }`}
-                          >
-                            <td className="p-3 text-slate-950 dark:text-white">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span>{t('detail.zoneLine', { no: idx + 1, label: row.label })}</span>
-                                {isSelected && (
-                                  <span className="text-[10px] bg-amber-400 text-slate-950 px-1.5 py-0.5 font-black uppercase tracking-wider rounded-none">
-                                    เลือกอยู่
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="p-3 text-slate-600 dark:text-slate-400">{row.route}</td>
-                            <td className="p-3 text-right font-black text-slate-950 dark:text-white font-mono">
-                              ฿{Number(vehicle.zoneRates![row.key]).toLocaleString()}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
+            {/* Transparent Pricing Breakdown - Modern Zone Price Cards */}
+            <section className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-slate-950 dark:text-white">
+                  {t('detail.ratesTitle')}
+                </h2>
+                <span className="text-xs text-slate-500 dark:text-slate-400">แตะเพื่อเลือกโซนเดินทาง</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs text-slate-600 dark:text-slate-400">
-                <div className="p-3 rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+              {/* Interactive Zone Price Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {(
+                  [
+                    { key: 'city' as const, label: t('zone.city.label'), route: t('vdm.routeCity') },
+                    { key: 'midHill' as const, label: t('zone.midHill.label'), route: t('vdm.routeMid') },
+                    { key: 'highHill' as const, label: t('zone.highHill.label'), route: t('vdm.routeHigh') },
+                    { key: 'crossProvince' as const, label: 'ข้ามจังหวัด / ทางไกล', route: 'ต่างจังหวัด / นอกเขตพื้นที่' },
+                  ]
+                )
+                  .filter((row) => Number(vehicle.zoneRates?.[row.key]) > 0)
+                  .map((row, idx) => {
+                    const isSelected = selectedZone === row.key;
+                    return (
+                      <div
+                        key={row.key}
+                        onClick={() => setSelectedZone(row.key)}
+                        className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 shadow-xs ${
+                          isSelected
+                            ? 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-500 ring-2 ring-amber-400/20 shadow-sm'
+                            : 'bg-slate-50/70 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-slate-400'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <span className="font-bold text-xs text-slate-900 dark:text-white">
+                              {t('detail.zoneLine', { no: idx + 1, label: row.label })}
+                            </span>
+                            {isSelected && (
+                              <span className="text-[10px] bg-amber-400 text-slate-950 px-2 py-0.5 font-black rounded-full uppercase">
+                                เลือกอยู่
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">{row.route}</p>
+                        </div>
+                        <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700 flex items-baseline justify-between">
+                          <span className="text-[11px] text-slate-400">เริ่มต้น</span>
+                          <span className="text-base font-black text-slate-950 dark:text-white font-mono">
+                            ฿{Number(vehicle.zoneRates![row.key]).toLocaleString()}
+                            <span className="text-[10px] font-normal text-slate-500">/วัน</span>
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 text-xs text-slate-600 dark:text-slate-400">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 space-y-1">
                   <span className="font-bold text-slate-950 dark:text-white block">{t('detail.hoursTitle')}</span>
                   <p>• {t('detail.termsHoursOnly', { h: String(terms.workHoursPerDay), rate: `${terms.overtimeRatePerHour} ฿` })}</p>
                 </div>
-                <div className="p-3 rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 space-y-1">
                   <span className="font-bold text-slate-950 dark:text-white block">{t('detail.stayTitle')}</span>
                   <p>• {t('detail.termsStay', { rate: `${terms.overnightStayRate} ฿` })}</p>
                   <p>
@@ -1092,8 +1093,8 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
         </div>
       </div>
 
-      {/* Mobile Sticky Bottom Contact Bar (mobile & tablet only) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xl">
+      {/* Mobile Sticky Bottom Contact Bar (Modern Backdrop Blur with Rounded Buttons) */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
           <div className="min-w-0 pr-1">
             <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
@@ -1101,7 +1102,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
             </span>
             {currentZonePrice !== null ? (
               <span className="flex items-baseline gap-1">
-                <span className="text-base sm:text-lg font-black font-mono text-slate-950 dark:text-white">
+                <span className="text-lg font-black font-mono text-slate-950 dark:text-white">
                   ฿{currentZonePrice.toLocaleString()}
                 </span>
                 <span className="text-[10px] text-slate-500 dark:text-slate-400">{t('vehicle.perDay')}</span>
@@ -1118,7 +1119,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowDepositModal(true)}
-                className="inline-flex h-11 items-center justify-center gap-1.5 px-3.5 sm:px-4 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs sm:text-sm rounded-none border border-amber-500 shadow-md active:scale-95 transition-all cursor-pointer whitespace-nowrap"
+                className="inline-flex h-11 items-center justify-center gap-1.5 px-4 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black text-xs sm:text-sm rounded-xl border border-amber-500 shadow-md active:scale-95 transition-all cursor-pointer whitespace-nowrap"
               >
                 <span className="material-symbols-outlined text-[18px]">verified</span>
                 <span>{t('vehicle.bookDepositMobile')}</span>
@@ -1130,7 +1131,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 onClick={handleDirectCall}
                 title={t('vehicle.directCall')}
                 aria-label={t('vehicle.directCall')}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-none bg-slate-900 dark:bg-white text-white dark:text-slate-900 border border-slate-900 dark:border-white active:scale-95 transition-transform shrink-0"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 border border-slate-900 dark:border-white shadow-sm active:scale-95 transition-transform shrink-0"
               >
                 <span className="material-symbols-outlined text-[18px]">call</span>
               </a>
@@ -1146,7 +1147,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
               rel="noopener noreferrer"
               title={t('vehicle.lineChat')}
               aria-label={t('vehicle.lineChat')}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-none bg-[#06C755] hover:bg-[#05b34c] text-white border border-[#06C755] active:scale-95 transition-transform shrink-0"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#06C755] hover:bg-[#05b34c] text-white border border-[#06C755] shadow-sm active:scale-95 transition-transform shrink-0"
             >
               <span className="material-symbols-outlined text-[18px]">chat</span>
             </a>

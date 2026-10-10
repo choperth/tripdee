@@ -84,6 +84,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
   const isYellowPlate = vehicle.plateType === 'yellow' || (vehicle.plateNumber ? vehicle.plateNumber.trim().startsWith('3') : false);
   const hasClass1Insurance = vehicle.insuranceType === 'class1' || (Array.isArray(vehicle.amenities) && vehicle.amenities.some((a) => a.includes('ชั้น 1') || a.toLowerCase().includes('first class')));
   const isInsured = hasClass1Insurance || vehicle.insuranceType || (Array.isArray(vehicle.amenities) && vehicle.amenities.some((a) => a.includes('ประกัน')));
+  const hasRating = typeof vehicle.rating === 'number' && vehicle.rating > 0;
 
   // Helper icons for amenities
   const getAmenityIcon = (text: string, index: number) => {
@@ -97,10 +98,10 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
   };
 
   return (
-    <article className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-none flex flex-col justify-between hover:border-slate-500 dark:hover:border-slate-600 transition-colors shadow-2xs group">
+    <article className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg transition-all duration-300 shadow-sm overflow-hidden group">
       <div>
         {/* 1. Vehicle Photo Header */}
-        <div className="relative h-52 sm:h-56 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800 rounded-none overflow-hidden">
+        <div className="relative aspect-video sm:h-56 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
           <button
             type="button"
             onClick={() => onSelectDetail(vehicle)}
@@ -125,38 +126,38 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
 
             {/* Top-left Badges */}
             {/* Top-left Badges: Yellow Plate 30, Insurance, Self-drive, Verified */}
-            <div className="absolute top-2 left-2 flex flex-wrap items-center gap-1 pointer-events-none max-w-[88%]">
+            <div className="absolute top-2 left-2 flex flex-wrap items-center gap-1.5 pointer-events-none max-w-[88%]">
               {isYellowPlate ? (
-                <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-[11px] font-black px-2 py-0.5 border border-amber-500 rounded-none shadow-xs">
+                <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-[11px] font-black px-2.5 py-0.5 border border-amber-500 rounded-full shadow-xs">
                   <span className="material-symbols-outlined text-[13px] leading-none">local_taxi</span>
                   <span>{t('vehicle.plateYellow30Short')}</span>
                 </span>
               ) : isSelfDrive ? (
-                <span className="inline-flex items-center gap-1 bg-indigo-700 text-white text-[11px] font-black px-2 py-0.5 border border-indigo-800 rounded-none shadow-xs">
+                <span className="inline-flex items-center gap-1 bg-indigo-700 text-white text-[11px] font-black px-2.5 py-0.5 border border-indigo-800 rounded-full shadow-xs">
                   <span className="material-symbols-outlined text-[13px] leading-none">key</span>
                   <span>{t('vehicle.selfDrive')}</span>
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 bg-slate-900/90 text-white text-[11px] font-bold px-2 py-0.5 border border-slate-700 rounded-none shadow-xs">
+                <span className="inline-flex items-center gap-1 bg-slate-900/90 text-white text-[11px] font-bold px-2.5 py-0.5 border border-slate-700 rounded-full shadow-xs">
                   <span>{t('vehicle.bluePlate')}</span>
                 </span>
               )}
 
               {isInsured && (
-                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/90 dark:text-emerald-300 text-[11px] font-bold px-2 py-0.5 border border-emerald-300 dark:border-emerald-700 rounded-none shadow-xs">
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/90 dark:text-emerald-300 text-[11px] font-bold px-2.5 py-0.5 border border-emerald-300 dark:border-emerald-700 rounded-full shadow-xs">
                   <span className="material-symbols-outlined text-[13px] text-emerald-600 dark:text-emerald-400 leading-none">shield_with_heart</span>
                   <span>{hasClass1Insurance ? t('vehicle.insuranceClass1Short') : t('vehicle.insured')}</span>
                 </span>
               )}
 
               {vehicle.isVerified && (
-                <span className="inline-flex items-center gap-1 bg-slate-900/95 text-amber-400 text-[11px] font-black px-2 py-0.5 border border-slate-700 uppercase rounded-none shadow-xs">
+                <span className="inline-flex items-center gap-1 bg-slate-900/95 text-amber-400 text-[11px] font-black px-2.5 py-0.5 border border-slate-700 uppercase rounded-full shadow-xs">
                   <span>⭐ {t('hero.verifiedSticker')}</span>
                 </span>
               )}
 
               {vehicle.plateNumber && (
-                <span className="bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-200 text-[11px] font-bold px-1.5 py-0.5 border border-slate-300 dark:border-slate-700 rounded-none shadow-xs">
+                <span className="bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-200 text-[11px] font-bold px-2 py-0.5 border border-slate-300 dark:border-slate-700 rounded-full shadow-xs">
                   {maskPlateNumber(vehicle.plateNumber)}
                 </span>
               )}
@@ -164,22 +165,22 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
 
             {/* Availability Alert — clear green when free, red when busy */}
             {isBusyToday ? (
-              <div className="absolute bottom-2 left-2 bg-rose-600/90 text-white text-xs font-bold px-2 py-0.5 flex items-center gap-1 rounded-none">
+              <div className="absolute bottom-2 left-2 bg-rose-600/90 text-white text-xs font-bold px-2.5 py-0.5 flex items-center gap-1 rounded-full shadow-xs">
                 <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                 <span>{t('cal.cardBusyToday')}</span>
               </div>
             ) : upcomingRanges.length > 0 ? (
-              <div className="absolute bottom-2 left-2 bg-amber-500/90 text-slate-950 text-xs font-bold px-2 py-0.5 flex items-center gap-1 rounded-none">
+              <div className="absolute bottom-2 left-2 bg-amber-500/90 text-slate-950 text-xs font-bold px-2.5 py-0.5 flex items-center gap-1 rounded-full shadow-xs">
                 <span className="material-symbols-outlined text-[13px]">event_busy</span>
                 <span>{t('cal.cardUpcomingBusy', { range: upcomingRanges[0].label })}</span>
               </div>
             ) : vehicle.isAvailable !== false ? (
-              <div className="absolute bottom-2 left-2 bg-emerald-600/90 text-white text-xs font-bold px-2 py-0.5 flex items-center gap-1 rounded-none">
+              <div className="absolute bottom-2 left-2 bg-emerald-600/90 text-white text-xs font-bold px-2.5 py-0.5 flex items-center gap-1 rounded-full shadow-xs">
                 <span className="w-1.5 h-1.5 bg-white rounded-full" />
                 <span>{t('vehicle.availableNow')}</span>
               </div>
             ) : (
-              <div className="absolute bottom-2 left-2 bg-slate-700/90 text-white text-xs font-bold px-2 py-0.5 flex items-center gap-1 rounded-none">
+              <div className="absolute bottom-2 left-2 bg-slate-700/90 text-white text-xs font-bold px-2.5 py-0.5 flex items-center gap-1 rounded-full shadow-xs">
                 <span className="material-symbols-outlined text-[13px]">pause_circle</span>
                 <span>{t('vehicle.paused')}</span>
               </div>
@@ -196,10 +197,10 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
             aria-pressed={isFavorite}
             aria-label={isFavorite ? t('vehicle.favoriteRemove') : t('vehicle.favoriteSave')}
             title={isFavorite ? t('vehicle.favoriteRemove') : t('vehicle.favoriteSave')}
-            className={`absolute top-2 right-2 z-10 grid h-9 w-9 place-items-center rounded-none border shadow-xs transition-colors cursor-pointer ${
+            className={`absolute top-2 right-2 z-10 grid h-9 w-9 place-items-center rounded-full border shadow-md transition-all cursor-pointer ${
               isFavorite
                 ? 'bg-rose-600 border-rose-700 text-white'
-                : 'bg-white/90 dark:bg-slate-900/90 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:text-rose-600'
+                : 'bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:text-rose-600'
             }`}
           >
             <span
@@ -214,41 +215,53 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
         {/* 2. Content Details (Bauhaus Architectural Spec Sheet) */}
         <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
           <div>
-            {/* Top Specification Strip */}
-            <div className="flex items-center justify-between text-xs pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
-              <span className="font-semibold text-slate-600 dark:text-slate-400">
-                {t('vehicle.seats', { n: vehicle.seats })} VIP
-              </span>
-              <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1 text-xs">
-                <span className="material-symbols-outlined text-[13px]">phone_in_talk</span>
-                <span>{t('vc.direct100')}</span>
-              </span>
+            {/* Driver Profile Strip with Circular Avatar */}
+            <div className="flex items-center gap-2.5 mb-2.5">
+              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 shadow-2xs bg-slate-100 dark:bg-slate-800 shrink-0 grid place-items-center text-slate-500">
+                <span className="material-symbols-outlined text-[18px]">account_circle</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-bold text-xs text-slate-900 dark:text-white truncate">{publicName}</span>
+                  {vehicle.isVerified && (
+                    <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400" title="Verified Driver">
+                      <span className="material-symbols-outlined text-[15px]">verified</span>
+                    </span>
+                  )}
+                  {hasRating && (
+                    <span className="inline-flex items-center gap-0.5 text-amber-500 text-[11px] font-bold ml-auto">
+                      <span className="material-symbols-outlined text-[13px] fill-current">star</span>
+                      <span>{Number(vehicle.rating).toFixed(1)}</span>
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-1 mt-0.5">
+                  <span className="material-symbols-outlined text-[12px] text-slate-400">location_on</span>
+                  <span>{shortLocation}</span>
+                  <a
+                    href={`/driver/card?id=${vehicle.id}`}
+                    className="text-[10px] text-amber-700 dark:text-amber-300 font-bold hover:underline ml-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    [นามบัตร]
+                  </a>
+                </p>
+              </div>
             </div>
 
-            {/* Vehicle Title & Driver Info */}
-            <h3 className="text-base font-bold text-slate-950 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            {/* Vehicle Title */}
+            <h3 className="text-base font-bold text-slate-950 dark:text-white mb-1.5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
               <button
                 type="button"
                 onClick={() => onSelectDetail(vehicle)}
-                className="text-left cursor-pointer hover:underline"
+                className="text-left cursor-pointer hover:underline line-clamp-1"
               >
                 {title}
               </button>
             </h3>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center flex-wrap gap-1 mb-2">
-              <span className="material-symbols-outlined text-[14px] text-slate-400">person</span>
-              <span>{publicName} • {shortLocation}</span>
-              <a
-                href={`/driver/card?id=${vehicle.id}`}
-                className="inline-flex items-center gap-0.5 text-[10px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-1.5 py-0.2 hover:bg-amber-100 transition-colors ml-1 font-bold"
-                title="เปิดดูนามบัตรดิจิทัลคนขับ (Digital Business Card)"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <span className="material-symbols-outlined text-[11px]">contact_phone</span>
-                <span>นามบัตร</span>
-              </a>
-              {companionVehicles.length > 0 && (
+            {companionVehicles.length > 0 && (
+              <p className="text-[11px] text-slate-500 mb-1.5">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -259,35 +272,35 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                       onSelectDetail(companionVehicles[0]);
                     }
                   }}
-                  className="ml-1 text-[10px] text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer"
+                  className="text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer"
                 >
                   {t('vc.teamCount', { n: companionVehicles.length })}
                 </button>
-              )}
-            </p>
+              </p>
+            )}
 
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
               {vehicleDescription(vehicle, locale) || t('vc.descFallback')}
             </p>
 
-            {/* Crisp 4-cell Spec Grid (Bauhaus Hairline Grid) */}
-            <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
-              <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-none">
-                <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-slate-200">
+            {/* 4-cell Spec Grid */}
+            <div className="grid grid-cols-2 gap-1.5 mt-3 text-xs">
+              <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl">
+                <span className="material-symbols-outlined text-[16px] text-slate-700 dark:text-slate-300">
                   {amenities[0] ? getAmenityIcon(amenities[0], 0) : 'chair'}
                 </span>
                 <span className="truncate font-semibold">{amenities[0] || t('vc.amSeatFallback')}</span>
               </div>
-              <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-none">
-                <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-slate-200">luggage</span>
+              <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl">
+                <span className="material-symbols-outlined text-[16px] text-slate-700 dark:text-slate-300">luggage</span>
                 <span className="truncate font-semibold">{amenities[1] || t('vc.amLuggageFallback')}</span>
               </div>
-              <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-none">
-                <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-slate-200">receipt_long</span>
+              <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl">
+                <span className="material-symbols-outlined text-[16px] text-slate-700 dark:text-slate-300">receipt_long</span>
                 <span className="truncate font-semibold">{vehicle.canIssueTaxInvoice ? t('vc.taxInvoice') : t('vc.receipt')}</span>
               </div>
-              <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-none">
-                <span className="material-symbols-outlined text-[16px] text-slate-900 dark:text-slate-200">verified_user</span>
+              <div className="flex items-center gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl">
+                <span className="material-symbols-outlined text-[16px] text-slate-700 dark:text-slate-300">verified_user</span>
                 <span className="truncate font-semibold">{t('vc.driverChecked')}</span>
               </div>
             </div>
@@ -300,10 +313,10 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                 {t('vehicle.priceFrom')}
               </span>
               <div className="flex items-baseline gap-1 whitespace-nowrap">
-                <span className="text-base sm:text-lg font-black text-slate-950 dark:text-white font-mono">
+                <span className="text-lg sm:text-xl font-black text-slate-950 dark:text-white font-mono">
                   {priceDisplay}
                 </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   {t('vehicle.perDay')}
                 </span>
               </div>
@@ -320,7 +333,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                     e.stopPropagation();
                     setShowDepositModal(true);
                   }}
-                  className="col-span-6 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs sm:text-sm py-2 px-2 transition-all flex items-center justify-center gap-1 cursor-pointer shadow-xs border border-amber-500 active:scale-95 whitespace-nowrap"
+                  className="col-span-6 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black text-xs sm:text-sm py-2 px-2 transition-all flex items-center justify-center gap-1 cursor-pointer shadow-sm border border-amber-500 rounded-xl active:scale-95 whitespace-nowrap"
                   title={t('vehicle.bookDepositMobile')}
                 >
                   <span className="material-symbols-outlined text-[16px] text-slate-950">verified</span>
@@ -336,7 +349,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                     e.stopPropagation();
                     handleWechatClick(e);
                   }}
-                  className={`${ENABLE_QR_PAYMENT ? 'col-span-4' : 'col-span-8'} inline-flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm py-2 px-2 border border-emerald-600 transition-colors rounded-none cursor-pointer shadow-2xs active:scale-95`}
+                  className={`${ENABLE_QR_PAYMENT ? 'col-span-4' : 'col-span-8'} inline-flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm py-2 px-2 border border-emerald-600 transition-colors rounded-xl cursor-pointer shadow-xs active:scale-95`}
                   title="微信联系司机"
                 >
                   <span className="material-symbols-outlined text-[15px] text-white">chat</span>
@@ -353,7 +366,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                   }}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`${ENABLE_QR_PAYMENT ? 'col-span-4' : 'col-span-8'} inline-flex items-center justify-center gap-1 bg-[#06C755] hover:bg-[#05b04b] text-white font-bold text-xs sm:text-sm py-2 px-2 border border-[#06C755] transition-colors rounded-none cursor-pointer shadow-2xs active:scale-95`}
+                  className={`${ENABLE_QR_PAYMENT ? 'col-span-4' : 'col-span-8'} inline-flex items-center justify-center gap-1 bg-[#06C755] hover:bg-[#05b04b] text-white font-bold text-xs sm:text-sm py-2 px-2 border border-[#06C755] transition-colors rounded-xl cursor-pointer shadow-xs active:scale-95`}
                   title={t('vc.lineTitle')}
                 >
                   <span className="material-symbols-outlined text-[15px] text-white">chat</span>
@@ -369,7 +382,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = memo(({ vehicle, onSelect
                     e.stopPropagation();
                     handleCallClick();
                   }}
-                  className={`${ENABLE_QR_PAYMENT ? 'col-span-2' : 'col-span-4'} inline-flex items-center justify-center bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-950 dark:text-white font-bold text-xs sm:text-sm py-2 px-1 border border-slate-300 dark:border-slate-700 transition-colors rounded-none cursor-pointer shadow-2xs active:scale-95`}
+                  className={`${ENABLE_QR_PAYMENT ? 'col-span-2' : 'col-span-4'} inline-flex items-center justify-center bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-950 dark:text-white font-bold text-xs sm:text-sm py-2 px-1 border border-slate-200 dark:border-slate-700 transition-colors rounded-xl cursor-pointer shadow-xs active:scale-95`}
                   title={t('vc.callTitle', { phone: vehicle.driverPhone })}
                 >
                   <span className="material-symbols-outlined text-[16px] text-teal-700 dark:text-teal-400">call</span>

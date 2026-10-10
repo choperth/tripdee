@@ -583,22 +583,15 @@ export default function HomePage() {
                 }
               />
 
-              {/* Quick Filter: Transport Category & Legal Type (Unified Minimalist Bar) */}
-              <div className="mb-4 sm:mb-6 flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs font-medium">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">
-                  {activeTab === 'van'
-                    ? t('home.plateGroupVan')
-                    : activeTab === 'suv_driver'
-                    ? t('home.plateGroupSuvDriver')
-                    : t('home.plateGroupCar')}
-                </span>
+              {/* Modern Horizontal Scrollable Filter Pills (Trip.com Mobile-First OTA Style) */}
+              <div className="mb-4 sm:mb-6 -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto scrollbar-none flex items-center gap-2 py-1">
                 <button
                   type="button"
                   onClick={() => setPlateFilter('all')}
-                  className={`px-3 py-1.5 rounded-none text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs ${
                     plateFilter === 'all'
-                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border border-slate-900 dark:border-white shadow-xs'
-                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-300 dark:border-slate-700'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200 dark:border-slate-800'
                   }`}
                 >
                   {t('home.plateAll', {
@@ -610,69 +603,95 @@ export default function HomePage() {
                         : totalCarCount,
                   })}
                 </button>
-                {activeTab === 'van' || activeTab === 'suv_driver' ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setPlateFilter('yellow')}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold transition-all cursor-pointer ${
-                        plateFilter === 'yellow'
-                          ? 'bg-amber-400 text-slate-950 border border-amber-500 shadow-xs'
-                          : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-300 dark:border-slate-700'
-                      }`}
-                    >
-                      <span>🟡 {t('home.plateYellow')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPlateFilter('blue')}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold transition-all cursor-pointer ${
-                        plateFilter === 'blue'
-                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border border-slate-900 dark:border-white shadow-xs'
-                          : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-300 dark:border-slate-700'
-                      }`}
-                    >
-                      <span className="w-2 h-2 bg-blue-500 rounded-none ring-1 ring-blue-500" />
-                      <span>{t('home.plateBlue')}</span>
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setPlateFilter('blue')}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold transition-all cursor-pointer ${
-                      plateFilter === 'blue'
-                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border border-slate-900 dark:border-white shadow-xs'
-                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-300 dark:border-slate-700'
-                    }`}
-                  >
-                    <span className="w-2 h-2 bg-blue-500 rounded-none ring-1 ring-blue-500" />
-                    <span>{t('home.plateCarBlue')}</span>
-                  </button>
-                )}
+
                 <button
                   type="button"
-                  onClick={() => setPlateFilter('tax')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold transition-all cursor-pointer ${
-                    plateFilter === 'tax'
-                      ? 'bg-emerald-700 text-white border border-emerald-800 shadow-xs'
-                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-300 dark:border-slate-700'
+                  onClick={() => setPlateFilter(plateFilter === 'yellow' ? 'all' : 'yellow')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs ${
+                    plateFilter === 'yellow'
+                      ? 'bg-amber-400 text-slate-950 border border-amber-500 shadow-sm font-black'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200 dark:border-slate-800'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[15px] text-emerald-400">receipt_long</span>
+                  <span>🟨</span>
+                  <span>{t('home.chipYellow')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSearchKeyword(searchKeyword === 'ชั้น 1' ? '' : 'ชั้น 1')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs ${
+                    searchKeyword === 'ชั้น 1'
+                      ? 'bg-emerald-600 text-white border border-emerald-600 shadow-sm'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+                  }`}
+                >
+                  <span>🛡️</span>
+                  <span>{t('vehicle.insuranceClass1Short')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSearchKeyword(searchKeyword === t('hero.quickMassage') ? '' : t('hero.quickMassage'))}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs ${
+                    searchKeyword === t('hero.quickMassage')
+                      ? 'bg-purple-600 text-white border border-purple-600 shadow-sm'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+                  }`}
+                >
+                  <span>💆</span>
+                  <span>{t('hero.quickMassage')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSearchKeyword(searchKeyword === 'จีน' ? '' : 'จีน')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs ${
+                    searchKeyword === 'จีน'
+                      ? 'bg-rose-600 text-white border border-rose-600 shadow-sm'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+                  }`}
+                >
+                  <span>🇨🇳</span>
+                  <span>{t('vehicle.langZh')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSearchKeyword(searchKeyword === 'อังกฤษ' ? '' : 'อังกฤษ')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs ${
+                    searchKeyword === 'อังกฤษ'
+                      ? 'bg-blue-600 text-white border border-blue-600 shadow-sm'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+                  }`}
+                >
+                  <span>🇬🇧</span>
+                  <span>{t('vehicle.langEn')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPlateFilter(plateFilter === 'tax' ? 'all' : 'tax')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs ${
+                    plateFilter === 'tax'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[15px] text-emerald-500">receipt_long</span>
                   <span>{t('home.plateTax')}</span>
                 </button>
               </div>
 
               {/* Active Filter Chips */}
               {hasFilters && (
-                <div className="mb-6 flex flex-wrap items-center gap-2 rounded-none bg-white dark:bg-slate-900 p-2.5 sm:p-3 border border-slate-300 dark:border-slate-700 shadow-2xs">
+                <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl bg-white dark:bg-slate-900 p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
                   <span className="text-xs font-semibold text-slate-500 flex items-center gap-1.5 mr-1">
                     <SlidersHorizontal className="h-3.5 w-3.5 text-slate-900 dark:text-slate-200" />
                     {t('home.activeFilters')}
                   </span>
                   {plateFilter !== 'all' && (
-                    <span className="inline-flex items-center gap-1.5 rounded-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-2.5 py-0.5 text-xs font-semibold border border-slate-300 dark:border-slate-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-3 py-1 text-xs font-semibold border border-slate-200 dark:border-slate-700">
                       <span>
                         {plateFilter === 'yellow' && t('home.chipYellow')}
                         {plateFilter === 'blue' && t('home.chipBlue')}
@@ -689,7 +708,7 @@ export default function HomePage() {
                     </span>
                   )}
                   {selectedZone !== 'all' && (
-                    <span className="inline-flex items-center gap-1.5 rounded-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-2.5 py-0.5 text-xs font-semibold border border-slate-300 dark:border-slate-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-3 py-1 text-xs font-semibold border border-slate-200 dark:border-slate-700">
                       <span>{t('home.chipZone', { zone: selectedZoneLabel })}</span>
                       <button
                         type="button"
@@ -702,7 +721,7 @@ export default function HomePage() {
                     </span>
                   )}
                   {selectedSeats !== 'all' && (
-                    <span className="inline-flex items-center gap-1.5 rounded-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-2.5 py-0.5 text-xs font-semibold border border-slate-300 dark:border-slate-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-3 py-1 text-xs font-semibold border border-slate-200 dark:border-slate-700">
                       <span>{t('home.chipSeats', { n: selectedSeats })}</span>
                       <button
                         type="button"
@@ -715,7 +734,7 @@ export default function HomePage() {
                     </span>
                   )}
                   {searchKeyword.trim() !== '' && (
-                    <span className="inline-flex items-center gap-1.5 rounded-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-2.5 py-0.5 text-xs font-semibold border border-slate-300 dark:border-slate-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 px-3 py-1 text-xs font-semibold border border-slate-200 dark:border-slate-700">
                       <span>&ldquo;{searchKeyword}&rdquo;</span>
                       <button
                         type="button"
@@ -730,7 +749,7 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={resetFilters}
-                    className="ml-auto inline-flex items-center gap-1 rounded-none bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer border border-slate-300 dark:border-slate-700"
+                    className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
                   >
                     <RotateCcw className="h-3 w-3" />
                     {t('home.clearFilters')}

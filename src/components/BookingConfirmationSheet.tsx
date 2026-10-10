@@ -277,14 +277,14 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
     <div className="w-full max-w-4xl mx-auto bg-white text-slate-900 rounded-none shadow-2xl overflow-hidden border border-slate-300 dark:border-slate-800 print:shadow-none print:border-none print:rounded-none print:m-0 print:p-0">
       {/* Screen-only Action Toolbar */}
       <div className="no-print bg-slate-950 text-white px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-800">
-        {/* View Mode Switcher: E-Ticket vs Formal Sheet */}
-        <div className="flex items-center bg-slate-900 p-0.5 border border-slate-800 rounded-none">
+        {/* View Mode Switcher: E-Ticket vs Formal Sheet (Modern Capsule Pills) */}
+        <div className="flex items-center bg-slate-900/90 p-1 border border-slate-800 rounded-full">
           <button
             type="button"
             onClick={() => setViewMode('eticket')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-black rounded-full transition-all cursor-pointer ${
               viewMode === 'eticket'
-                ? 'bg-amber-400 text-slate-950 shadow-xs'
+                ? 'bg-amber-400 text-slate-950 shadow-sm'
                 : 'text-slate-300 hover:text-white'
             }`}
           >
@@ -294,9 +294,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
           <button
             type="button"
             onClick={() => setViewMode('sheet')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-black rounded-full transition-all cursor-pointer ${
               viewMode === 'sheet'
-                ? 'bg-amber-400 text-slate-950 shadow-xs'
+                ? 'bg-amber-400 text-slate-950 shadow-sm'
                 : 'text-slate-300 hover:text-white'
             }`}
           >
@@ -345,29 +345,28 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
           )}
         </div>
       </div>
-      {/* View Mode 1: Mobile Pass / Boarding Pass E-Ticket */}
-      <div className={`p-4 sm:p-6 bg-slate-100 dark:bg-slate-950/60 ${viewMode === 'eticket' ? 'block' : 'hidden'} print:hidden`}>
-        <div className="max-w-md mx-auto bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 shadow-xl overflow-hidden rounded-none">
+      {/* View Mode 1: Mobile Pass / Boarding Pass E-Ticket (Modern Rounded-3xl) */}
+      <div className={`p-4 sm:p-6 bg-slate-100/80 dark:bg-slate-950/60 ${viewMode === 'eticket' ? 'block' : 'hidden'} print:hidden`}>
+        <div className="max-w-md mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xl overflow-hidden rounded-3xl">
           {/* Ticket Header Banner */}
-          <div className="bg-slate-950 text-white p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="p-1.5 bg-amber-400 text-slate-950 font-black text-xs">TD</span>
+              <span className="p-1.5 bg-amber-400 text-slate-950 font-black text-xs rounded-lg shadow-xs">TD</span>
               <div>
                 <p className="text-[10px] font-mono tracking-wider text-slate-400 uppercase">TripDee Pass</p>
                 <h3 className="font-mono text-sm font-black tracking-tight text-white">{data.bookingId}</h3>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 text-[11px] font-bold">
+            <div className="flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-3 py-1 text-[11px] font-bold rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>{t('sheet.statusConfirmed')}</span>
             </div>
           </div>
-
           {/* Vehicle & Driver Segment */}
           <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex items-center gap-3">
               {vehicle?.images?.[0] ? (
-                <div className="relative w-16 h-16 rounded-none overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shrink-0">
+                <div className="relative w-16 h-16 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shrink-0 shadow-xs">
                   <Image
                     src={vehicle.images[0]}
                     alt={data.vehicleTitle}
@@ -377,16 +376,16 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                   />
                 </div>
               ) : (
-                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 grid place-items-center text-slate-400 shrink-0 border border-slate-200 dark:border-slate-700">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 grid place-items-center text-slate-400 shrink-0 border border-slate-200 dark:border-slate-700 rounded-2xl">
                   <CarFront className="w-8 h-8" />
                 </div>
               )}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-mono text-xs font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 border border-slate-300 dark:border-slate-700">
+                  <span className="font-mono text-xs font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-0.5 border border-slate-200 dark:border-slate-700 rounded-full">
                     {data.plateNumber}
                   </span>
-                  <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 border border-amber-300 dark:border-amber-800">
+                  <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 border border-amber-300 dark:border-amber-800 rounded-full">
                     {data.plateType === 'yellow' ? 'ป้ายเหลือง 30' : 'ป้ายฟ้า VIP'}
                   </span>
                 </div>
@@ -399,12 +398,11 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 </p>
               </div>
             </div>
-
             {/* Direct Contact Button */}
             {data.driverPhone && (
               <a
                 href={`tel:${data.driverPhone}`}
-                className="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs border border-slate-300 dark:border-slate-700 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold text-xs border border-slate-200 dark:border-slate-700 rounded-xl transition-colors shadow-2xs"
               >
                 <span className="material-symbols-outlined text-[16px] text-teal-600">call</span>
                 <span>โทรตรงคนขับ: {data.driverPhone}</span>
@@ -429,9 +427,11 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
               <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{data.routeDetails}</p>
             </div>
           </div>
-
           {/* Financial Tear-off Stub (Notched Boarding Pass styling) */}
-          <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-800/50 relative">
+          <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-800/50 relative border-t-2 border-dashed border-slate-200 dark:border-slate-700">
+            {/* Notch cutouts on edges */}
+            <div className="absolute -top-3.5 -left-3.5 w-7 h-7 bg-slate-100 dark:bg-slate-950/60 rounded-full border border-slate-300 dark:border-slate-800" />
+            <div className="absolute -top-3.5 -right-3.5 w-7 h-7 bg-slate-100 dark:bg-slate-950/60 rounded-full border border-slate-300 dark:border-slate-800" />
             <div className="flex items-center justify-between mb-3 text-xs">
               <div>
                 <span className="text-[10px] uppercase text-emerald-700 dark:text-emerald-400 font-bold block">มัดจำล็อกคิวแล้ว (Deposit Paid)</span>
@@ -450,9 +450,8 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                   <p className="font-bold text-slate-900 dark:text-white">สแกนตรวจสอบข้อมูลตั๋ว</p>
                   <p>แสดงตั๋วนี้ให้คนขับดูในวันเดินทาง</p>
                 </div>
-                <div className="p-1.5 bg-white border border-slate-300 dark:border-slate-700 shrink-0">
+                <div className="p-2 bg-white border border-slate-200 dark:border-slate-700 rounded-xl shrink-0 shadow-xs">
                   <svg
-                    className="w-14 h-14"
                     viewBox="0 0 100 100"
                     fill="currentColor"
                   >
@@ -464,11 +463,11 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
           </div>
 
           {/* Quick Action Buttons for E-Ticket */}
-          <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 space-y-2">
+          <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
             <button
               type="button"
               onClick={handleAddToCalendar}
-              className="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 border border-amber-500 active:scale-98 transition-all cursor-pointer shadow-xs"
+              className="w-full py-3 px-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 border border-amber-500 rounded-xl active:scale-98 transition-all cursor-pointer shadow-md"
             >
               <Calendar className="w-4 h-4 text-slate-950" />
               <span>{calendarDownloaded ? t('sheet.calendarSuccess') : t('sheet.addToCalendar')}</span>
@@ -477,7 +476,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
             <button
               type="button"
               onClick={handleCopySummary}
-              className="w-full py-2 px-3 bg-[#06C755] hover:bg-[#05b04b] text-white font-bold text-xs flex items-center justify-center gap-2 border border-[#06C755] active:scale-98 transition-all cursor-pointer shadow-2xs"
+              className="w-full py-2.5 px-3 bg-[#06C755] hover:bg-[#05b04b] text-white font-bold text-xs flex items-center justify-center gap-2 border border-[#06C755] rounded-xl active:scale-98 transition-all cursor-pointer shadow-sm"
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               <span>{copied ? t('sheet.copied') : t('sheet.copyDriverSummary')}</span>

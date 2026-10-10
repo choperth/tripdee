@@ -292,10 +292,10 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
     <div ref={containerRef} className={`relative w-full ${className}`}>
       {/* Input Trigger Bar */}
       <div
-        className={`w-full min-h-[44px] h-11 px-3 bg-white dark:bg-slate-850 dark:text-white rounded-none text-body-base font-body-base border transition-all flex items-center justify-between cursor-pointer select-none ${
+        className={`w-full min-h-[44px] h-11 px-3 bg-white dark:bg-slate-850 dark:text-white rounded-xl text-body-base font-body-base border transition-all flex items-center justify-between cursor-pointer select-none shadow-xs ${
           isOpen
-            ? 'border-slate-900 dark:border-white bg-white dark:bg-slate-900 shadow-sm'
-            : 'border-slate-300 dark:border-slate-700 hover:border-slate-900 dark:hover:border-slate-400'
+            ? 'border-blue-600 dark:border-blue-400 ring-2 ring-blue-500/20 bg-white dark:bg-slate-900 shadow-md'
+            : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500'
         }`}
         onClick={() => setIsOpen(!isOpen)}
         role="button"
@@ -326,7 +326,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
             <button
               type="button"
               onClick={handleClear}
-              className="p-1 rounded-none text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+              className="p-1 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
               title={t('tdp.clearDate')}
             >
               <X className="w-3.5 h-3.5" />
@@ -353,7 +353,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
 
       {/* Interactive Expandable Calendar Panel */}
       {isOpen && (
-        <div className="mt-2 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-none shadow-2xl p-3 sm:p-4 z-50 animate-fade-in space-y-3">
+        <div className="mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-3 sm:p-4 z-50 animate-fade-in space-y-3">
           {/* Header Bar: Month & Year Selectors + Nav buttons */}
           <div className="flex items-center justify-between gap-1 pb-2 border-b border-slate-200 dark:border-slate-800">
             {/* Quick Month & Year Dropdowns */}
@@ -362,7 +362,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
               <select
                 value={viewMonth}
                 onChange={(e) => setViewMonth(Number(e.target.value))}
-                className="h-8 px-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-none text-xs font-bold border border-slate-300 dark:border-slate-700 cursor-pointer focus:outline-none focus:border-slate-900"
+                className="h-8 px-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 {monthNames.map((name, idx) => (
                   <option key={name} value={idx}>
@@ -375,7 +375,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
               <select
                 value={viewYear}
                 onChange={(e) => setViewYear(Number(e.target.value))}
-                className="h-8 px-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-none text-xs font-bold border border-slate-300 dark:border-slate-700 cursor-pointer focus:outline-none focus:border-slate-900"
+                className="h-8 px-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 {availableYears.map((yr) => (
                   <option key={yr} value={yr}>
@@ -390,16 +390,14 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="w-7 h-7 rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-colors"
-                title={t('tdp.prevMonth')}
+                className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="w-7 h-7 rounded-none border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-colors"
-                title={t('tdp.nextMonth')}
+                className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -414,21 +412,21 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
             <button
               type="button"
               onClick={handleQuickToday}
-              className="px-2.5 py-1 rounded-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-slate-800 dark:text-white font-bold text-[11px] uppercase tracking-wider transition-colors cursor-pointer"
+              className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-slate-800 dark:text-white font-semibold text-[11px] transition-colors cursor-pointer"
             >
               {t('tdp.today')}
             </button>
             <button
               type="button"
               onClick={handleQuickTomorrow}
-              className="px-2.5 py-1 rounded-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-slate-800 dark:text-white font-bold text-[11px] uppercase tracking-wider transition-colors cursor-pointer"
+              className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-slate-800 dark:text-white font-semibold text-[11px] transition-colors cursor-pointer"
             >
               {t('tdp.tomorrow')}
             </button>
             <button
               type="button"
               onClick={handleQuickThisWeekend}
-              className="px-2.5 py-1 rounded-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-amber-700 dark:text-amber-400 font-bold text-[11px] uppercase tracking-wider transition-colors cursor-pointer"
+              className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-amber-700 dark:text-amber-400 font-semibold text-[11px] transition-colors cursor-pointer"
             >
               {t('tdp.weekend')}
             </button>
@@ -474,21 +472,21 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
                   type="button"
                   disabled={isPast}
                   onClick={() => handleSelectDay(iso)}
-                  className={`h-9 sm:h-10 text-xs sm:text-sm font-bold flex flex-col items-center justify-center relative transition-all cursor-pointer rounded-none ${
+                  className={`h-9 sm:h-10 text-xs sm:text-sm font-bold flex flex-col items-center justify-center relative transition-all cursor-pointer rounded-lg ${
                     isPast
                       ? 'opacity-25 bg-transparent cursor-not-allowed text-slate-400'
                       : isSelected
-                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm z-10 font-black'
+                      ? 'bg-blue-600 text-white dark:bg-blue-500 shadow-sm z-10 font-black rounded-lg'
                       : isInRange
-                      ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white'
+                      ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 rounded-none'
                       : isToday
-                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-2 border-slate-900 dark:border-white font-black'
-                      : 'bg-slate-50/70 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-2 border-blue-500 font-black rounded-lg'
+                      : 'bg-transparent text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg'
                   }`}
                 >
                   <span>{dayNum}</span>
                   {isToday && !isSelected && (
-                    <span className="w-1 h-1 rounded-none bg-slate-900 dark:bg-white absolute bottom-1" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 absolute bottom-1" />
                   )}
                 </button>
               );
@@ -506,7 +504,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={t('tdp.manualPh')}
-                className="w-full h-9 px-3 bg-white dark:bg-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 rounded-none text-xs focus:border-slate-900 dark:focus:border-white focus:outline-none"
+                className="w-full h-9 px-3 bg-white dark:bg-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
               />
             </div>
           ) : null}
@@ -527,7 +525,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="px-2.5 py-1 rounded-none border border-rose-300 dark:border-rose-900 text-xs font-bold uppercase tracking-wider text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-1 transition-colors cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg border border-rose-300 dark:border-rose-900 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span>{t('tdp.clearValue')}</span>
@@ -537,7 +535,7 @@ export const TravelDatePicker: React.FC<TravelDatePickerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="px-4 py-1.5 rounded-none bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+                className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 shadow-sm hover:shadow transition-all cursor-pointer"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>{t('tdp.done')}</span>

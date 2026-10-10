@@ -277,15 +277,14 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
-          aria-labelledby="deposit-modal-title"
-          className="bg-white dark:bg-slate-900 border-t sm:border border-slate-300 dark:border-slate-800 w-full max-w-lg shadow-2xl relative overflow-hidden rounded-t-2xl sm:rounded-none max-h-[92vh] sm:max-h-[88vh] flex flex-col"
+          className="bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 w-full max-w-lg shadow-2xl relative overflow-hidden rounded-t-3xl sm:rounded-2xl max-h-[92vh] sm:max-h-[88vh] flex flex-col"
         >
           {/* Mobile Bottom Sheet Pull Bar Handle */}
-          <div className="w-12 h-1.5 bg-slate-400/50 dark:bg-slate-600 rounded-full mx-auto my-2.5 block sm:hidden shrink-0" aria-hidden="true" />
+          <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto my-2.5 block sm:hidden shrink-0" aria-hidden="true" />
           {/* Header */}
           <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-800">
             <div className="flex items-center gap-2.5">
-              <span className="p-1.5 bg-amber-400 text-slate-950 font-black rounded-none">
+              <span className="p-1.5 bg-amber-400 text-slate-950 font-black rounded-lg">
                 <QrCode className="w-5 h-5" />
               </span>
               <div>
@@ -374,7 +373,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                       placeholder="เช่น สมชาย ใจดี"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
+                      className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
                     />
                   </div>
 
@@ -390,7 +389,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                         placeholder="081-xxx-xxxx"
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
+                        className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
                       />
                     </div>
                     <div>
@@ -403,7 +402,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                         placeholder="สำหรับส่งใบยืนยัน"
                         value={customerLine}
                         onChange={(e) => setCustomerLine(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
+                        className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
                       />
                     </div>
                   </div>
@@ -420,7 +419,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                         max="30"
                         value={totalDays}
                         onChange={(e) => setTotalDays(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
+                        className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
                       />
                     </div>
                     <div className="sm:col-span-1">
@@ -432,7 +431,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                         type="date"
                         value={travelDate}
                         onChange={(e) => setTravelDate(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
+                        className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
                       />
                     </div>
                     <div className="sm:col-span-1">
@@ -444,7 +443,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                         type="text"
                         value={route}
                         onChange={(e) => setRoute(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
+                        className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
                       />
                     </div>
                   </div>
@@ -539,7 +538,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+                    className="w-full py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black text-sm rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md hover:shadow-lg disabled:opacity-50"
                   >
                     {loading ? (
                       <>
@@ -563,17 +562,24 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
             {/* STEP 2: ChillPay PromptPay QR Code & Countdown */}
             {step === 'qr' && (
               <div className="text-center space-y-4">
-                {/* Timer Bar */}
-                <div className="flex items-center justify-between p-2.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs">
-                  <div className="flex items-center gap-1.5 font-bold">
-                    <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 animate-pulse" />
-                    <span>เวลาสำหรับชำระเงิน</span>
+                {/* Timer Bar with Progress Indicator */}
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-2xl text-xs space-y-2">
+                  <div className="flex items-center justify-between text-amber-900 dark:text-amber-200 font-bold">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 animate-pulse" />
+                      <span>เวลาสำหรับชำระเงิน</span>
+                    </div>
+                    <span className="font-mono font-black text-sm text-red-600 dark:text-red-400">
+                      {formatCountdown(timeLeft)}
+                    </span>
                   </div>
-                  <span className="font-mono font-black text-sm text-red-600 dark:text-red-400">
-                    {formatCountdown(timeLeft)}
-                  </span>
+                  <div className="w-full bg-amber-100 dark:bg-amber-900/40 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-amber-500 h-full rounded-full transition-all duration-1000"
+                      style={{ width: `${Math.max(0, Math.min(100, (timeLeft / 900) * 100))}%` }}
+                    />
+                  </div>
                 </div>
-
                 {/* Booking ID and Amount */}
                 <div className="flex items-center justify-between text-xs border-b border-slate-200 dark:border-slate-800 pb-2">
                   <div className="flex items-center gap-1 text-slate-500">
@@ -597,7 +603,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                 </div>
 
                 {/* Dynamic PromptPay QR Display */}
-                <div className="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 shadow-inner max-w-xs mx-auto">
+                <div className="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 rounded-2xl shadow-sm max-w-xs mx-auto">
                   <div className="text-[11px] font-black text-[#003d6d] flex items-center gap-1 mb-2">
                     <span className="bg-[#003d6d] text-white px-1 py-0.2 text-[9px] font-bold">THAI QR</span>
                     <span>PROMPTPAY</span>
@@ -625,9 +631,8 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                   </span>
                 </div>
 
-                {/* Policy Notice Box */}
                 {/* Policy Notice Box: 100% Refund & Vehicle Replacement Guarantee */}
-                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs space-y-2 text-left">
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs space-y-2 text-left">
                   <div className="flex items-start gap-2">
                     <span className="material-symbols-outlined text-[18px] text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">verified_user</span>
                     <div>
@@ -657,7 +662,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                   <button
                     type="button"
                     onClick={checkPaymentStatus}
-                    className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                    className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     <span>เช็คสถานะอีกครั้ง</span>
@@ -668,7 +673,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                       href={paymentUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="py-2 px-3 bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors flex items-center gap-1"
+                      className="py-2.5 px-4 bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 rounded-xl transition-colors flex items-center gap-1 shadow-sm"
                     >
                       <span>หน้าจ่าย ChillPay</span>
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -711,7 +716,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                 </div>
 
                 {/* Unlocked Driver Details Preview Bento */}
-                <div className="p-4 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 text-left text-xs space-y-2.5">
+                <div className="p-4 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 rounded-2xl text-left text-xs space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-emerald-900 dark:text-emerald-200">
                       🔓 ปลดล็อกข้อมูลคนขับ 100%
@@ -759,7 +764,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                     onClick={() => {
                       setShowConfirmationSheet(true);
                     }}
-                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
+                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
                   >
                     <span>เปิดดูใบยืนยันการจอง & สัญญาเช่ารถ (TripDee Slip)</span>
                     <ArrowRight className="w-4 h-4" />
@@ -768,7 +773,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-colors"
+                    className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-colors"
                   >
                     เสร็จสิ้น / ปิดหน้าต่าง
                   </button>
