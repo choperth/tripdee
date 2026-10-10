@@ -7,7 +7,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { X, Check, AlertCircle, RefreshCw, Loader2, MessageCircle, Plus, Pencil } from 'lucide-react';
 import { compressImage } from '@/lib/imageCompression';
 import { fetchVehicleReviews, calculateReviewStats, Review } from '@/lib/reviewsStore';
-import { Vehicle } from '@/data/mockData';
+import { Vehicle, PlateType, InsuranceType } from '@/data/mockData';
 import { DEFAULT_VEHICLE_TERMS, encodeRateNoteWithTerms, parseVehicleTerms } from '@/lib/vehicleTerms';
 import { toISODateString, generateDateRange } from '@/lib/availabilityUtils';
 import { DriverSmartECardModal } from '@/components/cards/DriverSmartECardModal';
@@ -32,7 +32,6 @@ const AMENITY_OPTIONS = [
   { id: 'air_purifier', label: 'เครื่องฟอกอากาศ' },
   { id: 'usbc', label: 'ที่ชาร์จ Type-C ทุกที่นั่ง' },
   { id: 'karaoke', label: 'คาราโอเกะ / Smart TV' },
-  { id: 'insurance1', label: 'ประกันภัยชั้น 1' },
   { id: 'cooler', label: 'ตู้เย็นขนาดเล็ก' },
   { id: 'luggage', label: 'พื้นที่กระเป๋ากว้าง' },
   { id: 'gps', label: 'GPS ติดตามรถ' },
@@ -98,6 +97,8 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
   // Free-form vehicle description and amenity checklist.
   const [description, setDescription] = useState('');
   const [amenities, setAmenities] = useState<string[]>([]);
+  const [plateType, setPlateType] = useState<PlateType>('yellow');
+  const [insuranceType, setInsuranceType] = useState<InsuranceType>('transport_passenger');
 
   /** True while the driver is composing a brand-new fleet vehicle. */
   const [isAddingNewVehicle, setIsAddingNewVehicle] = useState(initialAddVehicle);
@@ -201,6 +202,12 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
     setRateHighHill(v.zoneRates?.highHill ? String(v.zoneRates.highHill) : '');
     setRateCross(v.zoneRates?.crossProvince ? String(v.zoneRates.crossProvince) : '');
     const terms = parseVehicleTerms(v);
+    setPlateType(v.plateType || terms.plateType || 'yellow');
+    setInsuranceType(
+      v.insuranceType ||
+      terms.insuranceType ||
+      (Array.isArray(v.amenities) && v.amenities.includes('ประกันภัยชั้น 1') ? 'class1' : 'transport_passenger')
+    );
     setFuelIncluded(terms.fuelIncluded);
     setFuelNote(terms.fuelNote);
     setWorkHoursPerDay(String(terms.workHoursPerDay));
@@ -209,7 +216,9 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
     setOvertimeRate(String(terms.overtimeRatePerHour));
     setOvernightRate(String(terms.overnightStayRate));
     setDescription(v.description || '');
-    setAmenities(Array.isArray(v.amenities) ? v.amenities : []);
+    setAmenities(
+      (Array.isArray(v.amenities) ? v.amenities : []).filter((a) => a !== 'ประกันภัยชั้น 1')
+    );
   }, []);
 
   /** Switch the dashboard to one of the driver's existing vehicles. */
@@ -240,6 +249,8 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
     setKakao(user?.kakao || '');
     setVehicleTitle('');
     setVehiclePlate('');
+    setPlateType('yellow');
+    setInsuranceType('transport_passenger');
     setSeats(9);
     setImages([]);
     setBusyDates([]);
@@ -520,20 +531,24 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
         driverWechat: wechat.trim() || undefined,
         driverKakao: kakao.trim() || undefined,
         plateNumber: vehiclePlate.trim() || undefined,
+        plateType,
+        insuranceType,
         images: images.length > 0 ? images : undefined,
         busyDates,
         description: description.trim() || undefined,
         amenities: amenities.length > 0 ? amenities : undefined,
         rateNote: encodeRateNoteWithTerms({
           workHoursPerDay: Number(workHoursPerDay) || DEFAULT_VEHICLE_TERMS.workHoursPerDay,
-          workStart: workStart.trim() || DEFAULT_VEHICLE_TERMS.workStart,
-          workEnd: workEnd.trim() || DEFAULT_VEHICLE_TERMS.workEnd,
+          workStart: workStart?.trim() || DEFAULT_VEHICLE_TERMS.workStart,
+          workEnd: workEnd?.trim() || DEFAULT_VEHICLE_TERMS.workEnd,
           overtimeRatePerHour:
             overtimeRate === '' ? DEFAULT_VEHICLE_TERMS.overtimeRatePerHour : Number(overtimeRate),
           overnightStayRate:
             overnightRate === '' ? DEFAULT_VEHICLE_TERMS.overnightStayRate : Number(overnightRate),
           fuelIncluded,
           fuelNote,
+          plateType,
+          insuranceType,
         }),
         zoneRates: Object.keys(zoneRates).length > 0 ? zoneRates : undefined,
         // A save without an id is a brand-new vehicle — never recycle the first one.
@@ -1412,20 +1427,53 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
                       />
                     </div>
 
-                    {/* License Plate Number */}
-                    <div className="flex flex-col gap-1.5">
+                    {/* License Plate Type & Number */}
+                    <div className="flex flex-col gap-2">
                       <label
                         className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between"
                         htmlFor="driver-plate"
                       >
                         <span className="flex items-center gap-1">
-                          <span>ป้ายทะเบียนรถ (ตรวจสอบมาตรฐานกรมการขนส่ง)</span>
+                          <span>ประเภทและเลขป้ายทะเบียน</span>
                           <span className="text-rose-600">*</span>
                         </span>
+                        <span className="font-mono text-[11px] text-slate-400">กรมการขนส่งทางบก</span>
                       </label>
+
+                      {/* Plate Type Segmented Selection */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { id: 'yellow' as const, label: t('plate.yellow.short'), desc: '30 / ขนส่งถูกกฎหมาย 100%', bgActive: 'bg-amber-500/15 border-amber-500 text-amber-950 dark:text-amber-300 ring-1 ring-amber-500' },
+                          { id: 'green' as const, label: t('plate.green.short'), desc: 'ธุรกิจ / ทัศนาจร ม.23', bgActive: 'bg-emerald-500/15 border-emerald-500 text-emerald-950 dark:text-emerald-300 ring-1 ring-emerald-500' },
+                          { id: 'blue' as const, label: t('plate.blue.short'), desc: 'นั่งส่วนบุคคล > 7 ที่นั่ง VIP', bgActive: 'bg-blue-500/15 border-blue-500 text-blue-950 dark:text-blue-300 ring-1 ring-blue-500' },
+                          { id: 'white' as const, label: t('plate.white.short'), desc: 'นั่งส่วนบุคคล ≤ 7 ที่นั่ง / SUV', bgActive: 'bg-slate-500/15 border-slate-500 text-slate-950 dark:text-slate-200 ring-1 ring-slate-400' },
+                        ].map((p) => {
+                          const isSelected = plateType === p.id;
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => setPlateType(p.id)}
+                              className={`p-2.5 text-left border rounded-none transition-all cursor-pointer flex flex-col justify-between ${
+                                isSelected
+                                  ? p.bgActive
+                                  : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 hover:border-slate-400 text-slate-700 dark:text-slate-300'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between w-full">
+                                <span className="text-xs font-bold">{p.label}</span>
+                                <span className={`w-2.5 h-2.5 rounded-full ${isSelected ? 'bg-current' : 'border border-slate-400'}`} />
+                              </div>
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{p.desc}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
                       <input
                         id="driver-plate"
                         type="text"
+                        placeholder="เช่น 30-1234 หรือ นข 5678 เชียงใหม่"
                         value={vehiclePlate}
                         onChange={(e) => setVehiclePlate(e.target.value)}
                         className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm font-mono font-semibold focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
@@ -1580,6 +1628,58 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
                         className="w-full p-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
                       />
                     </div>
+
+                    {/* Dedicated Insurance & Safety Section */}
+                    <div className="flex flex-col gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[18px] text-emerald-600">shield</span>
+                          <span>ความคุ้มครองและประกันภัย (Insurance & Safety)</span>
+                          <span className="text-rose-600">*</span>
+                        </label>
+                        <span className="text-[11px] text-slate-400">ระบุตามกรมธรรม์จริง ป้องกันการโฆษณาเท็จ</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {[
+                          { id: 'class1' as const, label: t('insurance.class1'), short: t('insurance.class1.short'), badge: 'คุ้มครองสูงสุด' },
+                          { id: 'class2_plus' as const, label: t('insurance.class2_plus'), short: t('insurance.class2_plus.short'), badge: 'คุ้มครองผู้โดยสาร' },
+                          { id: 'transport_passenger' as const, label: t('insurance.transport_passenger'), short: t('insurance.transport_passenger.short'), badge: 'มาตรฐานกรมการขนส่ง' },
+                          { id: 'compulsory_only' as const, label: t('insurance.compulsory_only'), short: t('insurance.compulsory_only.short'), badge: 'พ.ร.บ. พื้นฐาน' },
+                        ].map((tier) => {
+                          const isSelected = insuranceType === tier.id;
+                          return (
+                            <label
+                              key={tier.id}
+                              className={`p-3 border rounded-none flex items-start gap-3 cursor-pointer transition-colors ${
+                                isSelected
+                                  ? 'bg-emerald-500/10 border-emerald-600 dark:border-emerald-500 ring-1 ring-emerald-500'
+                                  : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 hover:border-slate-400'
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="insurance_tier"
+                                checked={isSelected}
+                                onChange={() => setInsuranceType(tier.id)}
+                                className="mt-0.5 accent-emerald-600 h-4 w-4 shrink-0"
+                              />
+                              <div className="flex flex-col gap-0.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-xs font-bold text-slate-900 dark:text-white">{tier.short}</span>
+                                  <span className="text-[10px] font-mono px-1.5 py-0.2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                    {tier.badge}
+                                  </span>
+                                </div>
+                                <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                                  {tier.label}
+                                </span>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     <div className="flex flex-col gap-2">
                       <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                         สิ่งอำนวยความสะดวกบนรถ (เลือกได้หลายรายการ)
@@ -1734,30 +1834,6 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
                         className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
                       />
                     </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300" htmlFor="terms-start">
-                        {t('driver.terms.workStart')}
-                      </label>
-                      <input
-                        id="terms-start"
-                        type="time"
-                        value={workStart}
-                        onChange={(e) => setWorkStart(e.target.value)}
-                        className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300" htmlFor="terms-end">
-                        {t('driver.terms.workEnd')}
-                      </label>
-                      <input
-                        id="terms-end"
-                        type="time"
-                        value={workEnd}
-                        onChange={(e) => setWorkEnd(e.target.value)}
-                        className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
-                      />
-                    </div>
                     <div className="flex flex-col gap-1.5 sm:col-span-2">
                       <label className="text-xs font-semibold text-slate-700 dark:text-slate-300" htmlFor="terms-stay">
                         {t('driver.terms.stay')}
@@ -1772,6 +1848,14 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
                         className="w-full h-11 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:border-slate-950 dark:focus:border-white focus:outline-none transition-colors"
                       />
                     </div>
+                  </div>
+                  <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 flex items-start gap-2">
+                    <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-[18px] shrink-0 mt-0.5">
+                      info
+                    </span>
+                    <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
+                      * {t('driver.terms.workHoursCapNote')}
+                    </p>
                   </div>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-3">

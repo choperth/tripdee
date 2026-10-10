@@ -2,7 +2,7 @@
  * Supabase Database Schema Definitions for TripDee
  */
 
-import { ZoneId } from '@/data/mockData';
+import { ZoneId, PlateType, InsuranceType } from '@/data/mockData';
 import type { LeadFeeStatus, OrgType, VehicleTier } from '@/lib/b2b';
 
 export type Json =
@@ -127,7 +127,8 @@ export type Database = {
           plate_number: string | null;
           routes: string;
           status: 'pending' | 'verified' | 'rejected';
-          plate_type: 'yellow' | 'blue' | null;
+          plate_type: PlateType | null;
+          insurance_type?: InsuranceType | null;
           can_issue_tax_invoice: boolean | null;
           business_type: 'company' | 'individual' | null;
           service_type: 'with_driver' | 'self_drive' | null;
@@ -154,7 +155,8 @@ export type Database = {
           plate_number?: string | null;
           routes?: string;
           status?: 'pending' | 'verified' | 'rejected';
-          plate_type?: 'yellow' | 'blue' | null;
+          plate_type?: PlateType | null;
+          insurance_type?: InsuranceType | null;
           can_issue_tax_invoice?: boolean | null;
           business_type?: 'company' | 'individual' | null;
           service_type?: 'with_driver' | 'self_drive' | null;
@@ -181,7 +183,8 @@ export type Database = {
           plate_number?: string | null;
           routes?: string;
           status?: 'pending' | 'verified' | 'rejected';
-          plate_type?: 'yellow' | 'blue' | null;
+          plate_type?: PlateType | null;
+          insurance_type?: InsuranceType | null;
           can_issue_tax_invoice?: boolean | null;
           business_type?: 'company' | 'individual' | null;
           service_type?: 'with_driver' | 'self_drive' | null;
@@ -221,7 +224,8 @@ export type Database = {
           popular_routes: string[];
           amenities: string[];
           description: string;
-          plate_type: 'yellow' | 'blue' | null;
+          plate_type: PlateType | null;
+          insurance_type?: InsuranceType | null;
           plate_number: string | null;
           can_issue_tax_invoice: boolean | null;
           business_type: 'company' | 'individual' | null;
@@ -260,7 +264,8 @@ export type Database = {
           popular_routes?: string[];
           amenities?: string[];
           description?: string;
-          plate_type?: 'yellow' | 'blue' | null;
+          plate_type?: PlateType | null;
+          insurance_type?: InsuranceType | null;
           plate_number?: string | null;
           can_issue_tax_invoice?: boolean | null;
           business_type?: 'company' | 'individual' | null;
@@ -299,7 +304,8 @@ export type Database = {
           popular_routes?: string[];
           amenities?: string[];
           description?: string;
-          plate_type?: 'yellow' | 'blue' | null;
+          plate_type?: PlateType | null;
+          insurance_type?: InsuranceType | null;
           plate_number?: string | null;
           can_issue_tax_invoice?: boolean | null;
           business_type?: 'company' | 'individual' | null;

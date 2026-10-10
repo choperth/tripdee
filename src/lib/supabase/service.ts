@@ -14,7 +14,7 @@
 
 import { getSupabase } from './client';
 import { Database, Booking } from './types';
-import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, ZoneId, BoardQuote } from '@/data/mockData';
+import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, ZoneId, BoardQuote, PlateType, InsuranceType } from '@/data/mockData';
 import { parseVehicleTerms } from '@/lib/vehicleTerms';
 import {
   isMockDataEnabled,
@@ -396,7 +396,8 @@ export async function saveDriverLead(lead: {
   vehicleModel: string;
   seats: string;
   plateNumber?: string;
-  plateType?: 'yellow' | 'blue';
+  plateType?: PlateType;
+  insuranceType?: InsuranceType;
   canIssueTaxInvoice?: boolean;
   businessType?: 'company' | 'individual';
   routes: string;
@@ -466,7 +467,8 @@ export async function saveDriverLead(lead: {
         vehicleModel: data.vehicle_model,
         seats: data.seats,
         plateNumber: data.plate_number || undefined,
-        plateType: (data.plate_type as 'yellow' | 'blue') || undefined,
+        plateType: (data.plate_type as PlateType) || lead.plateType || undefined,
+        insuranceType: lead.insuranceType,
         canIssueTaxInvoice: data.can_issue_tax_invoice !== null && data.can_issue_tax_invoice !== undefined ? Boolean(data.can_issue_tax_invoice) : undefined,
         businessType: data.business_type || undefined,
         routes: data.routes,
@@ -567,7 +569,8 @@ export async function verifyDriverLead(id: string): Promise<boolean> {
         vehicleModel: updatedLead.vehicle_model || '',
         seats: String(updatedLead.seats || ''),
         plateNumber: updatedLead.plate_number || undefined,
-        plateType: (updatedLead.plate_type as 'yellow' | 'blue') || undefined,
+        plateType: (updatedLead.plate_type as PlateType) || undefined,
+        insuranceType: ((updatedLead as Record<string, unknown>).insurance_type as InsuranceType) || undefined,
         canIssueTaxInvoice: updatedLead.can_issue_tax_invoice !== null && updatedLead.can_issue_tax_invoice !== undefined ? Boolean(updatedLead.can_issue_tax_invoice) : undefined,
         businessType: updatedLead.business_type || undefined,
         routes: updatedLead.routes || '',
@@ -698,7 +701,8 @@ type VehicleRow = {
   popular_routes?: string[] | null;
   amenities?: string[] | null;
   description?: string | null;
-  plate_type?: 'yellow' | 'blue' | null;
+  plate_type?: PlateType | null;
+  insurance_type?: InsuranceType | null;
   plate_number?: string | null;
   can_issue_tax_invoice?: boolean | null;
   business_type?: 'company' | 'individual' | null;
@@ -716,7 +720,17 @@ type VehicleRow = {
 /** Map a raw `vehicles` row into the app-level `Vehicle` shape. */
 function mapVehicleRow(row: VehicleRow): Vehicle {
   const rateNote = row.rate_note || undefined;
-  const terms = parseVehicleTerms({ rateNote });
+  const terms = parseVehicleTerms({
+    rateNote,
+    plateType: (row.plate_type as PlateType) || undefined,
+    insuranceType: (row.insurance_type as InsuranceType) || undefined,
+  });
+  const plateType = (row.plate_type as PlateType) || terms.plateType || undefined;
+  const insuranceType =
+    (row.insurance_type as InsuranceType) ||
+    terms.insuranceType ||
+    (row.amenities?.includes('ประกันภัยชั้น 1') ? 'class1' : 'transport_passenger');
+
   return {
     id: row.id,
     title: row.title,
@@ -747,7 +761,8 @@ function mapVehicleRow(row: VehicleRow): Vehicle {
     popularRoutes: row.popular_routes || [],
     amenities: row.amenities || [],
     description: row.description || '',
-    plateType: row.plate_type || undefined,
+    plateType,
+    insuranceType,
     plateNumber: row.plate_number || undefined,
     canIssueTaxInvoice:
       row.can_issue_tax_invoice === null || row.can_issue_tax_invoice === undefined
@@ -775,6 +790,7 @@ function mapVehicleRow(row: VehicleRow): Vehicle {
  */
 const OPTIONAL_VEHICLE_COLUMNS = [
   'plate_type',
+  'insurance_type',
   'plate_number',
   'can_issue_tax_invoice',
   'business_type',
@@ -800,6 +816,7 @@ const OPTIONAL_VEHICLE_COLUMN_GROUPS: OptionalColumn[][] = [
   // Group 1 is the base migration. Keep it small so a partial migration
   // still lets the rest through.
   ['plate_type', 'plate_number', 'can_issue_tax_invoice'],
+  ['insurance_type'],
   ['business_type', 'is_available', 'rental_type', 'transmission'],
   // Ownership + approval.
   ['owner_id', 'approval_status'],
@@ -885,6 +902,7 @@ function toVehicleRowPayload(vehicle: Vehicle): Record<string, unknown> {
     amenities: vehicle.amenities ?? [],
     description: vehicle.description,
     plate_type: vehicle.plateType || null,
+    insurance_type: vehicle.insuranceType || null,
     plate_number: vehicle.plateNumber || null,
     can_issue_tax_invoice: vehicle.canIssueTaxInvoice ?? null,
     business_type: vehicle.businessType || null,
@@ -926,6 +944,7 @@ function toVehicleColumnUpdates(updates: Partial<Vehicle>): Record<string, unkno
   if (updates.amenities !== undefined) out.amenities = updates.amenities ?? [];
   if (updates.description !== undefined) out.description = updates.description;
   if (updates.plateType !== undefined) out.plate_type = updates.plateType;
+  if (updates.insuranceType !== undefined) out.insurance_type = updates.insuranceType;
   if (updates.plateNumber !== undefined) out.plate_number = updates.plateNumber;
   if (updates.canIssueTaxInvoice !== undefined) out.can_issue_tax_invoice = updates.canIssueTaxInvoice;
   if (updates.businessType !== undefined) out.business_type = updates.businessType;
@@ -1122,6 +1141,8 @@ export async function updateVehicle(id: string, updates: Partial<Vehicle>): Prom
     merged.overtimeRatePerHour = parsed.overtimeRatePerHour;
     merged.overnightStayRate = parsed.overnightStayRate;
     merged.fuelIncluded = parsed.fuelIncluded;
+    if (parsed.plateType && updates.plateType === undefined) merged.plateType = parsed.plateType;
+    if (parsed.insuranceType && updates.insuranceType === undefined) merged.insuranceType = parsed.insuranceType;
   }
   addApprovedVehicle(merged);
 

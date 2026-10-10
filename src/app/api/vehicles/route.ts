@@ -55,6 +55,7 @@ const DRIVER_EDITABLE_FIELDS = [
   'overtimeRatePerHour',
   'overnightStayRate',
   'fuelIncluded',
+  'insuranceType',
   'isAvailable',
   'rentalType',
   'transmission',

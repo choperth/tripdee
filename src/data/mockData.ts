@@ -12,6 +12,9 @@ export interface ZoneRateCard {
   fuelFlatRatePerDay: number;
 }
 
+export type PlateType = 'yellow' | 'green' | 'blue' | 'white';
+export type InsuranceType = 'class1' | 'class2_plus' | 'transport_passenger' | 'compulsory_only';
+
 export interface Vehicle {
   id: string;
   title: string;
@@ -49,8 +52,10 @@ export interface Vehicle {
   popularRoutes?: string[];
   amenities?: string[];
   description: string;
-  /** ประเภทป้ายทะเบียน: yellow = ป้ายเหลือง 30 ขนส่งสาธารณะ, blue = ป้ายฟ้า ส่วนบุคคล */
-  plateType?: 'yellow' | 'blue';
+  /** ประเภทป้ายทะเบียน: yellow = ป้ายเหลือง 30, green = ป้ายเขียว, blue = ป้ายฟ้า, white = ป้ายขาว-ดำ */
+  plateType?: PlateType;
+  /** ระดับประกันภัย: class1 = ชั้น 1, class2_plus = ชั้น 2+/3+, transport_passenger = พ.ร.บ.ขนส่ง + คุ้มครองผู้โดยสาร, compulsory_only = พ.ร.บ.ภาคบังคับ */
+  insuranceType?: InsuranceType;
   /** เลขทะเบียนรถ */
   plateNumber?: string;
   /** สามารถออกใบกำกับภาษี / ใบเสร็จรับเงินเต็มรูปแบบ / หัก ณ ที่จ่าย 3% ได้ */

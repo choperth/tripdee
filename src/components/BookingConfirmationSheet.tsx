@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
-import { Vehicle } from '@/data/mockData';
+import { Vehicle, PlateType, InsuranceType } from '@/data/mockData';
 import { DEFAULT_VEHICLE_TERMS, parseVehicleTerms } from '@/lib/vehicleTerms';
 import { vehicleTitle, vehiclePopularRoutes } from '@/data/vehicleI18n';
 import {
@@ -45,7 +45,9 @@ export interface BookingSheetData {
   driverLine?: string;
   vehicleTitle: string;
   plateNumber: string;
-  plateType: 'yellow' | 'blue';
+  plateType: PlateType;
+  insuranceType?: InsuranceType;
+  workHoursPerDay?: number;
   isVerified: boolean;
   canIssueTaxInvoice?: boolean;
   // Financial terms
@@ -116,7 +118,15 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
     vehicleTitle:
       (vehicle ? vehicleTitle(vehicle, locale) : '') || initialData?.vehicleTitle || t('sheet.dVehicle'),
     plateNumber: vehicle?.plateNumber || initialData?.plateNumber || t('sheet.dPlate'),
-    plateType: vehicle?.plateType || initialData?.plateType || 'yellow',
+    plateType: vehicle?.plateType || initialData?.plateType || terms.plateType || 'yellow',
+    insuranceType:
+      vehicle?.insuranceType ||
+      initialData?.insuranceType ||
+      terms.insuranceType ||
+      (Array.isArray(vehicle?.amenities) && vehicle.amenities.includes('ประกันภัยชั้น 1')
+        ? 'class1'
+        : 'transport_passenger'),
+    workHoursPerDay: initialData?.workHoursPerDay || terms.workHoursPerDay || 10,
     isVerified: vehicle ? Boolean(vehicle.isVerified) : Boolean(initialData?.isVerified),
     canIssueTaxInvoice: vehicle?.canIssueTaxInvoice ?? initialData?.canIssueTaxInvoice ?? false,
     dailyRate: dailyRateDefault ?? null,
@@ -158,7 +168,23 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
 
   const handleCopySummary = () => {
     const plateTypeText =
-      data.plateType === 'yellow' ? t('sheet.plateYellowLong') : t('sheet.plateBlueLong');
+      data.plateType === 'yellow'
+        ? t('sheet.plateYellowLong')
+        : data.plateType === 'green'
+        ? t('sheet.plateGreenLong')
+        : data.plateType === 'blue'
+        ? t('sheet.plateBlueLong')
+        : t('sheet.plateWhiteLong');
+
+    const insuranceText =
+      data.insuranceType === 'class1'
+        ? t('insurance.class1.short')
+        : data.insuranceType === 'class2_plus'
+        ? t('insurance.class2_plus.short')
+        : data.insuranceType === 'compulsory_only'
+        ? t('insurance.compulsory_only.short')
+        : t('insurance.transport_passenger.short');
+
     const lines = [
       t('sheet.cpHead'),
       t('sheet.cpRef', { id: data.bookingId }),
@@ -174,6 +200,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
       t('sheet.cpPhone', { phone: data.driverPhone }),
       t('sheet.cpModel', { title: data.vehicleTitle }),
       t('sheet.cpPlate', { plate: data.plateNumber, plateType: plateTypeText }),
+      `🛡️ ${t('sheet.labelInsurance')}: ${insuranceText}`,
       '',
       t('sheet.cpMoneyHead'),
       t('sheet.cpRate', {
@@ -495,9 +522,27 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                     {data.plateNumber}
                   </span>
                   <span className="text-[10px] font-bold text-slate-600">
-                    ({data.plateType === 'yellow' ? t('sheet.plateYellow') : t('sheet.plateBlue')} ถูกกฎหมาย 100%)
+                    ({data.plateType === 'yellow'
+                      ? t('sheet.plateYellow')
+                      : data.plateType === 'green'
+                      ? t('sheet.plateGreen')
+                      : data.plateType === 'blue'
+                      ? t('sheet.plateBlue')
+                      : t('sheet.plateWhite')})
                   </span>
                 </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">{t('sheet.labelInsurance')}</span>
+                <span className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded-none text-[11px]">
+                  {data.insuranceType === 'class1'
+                    ? t('insurance.class1.short')
+                    : data.insuranceType === 'class2_plus'
+                    ? t('insurance.class2_plus.short')
+                    : data.insuranceType === 'compulsory_only'
+                    ? t('insurance.compulsory_only.short')
+                    : t('insurance.transport_passenger.short')}
+                </span>
               </div>
             </div>
           </div>
@@ -593,7 +638,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
                 <strong>{t('sheet.fuelLabel')}</strong> {data.fuelTerms || 'เติมคืนเต็มถังตามจริงเมื่อจบทริป'}
               </p>
               <p>
-                <strong>{t('sheet.otLabel')}</strong> เศษชั่วโมงละ {data.overtimeRate || 200} บาท (ชำระตรงกับคนขับ) • เวลาทำงานปกติ 10 ชั่วโมง/วัน (สิ้นสุดไม่เกิน 18:00–19:00 น.)
+                <strong>{t('sheet.otLabel')}</strong> เศษชั่วโมงละ {data.overtimeRate || 200} บาท (ชำระตรงกับคนขับ) • เวลาทำงานปกติ {data.workHoursPerDay || 10} ชั่วโมง/วัน (สิ้นสุดไม่เกิน 20:00 น.)
               </p>
               <p>
                 <strong>{t('sheet.overnightLabel')}</strong> {data.overnightRate || 500} บาท/คืน (กรณีลูกค้าไม่ได้จัดเตรียมห้องพักให้คนขับ)
@@ -629,9 +674,9 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
         <div className="mt-4 rounded-none border border-slate-200 p-3.5 bg-slate-50/50 text-[11px] text-slate-600 space-y-1.5">
           <p className="font-black text-slate-800 uppercase tracking-wider">{t('sheet.standardsTitle')}</p>
           <ul className="list-disc pl-4 space-y-1">
-            <li>เวลาทำงานปกติ 10 ชั่วโมง/วัน (สิ้นสุดไม่เกิน 18:00–19:00 น.)</li>
-            <li>ค่าล่วงเวลา (OT): เศษชั่วโมงละ 200 บาท (ชำระตรงกับคนขับ)</li>
-            <li>ค่าที่พักคนขับค้างคืน: 500 บาท/คืน (กรณีลูกค้าไม่ได้จัดเตรียมห้องพักให้)</li>
+            <li>{t('sheet.standardClause1', { h: String(data.workHoursPerDay || 10) })}</li>
+            <li>ค่าล่วงเวลา (OT): เศษชั่วโมงละ {data.overtimeRate || 200} บาท (ชำระตรงกับคนขับ)</li>
+            <li>ค่าที่พักคนขับค้างคืน: {data.overnightRate || 500} บาท/คืน (กรณีลูกค้าไม่ได้จัดเตรียมห้องพักให้)</li>
             <li>ค่าน้ำมัน: เติมคืนเต็มถังตามจริงเมื่อจบทริป</li>
             <li>{t('sheet.std1')}</li>
             <li>{t('sheet.std2')}</li>

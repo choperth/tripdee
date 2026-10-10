@@ -72,6 +72,59 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
   // Driver-defined service terms, with automatic fallback to the standard defaults.
   const terms = useMemo(() => parseVehicleTerms(vehicle), [vehicle]);
 
+  const plateType = vehicle.plateType || terms.plateType || 'yellow';
+  const insuranceTier =
+    vehicle.insuranceType ||
+    terms.insuranceType ||
+    (Array.isArray(vehicle.amenities) && vehicle.amenities.includes('ประกันภัยชั้น 1')
+      ? 'class1'
+      : 'transport_passenger');
+
+  const insuranceLabel = useMemo(() => {
+    switch (insuranceTier) {
+      case 'class1':
+        return t('insurance.class1.short');
+      case 'class2_plus':
+        return t('insurance.class2_plus.short');
+      case 'transport_passenger':
+        return t('insurance.transport_passenger.short');
+      case 'compulsory_only':
+        return t('insurance.compulsory_only.short');
+      default:
+        return t('insurance.transport_passenger.short');
+    }
+  }, [insuranceTier, t]);
+
+  const plateLabel = useMemo(() => {
+    switch (plateType) {
+      case 'yellow':
+        return t('detail.yellowPlateLong');
+      case 'green':
+        return t('sheet.plateGreenLong');
+      case 'blue':
+        return t('detail.licenseOk');
+      case 'white':
+        return t('sheet.plateWhiteLong');
+      default:
+        return t('detail.yellowPlateLong');
+    }
+  }, [plateType, t]);
+
+  const plateBadgeClass = useMemo(() => {
+    switch (plateType) {
+      case 'yellow':
+        return 'bg-amber-400 text-slate-950 border-amber-500';
+      case 'green':
+        return 'bg-emerald-600 text-white border-emerald-700';
+      case 'blue':
+        return 'bg-blue-600 text-white border-blue-700';
+      case 'white':
+        return 'bg-white text-slate-950 border-slate-300 dark:border-slate-700';
+      default:
+        return 'bg-amber-400 text-slate-950 border-amber-500';
+    }
+  }, [plateType]);
+
   const isSelfDrive =
     vehicle.rentalType === 'self_drive' ||
     (vehicle.type !== 'van' && vehicle.rentalType !== 'with_driver');
@@ -231,16 +284,12 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                   <Car className="w-3 h-3" />
                   <span>{t('detail.selfDriveBadge')}</span>
                 </span>
-              ) : vehicle.plateType === 'yellow' ? (
-                <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 border border-amber-500 uppercase rounded-none">
-                  <span className="material-symbols-outlined text-[13px] text-slate-950">
-                    local_taxi
-                  </span>
-                  <span>{t('detail.yellowPlateLong')}</span>
-                </span>
               ) : (
-                <span className="inline-flex items-center gap-1 bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 border border-slate-900 rounded-none">
-                  <span>{t('vehicle.bluePlate')}</span>
+                <span className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 border uppercase rounded-none ${plateBadgeClass}`}>
+                  <span className="material-symbols-outlined text-[13px]">
+                    {plateType === 'yellow' ? 'local_taxi' : 'directions_car'}
+                  </span>
+                  <span>{plateLabel}</span>
                 </span>
               )}
 
@@ -294,7 +343,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
               <span>•</span>
               <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
                 <span className="material-symbols-outlined text-[16px]">shield_with_heart</span>
-                <span>{t('detail.insuranceFull')}</span>
+                <span>{insuranceLabel}</span>
               </span>
             </div>
           </div>
@@ -380,7 +429,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                 sizes="(max-width: 768px) 100vw, 25vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <span className="absolute top-2 left-2 bg-amber-400 text-slate-950 text-[10px] px-2 py-0.5 rounded-none font-black border border-amber-500 uppercase">
+              <span className={`absolute top-2 left-2 text-[10px] px-2 py-0.5 rounded-none font-black border uppercase ${plateBadgeClass}`}>
                 {vehicle.plateNumber ? maskPlateNumber(vehicle.plateNumber) : t('detail.plateLegal')}
               </span>
             </div>
@@ -542,13 +591,9 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                   </span>
                   <span className="text-xs font-bold text-slate-950 dark:text-white flex items-center gap-1 sm:justify-end mt-0.5">
                     <span className="material-symbols-outlined text-[16px] text-amber-500">
-                      {vehicle.plateType === 'yellow' ? 'local_taxi' : 'directions_car'}
+                      {plateType === 'yellow' ? 'local_taxi' : 'directions_car'}
                     </span>
-                    <span>
-                      {vehicle.plateType === 'yellow'
-                        ? t('detail.yellowPlateLong')
-                        : t('detail.licenseOk')}
-                    </span>
+                    <span>{plateLabel}</span>
                   </span>
                 </div>
               </div>
@@ -627,7 +672,7 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs text-slate-600 dark:text-slate-400">
                 <div className="p-3 rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
                   <span className="font-bold text-slate-950 dark:text-white block">{t('detail.hoursTitle')}</span>
-                  <p>• {t('detail.termsHours', { h: terms.workHoursPerDay, start: terms.workStart, end: terms.workEnd, rate: `${terms.overtimeRatePerHour} ฿` })}</p>
+                  <p>• {t('detail.termsHoursOnly', { h: String(terms.workHoursPerDay), rate: `${terms.overtimeRatePerHour} ฿` })}</p>
                 </div>
                 <div className="p-3 rounded-none bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
                   <span className="font-bold text-slate-950 dark:text-white block">{t('detail.stayTitle')}</span>
@@ -696,8 +741,16 @@ export const VehicleDetailView: React.FC<VehicleDetailViewProps> = ({
                                 <span className="px-1.5 py-0.5 rounded-none bg-amber-400 text-slate-950 text-[10px] font-black border border-amber-500 uppercase">
                                   {t('hero.quickYellow')}
                                 </span>
+                              ) : comp.plateType === 'green' ? (
+                                <span className="px-1.5 py-0.5 rounded-none bg-emerald-600 text-white text-[10px] font-black border border-emerald-700 uppercase">
+                                  {t('plate.green.short')}
+                                </span>
+                              ) : comp.plateType === 'white' ? (
+                                <span className="px-1.5 py-0.5 rounded-none bg-white text-slate-950 text-[10px] font-bold border border-slate-300">
+                                  {t('plate.white.short')}
+                                </span>
                               ) : (
-                                <span className="px-1.5 py-0.5 rounded-none bg-slate-900 text-white text-[10px] font-bold">
+                                <span className="px-1.5 py-0.5 rounded-none bg-blue-600 text-white text-[10px] font-bold border border-blue-700">
                                   {t('fleet.plateBlue')}
                                 </span>
                               )}

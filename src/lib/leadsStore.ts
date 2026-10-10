@@ -6,7 +6,8 @@
 import type { LeadFeeStatus, OrgType, VehicleTier } from '@/lib/b2b';
 import { calcLeadFee, clampCarCount } from '@/lib/b2b';
 import { formatLineLink, formatWhatsAppLink } from '@/lib/contactUtils';
-export type { LeadFeeStatus, OrgType, VehicleTier };
+import type { PlateType, InsuranceType } from '@/data/mockData';
+export type { LeadFeeStatus, OrgType, VehicleTier, PlateType, InsuranceType };
 
 export interface QuotationLead {
   id: string;
@@ -51,7 +52,8 @@ export interface DriverLead {
   vehicleModel: string;
   seats: string;
   plateNumber?: string;
-  plateType?: 'yellow' | 'blue';
+  plateType?: PlateType;
+  insuranceType?: InsuranceType;
   canIssueTaxInvoice?: boolean;
   businessType?: 'company' | 'individual';
   routes: string;
@@ -152,6 +154,7 @@ export function convertLeadToVehicle(lead: DriverLead): Vehicle {
       lead.description?.trim() ||
       `บริการรถพร้อมคนขับ โดย ${lead.driverName} (${lead.nickname}) ยานพาหนะ ${lead.vehicleModel}${lead.routes ? ` ชำนาญเส้นทาง ${lead.routes}` : ''}`,
     plateType: lead.plateType || (isYellow ? 'yellow' : 'blue'),
+    insuranceType: lead.insuranceType || (lead.amenities?.includes('ประกันภัยชั้น 1') ? 'class1' : 'transport_passenger'),
     plateNumber: lead.plateNumber || undefined,
     canIssueTaxInvoice: Boolean(lead.canIssueTaxInvoice),
     businessType: lead.businessType || (isYellow ? 'company' : 'individual'),
@@ -364,7 +367,8 @@ export function addDriverLead(lead: {
   vehicleModel: string;
   seats: string;
   plateNumber?: string;
-  plateType?: 'yellow' | 'blue';
+  plateType?: PlateType;
+  insuranceType?: InsuranceType;
   canIssueTaxInvoice?: boolean;
   businessType?: 'company' | 'individual';
   routes: string;

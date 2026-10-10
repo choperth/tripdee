@@ -18,7 +18,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { VEHICLE_CATEGORY_GROUPS } from '@/data/vehicleModels';
-import type { Vehicle } from '@/data/mockData';
+import type { Vehicle, PlateType, InsuranceType } from '@/data/mockData';
 import { compressImage } from '@/lib/imageCompression';
 
 interface DriverRegisterModalProps {
@@ -30,7 +30,6 @@ interface DriverRegisterModalProps {
 const AMENITY_KEYS = [
   'reg.amMassageSeat',
   'reg.amWifi',
-  'reg.amInsurance',
   'reg.amWater',
   'reg.amKaraoke',
   'reg.amCharge',
@@ -115,10 +114,11 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
     serviceHub: 'CHIANG_MAI',
     vehicleModel: 'Toyota Commuter D4D (หลังคาสูง 9-13 ที่นั่ง)',
     seats: '10',
-    plateType: 'yellow' as 'yellow' | 'blue',
+    plateType: 'yellow' as PlateType,
     plateNumber: '',
+    insuranceType: 'transport_passenger' as InsuranceType,
     canIssueTaxInvoice: true,
-    amenities: ['reg.amWifi', 'reg.amInsurance'] as string[],
+    amenities: ['reg.amWifi'] as string[],
     pickupLocation: '',
     depositTerms: '',
     pricePerDay: '',
@@ -265,6 +265,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
           seats: formData.seats,
           plateType: formData.plateType,
           plateNumber: formData.plateNumber.trim(),
+          insuranceType: formData.insuranceType,
           canIssueTaxInvoice: formData.canIssueTaxInvoice,
           businessType: formData.canIssueTaxInvoice ? 'company' : 'individual',
           routes: formData.serviceHub,
@@ -945,46 +946,40 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
 
                     {/* License Plate Type */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 sm:col-span-2">
                         <label className="text-xs font-bold text-ink">{t('reg.fPlateType')}</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <label
-                            className={`flex items-center gap-2 p-2.5 rounded-none border cursor-pointer text-xs font-bold transition-all ${
-                              formData.plateType === 'yellow'
-                                ? 'bg-amber-500/15 border-amber-500/40 text-amber-900 dark:text-amber-300 ring-1 ring-amber-500/50'
-                                : 'bg-card border-rule text-ink-2'
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="license_plate"
-                              checked={formData.plateType === 'yellow'}
-                              onChange={() => setFormData({ ...formData, plateType: 'yellow' })}
-                              className="text-amber-500"
-                            />
-                            <span>{t('reg.plateYellow')}</span>
-                          </label>
-
-                          <label
-                            className={`flex items-center gap-2 p-2.5 rounded-none border cursor-pointer text-xs font-bold transition-all ${
-                              formData.plateType === 'blue'
-                                ? 'bg-blue-500/15 border-blue-500/40 text-blue-900 dark:text-blue-300 ring-1 ring-blue-500/50'
-                                : 'bg-card border-rule text-ink-2'
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="license_plate"
-                              checked={formData.plateType === 'blue'}
-                              onChange={() => setFormData({ ...formData, plateType: 'blue' })}
-                              className="text-blue-500"
-                            />
-                            <span>{t('reg.plateBlue')}</span>
-                          </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {[
+                            { id: 'yellow' as const, label: t('plate.yellow.short'), desc: '30 รถโดยสารสาธารณะ', active: 'bg-amber-500/15 border-amber-500/40 text-amber-900 dark:text-amber-300 ring-1 ring-amber-500/50' },
+                            { id: 'green' as const, label: t('plate.green.short'), desc: 'บริการธุรกิจ / ม.23', active: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-900 dark:text-emerald-300 ring-1 ring-emerald-500/50' },
+                            { id: 'blue' as const, label: t('plate.blue.short'), desc: 'นั่งส่วนบุคคล > 7 ที่นั่ง VIP', active: 'bg-blue-500/15 border-blue-500/40 text-blue-900 dark:text-blue-300 ring-1 ring-blue-500/50' },
+                            { id: 'white' as const, label: t('plate.white.short'), desc: 'นั่งส่วนบุคคล ≤ 7 ที่นั่ง', active: 'bg-slate-500/15 border-slate-500/40 text-slate-900 dark:text-slate-200 ring-1 ring-slate-400' },
+                          ].map((p) => (
+                            <label
+                              key={p.id}
+                              className={`flex flex-col gap-1 p-2.5 rounded-none border cursor-pointer text-xs font-bold transition-all ${
+                                formData.plateType === p.id
+                                  ? p.active
+                                  : 'bg-card border-rule text-ink-2'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span>{p.label}</span>
+                                <input
+                                  type="radio"
+                                  name="license_plate"
+                                  checked={formData.plateType === p.id}
+                                  onChange={() => setFormData({ ...formData, plateType: p.id })}
+                                  className="accent-amber-500"
+                                />
+                              </div>
+                              <span className="text-[10px] text-ink-3 font-normal line-clamp-1">{p.desc}</span>
+                            </label>
+                          ))}
                         </div>
                       </div>
 
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 sm:col-span-2">
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-bold text-ink">{t('reg.fPlateNumber')}</label>
                           <span className="text-[10px] font-bold text-accent">{t('reg.platePrivacy')}</span>
@@ -1212,6 +1207,55 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
                         <p className="text-xs font-medium text-ink-2 mt-0.5">
                           {t('reg.taxComplianceDesc')}
                         </p>
+                      </div>
+                    </div>
+
+                    {/* Dedicated Insurance Tier Selector */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-ink flex items-center gap-1.5">
+                          <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                          <span>ระดับประกันภัยและความคุ้มครองผู้โดยสาร (Insurance Tier)</span>
+                          <span className="text-red-500">*</span>
+                        </label>
+                        <span className="text-[11px] text-slate-500">ตามกรมธรรม์จริง</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {[
+                          { id: 'class1' as const, label: t('insurance.class1'), short: t('insurance.class1.short'), badge: 'คุ้มครองสูงสุด' },
+                          { id: 'class2_plus' as const, label: t('insurance.class2_plus'), short: t('insurance.class2_plus.short'), badge: 'คุ้มครองผู้โดยสาร' },
+                          { id: 'transport_passenger' as const, label: t('insurance.transport_passenger'), short: t('insurance.transport_passenger.short'), badge: 'มาตรฐานขนส่ง' },
+                          { id: 'compulsory_only' as const, label: t('insurance.compulsory_only'), short: t('insurance.compulsory_only.short'), badge: 'พ.ร.บ. ภาคบังคับ' },
+                        ].map((ins) => {
+                          const isSelected = formData.insuranceType === ins.id;
+                          return (
+                            <label
+                              key={ins.id}
+                              className={`p-3 rounded-none border cursor-pointer transition-all flex items-start gap-2.5 ${
+                                isSelected
+                                  ? 'bg-emerald-500/10 border-emerald-500/60 ring-1 ring-emerald-500 text-ink'
+                                  : 'bg-card border-rule text-ink-2 hover:bg-paper-2'
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="reg_insurance_tier"
+                                checked={isSelected}
+                                onChange={() => setFormData({ ...formData, insuranceType: ins.id })}
+                                className="mt-0.5 accent-emerald-600"
+                              />
+                              <div className="flex flex-col gap-0.5">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold text-ink">{ins.short}</span>
+                                  <span className="text-[10px] font-mono px-1.5 py-0.2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                    {ins.badge}
+                                  </span>
+                                </div>
+                                <span className="text-[11px] text-ink-3 leading-snug">{ins.label}</span>
+                              </div>
+                            </label>
+                          );
+                        })}
                       </div>
                     </div>
 

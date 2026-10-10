@@ -219,6 +219,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
     vehicleTitle: vehicleName,
     plateNumber: vehicle?.plateNumber,
     plateType: vehicle?.plateType || 'yellow',
+    insuranceType: vehicle?.insuranceType,
     isVerified: vehicle?.isVerified,
     canIssueTaxInvoice: vehicle?.canIssueTaxInvoice,
     dailyRate: dailyRate ?? undefined,
