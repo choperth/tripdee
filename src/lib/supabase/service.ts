@@ -16,6 +16,7 @@ import { getSupabase } from './client';
 import { Database, Booking } from './types';
 import { Vehicle, BoardPost, VEHICLES, BOARD_POSTS, ZoneId, BoardQuote, PlateType, InsuranceType } from '@/data/mockData';
 import { parseVehicleTerms } from '@/lib/vehicleTerms';
+import { calculateTripDates } from '@/lib/availabilityUtils';
 import {
   isMockDataEnabled,
   isExcludedTestVehicle,
@@ -2532,6 +2533,33 @@ export async function updateBookingPayment(
         .select()
         .maybeSingle();
 
+      // Calendar Auto-Lock: lock or unlock vehicle.busyDates
+      try {
+        const currentBooking = await getBookingById(id);
+        if (currentBooking?.vehicleId && currentBooking.travelDate) {
+          const tripDates = calculateTripDates(currentBooking.travelDate, currentBooking.totalDays || 1);
+          if (tripDates.length > 0) {
+            const vehicle = await fetchVehicleById(currentBooking.vehicleId);
+            if (vehicle) {
+              if (updates.paymentStatus === 'paid') {
+                const currentBusy = Array.isArray(vehicle.busyDates) ? vehicle.busyDates : [];
+                const mergedBusy = Array.from(new Set([...currentBusy, ...tripDates])).sort();
+                await updateVehicle(currentBooking.vehicleId, { busyDates: mergedBusy });
+                console.info(`[Calendar Auto-Lock]: Locked ${tripDates.length} days for vehicle ${currentBooking.vehicleId}:`, tripDates);
+              } else if (updates.paymentStatus === 'failed' || updates.paymentStatus === 'expired') {
+                if (Array.isArray(vehicle.busyDates)) {
+                  const updatedBusy = vehicle.busyDates.filter((d) => !tripDates.includes(d));
+                  await updateVehicle(currentBooking.vehicleId, { busyDates: updatedBusy });
+                  console.info(`[Calendar Auto-Unlock]: Unlocked ${tripDates.length} days for vehicle ${currentBooking.vehicleId}`);
+                }
+              }
+            }
+          }
+        }
+      } catch (calErr) {
+        console.error('[Calendar Auto-Lock Error]:', calErr);
+      }
+
       if (!error && data) {
         return mapBookingRow(data);
       }
@@ -2550,6 +2578,25 @@ export async function updateBookingPayment(
       ...(updates.paidAt !== undefined ? { paidAt: updates.paidAt } : {}),
       ...(updates.completedAt !== undefined ? { completedAt: updates.completedAt } : {}),
     };
+
+    const currentBooking = localBookings[idx];
+    if (currentBooking?.vehicleId && currentBooking.travelDate) {
+      const tripDates = calculateTripDates(currentBooking.travelDate, currentBooking.totalDays || 1);
+      if (tripDates.length > 0) {
+        const vehicle = getApprovedVehicles().find((v) => v.id === currentBooking.vehicleId) || VEHICLES.find((v) => v.id === currentBooking.vehicleId);
+        if (vehicle) {
+          if (updates.paymentStatus === 'paid') {
+            const currentBusy = Array.isArray(vehicle.busyDates) ? vehicle.busyDates : [];
+            vehicle.busyDates = Array.from(new Set([...currentBusy, ...tripDates])).sort();
+          } else if (updates.paymentStatus === 'failed' || updates.paymentStatus === 'expired') {
+            if (Array.isArray(vehicle.busyDates)) {
+              vehicle.busyDates = vehicle.busyDates.filter((d) => !tripDates.includes(d));
+            }
+          }
+        }
+      }
+    }
+
     return localBookings[idx];
   }
   return null;

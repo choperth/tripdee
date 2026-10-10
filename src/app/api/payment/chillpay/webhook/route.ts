@@ -4,8 +4,7 @@ export const revalidate = 0;
 import { NextRequest, NextResponse } from 'next/server';
 import { updateBookingPayment, getBookingById } from '@/lib/supabase/service';
 import { verifyChillPayWebhookChecksum, getChillPayConfig, ChillPayWebhookPayload } from '@/lib/chillpay';
-import { sendLineBoardJobNotification } from '@/lib/lineNotification';
-import { sendTelegramMessage, escapeTg } from '@/lib/notification';
+import { sendBookingSuccessNotifications } from '@/lib/notification';
 
 export async function POST(req: NextRequest) {
   try {
@@ -85,48 +84,20 @@ export async function POST(req: NextRequest) {
       );
     }
     if (isSuccess) {
-      // 3. Update database: payment_status = 'paid', is_contact_unlocked = true
-      await updateBookingPayment(orderNo, {
+      // 3. Update database: payment_status = 'paid', is_contact_unlocked = true (Auto-locks calendar)
+      const updatedBooking = await updateBookingPayment(orderNo, {
         paymentStatus: 'paid',
         chillpayTransactionId: transactionId || null,
         isContactUnlocked: true,
         paidAt: new Date().toISOString(),
       });
 
-      // 4. Send LINE Dispatcher Notification to driver channel / LINE Notify group
-      try {
-        await sendLineBoardJobNotification({
-          id: orderNo,
-          type: 'request',
-          title: `✅ ล็อกคิวสำเร็จ: มัดจำ ${booking.depositAmount} บ. (${booking.route})`,
-          date: booking.travelDate,
-          days: booking.totalDays,
-          seats: 10,
-          price: booking.totalPrice,
-          priceNote: `มัดจำแล้ว ฿${booking.depositAmount.toLocaleString()} | เหลือจ่ายคนขับ ฿${booking.remainingAmount.toLocaleString()}`,
-          authorName: booking.customerName,
-          authorPhone: booking.customerPhone,
-          authorLine: booking.customerLine || undefined,
-          detail: `ลูกค้าชำระเงินมัดจำผ่าน ChillPay PromptPay เรียบร้อยแล้ว ยืนยันการล็อกคิวรถ!`,
-          category: 'general',
-          isNegotiable: false,
-        });
-      } catch (lineErr) {
-        console.error('[ChillPay Webhook LINE Dispatch Exception]:', lineErr);
+      // 4. Send Direct Driver Alert, Telegram, LINE, and Web Push notifications
+      if (updatedBooking) {
+        sendBookingSuccessNotifications(updatedBooking).catch((notifyErr) =>
+          console.error('[Booking Success Notifications Error]:', notifyErr)
+        );
       }
-
-      // 5. Send Telegram Notification
-      sendTelegramMessage(
-        `💳 *[TripDee: ชำระมัดจำล็อกคิวสำเร็จ]*\n\n` +
-        `🆔 *Order No:* \`${escapeTg(orderNo)}\`\n` +
-        `💰 *ยอดมัดจำ:* ฿${booking.depositAmount.toLocaleString()} บาท\n` +
-        `💵 *คงเหลือจ่ายคนขับ:* ฿${booking.remainingAmount.toLocaleString()} บาท\n` +
-        `👤 *ลูกค้า:* ${escapeTg(booking.customerName)}\n` +
-        `📞 *โทร:* [${booking.customerPhone}](tel:${booking.customerPhone})\n` +
-        `📅 *วันเดินทาง:* ${escapeTg(booking.travelDate)} (${booking.totalDays} วัน)\n` +
-        `📍 *เส้นทาง:* ${escapeTg(booking.route)}\n` +
-        `🎉 ปลดล็อกเบอร์โทรและยืนยันคิวเรียบร้อยแล้ว`
-      ).catch((err) => console.error('[Notification Payment Telegram Error]:', err));
 
       console.info(`[ChillPay Webhook SUCCESS]: Order ${orderNo} marked as paid`);
       return NextResponse.json({ status: 200, message: 'Success' }, { status: 200 });

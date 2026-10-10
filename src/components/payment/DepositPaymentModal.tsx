@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Vehicle } from '@/data/mockData';
 import { vehicleTitle } from '@/data/vehicleI18n';
 import { useLanguage } from '@/context/LanguageContext';
@@ -50,7 +50,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(dialogRef, { onClose, enabled: isOpen });
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { user } = useAuth();
 
   // Zero-Friction User Autofill
@@ -65,16 +65,47 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
   );
   const [totalDays, setTotalDays] = useState<number>(defaultTotalDays);
 
-  // Pricing calculation with Dynamic Zone Pricing
+  // Multi-day multi-zone breakdown state
+  const [dailyZones, setDailyZones] = useState<Record<number, ZoneKey>>({});
+  const [showMultiZone, setShowMultiZone] = useState<boolean>(false);
+
+  // Pricing calculation with Dynamic Zone Pricing & Multi-Day Multi-Zone
   const dailyRate =
     (selectedZone && vehicle?.zoneRates?.[selectedZone]) ??
     vehicle?.zoneRates?.city ??
     null;
   const hasValidRate = typeof dailyRate === 'number' && dailyRate > 0;
   const daysCount = Math.max(1, Number(totalDays) || 1);
-  const totalPrice = hasValidRate ? dailyRate * daysCount : 0;
+
+  const totalPrice = useMemo(() => {
+    if (!hasValidRate) return 0;
+    let sum = 0;
+    for (let day = 1; day <= daysCount; day++) {
+      const z = dailyZones[day] || selectedZone || 'city';
+      const r = vehicle?.zoneRates?.[z] ?? vehicle?.zoneRates?.city ?? (dailyRate || 0);
+      sum += r;
+    }
+    return sum;
+  }, [daysCount, dailyZones, selectedZone, vehicle?.zoneRates, hasValidRate, dailyRate]);
+
   const depositAmount = 100 * daysCount;
   const remainingAmount = Math.max(0, totalPrice - depositAmount);
+
+  const detailedRoute = useMemo(() => {
+    if (daysCount <= 1 || Object.keys(dailyZones).length === 0) {
+      return route;
+    }
+    const zoneLabels: Record<ZoneKey, string> = {
+      city: 'ในเมือง',
+      midHill: 'ดอยใกล้/แม่ริม',
+      highHill: 'ดอยสูง/อินทนนท์',
+      crossProvince: 'ข้ามจังหวัด',
+    };
+    const breakdown = Array.from({ length: daysCount }, (_, i) => i + 1)
+      .map((d) => `วัน ${d}: ${zoneLabels[dailyZones[d] || selectedZone || 'city']}`)
+      .join(' • ');
+    return `${route} (${breakdown})`;
+  }, [route, daysCount, dailyZones, selectedZone]);
 
   // Payment flow step: 'form' | 'qr' | 'success'
   const [step, setStep] = useState<'form' | 'qr' | 'success'>('form');
@@ -158,7 +189,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
           customerName: customerName.trim(),
           customerPhone: customerPhone.trim(),
           customerLine: customerLine.trim() || undefined,
-          route: route.trim(),
+          route: detailedRoute,
           travelDate,
           totalDays: daysCount,
           totalPrice,
@@ -222,7 +253,7 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
     customerLine,
     travelDates: travelDate,
     totalDays: daysCount,
-    routeDetails: route,
+    routeDetails: detailedRoute,
     driverName: vehicle?.driverName,
     driverNickname: vehicle?.driverNickname,
     driverPhone: vehicle?.driverPhone,
@@ -419,6 +450,84 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                   </div>
                 </div>
 
+                {/* Multi-Day Multi-Zone Itinerary Selector */}
+                {daysCount > 1 && (
+                  <div className="border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowMultiZone(!showMultiZone)}
+                      className="flex items-center justify-between w-full text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[16px] text-amber-500">alt_route</span>
+                        <span>{t('modal.multiZoneTitle')}</span>
+                      </span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
+                        {showMultiZone ? '▲ ปิด' : '▼ ระบุโซนแยกรายวัน'}
+                      </span>
+                    </button>
+
+                    {showMultiZone && (
+                      <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          เลือกระดับความชัน/ระยะทางในแต่ละวัน เพื่อให้ระบบคำนวณราคารวมและยอดคงเหลือจ่ายคนขับตรงตามเส้นทางจริง
+                        </p>
+                        {Array.from({ length: daysCount }, (_, i) => i + 1).map((day) => {
+                          const curZ = dailyZones[day] || selectedZone || 'city';
+                          return (
+                            <div key={day} className="flex items-center justify-between gap-2 text-xs">
+                              <span className="font-bold text-slate-700 dark:text-slate-300 w-16 shrink-0">
+                                {t('modal.dayNumber', { day: String(day) })}:
+                              </span>
+                              <select
+                                value={curZ}
+                                onChange={(e) =>
+                                  setDailyZones((prev) => ({
+                                    ...prev,
+                                    [day]: e.target.value as ZoneKey,
+                                  }))
+                                }
+                                className="flex-1 px-2.5 py-1.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-amber-500"
+                              >
+                                <option value="city">
+                                  ในเมือง / สันกำแพง / หางดง (฿{(vehicle?.zoneRates?.city ?? 0).toLocaleString()}/วัน)
+                                </option>
+                                <option value="midHill">
+                                  ดอยใกล้ / แม่ริม / ม่อนแจ่ม (฿{(vehicle?.zoneRates?.midHill ?? vehicle?.zoneRates?.city ?? 0).toLocaleString()}/วัน)
+                                </option>
+                                <option value="highHill">
+                                  ดอยสูง / อินทนนท์ / อ่างขาง (฿{(vehicle?.zoneRates?.highHill ?? vehicle?.zoneRates?.city ?? 0).toLocaleString()}/วัน)
+                                </option>
+                                <option value="crossProvince">
+                                  ข้ามจังหวัด / ทางไกล (฿{(vehicle?.zoneRates?.crossProvince ?? vehicle?.zoneRates?.highHill ?? vehicle?.zoneRates?.city ?? 0).toLocaleString()}/วัน)
+                                </option>
+                              </select>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Cancellation & Guarantee Policy Trust Card */}
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200 dark:border-slate-700 text-xs space-y-2">
+                  <div className="flex items-start gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">verified_user</span>
+                    <div>
+                      <span className="font-bold text-slate-900 dark:text-white block">{t('guarantee.refundTitle')}</span>
+                      <p className="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">{t('guarantee.refundDesc')}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700">
+                    <span className="material-symbols-outlined text-[18px] text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">handshake</span>
+                    <div>
+                      <span className="font-bold text-slate-900 dark:text-white block">{t('guarantee.replacementTitle')}</span>
+                      <p className="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">{t('guarantee.replacementDesc')}</p>
+                    </div>
+                  </div>
+                </div>
+
                 {errorMessage && (
                   <div className="p-2.5 bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
@@ -517,8 +626,22 @@ const DepositPaymentModalContent: React.FC<DepositPaymentModalProps> = ({
                 </div>
 
                 {/* Policy Notice Box */}
-                <div className="p-3 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs rounded-none text-left leading-relaxed">
-                  🌿 เพื่อความพร้อมในการเตรียมรถและการล็อกคิวงานของคนขับ ค่าบริการระบบไม่สามารถขอคืนเป็นเงินสดได้ แต่หากท่านมีความจำเป็นต้องปรับเปลี่ยนแผน สามารถแจ้งขอเลื่อนวันเดินทางได้ฟรี 1 ครั้ง (ภายในระยะเวลา 60 วัน)
+                {/* Policy Notice Box: 100% Refund & Vehicle Replacement Guarantee */}
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs space-y-2 text-left">
+                  <div className="flex items-start gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">verified_user</span>
+                    <div>
+                      <span className="font-bold text-slate-900 dark:text-white block">{t('guarantee.refundTitle')}</span>
+                      <p className="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">{t('guarantee.refundDesc')}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700">
+                    <span className="material-symbols-outlined text-[18px] text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">handshake</span>
+                    <div>
+                      <span className="font-bold text-slate-900 dark:text-white block">{t('guarantee.replacementTitle')}</span>
+                      <p className="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">{t('guarantee.replacementDesc')}</p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Polling Radar indicator */}

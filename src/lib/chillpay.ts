@@ -25,6 +25,20 @@ export interface ChillPayPaymentResponse {
   qrImage?: string;
   rawPayload?: Record<string, unknown>;
 }
+export interface ChillPayInquiryParams {
+  orderNo: string;
+  transactionId?: string;
+}
+
+export interface ChillPayInquiryResponse {
+  isPaid: boolean;
+  status: number;
+  code: number;
+  message: string;
+  transactionId?: string;
+  paidAmount?: number;
+  rawPayload?: Record<string, unknown>;
+}
 
 export interface ChillPayWebhookPayload {
   TransactionId?: string | number;
@@ -225,6 +239,94 @@ export async function createChillPayPayment(
       status: 1,
       code: 500,
       message: `Failed to connect to ChillPay: ${errMsg}`,
+    };
+  }
+}
+
+/**
+ * Inquires transaction status directly from ChillPay Payment Gateway.
+ * Used as a fallback when webhook callbacks are delayed.
+ */
+export async function inquireChillPayTransaction(
+  params: ChillPayInquiryParams,
+  overrideConfig?: Partial<ChillPayConfig>
+): Promise<ChillPayInquiryResponse> {
+  const config = { ...getChillPayConfig(), ...overrideConfig };
+  if (!config.merchantCode || !config.apiKey || !config.md5Secret) {
+    return {
+      isPaid: false,
+      status: 1,
+      code: 400,
+      message: 'ChillPay credentials are not configured',
+    };
+  }
+
+  const endpoint =
+    config.environment === 'production'
+      ? 'https://appsrv.chillpay.co/api/v2/Payment/Inquiry'
+      : 'https://sandbox-appsrv2.chillpay.co/api/v2/Payment/Inquiry';
+
+  // CheckSum for Inquiry: MD5(MerchantCode + OrderNo + ApiKey + md5Secret)
+  const rawString = `${config.merchantCode}${params.orderNo}${config.apiKey}${config.md5Secret}`;
+  const checkSum = crypto.createHash('md5').update(rawString).digest('hex').toLowerCase();
+
+  const requestBody = {
+    MerchantCode: config.merchantCode,
+    OrderNo: params.orderNo,
+    TransactionId: params.transactionId,
+    ApiKey: config.apiKey,
+    CheckSum: checkSum,
+  };
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!res.ok) {
+      return {
+        isPaid: false,
+        status: 1,
+        code: res.status,
+        message: `HTTP error ${res.status}`,
+      };
+    }
+
+    const data = await res.json();
+    const code = Number(data.Code ?? data.code ?? 0);
+    const status = Number(data.Status ?? data.status ?? 0);
+    const paymentStatus = String(data.PaymentStatus || data.paymentStatus || '').toLowerCase();
+
+    // Code 200 or Status 0, or paymentStatus 'paid' / 'success' indicates paid
+    const isPaid =
+      (code === 200 || status === 0 || paymentStatus === 'paid' || paymentStatus === 'success') &&
+      code !== 400 &&
+      code !== 500;
+    const transactionId = String(data.TransactionId || data.transactionId || params.transactionId || '');
+    const paidAmount = Number(data.Amount || data.amount || 0);
+
+    return {
+      isPaid,
+      status,
+      code,
+      message: data.Message || data.message || (isPaid ? 'Payment confirmed' : 'Pending payment'),
+      transactionId: transactionId || undefined,
+      paidAmount: paidAmount > 0 ? (paidAmount > 1000 ? paidAmount / 100 : paidAmount) : undefined,
+      rawPayload: data,
+    };
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.warn('[ChillPay Inquiry Exception]:', errMsg);
+    return {
+      isPaid: false,
+      status: 1,
+      code: 500,
+      message: `Inquiry network error: ${errMsg}`,
     };
   }
 }

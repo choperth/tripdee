@@ -170,6 +170,44 @@ export function generateDateRange(startIso: string, endIso: string): string[] {
   return result;
 }
 
+/**
+ * Calculates all trip dates as an array of 'YYYY-MM-DD' strings.
+ * Given a start travelDate string (ISO or parseable) and totalDays.
+ */
+export function calculateTripDates(travelDateStr: string, totalDays: number = 1): string[] {
+  const validDays = Math.max(1, Number(totalDays) || 1);
+  if (!travelDateStr || typeof travelDateStr !== 'string') return [];
+  const trimmed = travelDateStr.trim();
+  if (!trimmed) return [];
+
+  // 1. Try ISO string match YYYY-MM-DD
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    const y = parseInt(isoMatch[1], 10);
+    const m = parseInt(isoMatch[2], 10) - 1;
+    const d = parseInt(isoMatch[3], 10);
+    const dates: string[] = [];
+    for (let i = 0; i < validDays; i++) {
+      const curr = new Date(y, m, d + i);
+      dates.push(toISODateString(curr));
+    }
+    return dates;
+  }
+
+  // 2. Fallback parse
+  const parsed = new Date(trimmed);
+  if (!isNaN(parsed.getTime())) {
+    const dates: string[] = [];
+    for (let i = 0; i < validDays; i++) {
+      const curr = new Date(parsed.getTime() + i * 86400000);
+      dates.push(toISODateString(curr));
+    }
+    return dates;
+  }
+
+  return [];
+}
+
 const THAI_MONTHS_MAP: Record<string, number> = {
   'ม.ค.': 0, 'มกรา': 0, 'มกราคม': 0,
   'ก.พ.': 1, 'กุมภา': 1, 'กุมภาพันธ์': 1,

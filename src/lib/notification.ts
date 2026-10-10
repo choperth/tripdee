@@ -4,7 +4,9 @@
  */
 import { BoardJobPayload, sendLineBoardJobNotification } from './lineNotification';
 import { formatWhatsAppLink } from './contactUtils';
-
+import { Booking } from './supabase/types';
+import { fetchVehicleById } from './supabase/service';
+import { sendPushToDrivers } from './pushService';
 export interface QuotationLeadPayload {
   companyName: string;
   phone: string;
@@ -340,4 +342,64 @@ export async function sendVehicleNotification(v: VehicleNotificationPayload): Pr
     `👤 *ดำเนินการโดย:* ${v.source === 'driver' ? 'คนขับ' : v.source === 'admin' ? 'แอดมิน' : 'ระบบ'}`;
 
   return sendTelegramMessage(text);
+}
+
+/**
+ * Sends comprehensive direct notifications to Driver, Admin, LINE, and Web Push
+ * when a deposit payment is confirmed (via Webhook or Inquiry Fallback).
+ */
+export async function sendBookingSuccessNotifications(booking: Booking): Promise<void> {
+  try {
+    const vehicle = booking.vehicleId ? await fetchVehicleById(booking.vehicleId) : null;
+    const driverName = vehicle?.driverName || vehicle?.driverNickname || 'คนขับ TripDee';
+    const driverPhone = vehicle?.driverPhone || '-';
+
+    // 1. Telegram Dispatch to Admin & Dispatch Channel
+    const text =
+      `🎉 *[TripDee: มีคิวจองและมัดจำสำเร็จใหม่!]*\n\n` +
+      `🆔 *Order No:* \`${escapeTg(booking.id)}\`\n` +
+      `👤 *ลูกค้า:* ${escapeTg(booking.customerName)}\n` +
+      `📞 *โทร:* [${booking.customerPhone}](tel:${booking.customerPhone})\n` +
+      (booking.customerLine ? `💬 *LINE:* ${escapeTg(booking.customerLine)}\n` : '') +
+      `📅 *วันเดินทาง:* ${escapeTg(booking.travelDate)} (${booking.totalDays} วัน)\n` +
+      `📍 *เส้นทาง:* ${escapeTg(booking.route)}\n` +
+      `💰 *มัดจำแล้ว:* ฿${booking.depositAmount.toLocaleString()} บ.\n` +
+      `💵 *คงเหลือเก็บหน้างาน:* ฿${booking.remainingAmount.toLocaleString()} บ.\n\n` +
+      `🚐 *คนขับเจ้าของรถ:*\n` +
+      `👤 *ชื่อ:* ${escapeTg(driverName)}\n` +
+      `📞 *โทรตรงคนขับ:* [${driverPhone}](tel:${driverPhone})\n` +
+      `🚘 *รถ:* ${escapeTg(vehicle?.title || '-')}\n` +
+      (vehicle?.plateNumber ? `🔢 *ทะเบียน:* ${escapeTg(vehicle.plateNumber)}\n` : '') +
+      `\n🔔 *โปรดประสานงานคนขับทันทีเพื่อยืนยันเวลานัดหมาย*`;
+
+    await sendTelegramMessage(text);
+
+    // 2. Direct Driver Alert via Web Push
+    sendPushToDrivers({
+      title: `🎉 มีคิวจองรถสำเร็จ! (${booking.route})`,
+      body: `คนขับ: ${driverName} • วันที่ ${booking.travelDate} • มัดจำแล้ว ฿${booking.depositAmount.toLocaleString()} บ.`,
+      url: `/booking-confirmation?bookingId=${encodeURIComponent(booking.id)}`,
+      tag: `booking-paid-${booking.id}`,
+    }).catch((err) => console.error('[Push Booking Error]:', err));
+
+    // 3. Dispatch to LINE Dispatcher
+    await sendLineBoardJobNotification({
+      id: booking.id,
+      type: 'request',
+      title: `🎉 รถได้รับคิวจองใหม่! มัดจำ ฿${booking.depositAmount.toLocaleString()} (${booking.route})`,
+      date: booking.travelDate,
+      days: booking.totalDays,
+      seats: vehicle?.seats || 10,
+      price: booking.totalPrice,
+      priceNote: `มัดจำแล้ว ฿${booking.depositAmount.toLocaleString()} | เหลือจ่ายคนขับ ฿${booking.remainingAmount.toLocaleString()}`,
+      authorName: booking.customerName,
+      authorPhone: booking.customerPhone,
+      authorLine: booking.customerLine || undefined,
+      detail: `คนขับ: ${driverName} (${driverPhone}) ทะเบียน: ${vehicle?.plateNumber || '-'} ยืนยันการล็อกคิวรถเรียบร้อย!`,
+      category: 'general',
+      isNegotiable: false,
+    }).catch((lineErr) => console.error('[LINE Booking Dispatch Error]:', lineErr));
+  } catch (err) {
+    console.error('[sendBookingSuccessNotifications Error]:', err);
+  }
 }

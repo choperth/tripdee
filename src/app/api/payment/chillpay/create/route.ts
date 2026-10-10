@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createBooking } from '@/lib/supabase/service';
+import { createBooking, fetchVehicleById } from '@/lib/supabase/service';
 import { createChillPayPayment, getChillPayConfig } from '@/lib/chillpay';
 import { validateHoneypot } from '@/lib/honeypot';
+import { calculateTripDates } from '@/lib/availabilityUtils';
 
 interface CreatePaymentRequestBody {
   vehicleId?: string;
@@ -36,11 +37,31 @@ export async function POST(req: NextRequest) {
     }
 
     const totalDays = Math.max(1, Number(body.totalDays) || 1);
+
+    // Pre-check for Double-Booking & Conflict
+    if (body.vehicleId) {
+      const vehicle = await fetchVehicleById(body.vehicleId);
+      if (vehicle) {
+        const tripDates = calculateTripDates(body.travelDate, totalDays);
+        const vehicleBusyDates = Array.isArray(vehicle.busyDates) ? vehicle.busyDates : [];
+        const hasConflict = tripDates.some((date) => vehicleBusyDates.includes(date));
+
+        if (hasConflict) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'ขออภัย รถคันนี้ติดคิวจองในวันที่เลือกแล้ว กรุณาเลือกวันอื่นหรือเลือกรถคันอื่นในฟลีต',
+            },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     // Security (CWE-20 / Tamper-proofing): Always calculate deposit strictly on server (100 THB/day)
     const depositAmount = totalDays * 100;
     const totalPrice = Math.max(depositAmount, Number(body.totalPrice) || 0);
     const remainingAmount = Math.max(0, totalPrice - depositAmount);
-
     // Generate unique order ID TD-BK-YYYYMMDD-XXXX
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randSuffix = Math.floor(1000 + Math.random() * 9000);

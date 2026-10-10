@@ -1,6 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getBookingById } from '@/lib/supabase/service';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
+import { NextRequest, NextResponse } from 'next/server';
+import { getBookingById, updateBookingPayment } from '@/lib/supabase/service';
+import { inquireChillPayTransaction } from '@/lib/chillpay';
+import { sendBookingSuccessNotifications } from '@/lib/notification';
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -20,6 +24,50 @@ export async function GET(req: NextRequest) {
         { success: false, error: 'Booking not found' },
         { status: 404 }
       );
+    }
+    // If pending for more than 15 seconds, trigger inquiry fallback directly with ChillPay gateway
+    if (booking.paymentStatus === 'pending') {
+      const createdAtMs = new Date(booking.createdAt).getTime();
+      const elapsedSec = (Date.now() - createdAtMs) / 1000;
+
+      if (elapsedSec >= 15) {
+        try {
+          const inquiryRes = await inquireChillPayTransaction({
+            orderNo: booking.id,
+            transactionId: booking.chillpayTransactionId || undefined,
+          });
+
+          if (inquiryRes.isPaid) {
+            console.info(`[ChillPay Status Inquiry Fallback]: Payment confirmed for ${booking.id} directly from gateway!`);
+            const paidAt = new Date().toISOString();
+            const updatedBooking = await updateBookingPayment(booking.id, {
+              paymentStatus: 'paid',
+              chillpayTransactionId: inquiryRes.transactionId || booking.chillpayTransactionId,
+              isContactUnlocked: true,
+              paidAt,
+            });
+
+            if (updatedBooking) {
+              sendBookingSuccessNotifications(updatedBooking).catch((e) =>
+                console.error('[Inquiry Fallback Notification Error]:', e)
+              );
+            }
+
+            return NextResponse.json({
+              success: true,
+              bookingId: booking.id,
+              paymentStatus: 'paid',
+              isPaid: true,
+              isContactUnlocked: true,
+              paidAt,
+              chillpayTransactionId: inquiryRes.transactionId || booking.chillpayTransactionId || null,
+              depositAmount: booking.depositAmount,
+            });
+          }
+        } catch (inquiryErr) {
+          console.warn('[ChillPay Status Inquiry Warning]:', inquiryErr);
+        }
+      }
     }
 
     // Security (CWE-200 / PDPA): Only expose necessary payment polling status, never return raw customer phone or full PII

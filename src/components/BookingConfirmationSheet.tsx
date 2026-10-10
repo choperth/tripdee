@@ -893,6 +893,7 @@ export const BookingConfirmationSheet: React.FC<BookingConfirmationSheetProps> =
             <li>{t('sheet.std1')}</li>
             <li>{t('sheet.std2')}</li>
             <li>{t('sheet.std3')}</li>
+            <li className="font-bold text-slate-900">{t('sheet.cancellationTerms')}</li>
           </ul>
         </div>
 
