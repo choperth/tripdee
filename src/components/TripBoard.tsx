@@ -31,6 +31,7 @@ import {
   getMyBoardPostToken,
   buildMagicLink,
 } from '@/lib/boardStorage';
+import { broadcastDataSync } from '@/lib/syncEvents';
 
 interface PostFormState {
   type: BoardPostType;
@@ -355,6 +356,7 @@ export const TripBoard: React.FC = () => {
         link: buildMagicLink(serverPost.id, finalToken),
       });
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
+      broadcastDataSync('board');
     } catch (err) {
       console.debug('Failed to persist post to server/Supabase:', err);
       saveMyBoardPost(post.id, generatedToken, post.pin, post.title);
@@ -459,6 +461,7 @@ export const TripBoard: React.FC = () => {
         )
       );
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
+      broadcastDataSync('board');
       setTimeout(() => {
         setQuoteDriverPost(null);
         setQuoteSubmitSuccess('');

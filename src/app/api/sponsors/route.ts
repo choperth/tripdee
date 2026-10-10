@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchSponsors, saveSponsor, updateSponsor, deleteSponsor } from '@/lib/supabase/service';
 import { verifyAdminAccess, unauthorizedAdminResponse } from '@/lib/authGuard';

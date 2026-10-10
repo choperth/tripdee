@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
+import { broadcastDataSync } from '@/lib/syncEvents';
 import type { DictKey } from '@/i18n/dictionaries';
 import {
   ShieldCheck,
@@ -321,6 +322,7 @@ export const DriverRegisterModal: React.FC<DriverRegisterModalProps> = ({
       }
 
       setSubmitted(true);
+      broadcastDataSync('drivers', 'create');
     } catch (err) {
       console.error('Submit driver error:', err);
       alert(t('reg.errNetwork'));

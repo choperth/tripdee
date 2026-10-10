@@ -8,6 +8,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
 import { AdminAlert } from './AdminAlert';
 import { adminFetch } from '@/lib/adminClient';
+import { broadcastDataSync } from '@/lib/syncEvents';
 import type { LeadFeeStatus, OrgType, VehicleTier } from '@/lib/b2b';
 import {
   LEAD_FEE_PER_CAR,
@@ -99,6 +100,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
         body: JSON.stringify({ id: quote.id, status }),
       });
       onRefresh();
+      broadcastDataSync('quotes');
     } catch (err) {
       setActionError((err as Error).message);
       console.error('Error updating quote status:', err);
@@ -116,6 +118,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
       });
       setDeletingQuote(null);
       onRefresh();
+      broadcastDataSync('quotes');
     } catch (err) {
       setDeletingQuote(null);
       setActionError((err as Error).message);
@@ -161,6 +164,7 @@ export const AdminQuoteTab: React.FC<AdminQuoteTabProps> = ({ quotes, onRefresh 
       });
       setEditingQuote(null);
       onRefresh();
+      broadcastDataSync('quotes');
     } catch (err) {
       setActionError((err as Error).message);
       console.error('Error updating quote:', err);

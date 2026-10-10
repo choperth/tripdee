@@ -8,6 +8,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
 import { AdminAlert } from './AdminAlert';
 import { adminFetch } from '@/lib/adminClient';
+import { broadcastDataSync } from '@/lib/syncEvents';
 
 interface AdminVehicleTabProps {
   vehicles: Vehicle[];
@@ -111,6 +112,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
       });
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
+      broadcastDataSync('vehicles');
     } catch (err) {
       setActionError((err as Error).message);
       console.error('Error toggling verified:', err);
@@ -131,6 +133,7 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
       });
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
+      broadcastDataSync('vehicles');
     } catch (err) {
       setActionError((err as Error).message);
       console.error('Error reviewing vehicle:', err);
@@ -151,8 +154,8 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
       setDeletingVehicle(null);
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
+      broadcastDataSync('vehicles');
     } catch (err) {
-      // Close the modal so the failure banner is visible, and keep the vehicle.
       setDeletingVehicle(null);
       setActionError((err as Error).message);
       console.error('Error deleting vehicle:', err);
@@ -215,10 +218,10 @@ export const AdminVehicleTab: React.FC<AdminVehicleTabProps> = ({ vehicles, onRe
       setIsNewModalOpen(false);
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
+      broadcastDataSync('vehicles');
     } catch (err) {
       setActionError((err as Error).message);
       console.error('Error saving vehicle:', err);
-    } finally {
       setIsSubmitting(false);
     }
   };

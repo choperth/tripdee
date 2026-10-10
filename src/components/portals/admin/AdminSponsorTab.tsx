@@ -7,6 +7,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
 import { AdminAlert } from './AdminAlert';
 import { adminFetch } from '@/lib/adminClient';
+import { broadcastDataSync } from '@/lib/syncEvents';
 
 interface AdminSponsorTabProps {
   sponsors: Sponsor[];
@@ -78,6 +79,7 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
       });
       setDeletingSponsor(null);
       onRefresh();
+      broadcastDataSync('sponsors');
     } catch (err) {
       setDeletingSponsor(null);
       setActionError((err as Error).message);
@@ -115,6 +117,7 @@ export const AdminSponsorTab: React.FC<AdminSponsorTabProps> = ({
       setEditingSponsor(null);
       setIsNewModalOpen(false);
       onRefresh();
+      broadcastDataSync('sponsors');
     } catch (err) {
       setActionError((err as Error).message);
       console.error('Error saving sponsor:', err);

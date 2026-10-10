@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchQuotations, saveQuotation, updateQuotation, deleteQuotation } from '@/lib/supabase/service';
 import type { QuotationLead } from '@/lib/leadsStore';
@@ -9,6 +12,7 @@ import {
 } from '@/lib/b2b';
 import { getDriverSession, verifyAdminAccess, unauthorizedAdminResponse } from '@/lib/authGuard';
 import { validateHoneypot } from '@/lib/honeypot';
+import { sendQuotationNotification, sendTelegramMessage, escapeTg } from '@/lib/notification';
 
 export async function GET(req: NextRequest) {
   // Security (CWE-200 / PDPA): admins see all rows; customers only see rows
@@ -85,6 +89,16 @@ export async function POST(req: NextRequest) {
         : undefined,
     });
 
+    // Dispatch notification to Telegram & Discord
+    sendQuotationNotification({
+      companyName: newLead.companyName,
+      phone: newLead.phone,
+      travelDate: newLead.travelDate,
+      passengers: newLead.passengers,
+      needsTaxInvoice: newLead.needsTaxInvoice,
+      details: `${newLead.route} (${newLead.carCount} คัน • ${newLead.vehicleTier}) วันที่ ${newLead.travelDate}`,
+    }).catch((err) => console.error('[Notification Quote Error]:', err));
+
     return NextResponse.json({
       success: true,
       message: 'บันทึกคำขอใบเสนอราคาเรียบร้อยแล้ว เจ้าหน้าที่จะติดต่อกลับภายใน 15 นาที',
@@ -141,6 +155,18 @@ export async function PUT(req: NextRequest) {
     if (!updated) {
       return NextResponse.json({ error: 'Quotation not found' }, { status: 404 });
     }
+
+    // Dispatch Telegram alert for admin quote updates
+    sendTelegramMessage(
+      `📝 *[TripDee: แอดมินอัปเดตใบเสนอราคา]*\n\n` +
+      `🆔 *รหัส:* \`${escapeTg(updated.id)}\`\n` +
+      `🏢 *บริษัท:* ${escapeTg(updated.companyName)}\n` +
+      `📊 *สถานะ:* \`${updated.status}\`\n` +
+      `💰 *ยอดประเมิน:* ฿${updated.estimatedPrice.toLocaleString()}\n` +
+      `🚗 *จำนวนรถ:* ${updated.carCount} คัน\n` +
+      (updated.assignedPartner ? `🤝 *พาร์ตเนอร์ที่จ่ายงาน:* ${escapeTg(updated.assignedPartner)}\n` : '') +
+      `🕒 *เวลา:* ${escapeTg(new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }))}`
+    ).catch((err) => console.error('[Notification Quote Update Error]:', err));
 
     return NextResponse.json({ success: true, quotation: updated });
   } catch (err) {

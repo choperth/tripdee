@@ -7,6 +7,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
 import { AdminAlert } from './AdminAlert';
 import { adminFetch } from '@/lib/adminClient';
+import { broadcastDataSync } from '@/lib/syncEvents';
 import { isBoardPostExpired } from '@/lib/availabilityUtils';
 import { copyTextToClipboard } from '@/lib/b2b';
 
@@ -81,6 +82,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
       });
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
+      broadcastDataSync('board');
     } catch (err) {
       setActionError((err as Error).message);
       console.error('Error toggling post verified:', err);
@@ -99,6 +101,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
       setDeletingPost(null);
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
+      broadcastDataSync('board');
     } catch (err) {
       // Close the modal so the failure banner is visible, and keep the post.
       setDeletingPost(null);
@@ -145,6 +148,7 @@ export const AdminBoardTab: React.FC<AdminBoardTabProps> = ({ posts, onRefresh }
       setEditingPost(null);
       onRefresh();
       window.dispatchEvent(new CustomEvent('tripdee-board-updated'));
+      broadcastDataSync('board');
     } catch (err) {
       setActionError((err as Error).message);
       console.error('Error updating board post:', err);

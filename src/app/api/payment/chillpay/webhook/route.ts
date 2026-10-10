@@ -1,7 +1,11 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextRequest, NextResponse } from 'next/server';
 import { updateBookingPayment, getBookingById } from '@/lib/supabase/service';
 import { verifyChillPayWebhookChecksum, getChillPayConfig, ChillPayWebhookPayload } from '@/lib/chillpay';
 import { sendLineBoardJobNotification } from '@/lib/lineNotification';
+import { sendTelegramMessage, escapeTg } from '@/lib/notification';
 
 export async function POST(req: NextRequest) {
   try {
@@ -110,6 +114,19 @@ export async function POST(req: NextRequest) {
       } catch (lineErr) {
         console.error('[ChillPay Webhook LINE Dispatch Exception]:', lineErr);
       }
+
+      // 5. Send Telegram Notification
+      sendTelegramMessage(
+        `💳 *[TripDee: ชำระมัดจำล็อกคิวสำเร็จ]*\n\n` +
+        `🆔 *Order No:* \`${escapeTg(orderNo)}\`\n` +
+        `💰 *ยอดมัดจำ:* ฿${booking.depositAmount.toLocaleString()} บาท\n` +
+        `💵 *คงเหลือจ่ายคนขับ:* ฿${booking.remainingAmount.toLocaleString()} บาท\n` +
+        `👤 *ลูกค้า:* ${escapeTg(booking.customerName)}\n` +
+        `📞 *โทร:* [${booking.customerPhone}](tel:${booking.customerPhone})\n` +
+        `📅 *วันเดินทาง:* ${escapeTg(booking.travelDate)} (${booking.totalDays} วัน)\n` +
+        `📍 *เส้นทาง:* ${escapeTg(booking.route)}\n` +
+        `🎉 ปลดล็อกเบอร์โทรและยืนยันคิวเรียบร้อยแล้ว`
+      ).catch((err) => console.error('[Notification Payment Telegram Error]:', err));
 
       console.info(`[ChillPay Webhook SUCCESS]: Order ${orderNo} marked as paid`);
       return NextResponse.json({ status: 200, message: 'Success' }, { status: 200 });

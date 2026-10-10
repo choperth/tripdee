@@ -20,6 +20,7 @@ import {
   orgTypeLabel,
   tierMetaFor,
 } from '@/lib/b2b';
+import { broadcastDataSync } from '@/lib/syncEvents';
 
 interface CorporateSectionProps {
   vehicles?: Vehicle[];
@@ -166,6 +167,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
         carCount,
       });
       await refreshQuotations();
+      broadcastDataSync('quotes', 'create');
     } catch (err) {
       console.error('Failed to post quotation:', err);
       setIsSubmitting(false);
@@ -210,6 +212,7 @@ export const CorporateSection: React.FC<CorporateSectionProps> = ({ vehicles: pr
     } catch (err) {
       console.error('Failed to post board request:', err);
     } finally {
+      broadcastDataSync('board', 'create');
       setIsSubmitting(false);
       setSubmitted(true);
     }

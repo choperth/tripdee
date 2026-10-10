@@ -11,6 +11,7 @@ import { Vehicle } from '@/data/mockData';
 import { DEFAULT_VEHICLE_TERMS, encodeRateNoteWithTerms, parseVehicleTerms } from '@/lib/vehicleTerms';
 import { toISODateString, generateDateRange } from '@/lib/availabilityUtils';
 import { DriverSmartECardModal } from '@/components/cards/DriverSmartECardModal';
+import { broadcastDataSync } from '@/lib/syncEvents';
 
 export interface DriverPortalContentProps {
   isModal?: boolean;
@@ -153,6 +154,8 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
         }
         setOwnVehicle(data.vehicle);
         setApprovalStatus(data.vehicle.approvalStatus || '');
+        window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
+        broadcastDataSync('vehicles', 'update');
       } else {
         // No vehicle submitted yet, so there is nothing to publish a state to.
         throw new Error('กรุณาบันทึกข้อมูลรถก่อนจึงจะเปลี่ยนสถานะการรับงานได้');
@@ -571,7 +574,8 @@ export const DriverPortalContent: React.FC<DriverPortalContentProps> = ({
         return [data.vehicle, ...prev];
       });
       setIsAddingNewVehicle(false);
-
+      window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
+      broadcastDataSync('vehicles', vehicleId ? 'update' : 'create');
       // Mirror into the local profile so the navbar and portal header render
       // correctly without another round trip.
       updateDriverProfile({

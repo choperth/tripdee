@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextRequest, NextResponse } from 'next/server';
 import {
   fetchVehicles,
@@ -17,6 +20,7 @@ import {
   getDriverSession,
   unauthorizedDriverResponse,
 } from '@/lib/authGuard';
+import { sendVehicleNotification } from '@/lib/notification';
 
 /**
  * Fields a driver is allowed to write on their own vehicle.
@@ -275,6 +279,18 @@ export async function POST(req: NextRequest) {
     };
 
     const saved = await saveVehicle(newVehicleData);
+
+    // Dispatch Telegram notification
+    sendVehicleNotification({
+      action: 'registered',
+      vehicleId: saved.id,
+      title: saved.title,
+      driverName: saved.driverName,
+      driverPhone: saved.driverPhone,
+      plateNumber: saved.plateNumber,
+      source: isAdmin ? 'admin' : 'driver',
+    }).catch((err) => console.error('[Notification Vehicle Register Error]:', err));
+
     return NextResponse.json({ success: true, vehicle: saved });
   } catch (err) {
     console.error('[TripDee Vehicles] Failed to create vehicle:', err);
@@ -322,6 +338,17 @@ export async function PUT(req: NextRequest) {
       if (!reviewed) {
         return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 });
       }
+
+      sendVehicleNotification({
+        action: body.approvalStatus === 'approved' ? 'approved' : 'rejected',
+        vehicleId: reviewed.id,
+        title: reviewed.title,
+        driverName: reviewed.driverName,
+        driverPhone: reviewed.driverPhone,
+        plateNumber: reviewed.plateNumber,
+        source: 'admin',
+      }).catch((err) => console.error('[Notification Vehicle Review Error]:', err));
+
       return NextResponse.json({ success: true, vehicle: reviewed });
     }
 
@@ -330,6 +357,16 @@ export async function PUT(req: NextRequest) {
       if (!updated) {
         return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 });
       }
+      sendVehicleNotification({
+        action: 'updated',
+        vehicleId: updated.id,
+        title: updated.title,
+        driverName: updated.driverName,
+        driverPhone: updated.driverPhone,
+        plateNumber: updated.plateNumber,
+        source: 'admin',
+      }).catch((err) => console.error('[Notification Vehicle Update Error]:', err));
+
       return NextResponse.json({ success: true, vehicle: updated });
     }
 
@@ -352,6 +389,19 @@ export async function PUT(req: NextRequest) {
     // First-time submissions still gate through admin approval in POST, and
     // admins keep full authority to reject or suspend from the admin console.
     const updated = await updateVehicle(String(body.id), patches);
+    if (!updated) {
+      return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 });
+    }
+    sendVehicleNotification({
+      action: 'updated',
+      vehicleId: updated.id,
+      title: updated.title,
+      driverName: updated.driverName,
+      driverPhone: updated.driverPhone,
+      plateNumber: updated.plateNumber,
+      source: 'driver',
+    }).catch((err) => console.error('[Notification Vehicle Update Error]:', err));
+
     return NextResponse.json({ success: true, vehicle: updated });
   } catch (err) {
     return NextResponse.json(
@@ -406,6 +456,14 @@ export async function DELETE(req: NextRequest) {
     }
 
     const ok = await deleteVehicle(String(id));
+    if (ok) {
+      sendVehicleNotification({
+        action: 'deleted',
+        vehicleId: String(id),
+        title: `Vehicle ${id}`,
+        source: isAdmin ? 'admin' : 'driver',
+      }).catch((err) => console.error('[Notification Vehicle Delete Error]:', err));
+    }
     return NextResponse.json({ success: ok });
   } catch (err) {
     return NextResponse.json(

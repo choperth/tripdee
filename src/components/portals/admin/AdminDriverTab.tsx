@@ -16,6 +16,7 @@ import {
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AdminDeleteModal } from './AdminDeleteModal';
+import { broadcastDataSync } from '@/lib/syncEvents';
 import { AdminAlert } from './AdminAlert';
 import { adminFetch } from '@/lib/adminClient';
 
@@ -90,6 +91,7 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
       });
       setDeletingDriver(null);
       onRefresh();
+      broadcastDataSync('drivers');
     } catch (err) {
       setDeletingDriver(null);
       setActionError((err as Error).message);
@@ -126,6 +128,7 @@ export const AdminDriverTab: React.FC<AdminDriverTabProps> = ({
       });
       setEditingDriver(null);
       onRefresh();
+      broadcastDataSync('drivers');
     } catch (err) {
       setActionError((err as Error).message);
       console.error('Error updating driver lead:', err);

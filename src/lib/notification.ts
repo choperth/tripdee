@@ -66,34 +66,16 @@ export async function sendQuotationNotification(lead: QuotationLeadPayload) {
   }
 
   // 2. Telegram Bot
-  const tgToken = process.env.TELEGRAM_BOT_TOKEN;
-  const tgChatId = process.env.TELEGRAM_CHAT_ID;
-  if (tgToken && tgChatId) {
-    try {
-      const text =
-        `🔔 *มีลูกค้าขอใบเสนอราคาใหม่ (TripDee)*\n\n` +
-        `🏢 *บริษัท:* ${escapeTg(lead.companyName || '-')}\n` +
-        `📞 *โทร:* [${lead.phone}](tel:${lead.phone})\n` +
-        `📅 *วันเดินทาง:* ${escapeTg(lead.travelDate || '-')}\n` +
-        `👥 *ผู้โดยสาร:* ${escapeTg(lead.passengers || '-')} คน\n` +
-        `📑 *ใบกำกับภาษี:* ${lead.needsTaxInvoice ? 'ต้องการ' : 'ไม่ต้องการ'}\n` +
-        `📝 *รายละเอียด:* ${escapeTg(lead.details || '-')}`;
-
-      const res = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: tgChatId,
-          text,
-          parse_mode: 'Markdown',
-        }),
-      });
-      results.push({ channel: 'telegram', ok: res.ok });
-    } catch (e) {
-      console.error('[Notification] Telegram quote error:', e);
-      results.push({ channel: 'telegram', ok: false });
-    }
-  }
+  const tgText =
+    `🔔 *มีลูกค้าขอใบเสนอราคาใหม่ (TripDee)*\n\n` +
+    `🏢 *บริษัท:* ${escapeTg(lead.companyName || '-')}\n` +
+    `📞 *โทร:* [${lead.phone}](tel:${lead.phone})\n` +
+    `📅 *วันเดินทาง:* ${escapeTg(lead.travelDate || '-')}\n` +
+    `👥 *ผู้โดยสาร:* ${escapeTg(lead.passengers || '-')} คน\n` +
+    `📑 *ใบกำกับภาษี:* ${lead.needsTaxInvoice ? 'ต้องการ' : 'ไม่ต้องการ'}\n` +
+    `📝 *รายละเอียด:* ${escapeTg(lead.details || '-')}`;
+  const tgOk = await sendTelegramMessage(tgText);
+  results.push({ channel: 'telegram', ok: tgOk });
 
   // 3. Google Sheet Webhook
   const sheetUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
@@ -156,34 +138,16 @@ export async function sendDriverNotification(driver: DriverLeadPayload) {
   }
 
   // 2. Telegram Bot
-  const tgToken = process.env.TELEGRAM_BOT_TOKEN;
-  const tgChatId = process.env.TELEGRAM_CHAT_ID;
-  if (tgToken && tgChatId) {
-    try {
-      const text =
-        `🚗 *มีคนขับสมัครร่วมงานใหม่ (TripDee)*\n\n` +
-        `👤 *คนขับ:* ${escapeTg(driver.driverName)} (${escapeTg(driver.nickname)})\n` +
-        `📞 *โทร:* [${driver.phone}](tel:${driver.phone})\n` +
-        `💬 *LINE:* ${escapeTg(driver.lineId || '-')}\n` +
-        `🚘 *รถยนต์:* ${escapeTg(driver.vehicleModel)} (${driver.seats} ที่นั่ง)\n` +
-        `📍 *โซน:* ${escapeTg(driver.zone || 'เชียงใหม่')}\n` +
-        `✨ *ออปชัน:* ${escapeTg(driver.amenities || '-')}`;
-
-      const res = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: tgChatId,
-          text,
-          parse_mode: 'Markdown',
-        }),
-      });
-      results.push({ channel: 'telegram', ok: res.ok });
-    } catch (e) {
-      console.error('[Notification] Telegram driver error:', e);
-      results.push({ channel: 'telegram', ok: false });
-    }
-  }
+  const tgText =
+    `🚗 *มีคนขับสมัครร่วมงานใหม่ (TripDee)*\n\n` +
+    `👤 *คนขับ:* ${escapeTg(driver.driverName)} (${escapeTg(driver.nickname)})\n` +
+    `📞 *โทร:* [${driver.phone}](tel:${driver.phone})\n` +
+    `💬 *LINE:* ${escapeTg(driver.lineId || '-')}\n` +
+    `🚘 *รถยนต์:* ${escapeTg(driver.vehicleModel)} (${driver.seats} ที่นั่ง)\n` +
+    `📍 *โซน:* ${escapeTg(driver.zone || 'เชียงใหม่')}\n` +
+    `✨ *ออปชัน:* ${escapeTg(driver.amenities || '-')}`;
+  const tgOk = await sendTelegramMessage(tgText);
+  results.push({ channel: 'telegram', ok: tgOk });
 
   // 3. Google Sheet Webhook
   const sheetUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
@@ -305,6 +269,75 @@ export async function sendBoardJobNotification(post: BoardJobPayload) {
   return results;
 }
 
-function escapeTg(str: string): string {
+export function escapeTg(str: string): string {
   return str.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+}
+
+/**
+ * Sends a Markdown-formatted message to Telegram.
+ * Checks TELEGRAM_ADMIN_CHAT_ID -> TELEGRAM_CHAT_ID -> TELEGRAM_DRIVER_CHAT_ID.
+ */
+export async function sendTelegramMessage(text: string, customChatId?: string): Promise<boolean> {
+  const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+  const tgChatId =
+    customChatId ||
+    process.env.TELEGRAM_ADMIN_CHAT_ID ||
+    process.env.TELEGRAM_CHAT_ID ||
+    process.env.TELEGRAM_DRIVER_CHAT_ID;
+
+  if (!tgToken || !tgChatId) {
+    return false;
+  }
+
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: tgChatId,
+        text,
+        parse_mode: 'Markdown',
+      }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('[Notification] Telegram send error:', err);
+    return false;
+  }
+}
+
+export interface VehicleNotificationPayload {
+  action: 'registered' | 'approved' | 'rejected' | 'updated' | 'deleted';
+  vehicleId: string;
+  title: string;
+  driverName?: string;
+  driverPhone?: string;
+  plateNumber?: string;
+  source?: 'admin' | 'driver' | 'system';
+}
+
+export async function sendVehicleNotification(v: VehicleNotificationPayload): Promise<boolean> {
+  const actionEmoji =
+    v.action === 'approved' ? '✅' :
+    v.action === 'rejected' ? '❌' :
+    v.action === 'registered' ? '🚐' :
+    v.action === 'deleted' ? '🗑️' : '✏️';
+
+  const actionLabel =
+    v.action === 'approved' ? 'อนุมัติรถเรียบร้อย (แสดงบนเว็บแล้ว)' :
+    v.action === 'rejected' ? 'ปฏิเสธรถยนต์' :
+    v.action === 'registered' ? 'มีรถลงทะเบียนใหม่ในระบบ' :
+    v.action === 'deleted' ? 'ลบรถยนต์ออกจากระบบ' : 'อัปเดตข้อมูลรถยนต์';
+
+  const text =
+    `${actionEmoji} *[TripDee: ${actionLabel}]*\n\n` +
+    `🚘 *รถ:* ${escapeTg(v.title || '-')}\n` +
+    `🆔 *รหัส:* \`${escapeTg(v.vehicleId)}\`\n` +
+    (v.driverName ? `👤 *คนขับ:* ${escapeTg(v.driverName)}\n` : '') +
+    (v.driverPhone ? `📞 *โทร:* [${v.driverPhone}](tel:${v.driverPhone})\n` : '') +
+    (v.plateNumber ? `🔢 *ทะเบียน:* ${escapeTg(v.plateNumber)}\n` : '') +
+    `🕒 *เวลา:* ${escapeTg(new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }))}\n` +
+    `👤 *ดำเนินการโดย:* ${v.source === 'driver' ? 'คนขับ' : v.source === 'admin' ? 'แอดมิน' : 'ระบบ'}`;
+
+  return sendTelegramMessage(text);
 }

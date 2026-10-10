@@ -1,7 +1,11 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchDriverLeads, saveDriverLead, verifyDriverLead, updateDriverLead, deleteDriverLead } from '@/lib/supabase/service';
 import { validateHoneypot } from '@/lib/honeypot';
 import { verifyAdminAccess, unauthorizedAdminResponse, getDriverSession } from '@/lib/authGuard';
+import { sendDriverNotification, sendTelegramMessage, escapeTg } from '@/lib/notification';
 
 export async function GET(req: NextRequest) {
   // Security (CWE-200 / PDPA): Driver registration list contains driver names, phone numbers, and documents.
@@ -41,6 +45,13 @@ export async function POST(req: NextRequest) {
         return unauthorizedAdminResponse('Unauthorized: Only administrators can approve driver verification');
       }
       const ok = await verifyDriverLead(String(body.id));
+      if (ok) {
+        sendTelegramMessage(
+          `✅ *[TripDee: แอดมินอนุมัติคนขับพาร์ตเนอร์แล้ว]*\n\n` +
+          `🆔 *รหัส:* \`${escapeTg(String(body.id))}\`\n` +
+          `🎉 รถยนต์ได้รับการอนุมัติและเปิดให้ผู้โดยสารค้นหาได้บนหน้าเว็บแล้ว`
+        ).catch((err) => console.error('[Notification Driver Approve Error]:', err));
+      }
       return NextResponse.json({ success: ok });
     }
 
@@ -86,6 +97,18 @@ export async function POST(req: NextRequest) {
       images: Array.isArray(body.images) ? body.images.filter(Boolean).slice(0, 4) : undefined,
     });
 
+    // Dispatch notification to Telegram & Discord
+    sendDriverNotification({
+      driverName: newDriver.driverName,
+      nickname: newDriver.nickname,
+      phone: newDriver.phone,
+      lineId: newDriver.lineId,
+      vehicleModel: newDriver.vehicleModel,
+      seats: newDriver.seats,
+      zone: newDriver.pickupLocation || newDriver.routes,
+      amenities: newDriver.amenities,
+    }).catch((err) => console.error('[Notification Driver Error]:', err));
+
     return NextResponse.json({
       success: true,
       message: 'ลงทะเบียนคนขับพาร์ตเนอร์สำเร็จ ข้อมูลพร้อมเผยแพร่บนระบบเรียบร้อยแล้ว',
@@ -113,6 +136,16 @@ export async function PUT(req: NextRequest) {
     if (!updated) {
       return NextResponse.json({ error: 'Driver lead not found' }, { status: 404 });
     }
+
+    // Dispatch Telegram alert for admin driver lead updates
+    sendTelegramMessage(
+      `✏️ *[TripDee: แอดมินอัปเดตข้อมูลคนขับ]*\n\n` +
+      `🆔 *รหัส:* \`${escapeTg(updated.id)}\`\n` +
+      `👤 *คนขับ:* ${escapeTg(updated.driverName)} (${escapeTg(updated.nickname)})\n` +
+      `📞 *โทร:* [${updated.phone}](tel:${updated.phone})\n` +
+      `🚘 *รุ่นรถ:* ${escapeTg(updated.vehicleModel)} (${updated.seats} ที่นั่ง)\n` +
+      `📊 *สถานะ:* \`${updated.status}\``
+    ).catch((err) => console.error('[Notification Driver Update Error]:', err));
 
     return NextResponse.json({ success: true, lead: updated });
   } catch (err) {

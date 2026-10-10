@@ -13,7 +13,8 @@ import { AdminQuoteTab } from '@/components/portals/admin/AdminQuoteTab';
 import { AdminBoardTab } from '@/components/portals/admin/AdminBoardTab';
 import { AdminSponsorTab } from '@/components/portals/admin/AdminSponsorTab';
 import { isMockDataEnabled } from '@/lib/mockConfig';
-
+import { subscribeDataSync, broadcastDataSync } from '@/lib/syncEvents';
+import { getSupabase } from '@/lib/supabase/client';
 type AdminView = 'overview' | 'fleet' | 'bookings' | 'operators' | 'board' | 'sponsors' | 'security';
 
 export interface AdminConsoleContentProps {
@@ -97,21 +98,23 @@ export const AdminConsoleContent: React.FC<AdminConsoleContentProps> = ({
     // Admin-gated reads rely on the httpOnly admin session cookie (sent
     // automatically on same-origin requests), never a client-held secret.
     // scope=admin returns the full fleet including vehicles still awaiting review.
-    const p1 = fetch('/api/vehicles?scope=admin')
+    // Always use cache: 'no-store' so admin console never renders stale cached data.
+    const cacheBuster = `_t=${Date.now()}`;
+    const p1 = fetch(`/api/vehicles?scope=admin&${cacheBuster}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (data.vehicles && Array.isArray(data.vehicles)) setVehicles(data.vehicles);
       })
       .catch(() => {});
 
-    const p2 = fetch('/api/leads/driver')
+    const p2 = fetch(`/api/leads/driver?${cacheBuster}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (data.drivers && Array.isArray(data.drivers)) setDriverLeads(data.drivers);
       })
       .catch(() => {});
 
-    const p3 = fetch('/api/leads/quote')
+    const p3 = fetch(`/api/leads/quote?${cacheBuster}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (data.quotations && Array.isArray(data.quotations)) setQuoteLeads(data.quotations);
@@ -120,14 +123,14 @@ export const AdminConsoleContent: React.FC<AdminConsoleContentProps> = ({
 
     // includeClosed so moderators can still see, edit, and remove posts that
     // were auto-closed (travel date passed) or closed by their author.
-    const p4 = fetch('/api/board?includeClosed=true')
+    const p4 = fetch(`/api/board?includeClosed=true&${cacheBuster}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (data.posts && Array.isArray(data.posts)) setBoardPosts(data.posts);
       })
       .catch(() => {});
 
-    const p5 = fetch('/api/sponsors')
+    const p5 = fetch(`/api/sponsors?${cacheBuster}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (data.sponsors && Array.isArray(data.sponsors)) setSponsors(data.sponsors);
@@ -135,15 +138,69 @@ export const AdminConsoleContent: React.FC<AdminConsoleContentProps> = ({
       .catch(() => {});
 
     Promise.allSettled([p1, p2, p3, p4, p5, refreshAnalytics()]).finally(() => {
-      setTimeout(() => setIsRefreshing(false), 600);
+      setTimeout(() => setIsRefreshing(false), 300);
     });
   }, [refreshAnalytics]);
 
   useEffect(() => {
     if (!isAdminAuthenticated) return;
-    const timeout = window.setTimeout(refreshAll, 0);
-    return () => window.clearTimeout(timeout);
+    // Initial load
+    queueMicrotask(() => {
+      refreshAll();
+    });
+
+    // 1. Cross-tab & in-page real-time synchronization
+    const unsubscribeSync = subscribeDataSync(() => {
+      refreshAll();
+    });
+
+    // 2. Refocus / visibility change listener: updates immediately when returning to tab
+    const onFocus = () => {
+      refreshAll();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshAll();
+      }
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    // 3. Heartbeat polling: every 6 seconds while the admin console tab is visible
+    const pollInterval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshAll();
+      }
+    }, 6000);
+
+    // 4. Supabase Realtime channel subscription (for mutations across different devices/servers)
+    const sb = getSupabase();
+    const channel = sb ? sb.channel('tripdee_admin_realtime') : null;
+    if (channel) {
+      try {
+        channel
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, () => refreshAll())
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'driver_leads' }, () => refreshAll())
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'quotations' }, () => refreshAll())
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'board_posts' }, () => refreshAll())
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'sponsors' }, () => refreshAll())
+          .subscribe();
+      } catch {
+        /* ignore realtime connection errors */
+      }
+    }
+
+    return () => {
+      unsubscribeSync();
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.clearInterval(pollInterval);
+      if (channel && sb) {
+        sb.removeChannel(channel);
+      }
+    };
   }, [isAdminAuthenticated, refreshAll]);
+
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -254,6 +311,8 @@ export const AdminConsoleContent: React.FC<AdminConsoleContentProps> = ({
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('tripdee-vehicles-updated'));
       }
+      broadcastDataSync('drivers', 'approve', driverId);
+      broadcastDataSync('vehicles', 'approve');
     } catch (err) {
       console.error('Error approving driver:', err);
     }
